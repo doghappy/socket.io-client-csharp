@@ -9,7 +9,15 @@ Follow-up will be added to NuGet, please wait.
 ### Usage
 
 ```cs
-var client = new SocketIO("http://localhost:3000");
+var client = new SocketIO("http://localhost:3000")
+{
+    // if server need some parameters, you can add to here
+    Parameters = new Dictionary<string, string>
+    {
+        { "uid", "" },
+        { "token", "" }
+    }
+}
 
 client.OnClosed += Client_OnClosed;
 client.OnConnected += Client_OnConnected;
@@ -19,13 +27,13 @@ client.OnOpened += Client_OnOpened;
 client.On("test", res =>
 {
     Console.WriteLine(res.Text);
-	// Next, you might parse the data in this way.
-	var obj = JsonConvert.DeserializeObject<T>(res.Text);
-	var jobj = JObject.Parse(res.Text);
-	int code = jobj.Value<int>("code");
-	bool hasMore = jobj["data"].Value<bool>("hasMore");
-	var data = jobj["data"].ToObject<ResponseData>();
-	// ...
+    // Next, you might parse the data in this way.
+    var obj = JsonConvert.DeserializeObject<T>(res.Text);
+    var jobj = JObject.Parse(res.Text);
+    int code = jobj.Value<int>("code");
+    bool hasMore = jobj["data"].Value<bool>("hasMore");
+    var data = jobj["data"].ToObject<ResponseData>();
+    // ...
 });
 
 // Connect to the server
