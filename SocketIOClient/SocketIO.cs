@@ -110,10 +110,10 @@ namespace SocketIOClient
                         string text = builder.ToString();
                         Pretreatment(text);
                     }
-                    if (_socket.State != WebSocketState.Open)
-                    {
+                    //if (_socket.State != WebSocketState.Open)
+                    //{
 
-                    }
+                    //}
                 }
             });
         }

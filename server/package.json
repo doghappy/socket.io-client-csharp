@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "server",
   "main": "app.js",
+  "scripts": {
+    "server": "node app"
+  },
   "author": {
     "name": ""
   },
