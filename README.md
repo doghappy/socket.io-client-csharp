@@ -9,7 +9,15 @@ Follow-up will be added to NuGet, please wait.
 ### Usage
 
 ```cs
-var client = new SocketIO("http://localhost:3000");
+var client = new SocketIO("http://localhost:3000")
+{
+    // if server need some parameters, you can add to here
+    Parameters = new Dictionary<string, string>
+    {
+        { "uid", "" },
+        { "token", "" }
+    }
+}
 
 client.OnClosed += Client_OnClosed;
 client.OnConnected += Client_OnConnected;
