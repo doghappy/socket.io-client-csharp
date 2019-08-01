@@ -19,13 +19,13 @@ client.OnOpened += Client_OnOpened;
 client.On("test", res =>
 {
     Console.WriteLine(res.Text);
-	// Next, you might parse the data in this way.
-	var obj = JsonConvert.DeserializeObject<T>(res.Text);
-	var jobj = JObject.Parse(res.Text);
-	int code = jobj.Value<int>("code");
-	bool hasMore = jobj["data"].Value<bool>("hasMore");
-	var data = jobj["data"].ToObject<ResponseData>();
-	// ...
+    // Next, you might parse the data in this way.
+    var obj = JsonConvert.DeserializeObject<T>(res.Text);
+    var jobj = JObject.Parse(res.Text);
+    int code = jobj.Value<int>("code");
+    bool hasMore = jobj["data"].Value<bool>("hasMore");
+    var data = jobj["data"].ToObject<ResponseData>();
+    // ...
 });
 
 // Connect to the server
