@@ -29,9 +29,9 @@ namespace SocketIOClient
             _urlConverter = new UrlConverter();
             if (_uri.AbsolutePath != "/")
             {
-                _namespace = _uri.AbsolutePath + ',';
+                Namespace = _uri.AbsolutePath + ',';
             }
-            _parserRegex = new Regex("42" + _namespace + @"\[""(\w+)"",([\s\S]*)\]");
+            _parserRegex = new Regex("42" + Namespace + @"\[""(\w+)"",([\s\S]*)\]");
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
@@ -43,7 +43,7 @@ namespace SocketIOClient
         private ClientWebSocket _socket;
         readonly OpenedParser _openedParser;
         readonly UrlConverter _urlConverter;
-        readonly string _namespace;
+        public string Namespace { get; private set; }
         readonly Regex _parserRegex;
 
         public int EIO { get; set; } = 3;
@@ -120,9 +120,6 @@ namespace SocketIOClient
 
         private void Pretreatment(string text)
         {
-            //0{"sid 这是一个建立连接的
-            //40 connected
-            //41 disconnected
             if (_openedParser.Check(text))
             {
                 JObject jobj = _openedParser.Parse(text);
@@ -137,11 +134,11 @@ namespace SocketIOClient
                     }
                 });
             }
-            else if (text == "40" + _namespace)
+            else if (text == "40" + Namespace)
             {
                 OnConnected?.Invoke();
             }
-            else if (text == "41" + _namespace)
+            else if (text == "41" + Namespace)
             {
                 OnClosed?.Invoke();
             }
@@ -165,7 +162,13 @@ namespace SocketIOClient
             //}
         }
 
-        private async Task SendMessageAsync(string text)
+        /// <summary>
+        /// Send text messages directly instead of wrapped messages, usually you don't need to call this method, 
+        /// messages sent by calling this method may not be processed by the SocketIO server.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public async Task SendMessageAsync(string text)
         {
             if (_socket.State == WebSocketState.Open)
             {
@@ -199,7 +202,7 @@ namespace SocketIOClient
             var builder = new StringBuilder();
             builder
                 .Append("42")
-                .Append(_namespace)
+                .Append(Namespace)
                 .Append('[')
                 .Append('"')
                 .Append(eventName)
