@@ -32,18 +32,18 @@ await client.EmitAsync("test", new { code = 200 });
 
 ...
 
-private static void Client_OnOpened(Arguments.OpenedArgs args)
+private void Client_OnOpened(Arguments.OpenedArgs args)
 {
     Console.WriteLine(args.Sid);
     Console.WriteLine(args.PingInterval);
 }
 
-private static void Client_OnConnected()
+private void Client_OnConnected()
 {
     Console.WriteLine("Connected to server");
 }
 
-private static void Client_OnClosed()
+private void Client_OnClosed()
 {
     Console.WriteLine("Closed by server");
 }
