@@ -1,0 +1,25 @@
+﻿在C#中对私有方法进行单元测试
+
+C# 是一个完美支持面向对象的编程语言，那么在类中，必然有 private 关键字修饰**私有成员**，protected 关键字修饰**子类可访问**。然而，这似乎不利于单元测试，因为 private/protected 方法无法被外部调用。这不禁让人疑惑，如何在 C# 中对私有方法进行单元测试？
+
+## 不要对私有方法进行测试
+
+这是由 TDD 思想决定的。你没听错，不要测试私有方法，如果你发现需要对很多私有方法的行为进行测试，那么很可能新的类“隐藏”在你尝试测试的类中，你应该去思考，如何把它提取出来，变成接口并对其测试，将来这些“私有方法”可以被替换。
+
+有一种极端的观点认为，任何时候都不应该有私有方法，这意味着，所有的方法都是公开的，于是它们都可被测试。如果你需要将一个方法改成 private 那么这个方法则很有可能应该出现在别的对象上。
+
+> 这个建议过于极端，但它却告诉了我们一个好的建议，常常会让我们在设计程序时，将对象分割成更小的对象，达到高内聚低耦合的效果。  
+> 同时，这个建议虽然有利于单元测试，但是如果经过深思熟虑地思考，发现 private 方法真的不适合独立出去，如果这时候强行独立，其实是抛弃了OO的部分思想，对于客户端来说，暴露了太多的细节。所以这个点**需要设计者去慎重思考**。
+
+## PrivateObject
+
+微软也发现了这个问题，于是添加了 PrivateObject 类到 `Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll` 中，于是大家可以使用以下方式去测试私有方法
+
+```cs
+Class target = new Class();
+PrivateObject obj = new PrivateObject(target);
+var retVal = obj.Invoke("PrivateMethod");
+Assert.AreEqual(expectedVal, retVal);
+```
+
+> 但是由于微软行动太慢了，在 .net core 的单元测试项目上，还没有添加这个类。[最新进展](http://github.com/Microsoft/testfx/issues/366)
