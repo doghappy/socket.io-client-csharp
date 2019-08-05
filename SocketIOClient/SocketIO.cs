@@ -29,9 +29,9 @@ namespace SocketIOClient
             _urlConverter = new UrlConverter();
             if (_uri.AbsolutePath != "/")
             {
-                Namespace = _uri.AbsolutePath + ',';
+                _namespace = _uri.AbsolutePath + ',';
             }
-            _parserRegex = new Regex("42" + Namespace + @"\[""(\w+)"",([\s\S]*)\]");
+            _parserRegex = new Regex("42" + _namespace + @"\[""(\w+)"",([\s\S]*)\]");
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
@@ -39,11 +39,13 @@ namespace SocketIOClient
         private const int ReceiveChunkSize = 1024;
         private const int SendChunkSize = 1024;
 
+        private bool _isConnected;
+
         readonly Uri _uri;
         private ClientWebSocket _socket;
         readonly OpenedParser _openedParser;
         readonly UrlConverter _urlConverter;
-        public string Namespace { get; private set; }
+        readonly string _namespace;
         readonly Regex _parserRegex;
 
         public int EIO { get; set; } = 3;
@@ -93,6 +95,7 @@ namespace SocketIOClient
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             //await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                            // OnClosed?.Invoke();
                         }
                         else if (result.MessageType == WebSocketMessageType.Text)
                         {
@@ -127,6 +130,10 @@ namespace SocketIOClient
                 OnOpened?.Invoke(args);
                 Task.Run(async () =>
                 {
+                    if (_namespace != null)
+                    {
+                        await SendMessageAsync("40" + _namespace);
+                    }
                     while (true)
                     {
                         await Task.Delay(args.PingInterval);
@@ -134,12 +141,14 @@ namespace SocketIOClient
                     }
                 });
             }
-            else if (text == "40" + Namespace)
+            else if (text == "40" + _namespace)
             {
+                _isConnected = true;
                 OnConnected?.Invoke();
             }
-            else if (text == "41" + Namespace)
+            else if (text == "41" + _namespace)
             {
+                _isConnected = false;
                 OnClosed?.Invoke();
             }
             else if (_parserRegex.IsMatch(text))
@@ -168,7 +177,7 @@ namespace SocketIOClient
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
-        public async Task SendMessageAsync(string text)
+        private async Task SendMessageAsync(string text)
         {
             if (_socket.State == WebSocketState.Open)
             {
@@ -202,7 +211,7 @@ namespace SocketIOClient
             var builder = new StringBuilder();
             builder
                 .Append("42")
-                .Append(Namespace)
+                .Append(_namespace)
                 .Append('[')
                 .Append('"')
                 .Append(eventName)
@@ -211,7 +220,18 @@ namespace SocketIOClient
                 .Append(text)
                 .Append(']');
 
-            await SendMessageAsync(builder.ToString());
+            while (true)
+            {
+                if (_isConnected)
+                {
+                    await SendMessageAsync(builder.ToString());
+                    break;
+                }
+                else
+                {
+                    await Task.Delay(20);
+                }
+            }
         }
     }
 }

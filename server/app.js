@@ -5,6 +5,7 @@ const io = require('socket.io')(server);
 const pathNsp = io.of("/path");
 
 io.on('connection', client => {
+    console.log("aaaaaaaaaaaaa");
     client.on('test', data => {
         const type = typeof data;
         if (type === "string") {
@@ -23,12 +24,18 @@ io.on('connection', client => {
             client.emit("test", "unknow type - server");
         }
     });
+    client.on('close', data => {
+        if (data === "close") {
+            client.disconnect();
+        }
+    });
     client.on('disconnect', () => {
         console.log(`disconnect: ${client.id}`);
     });
 });
 
 pathNsp.on('connection', client => {
+    console.log(client.id);
     client.on('test', data => {
         const type = typeof data;
         if (type === "string") {
@@ -45,6 +52,12 @@ pathNsp.on('connection', client => {
             }
         } else {
             client.emit("test", "unknow type - server/path");
+        }
+    });
+    client.on('close', data => {
+        console.log("bbbbbbbbbbbb");
+        if (data === "close") {
+            client.disconnect();
         }
     });
     client.on('disconnect', () => {

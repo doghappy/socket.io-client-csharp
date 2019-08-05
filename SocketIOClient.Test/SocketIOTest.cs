@@ -121,5 +121,32 @@ namespace SocketIOClient.Test
             });
             await client.ConnectAsync();
         }
+
+        [TestMethod]
+        public async Task CloseByServerTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            client.OnClosed += () =>
+            {
+                Assert.IsTrue(true);
+            };
+            await client.ConnectAsync();
+            await client.EmitAsync("close", "close");
+        }
+
+        [TestMethod]
+        public async Task CloseByServerWithPathTest()
+        {
+            bool result = false;
+            var client = new SocketIO("http://localhost:3000/path");
+            client.OnClosed += () =>
+            {
+                result = true;
+            };
+            await client.ConnectAsync();
+            await client.EmitAsync("close", "close");
+            await Task.Delay(1000);
+            Assert.IsTrue(result);
+        }
     }
 }

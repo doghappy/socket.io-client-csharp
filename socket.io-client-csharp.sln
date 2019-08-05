@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Test", "Sock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Sample", "SocketIOClient.Sample\SocketIOClient.Sample.csproj", "{94A6907C-FC8C-46C3-8A08-6B7BFE898932}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Sample", "SocketIOClient.Sample\SocketIOClient.Sample.csproj", "{94A6907C-FC8C-46C3-8A08-6B7BFE898932}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
