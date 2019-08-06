@@ -1,6 +1,6 @@
 ﻿namespace SocketIOClient
 {
-    public enum SocketIOStatus
+    public enum SocketIOState
     {
         None,
         Connected,

@@ -59,7 +59,26 @@ namespace SocketIOClient
 
         private readonly Dictionary<string, EventHandler> _eventHandlers;
 
-        public SocketIOStatus Status { get; private set; }
+        private SocketIOState _status;
+        public SocketIOState State
+        {
+            get => _status;
+            set
+            {
+                if (_status != value)
+                {
+                    _status = value;
+                    if (value == SocketIOState.Closed)
+                    {
+                        OnClosed?.Invoke();
+                    }
+                    else if (value == SocketIOState.Connected)
+                    {
+                        OnConnected?.Invoke();
+                    }
+                }
+            }
+        }
 
         public async Task ConnectAsync()
         {
@@ -71,6 +90,7 @@ namespace SocketIOClient
             _socket = new ClientWebSocket();
             await _socket.ConnectAsync(wsUri, CancellationToken.None);
             Listen();
+            //await ListenAsync();
         }
 
         public async Task CloseAsync()
@@ -79,42 +99,101 @@ namespace SocketIOClient
             _socket.Dispose();
         }
 
+        private async Task ListenAsync()
+        {
+
+            //Task.Run(async () =>
+            //Task.Factory.StartNew(async () =>
+            //{
+
+
+            var buffer = new byte[ReceiveChunkSize];
+            while (true)
+            {
+                if (_socket.State == WebSocketState.Closed)
+                {
+                    if (State != SocketIOState.Closed)
+                    {
+                        State = SocketIOState.Closed;
+                        OnClosed?.Invoke();
+                    }
+                    break;
+                }
+                else if (_socket.State == WebSocketState.Open)
+                {
+                    var builder = new StringBuilder();
+                    WebSocketReceiveResult result;
+                    do
+                    {
+                        result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            builder.Append(str);
+                        }
+                        else if (result.MessageType == WebSocketMessageType.Close)
+                        {
+
+                        }
+                        else
+                        {
+                            throw new NotImplementedException();
+                        }
+                    } while (!result.EndOfMessage);
+
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        string text = builder.ToString();
+                        Console.WriteLine("Receive: " + text);
+                        await PretreatmentAsync(text);
+                        //await Task.Factory.StartNew();
+                    }
+                }
+                else
+                {
+
+                }
+            }
+            //});
+        }
+
         private void Listen()
         {
-            Task.Run(async () =>
+            // Listen State
+            Task.Factory.StartNew(async () =>
+            {
+                while (true)
+                {
+                    await Task.Delay(500);
+                    if (_socket.State == WebSocketState.Aborted || _socket.State == WebSocketState.Closed)
+                    {
+                        State = SocketIOState.Closed;
+                    }
+                }
+            });
+
+            // Listen Message
+            Task.Factory.StartNew(async () =>
             {
                 var buffer = new byte[ReceiveChunkSize];
                 while (true)
                 {
-                    if (_socket.State == WebSocketState.Closed)
+                    if (_socket.State == WebSocketState.Open)
                     {
-                        if (Status != SocketIOStatus.Closed)
-                        {
-                            Status = SocketIOStatus.Closed;
-                            OnClosed?.Invoke();
-                        }
-                        break;
-                    }
-                    else if (_socket.State == WebSocketState.Open)
-                    {
-                        var builder = new StringBuilder();
-                        WebSocketReceiveResult result;
-                        do
-                        {
-                            result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                            if (result.MessageType == WebSocketMessageType.Text)
-                            {
-                                string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                                builder.Append(str);
-                            }
-                            //else
-                            //{
-                            //    throw new NotImplementedException();
-                            //}
-                        } while (!result.EndOfMessage);
-
+                        WebSocketReceiveResult result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
+                            var builder = new StringBuilder();
+                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            builder.Append(str);
+
+                            while (!result.EndOfMessage)
+                            {
+                                result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                                str = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                                builder.Append(str);
+                            }
+
                             string text = builder.ToString();
                             Console.WriteLine("Receive: " + text);
                             await PretreatmentAsync(text);
@@ -136,10 +215,10 @@ namespace SocketIOClient
                     {
                         await SendMessageAsync("40" + _namespace);
                     }
-                    Status = SocketIOStatus.Connected;
+                    State = SocketIOState.Connected;
                     while (true)
                     {
-                        if (Status == SocketIOStatus.Connected)
+                        if (State == SocketIOState.Connected)
                         {
                             await Task.Delay(args.PingInterval);
                             await SendMessageAsync(((int)EngineIOProtocol.Ping).ToString());
@@ -153,16 +232,14 @@ namespace SocketIOClient
             }
             else if (text == "40" + _namespace)
             {
-                Status = SocketIOStatus.Connected;
-                OnConnected?.Invoke();
+                State = SocketIOState.Connected;
             }
             else if (text == "41" + _namespace)
             {
-                if (Status != SocketIOStatus.Closed)
+                if (State != SocketIOState.Closed)
                 {
-                    Status = SocketIOStatus.Closed;
+                    State = SocketIOState.Closed;
                     await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                    OnClosed?.Invoke();
                 }
             }
             else if (_parserRegex.IsMatch(text))
@@ -228,12 +305,12 @@ namespace SocketIOClient
             int i = 0;
             while (true)
             {
-                if (Status == SocketIOStatus.Connected)
+                if (State == SocketIOState.Connected)
                 {
                     await SendMessageAsync(builder.ToString());
                     break;
                 }
-                else if (Status == SocketIOStatus.None)
+                else if (State == SocketIOState.None)
                 {
                     i++;
                     await Task.Delay(20);
@@ -241,10 +318,6 @@ namespace SocketIOClient
                     {
                         throw new SocketIOEmitFailedException();
                     }
-                }
-                else
-                {
-
                 }
             }
         }
