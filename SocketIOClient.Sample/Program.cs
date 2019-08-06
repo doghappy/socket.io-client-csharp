@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Sample
@@ -24,6 +26,7 @@ namespace SocketIOClient.Sample
             // Listen server events
             client.On("test", res =>
             {
+                string resText = JsonConvert.DeserializeObject<string>(res.Text);
                 Console.WriteLine(res.Text);
             });
 
@@ -31,8 +34,9 @@ namespace SocketIOClient.Sample
             await client.ConnectAsync();
 
             // Emit test event, send string.
-            await client.EmitAsync("test", "test");
-            await client.EmitAsync("close", "close");
+            string text = File.ReadAllText("test.txt");
+            await client.EmitAsync("test", text);
+            //await client.EmitAsync("close", "close");
         }
 
         private static void Client_OnOpened(Arguments.OpenedArgs args)

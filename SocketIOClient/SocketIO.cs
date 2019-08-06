@@ -90,7 +90,6 @@ namespace SocketIOClient
             _socket = new ClientWebSocket();
             await _socket.ConnectAsync(wsUri, CancellationToken.None);
             Listen();
-            //await ListenAsync();
         }
 
         public async Task CloseAsync()
