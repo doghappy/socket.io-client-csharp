@@ -88,7 +88,7 @@ namespace SocketIOClient
                 {
                     if (_socket.State == WebSocketState.Closed)
                     {
-                        if (Status!= SocketIOStatus.Closed)
+                        if (Status != SocketIOStatus.Closed)
                         {
                             Status = SocketIOStatus.Closed;
                             OnClosed?.Invoke();
