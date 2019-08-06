@@ -13,11 +13,13 @@ namespace SocketIOClient.Sample
 
         static async Task Test()
         {
+            //var client = new SocketIO("http://localhost:3000/");
             var client = new SocketIO("http://localhost:3000/path");
 
             client.OnClosed += Client_OnClosed;
             client.OnConnected += Client_OnConnected;
-            client.OnOpened += Client_OnOpened;
+            //client.OnOpened += Client_OnOpened;
+            //client.OnAborted += () => Console.WriteLine("Aborted");
 
             // Listen server events
             client.On("test", res =>
@@ -29,6 +31,7 @@ namespace SocketIOClient.Sample
             await client.ConnectAsync();
 
             // Emit test event, send string.
+            await client.EmitAsync("test", "test");
             await client.EmitAsync("close", "close");
         }
 

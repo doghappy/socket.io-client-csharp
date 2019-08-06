@@ -7,19 +7,19 @@ namespace SocketIOClient.Test
     [TestClass]
     public class SocketIOTest
     {
-        [TestMethod]
-        public async Task ConnectTest()
-        {
-            var client = new SocketIO("http://localhost:3000");
-            client.OnOpened += async arg =>
-            {
-                Assert.IsNotNull(arg);
-                Assert.IsFalse(string.IsNullOrEmpty(arg.Sid));
-                Assert.IsTrue(arg.PingInterval != 0);
-                await client.CloseAsync();
-            };
-            await client.ConnectAsync();
-        }
+        //[TestMethod]
+        //public async Task ConnectTest()
+        //{
+        //    var client = new SocketIO("http://localhost:3000");
+        //    client.OnOpened += async arg =>
+        //    {
+        //        Assert.IsNotNull(arg);
+        //        Assert.IsFalse(string.IsNullOrEmpty(arg.Sid));
+        //        Assert.IsTrue(arg.PingInterval != 0);
+        //        await client.CloseAsync();
+        //    };
+        //    await client.ConnectAsync();
+        //}
 
         [TestMethod]
         public async Task OnConnectedTest()
