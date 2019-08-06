@@ -60,6 +60,10 @@ pathNsp.on('connection', client => {
             client.disconnect();
         }
     });
+    client.on('ws_message -new', data => {
+        console.log(data);
+        client.emit("ws_message -new", "message from server");
+    });
     client.on('disconnect', () => {
         console.log(`disconnect: ${client.id}`);
     });

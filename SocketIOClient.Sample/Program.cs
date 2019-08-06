@@ -24,9 +24,8 @@ namespace SocketIOClient.Sample
             //client.OnAborted += () => Console.WriteLine("Aborted");
 
             // Listen server events
-            client.On("test", res =>
+            client.On("ws_message -new", res =>
             {
-                string resText = JsonConvert.DeserializeObject<string>(res.Text);
                 Console.WriteLine(res.Text);
             });
 
@@ -34,8 +33,7 @@ namespace SocketIOClient.Sample
             await client.ConnectAsync();
 
             // Emit test event, send string.
-            string text = File.ReadAllText("test.txt");
-            await client.EmitAsync("test", text);
+            await client.EmitAsync("ws_message -new", "ws_message-new");
             //await client.EmitAsync("close", "close");
         }
 

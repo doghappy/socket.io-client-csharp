@@ -32,7 +32,7 @@ namespace SocketIOClient
             {
                 _namespace = _uri.AbsolutePath + ',';
             }
-            _parserRegex = new Regex("42" + _namespace + @"\[""(\w+)"",([\s\S]*)\]");
+            _parserRegex = new Regex("^42" + _namespace + @"\[""([\s\w-]+)"",([\s\S]*)\]$");
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
