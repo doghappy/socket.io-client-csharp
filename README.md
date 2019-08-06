@@ -4,7 +4,9 @@ This is the Socket.IO client for C#, which is base on `ClientWebSocket`, provide
 
 ### Nuget
 
-Follow-up will be added to NuGet, please wait.
+```
+Install-Package SocketIOClient
+```
 
 ### Usage
 
