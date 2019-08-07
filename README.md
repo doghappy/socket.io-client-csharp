@@ -54,8 +54,30 @@ private void Client_OnConnected()
     Console.WriteLine("Connected to server");
 }
 
-private void Client_OnClosed()
+private async void Client_OnClosed()
 {
-    Console.WriteLine("Closed by server");
+    if (reason == ServerCloseReason.ClosedByServer)
+    {
+        // ...
+    }
+    else if (reason == ServerCloseReason.Aborted)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            try
+            {
+                await client.ConnectAsync();
+                break;
+            }
+            catch (WebSocketException ex)
+            {
+                // show tips
+                Console.WriteLine(ex.Message);
+                await Task.Delay(2000);
+            }
+        }
+        // show tips
+        Console.WriteLine("Tried to reconnect 3 times, unable to connect to the server");
+    }
 }
 ```
