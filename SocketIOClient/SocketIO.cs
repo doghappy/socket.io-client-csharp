@@ -53,35 +53,11 @@ namespace SocketIOClient
 
         public event Action OnConnected;
 
-        /// <summary>
-        /// Triggered when the server disconnects rather than the client actively disconnects.
-        /// </summary>
-        public event Action OnClosed;
+        public event Action<ServerCloseReason> OnClosed;
 
         private readonly Dictionary<string, EventHandler> _eventHandlers;
 
-        private SocketIOState _status;
-        public SocketIOState State
-        {
-            get => _status;
-            set
-            {
-                if (_status != value)
-                {
-                    _status = value;
-                    if (value == SocketIOState.Closed)
-                    {
-                        _tokenSource.Cancel();
-                        _tokenSource = null;
-                        OnClosed?.Invoke();
-                    }
-                    else if (value == SocketIOState.Connected)
-                    {
-                        OnConnected?.Invoke();
-                    }
-                }
-            }
-        }
+        public SocketIOState State { get; private set; }
 
         public async Task ConnectAsync()
         {
@@ -101,7 +77,7 @@ namespace SocketIOClient
             await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
             _socket.Dispose();
             _tokenSource.Cancel();
-            _tokenSource = null;
+            OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
         }
 
         private void Listen()
@@ -114,7 +90,12 @@ namespace SocketIOClient
                     await Task.Delay(500);
                     if (_socket.State == WebSocketState.Aborted || _socket.State == WebSocketState.Closed)
                     {
-                        State = SocketIOState.Closed;
+                        if (State != SocketIOState.Closed)
+                        {
+                            State = SocketIOState.Closed;
+                            _tokenSource.Cancel();
+                            OnClosed?.Invoke(ServerCloseReason.Aborted);
+                        }
                     }
                 }
             }, _tokenSource.Token);
@@ -180,6 +161,7 @@ namespace SocketIOClient
             else if (text == "40" + _namespace)
             {
                 State = SocketIOState.Connected;
+                OnConnected?.Invoke();
             }
             else if (text == "41" + _namespace)
             {
@@ -187,6 +169,8 @@ namespace SocketIOClient
                 {
                     State = SocketIOState.Closed;
                     await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
+                    _tokenSource.Cancel();
+                    OnClosed?.Invoke(ServerCloseReason.ClosedByServer);
                 }
             }
             else if (_parserRegex.IsMatch(text))
