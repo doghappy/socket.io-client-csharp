@@ -27,23 +27,9 @@ namespace SocketIOClient.Sample
                 await client.ConnectAsync();
                 await client.EmitAsync("test", "test");
             };
-
-            client.OnClosed += Client_OnClosed;
-            client.OnConnected += Client_OnConnected;
-            //client.OnOpened += Client_OnOpened;
-            //client.OnAborted += () => Console.WriteLine("Aborted");
-
-            // Listen server events
-            client.On("ws_message -new", res =>
-            {
-                Console.WriteLine(res.Text);
-            });
-
             await client.ConnectAsync();
-
-            // Emit test event, send string.
-            await client.EmitAsync("ws_message -new", "ws_message-new");
-            //await client.EmitAsync("close", "close");
+            await Task.Delay(10000);
+            await client.EmitAsync("close", "close");
         }
 
         static void Test1(CancellationTokenSource tokenSource)
