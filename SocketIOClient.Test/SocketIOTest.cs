@@ -148,5 +148,46 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             Assert.IsTrue(result);
         }
+
+        [TestMethod]
+        public async Task RoomTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            await client.ConnectAsync();
+            string room = Guid.NewGuid().ToString();
+
+            string roomMsg = string.Empty;
+            client.On(room, res =>
+            {
+                roomMsg = res.Text;
+            });
+
+            await client.EmitAsync("create room", room);
+            await Task.Delay(1000);
+            Assert.AreEqual("\"I joined the room: " + room + "\"", roomMsg);
+        }
+
+        [TestMethod]
+        public async Task RoomMessageTest()
+        {
+            string room = "ROOM";
+            string client1Msg = string.Empty;
+            string client2Msg = string.Empty;
+
+            var client1 = new SocketIO("http://localhost:3000");
+            client1.On(room, res => client1Msg = res.Text);
+            await client1.ConnectAsync();
+            await client1.EmitAsync("create room", room);
+
+            var client2 = new SocketIO("http://localhost:3000");
+            client2.On(room, res => client2Msg = res.Text);
+            await client2.ConnectAsync();
+            await client2.EmitAsync("create room", room);
+
+            //需要添加 EmitAsync("event",roomName,data);
+
+            await Task.Delay(1000);
+            Assert.AreEqual(client1Msg, client2Msg);
+        }
     }
 }

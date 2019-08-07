@@ -29,6 +29,11 @@ io.on('connection', client => {
             client.disconnect();
         }
     });
+    client.on('create room', data => {
+        console.log("join room:" + data);
+        client.join(data);
+        io.to(data).emit(data, "I joined the room: " + data);
+    });
     client.on('disconnect', () => {
         console.log(`disconnect: ${client.id}`);
     });
@@ -70,5 +75,7 @@ pathNsp.on('connection', client => {
 });
 
 server.listen(3000);
+
+//https://stackoverflow.com/questions/19150220/creating-rooms-in-socket-io
 
 console.log('Socket IO server started');

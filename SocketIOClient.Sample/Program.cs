@@ -24,7 +24,8 @@ namespace SocketIOClient.Sample
             //client.OnAborted += () => Console.WriteLine("Aborted");
 
             // Listen server events
-            client.On("ws_message -new", res =>
+            string roomName = "ROOM";
+            client.On(roomName, res =>
             {
                 Console.WriteLine(res.Text);
             });
@@ -33,7 +34,7 @@ namespace SocketIOClient.Sample
             await client.ConnectAsync();
 
             // Emit test event, send string.
-            await client.EmitAsync("ws_message -new", "ws_message-new");
+            await client.EmitAsync("create room", "ws_message-new");
             //await client.EmitAsync("close", "close");
         }
 
