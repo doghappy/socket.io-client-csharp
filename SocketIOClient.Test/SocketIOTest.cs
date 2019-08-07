@@ -148,5 +148,32 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             Assert.IsTrue(result);
         }
+
+        [TestMethod]
+        public async Task EventNameTest()
+        {
+            string text = string.Empty;
+            var client = new SocketIO("http://localhost:3000/path");
+            client.On("ws_message -new", res =>
+            {
+                text = res.Text;
+            });
+            await client.ConnectAsync();
+            await client.EmitAsync("ws_message -new", "ws_message-new");
+            await Task.Delay(1000);
+            Assert.AreEqual(text, "\"message from server\"");
+        }
+
+        //[TestMethod]
+        //public async Task ReConnectTest()
+        //{
+        //    string text = string.Empty;
+        //    var client = new SocketIO("http://localhost:3000");
+        //    await client.ConnectAsync();
+        //    await client.CloseAsync()
+        //    await client.EmitAsync("ws_message -new", "ws_message-new");
+        //    await Task.Delay(1000);
+        //    Assert.AreEqual(text, "\"message from server\"");
+        //}
     }
 }
