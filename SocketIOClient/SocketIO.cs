@@ -46,6 +46,7 @@ namespace SocketIOClient
         readonly UrlConverter _urlConverter;
         readonly string _namespace;
         readonly Regex _parserRegex;
+        private CancellationTokenSource _tokenSource;
 
         public int EIO { get; set; } = 3;
         public Dictionary<string, string> Parameters { get; set; }
@@ -70,6 +71,8 @@ namespace SocketIOClient
                     _status = value;
                     if (value == SocketIOState.Closed)
                     {
+                        _tokenSource.Cancel();
+                        _tokenSource = null;
                         OnClosed?.Invoke();
                     }
                     else if (value == SocketIOState.Connected)
@@ -82,20 +85,23 @@ namespace SocketIOClient
 
         public async Task ConnectAsync()
         {
+            _tokenSource = new CancellationTokenSource();
             Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Parameters);
             if (_socket != null)
             {
                 _socket.Dispose();
             }
             _socket = new ClientWebSocket();
-            await _socket.ConnectAsync(wsUri, CancellationToken.None);
+            await _socket.ConnectAsync(wsUri, _tokenSource.Token);
             Listen();
         }
 
         public async Task CloseAsync()
         {
-            await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Call CloseAsync()", CancellationToken.None);
+            await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
             _socket.Dispose();
+            _tokenSource.Cancel();
+            _tokenSource = null;
         }
 
         private void Listen()
@@ -105,13 +111,13 @@ namespace SocketIOClient
             {
                 while (true)
                 {
-                    await Task.Delay(200);
+                    await Task.Delay(500);
                     if (_socket.State == WebSocketState.Aborted || _socket.State == WebSocketState.Closed)
                     {
                         State = SocketIOState.Closed;
                     }
                 }
-            });
+            }, _tokenSource.Token);
 
             // Listen Message
             Task.Factory.StartNew(async () =>
@@ -121,7 +127,7 @@ namespace SocketIOClient
                 {
                     if (_socket.State == WebSocketState.Open)
                     {
-                        WebSocketReceiveResult result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        WebSocketReceiveResult result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), _tokenSource.Token);
                         if (result.MessageType == WebSocketMessageType.Text)
                         {
                             var builder = new StringBuilder();
@@ -130,18 +136,18 @@ namespace SocketIOClient
 
                             while (!result.EndOfMessage)
                             {
-                                result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                                result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), _tokenSource.Token);
                                 str = Encoding.UTF8.GetString(buffer, 0, result.Count);
                                 builder.Append(str);
                             }
 
                             string text = builder.ToString();
-                            Console.WriteLine("Receive: " + text);
+                            // Console.WriteLine("Receive: " + text);
                             await PretreatmentAsync(text);
                         }
                     }
                 }
-            });
+            }, _tokenSource.Token);
         }
 
         private async Task PretreatmentAsync(string text)
@@ -180,7 +186,7 @@ namespace SocketIOClient
                 if (State != SocketIOState.Closed)
                 {
                     State = SocketIOState.Closed;
-                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
                 }
             }
             else if (_parserRegex.IsMatch(text))
@@ -217,8 +223,8 @@ namespace SocketIOClient
                         count = messageBuffer.Length - offset;
                     }
 
-                    await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, CancellationToken.None);
-                    Console.WriteLine("Send: " + text);
+                    await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, _tokenSource.Token);
+                    //Console.WriteLine("Send: " + text);
                 }
             }
         }
@@ -246,7 +252,11 @@ namespace SocketIOClient
             int i = 0;
             while (true)
             {
-                if (State == SocketIOState.Connected)
+                if (_tokenSource.Token.IsCancellationRequested)
+                {
+                    break;
+                }
+                else if (State == SocketIOState.Connected)
                 {
                     await SendMessageAsync(builder.ToString());
                     break;
