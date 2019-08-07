@@ -126,7 +126,7 @@ namespace SocketIOClient.Test
         public async Task CloseByServerTest()
         {
             var client = new SocketIO("http://localhost:3000");
-            client.OnClosed += () =>
+            client.OnClosed += reason =>
             {
                 Assert.IsTrue(true);
             };
@@ -139,7 +139,7 @@ namespace SocketIOClient.Test
         {
             bool result = false;
             var client = new SocketIO("http://localhost:3000/path");
-            client.OnClosed += () =>
+            client.OnClosed += reason =>
             {
                 result = true;
             };
