@@ -261,6 +261,7 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             Assert.AreEqual("UnhandledEvent-Server", en);
             Assert.AreEqual($"\"{guid} - server\"", text);
+            await client.ConnectAsync();
         }
     }
 }
