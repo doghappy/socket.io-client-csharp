@@ -55,6 +55,7 @@ namespace SocketIOClient
 
         public event Action<ServerCloseReason> OnClosed;
         public event Action<string, ResponseArgs> UnhandledEvent;
+        public event Action<string, ResponseArgs> OnReceivedEvent;
 
         public Dictionary<string, EventHandler> EventHandlers { get; }
 
@@ -206,6 +207,12 @@ namespace SocketIOClient
         public Task InvokeUnhandledEvent(string eventName, ResponseArgs args)
         {
             UnhandledEvent?.Invoke(eventName, args);
+            return Task.CompletedTask;
+        }
+
+        public Task InvokeReceivedEvent(string eventName, ResponseArgs args)
+        {
+            OnReceivedEvent?.Invoke(eventName, args);
             return Task.CompletedTask;
         }
 

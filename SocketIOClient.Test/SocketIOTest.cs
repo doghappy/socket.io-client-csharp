@@ -263,5 +263,31 @@ namespace SocketIOClient.Test
             Assert.AreEqual($"\"{guid} - server\"", text);
             await client.ConnectAsync();
         }
+
+        [TestMethod]
+        public async Task ReceivedEventTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            string en1 = string.Empty;
+            string text1 = string.Empty;
+            string text2 = string.Empty;
+            string guid = Guid.NewGuid().ToString();
+            client.OnReceivedEvent += (eventName, args) =>
+            {
+                en1 = eventName;
+                text1 = args.Text;
+            };
+            client.On("test", args =>
+            {
+                text2 = args.Text;
+            });
+            await client.ConnectAsync();
+            await client.EmitAsync("test", guid);
+            await Task.Delay(1000);
+            Assert.AreEqual("test", en1);
+            Assert.AreEqual($"\"{guid} - server\"", text1);
+            Assert.AreEqual(text1, text2);
+            await client.ConnectAsync();
+        }
     }
 }
