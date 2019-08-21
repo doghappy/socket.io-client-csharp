@@ -1,15 +1,34 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using SocketIOClient.Arguments;
 
 namespace SocketIOClient.Parsers
 {
     class MessageEventParser : IParser
     {
-        public bool Check(string text) => text.StartsWith("0{\"sid\":\"");
-
-        public JObject Parse(string text)
+        public Task ParseAsync(ResponseTextParser rtp)
         {
-            string message = text.TrimStart('0');
-            return JObject.Parse(message);
+            var regex = new Regex($@"^42{rtp.Namespace}\d*\[""([\s\w-]+)"",([\s\S]*)\]$");
+            if (regex.IsMatch(rtp.Text))
+            {
+                var groups = regex.Match(rtp.Text).Groups;
+                string eventName = groups[1].Value;
+                if (rtp.Socket.EventHandlers.ContainsKey(eventName))
+                {
+                    var handler = rtp.Socket.EventHandlers[eventName];
+                    handler(new ResponseArgs
+                    {
+                        Text = groups[2].Value,
+                        RawText = rtp.Text
+                    });
+                }
+                return Task.CompletedTask;
+            }
+            else
+            {
+                rtp.Parser = new MessageAckParser();
+                return rtp.ParseAsync();
+            }
         }
     }
 }

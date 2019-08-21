@@ -25,14 +25,15 @@ namespace SocketIOClient
             {
                 throw new ArgumentException("Unsupported protocol");
             }
-            _openedParser = new OpenedParser();
-            _eventHandlers = new Dictionary<string, EventHandler>();
+            EventHandlers = new Dictionary<string, EventHandler>();
+            Callbacks = new Dictionary<int, EventHandler>();
             _urlConverter = new UrlConverter();
             if (_uri.AbsolutePath != "/")
             {
                 _namespace = _uri.AbsolutePath + ',';
             }
-            _parserRegex = new Regex("^42" + _namespace + @"\[""([\s\w-]+)"",([\s\S]*)\]$");
+            _packetId = -1;
+            _emitQueue = new Queue<string>();
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
@@ -42,11 +43,13 @@ namespace SocketIOClient
 
         readonly Uri _uri;
         private ClientWebSocket _socket;
-        readonly OpenedParser _openedParser;
         readonly UrlConverter _urlConverter;
         readonly string _namespace;
-        readonly Regex _parserRegex;
         private CancellationTokenSource _tokenSource;
+        private int _packetId;
+        public Dictionary<int, EventHandler> Callbacks { get; }
+        public ResponseTextParser Parser { get; private set; }
+        readonly Queue<string> _emitQueue;
 
         public int EIO { get; set; } = 3;
         public Dictionary<string, string> Parameters { get; set; }
@@ -55,12 +58,13 @@ namespace SocketIOClient
 
         public event Action<ServerCloseReason> OnClosed;
 
-        private readonly Dictionary<string, EventHandler> _eventHandlers;
+        public Dictionary<string, EventHandler> EventHandlers { get; }
 
         public SocketIOState State { get; private set; }
 
         public async Task ConnectAsync()
         {
+            Parser = new ResponseTextParser(_namespace, this);
             _tokenSource = new CancellationTokenSource();
             Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Parameters);
             if (_socket != null)
@@ -79,6 +83,8 @@ namespace SocketIOClient
             _tokenSource.Cancel();
             OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
         }
+
+
 
         private void Listen()
         {
@@ -122,71 +128,12 @@ namespace SocketIOClient
                                 builder.Append(str);
                             }
 
-                            string text = builder.ToString();
-                            // Console.WriteLine("Receive: " + text);
-                            await PretreatmentAsync(text);
+                            Parser.Text = builder.ToString();
+                            await Parser.ParseAsync();
                         }
                     }
                 }
             }, _tokenSource.Token);
-        }
-
-        private async Task PretreatmentAsync(string text)
-        {
-            if (_openedParser.Check(text))
-            {
-                JObject jobj = _openedParser.Parse(text);
-                var args = jobj.ToObject<OpenedArgs>();
-                await Task.Factory.StartNew(async () =>
-                {
-                    if (_namespace != null)
-                    {
-                        await SendMessageAsync("40" + _namespace);
-                    }
-                    State = SocketIOState.Connected;
-                    while (true)
-                    {
-                        if (State == SocketIOState.Connected)
-                        {
-                            await Task.Delay(args.PingInterval);
-                            await SendMessageAsync(((int)EngineIOProtocol.Ping).ToString());
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                });
-            }
-            else if (text == "40" + _namespace)
-            {
-                State = SocketIOState.Connected;
-                OnConnected?.Invoke();
-            }
-            else if (text == "41" + _namespace)
-            {
-                if (State != SocketIOState.Closed)
-                {
-                    State = SocketIOState.Closed;
-                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
-                    _tokenSource.Cancel();
-                    OnClosed?.Invoke(ServerCloseReason.ClosedByServer);
-                }
-            }
-            else if (_parserRegex.IsMatch(text))
-            {
-                var groups = _parserRegex.Match(text).Groups;
-                string eventName = groups[1].Value;
-                if (_eventHandlers.ContainsKey(eventName))
-                {
-                    var handler = _eventHandlers[eventName];
-                    handler(new ResponseArgs
-                    {
-                        Text = groups[2].Value,
-                        RawText = text
-                    });
-                }
-            }
         }
 
         private async Task SendMessageAsync(string text)
@@ -208,23 +155,69 @@ namespace SocketIOClient
                     }
 
                     await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, _tokenSource.Token);
-                    //Console.WriteLine("Send: " + text);
                 }
             }
         }
 
-        public void On(string eventName, EventHandler handler)
+        public async Task InvokeConnectedAsync()
         {
-            _eventHandlers.Add(eventName, handler);
+            State = SocketIOState.Connected;
+            OnConnected?.Invoke();
+            while (_emitQueue.Count > 0)
+            {
+                string item = _emitQueue.Dequeue();
+                await SendMessageAsync(item);
+            }
         }
 
-        public async Task EmitAsync(string eventName, object obj)
+        public async Task InvokeClosedAsync()
+        {
+            if (State != SocketIOState.Closed)
+            {
+                State = SocketIOState.Closed;
+                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
+                _tokenSource.Cancel();
+                OnClosed?.Invoke(ServerCloseReason.ClosedByServer);
+            }
+        }
+
+        public async Task InvokeOpenedAsync(OpenedArgs args)
+        {
+            await Task.Factory.StartNew(async () =>
+            {
+                if (_namespace != null)
+                {
+                    await SendMessageAsync("40" + _namespace);
+                }
+                State = SocketIOState.Connected;
+                while (true)
+                {
+                    if (State == SocketIOState.Connected)
+                    {
+                        await Task.Delay(args.PingInterval);
+                        await SendMessageAsync(((int)EngineIOProtocol.Ping).ToString());
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            });
+        }
+
+        public void On(string eventName, EventHandler handler)
+        {
+            EventHandlers.Add(eventName, handler);
+        }
+
+        private async Task EmitAsync(string eventName, int packetId, object obj)
         {
             string text = JsonConvert.SerializeObject(obj);
             var builder = new StringBuilder();
             builder
                 .Append("42")
                 .Append(_namespace)
+                .Append(packetId)
                 .Append('[')
                 .Append('"')
                 .Append(eventName)
@@ -232,29 +225,29 @@ namespace SocketIOClient
                 .Append(',')
                 .Append(text)
                 .Append(']');
-            //await SendMessageAsync(builder.ToString());
-            int i = 0;
-            while (true)
+
+            string message = builder.ToString();
+            if (State == SocketIOState.Connected)
             {
-                if (_tokenSource.Token.IsCancellationRequested)
-                {
-                    break;
-                }
-                else if (State == SocketIOState.Connected)
-                {
-                    await SendMessageAsync(builder.ToString());
-                    break;
-                }
-                else if (State == SocketIOState.None)
-                {
-                    i++;
-                    await Task.Delay(20);
-                    if (i == 1000)
-                    {
-                        throw new SocketIOEmitFailedException();
-                    }
-                }
+                await SendMessageAsync(message);
             }
+            else if (State == SocketIOState.None)
+            {
+                _emitQueue.Enqueue(message);
+            }
+        }
+
+        public async Task EmitAsync(string eventName, object obj)
+        {
+            _packetId++;
+            await EmitAsync(eventName, _packetId, obj);
+        }
+
+        public async Task EmitAsync(string eventName, object obj, EventHandler callback)
+        {
+            _packetId++;
+            Callbacks.Add(_packetId, callback);
+            await EmitAsync(eventName, _packetId, obj);
         }
     }
 }

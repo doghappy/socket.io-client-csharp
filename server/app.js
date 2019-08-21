@@ -5,7 +5,6 @@ const io = require('socket.io')(server);
 const pathNsp = io.of("/path");
 
 io.on('connection', client => {
-    console.log("aaaaaaaaaaaaa");
     client.on('test', data => {
         const type = typeof data;
         if (type === "string") {
@@ -28,6 +27,12 @@ io.on('connection', client => {
         if (data === "close") {
             client.disconnect();
         }
+    });
+    client.on('callback', (data, fn) => {
+        console.log(data);
+        console.log(fn);
+        console.log(fn.toString());
+        fn(data + " - server");
     });
     client.on('create room', data => {
         console.log("join room:" + data);

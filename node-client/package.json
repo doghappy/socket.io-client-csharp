@@ -1,0 +1,12 @@
+{
+  "name": "node-client",
+  "version": "0.0.0",
+  "description": "node-client",
+  "main": "app.js",
+  "author": {
+    "name": ""
+  },
+  "dependencies": {
+    "socket.io-client": "^2.2.0"
+  }
+}

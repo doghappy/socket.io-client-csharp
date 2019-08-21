@@ -52,24 +52,8 @@ namespace SocketIOClient.Sample
                 }
             };
             await client.ConnectAsync();
-            await Task.Delay(10000);
-            await client.EmitAsync("close", "close");
-        }
 
-        static void Test1(CancellationTokenSource tokenSource)
-        {
-            Task.Run(async () =>
-            {
-                while (true)
-                {
-                    if (tokenSource.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    await Task.Delay(1000);
-                    Console.WriteLine(DateTime.Now);
-                }
-            }, tokenSource.Token);
+            await client.EmitAsync("callback", "cb");
         }
     }
 }

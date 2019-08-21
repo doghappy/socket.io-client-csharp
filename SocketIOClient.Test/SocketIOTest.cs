@@ -216,5 +216,32 @@ namespace SocketIOClient.Test
         //    await Task.Delay(1000);
         //    Assert.AreEqual(text, "\"message from server\"");
         //}
+
+        [TestMethod]
+        public async Task CallbackTest()
+        {
+            string text = string.Empty;
+            string guid = Guid.NewGuid().ToString();
+            var client = new SocketIO("http://localhost:3000");
+            await client.ConnectAsync();
+            await client.EmitAsync("callback", guid, async res =>
+            {
+                text = res.Text;
+                await client.CloseAsync();
+            });
+            await Task.Delay(1000);
+            Assert.AreEqual(text, $"\"{guid} - server\"");
+        }
+
+        [TestMethod]
+        public async Task NonCallbackTest()
+        {
+            string guid = Guid.NewGuid().ToString();
+            var client = new SocketIO("http://localhost:3000");
+            await client.ConnectAsync();
+            await client.EmitAsync("callback", guid);
+            await Task.Delay(1000);
+            Assert.AreEqual(SocketIOState.Connected, client.State);
+        }
     }
 }
