@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SocketIOClient.Exceptions
 {
+    [Obsolete]
     public class SocketIOEmitFailedException : Exception
     {
     }

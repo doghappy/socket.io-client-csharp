@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SocketIOClient.Arguments;
-using SocketIOClient.Exceptions;
 using SocketIOClient.Parsers;
 
 namespace SocketIOClient
@@ -57,6 +54,7 @@ namespace SocketIOClient
         public event Action OnConnected;
 
         public event Action<ServerCloseReason> OnClosed;
+        public event Action<string, ResponseArgs> UnhandledEvent;
 
         public Dictionary<string, EventHandler> EventHandlers { get; }
 
@@ -203,6 +201,12 @@ namespace SocketIOClient
                     }
                 }
             });
+        }
+
+        public Task InvokeUnhandledEvent(string eventName, ResponseArgs args)
+        {
+            UnhandledEvent?.Invoke(eventName, args);
+            return Task.CompletedTask;
         }
 
         public void On(string eventName, EventHandler handler)

@@ -29,10 +29,13 @@ io.on('connection', client => {
         }
     });
     client.on('callback', (data, fn) => {
-        console.log(data);
-        console.log(fn);
-        console.log(fn.toString());
         fn(data + " - server");
+    });
+    client.on('*', data => {
+        client.emit("*", "**");
+    });
+    client.on('UnhandledEvent', data => {
+        client.emit("UnhandledEvent-Server", data + " - server");
     });
     client.on('create room', data => {
         console.log("join room:" + data);

@@ -230,7 +230,7 @@ namespace SocketIOClient.Test
                 await client.CloseAsync();
             });
             await Task.Delay(1000);
-            Assert.AreEqual(text, $"\"{guid} - server\"");
+            Assert.AreEqual($"\"{guid} - server\"", text);
         }
 
         [TestMethod]
@@ -242,6 +242,25 @@ namespace SocketIOClient.Test
             await client.EmitAsync("callback", guid);
             await Task.Delay(1000);
             Assert.AreEqual(SocketIOState.Connected, client.State);
+        }
+
+        [TestMethod]
+        public async Task UnhandleEventTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            string text = string.Empty;
+            string en = string.Empty;
+            string guid = Guid.NewGuid().ToString();
+            client.UnhandledEvent += (eventName, args) =>
+            {
+                en = eventName;
+                text = args.Text;
+            };
+            await client.ConnectAsync();
+            await client.EmitAsync("UnhandledEvent", guid);
+            await Task.Delay(1000);
+            Assert.AreEqual("UnhandledEvent-Server", en);
+            Assert.AreEqual($"\"{guid} - server\"", text);
         }
     }
 }
