@@ -43,11 +43,11 @@ await client.ConnectAsync();
 
 client.OnConnected += async () =>
 {
-	// Emit test event, send string.
-	await client.EmitAsync("test", "EmitTest");
+    // Emit test event, send string.
+    await client.EmitAsync("test", "EmitTest");
 
-	// Emit test event, send object.
-	await client.EmitAsync("test", new { code = 200 });
+    // Emit test event, send object.
+    await client.EmitAsync("test", new { code = 200 });
 }
 
 // ...
