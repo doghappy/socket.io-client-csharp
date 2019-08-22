@@ -30,7 +30,8 @@ namespace SocketIOClient
                 _namespace = _uri.AbsolutePath + ',';
             }
             _packetId = -1;
-            _emitQueue = new Queue<string>();
+            //_emitQueue = new Queue<string>();
+            ConnectTimeout = TimeSpan.FromSeconds(30);
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
@@ -46,9 +47,10 @@ namespace SocketIOClient
         private int _packetId;
         public Dictionary<int, EventHandler> Callbacks { get; }
         public ResponseTextParser Parser { get; private set; }
-        readonly Queue<string> _emitQueue;
+        //readonly Queue<string> _emitQueue;
 
         public int EIO { get; set; } = 3;
+        public TimeSpan ConnectTimeout { get; set; }
         public Dictionary<string, string> Parameters { get; set; }
 
         public event Action OnConnected;
@@ -61,7 +63,7 @@ namespace SocketIOClient
 
         public SocketIOState State { get; private set; }
 
-        public async Task ConnectAsync()
+        public Task ConnectAsync()
         {
             Parser = new ResponseTextParser(_namespace, this);
             _tokenSource = new CancellationTokenSource();
@@ -71,19 +73,31 @@ namespace SocketIOClient
                 _socket.Dispose();
             }
             _socket = new ClientWebSocket();
-            await _socket.ConnectAsync(wsUri, _tokenSource.Token);
+            bool executed = _socket.ConnectAsync(wsUri, CancellationToken.None).Wait(ConnectTimeout);
+            if (!executed)
+            {
+                throw new TimeoutException();
+            }
             Listen();
+            return Task.CompletedTask;
         }
 
         public async Task CloseAsync()
         {
-            await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
-            _socket.Dispose();
-            _tokenSource.Cancel();
-            OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
+            if (_socket == null)
+            {
+                throw new InvalidOperationException("Close failed, must connect first.");
+            }
+            else
+            {
+                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
+                _socket.Dispose();
+                _socket = null;
+                _tokenSource.Cancel();
+                _tokenSource.Dispose();
+                OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
+            }
         }
-
-
 
         private void Listen()
         {
@@ -158,15 +172,20 @@ namespace SocketIOClient
             }
         }
 
-        public async Task InvokeConnectedAsync()
+        public Task InvokeConnectedAsync()
         {
             State = SocketIOState.Connected;
             OnConnected?.Invoke();
-            while (_emitQueue.Count > 0)
-            {
-                string item = _emitQueue.Dequeue();
-                await SendMessageAsync(item);
-            }
+            return Task.CompletedTask;
+            //if (_emitQueue.Count > 0)
+            //{
+            //    await Task.Delay(1000);
+            //}
+            //while (_emitQueue.Count > 0)
+            //{
+            //    string item = _emitQueue.Dequeue();
+            //    await SendMessageAsync(item);
+            //}
         }
 
         public async Task InvokeClosedAsync()
@@ -242,9 +261,13 @@ namespace SocketIOClient
             {
                 await SendMessageAsync(message);
             }
-            else if (State == SocketIOState.None)
+            //else if (State == SocketIOState.None)
+            //{
+            //    _emitQueue.Enqueue(message);
+            //}
+            else
             {
-                _emitQueue.Enqueue(message);
+                throw new InvalidOperationException("Socket connection not ready, emit failure.");
             }
         }
 

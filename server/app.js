@@ -3,6 +3,14 @@
 const server = require('http').createServer();
 const io = require('socket.io')(server);
 const pathNsp = io.of("/path");
+const sleep = require("await-sleep");
+
+//io.on("connect", async client => {
+//    console.log(new Date().getSeconds());
+//    await sleep(11000);
+//    console.log(new Date().getSeconds());
+//});
+
 
 io.on('connection', client => {
     client.on('test', data => {

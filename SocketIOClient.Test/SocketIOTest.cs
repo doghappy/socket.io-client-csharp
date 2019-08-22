@@ -75,6 +75,7 @@ namespace SocketIOClient.Test
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("test", guid);
         }
 
@@ -105,6 +106,7 @@ namespace SocketIOClient.Test
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("test", new[] { 0, 1, 2 });
         }
 
@@ -144,6 +146,7 @@ namespace SocketIOClient.Test
                 result = true;
             };
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("close", "close");
             await Task.Delay(1000);
             Assert.IsTrue(result);
@@ -162,6 +165,7 @@ namespace SocketIOClient.Test
                 roomMsg = res.Text;
             });
 
+            await Task.Delay(1000);
             await client.EmitAsync("create room", room);
             await Task.Delay(1000);
             Assert.AreEqual("\"I joined the room: " + room + "\"", roomMsg);
@@ -177,11 +181,13 @@ namespace SocketIOClient.Test
             var client1 = new SocketIO("http://localhost:3000");
             client1.On(room, res => client1Msg = res.Text);
             await client1.ConnectAsync();
+            await Task.Delay(1000);
             await client1.EmitAsync("create room", room);
 
             var client2 = new SocketIO("http://localhost:3000");
             client2.On(room, res => client2Msg = res.Text);
             await client2.ConnectAsync();
+            await Task.Delay(1000);
             await client2.EmitAsync("create room", room);
 
             //需要添加 EmitAsync("event",roomName,data);
@@ -200,6 +206,7 @@ namespace SocketIOClient.Test
                 text = res.Text;
             });
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("ws_message -new", "ws_message-new");
             await Task.Delay(1000);
             Assert.AreEqual(text, "\"message from server\"");
@@ -224,6 +231,7 @@ namespace SocketIOClient.Test
             string guid = Guid.NewGuid().ToString();
             var client = new SocketIO("http://localhost:3000");
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("callback", guid, async res =>
             {
                 text = res.Text;
@@ -239,6 +247,7 @@ namespace SocketIOClient.Test
             string guid = Guid.NewGuid().ToString();
             var client = new SocketIO("http://localhost:3000");
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("callback", guid);
             await Task.Delay(1000);
             Assert.AreEqual(SocketIOState.Connected, client.State);
@@ -257,6 +266,7 @@ namespace SocketIOClient.Test
                 text = args.Text;
             };
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("UnhandledEvent", guid);
             await Task.Delay(1000);
             Assert.AreEqual("UnhandledEvent-Server", en);
@@ -282,11 +292,34 @@ namespace SocketIOClient.Test
                 text2 = args.Text;
             });
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("test", guid);
             await Task.Delay(1000);
             Assert.AreEqual("test", en1);
             Assert.AreEqual($"\"{guid} - server\"", text1);
             Assert.AreEqual(text1, text2);
+            await client.ConnectAsync();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(TimeoutException))]
+        public async Task TimeoutTest()
+        {
+            var client = new SocketIO("http://localhost:3000")
+            {
+                ConnectTimeout = TimeSpan.FromMilliseconds(10)
+            };
+            TimeoutException timeoutException = null;
+            try
+            {
+                await client.ConnectAsync();
+            }
+            catch (TimeoutException e)
+            {
+                timeoutException = e;
+            }
+            await Task.Delay(1000);
+            Assert.IsNotNull(timeoutException);
             await client.ConnectAsync();
         }
     }
