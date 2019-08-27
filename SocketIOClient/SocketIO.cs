@@ -82,7 +82,7 @@ namespace SocketIOClient
             return Task.CompletedTask;
         }
 
-        public async Task CloseAsync()
+        public Task CloseAsync()
         {
             if (_socket == null)
             {
@@ -90,12 +90,13 @@ namespace SocketIOClient
             }
             else
             {
-                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
-                _socket.Dispose();
-                _socket = null;
                 _tokenSource.Cancel();
                 _tokenSource.Dispose();
+                _socket.Abort();
+                _socket.Dispose();
+                _socket = null;
                 OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
+                return Task.CompletedTask;
             }
         }
 

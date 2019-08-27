@@ -133,6 +133,7 @@ namespace SocketIOClient.Test
                 Assert.IsTrue(true);
             };
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("close", "close");
         }
 
@@ -148,6 +149,29 @@ namespace SocketIOClient.Test
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("close", "close");
+            await Task.Delay(1000);
+            Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public async Task CloseByClientTest()
+        {
+            bool result = false;
+            var client = new SocketIO("http://localhost:3000");
+            client.OnClosed += reason =>
+            {
+                if (reason == ServerCloseReason.ClosedByClient)
+                {
+                    result = true;
+                }
+                else
+                {
+                    Assert.Fail();
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.CloseAsync();
             await Task.Delay(1000);
             Assert.IsTrue(result);
         }
