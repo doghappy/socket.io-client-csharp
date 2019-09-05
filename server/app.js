@@ -75,6 +75,11 @@ pathNsp.on('connection', client => {
             client.emit("test", "unknow type - server/path");
         }
     });
+
+    client.on('callback', (data, fn) => {
+        fn(data + " - server/path");
+    });
+
     client.on('close', data => {
         console.log("bbbbbbbbbbbb");
         if (data === "close") {
