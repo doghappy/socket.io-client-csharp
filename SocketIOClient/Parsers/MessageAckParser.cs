@@ -4,29 +4,29 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Parsers
 {
-	class MessageAckParser : IParser
-	{
-		public Task ParseAsync(ResponseTextParser rtp)
-		{
-			var regex = new Regex($@"^43{rtp.Namespace}(\d*)\[([\s\S]*)\]$");
-			if (regex.IsMatch(rtp.Text))
-			{
-				var groups = regex.Match(rtp.Text).Groups;
-				if (!int.TryParse(groups[1].Value, out int packetId))
-					packetId = -1;
+    class MessageAckParser : IParser
+    {
+        public Task ParseAsync(ResponseTextParser rtp)
+        {
+            var regex = new Regex($@"^43{rtp.Namespace}(\d*)\[([\s\S]*)\]$");
+            if (regex.IsMatch(rtp.Text))
+            {
+                var groups = regex.Match(rtp.Text).Groups;
+                if (!int.TryParse(groups[1].Value, out int packetId))
+                    packetId = -1;
 
-				if (rtp.Socket.Callbacks.ContainsKey(packetId))
-				{
-					var handler = rtp.Socket.Callbacks[packetId];
-					handler(new ResponseArgs
-					{
-						Text = groups[2].Value,
-						RawText = rtp.Text
-					});
-					rtp.Socket.Callbacks.Remove(packetId);
-				}
-			}
-			return Task.CompletedTask;
-		}
-	}
+                if (rtp.Socket.Callbacks.ContainsKey(packetId))
+                {
+                    var handler = rtp.Socket.Callbacks[packetId];
+                    handler(new ResponseArgs
+                    {
+                        Text = groups[2].Value,
+                        RawText = rtp.Text
+                    });
+                    rtp.Socket.Callbacks.Remove(packetId);
+                }
+            }
+            return Task.CompletedTask;
+        }
+    }
 }

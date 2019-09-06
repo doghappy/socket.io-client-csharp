@@ -266,26 +266,26 @@ namespace SocketIOClient.Test
         }
 
         [TestMethod]
-		public async Task CallbackWithRoomTest()
-		{
-			string text = string.Empty;
-			string guid = Guid.NewGuid().ToString();
-			var client = new SocketIO("http://localhost:3000/path");
-			await client.ConnectAsync();
-			await Task.Delay(1000);
-			bool callbackCalled = false;
-			await client.EmitAsync("callback", guid, async res =>
-			{
-				text = res.Text;
-				callbackCalled = true;
-				await client.CloseAsync();
-			});
-			await Task.Delay(1000);
-			Assert.IsTrue(callbackCalled, "Callback was not called");
-			Assert.AreEqual($"\"{guid} - server/path\"", text);
-		}
+        public async Task CallbackWithRoomTest()
+        {
+            string text = string.Empty;
+            string guid = Guid.NewGuid().ToString();
+            var client = new SocketIO("http://localhost:3000/path");
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            bool callbackCalled = false;
+            await client.EmitAsync("callback", guid, async res =>
+            {
+                text = res.Text;
+                callbackCalled = true;
+                await client.CloseAsync();
+            });
+            await Task.Delay(1000);
+            Assert.IsTrue(callbackCalled, "Callback was not called");
+            Assert.AreEqual($"\"{guid} - server/path\"", text);
+        }
 
-		[TestMethod]
+        [TestMethod]
         public async Task NonCallbackTest()
         {
             string guid = Guid.NewGuid().ToString();
