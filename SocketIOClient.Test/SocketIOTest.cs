@@ -89,6 +89,7 @@ namespace SocketIOClient.Test
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
+            await Task.Delay(1000);
             await client.EmitAsync("test", new
             {
                 code = 200,

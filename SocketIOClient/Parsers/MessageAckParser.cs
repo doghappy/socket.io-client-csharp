@@ -8,13 +8,11 @@ namespace SocketIOClient.Parsers
     {
         public Task ParseAsync(ResponseTextParser rtp)
         {
-            var regex = new Regex($@"^43{rtp.Namespace}(\d*)\[([\s\S]*)\]$");
+            var regex = new Regex($@"^43{rtp.Namespace}(\d+)\[([\s\S]*)\]$");
             if (regex.IsMatch(rtp.Text))
             {
                 var groups = regex.Match(rtp.Text).Groups;
-                if (!int.TryParse(groups[1].Value, out int packetId))
-                    packetId = -1;
-
+                int packetId = int.Parse(groups[1].Value);
                 if (rtp.Socket.Callbacks.ContainsKey(packetId))
                 {
                     var handler = rtp.Socket.Callbacks[packetId];
