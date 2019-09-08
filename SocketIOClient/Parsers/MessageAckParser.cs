@@ -8,7 +8,7 @@ namespace SocketIOClient.Parsers
     {
         public Task ParseAsync(ResponseTextParser rtp)
         {
-            var regex = new Regex($@"^43(\d+){rtp.Namespace}\d*\[([\s\S]*)\]$");
+            var regex = new Regex($@"^43{rtp.Namespace}(\d+)\[([\s\S]*)\]$");
             if (regex.IsMatch(rtp.Text))
             {
                 var groups = regex.Match(rtp.Text).Groups;
