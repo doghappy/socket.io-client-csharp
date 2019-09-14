@@ -30,7 +30,6 @@ namespace SocketIOClient
                 _namespace = _uri.AbsolutePath + ',';
             }
             _packetId = -1;
-            //_emitQueue = new Queue<string>();
             ConnectTimeout = TimeSpan.FromSeconds(30);
         }
 
@@ -46,8 +45,6 @@ namespace SocketIOClient
         private CancellationTokenSource _tokenSource;
         private int _packetId;
         public Dictionary<int, EventHandler> Callbacks { get; }
-        public ResponseTextParser Parser { get; private set; }
-        //readonly Queue<string> _emitQueue;
 
         public int EIO { get; set; } = 3;
         public TimeSpan ConnectTimeout { get; set; }
@@ -65,7 +62,6 @@ namespace SocketIOClient
 
         public Task ConnectAsync()
         {
-            Parser = new ResponseTextParser(_namespace, this);
             _tokenSource = new CancellationTokenSource();
             Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Parameters);
             if (_socket != null)
@@ -142,8 +138,11 @@ namespace SocketIOClient
                                 builder.Append(str);
                             }
 
-                            Parser.Text = builder.ToString();
-                            await Parser.ParseAsync();
+                            var parser = new ResponseTextParser(_namespace, this)
+                            {
+                                Text = builder.ToString()
+                            };
+                            await parser.ParseAsync();
                         }
                     }
                 }
@@ -178,15 +177,6 @@ namespace SocketIOClient
             State = SocketIOState.Connected;
             OnConnected?.Invoke();
             return Task.CompletedTask;
-            //if (_emitQueue.Count > 0)
-            //{
-            //    await Task.Delay(1000);
-            //}
-            //while (_emitQueue.Count > 0)
-            //{
-            //    string item = _emitQueue.Dequeue();
-            //    await SendMessageAsync(item);
-            //}
         }
 
         public async Task InvokeClosedAsync()
@@ -262,10 +252,6 @@ namespace SocketIOClient
             {
                 await SendMessageAsync(message);
             }
-            //else if (State == SocketIOState.None)
-            //{
-            //    _emitQueue.Enqueue(message);
-            //}
             else
             {
                 throw new InvalidOperationException("Socket connection not ready, emit failure.");
