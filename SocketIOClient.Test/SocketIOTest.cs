@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace SocketIOClient.Test
 {
@@ -366,6 +368,52 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             Assert.IsNotNull(timeoutException);
             await client.ConnectAsync();
+        }
+
+        [TestMethod]
+        public async Task ErrorTest()
+        {
+            bool result = false;
+            var client = new SocketIO("http://localhost:3000")
+            {
+                Parameters = new Dictionary<string, string>
+                {
+                    { "throw", "true" }
+                }
+            };
+            string resText = null;
+            client.OnError += args =>
+            {
+                result = true;
+                resText = JsonConvert.DeserializeObject<string>(args.Text);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            Assert.IsTrue(result);
+            Assert.AreEqual("Authentication error", resText);
+        }
+
+        [TestMethod]
+        public async Task NsErrorTest()
+        {
+            bool result = false;
+            var client = new SocketIO("http://localhost:3000/path")
+            {
+                Parameters = new Dictionary<string, string>
+                {
+                    { "throw", "true" }
+                }
+            };
+            string resText = null;
+            client.OnError += args =>
+            {
+                result = true;
+                resText = JsonConvert.DeserializeObject<string>(args.Text);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            Assert.IsTrue(result);
+            Assert.AreEqual("Authentication error -- Ns", resText);
         }
     }
 }

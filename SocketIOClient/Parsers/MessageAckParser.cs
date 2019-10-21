@@ -23,8 +23,13 @@ namespace SocketIOClient.Parsers
                     });
                     rtp.Socket.Callbacks.Remove(packetId);
                 }
+                return Task.CompletedTask;
             }
-            return Task.CompletedTask;
+            else
+            {
+                rtp.Parser = new ErrorParser();
+                return rtp.ParseAsync();
+            }
         }
     }
 }

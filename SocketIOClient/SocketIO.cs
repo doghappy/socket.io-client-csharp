@@ -51,7 +51,7 @@ namespace SocketIOClient
         public Dictionary<string, string> Parameters { get; set; }
 
         public event Action OnConnected;
-
+        public event Action<ResponseArgs> OnError;
         public event Action<ServerCloseReason> OnClosed;
         public event Action<string, ResponseArgs> UnhandledEvent;
         public event Action<string, ResponseArgs> OnReceivedEvent;
@@ -223,6 +223,12 @@ namespace SocketIOClient
         public Task InvokeReceivedEvent(string eventName, ResponseArgs args)
         {
             OnReceivedEvent?.Invoke(eventName, args);
+            return Task.CompletedTask;
+        }
+
+        public Task InvokeErrorEvent(ResponseArgs args)
+        {
+            OnError?.Invoke(args);
             return Task.CompletedTask;
         }
 

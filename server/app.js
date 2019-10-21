@@ -11,8 +11,20 @@ const sleep = require("await-sleep");
 //    console.log(new Date().getSeconds());
 //});
 
+io.use(function (socket, next) {
+    if (socket.request._query.throw) {
+        next(new Error("Authentication error"));
+    }
+    next();
+});
 
 io.on('connection', client => {
+
+    //client.use((packet, next) => {
+    //    console.log(packet, "============");
+    //    next();
+    //});
+
     client.on('test', data => {
         const type = typeof data;
         if (type === "string") {
@@ -55,6 +67,13 @@ io.on('connection', client => {
     });
 });
 
+
+pathNsp.use(function (socket, next) {
+    if (socket.request._query.throw) {
+        next(new Error("Authentication error -- Ns"));
+    }
+    next();
+});
 pathNsp.on('connection', client => {
     console.log(client.id);
     client.on('test', data => {
