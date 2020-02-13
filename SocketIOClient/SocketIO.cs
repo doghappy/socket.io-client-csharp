@@ -13,8 +13,8 @@ namespace SocketIOClient
     public class SocketIO
     {
         /// <summary>
-        /// Options 1: http://example.com/subpath + /socket.io + /sionamespace + ture
-        /// Options 2: http://example.com/sionamespace + param path unuse + param sionamespace unuse + ture
+        /// Options 1: http://example.com/subpath + /socket.io + /sionamespace + true
+        /// Options 2: http://example.com/sionamespace + param path unuse + param sionamespace unuse + true
         /// </summary>
         /// <param name="uri">新版：HTTP(s)服务地址，结尾不需要斜杠。例如：https://example.com/subpath。旧版：http://example.com/sionamespace</param>
         /// <param name="path">Socket.io服务路径。socket.io在服务端的参数path，默认为/socket.io。例如：/subpath/which/provide/socket/io/service。参考https://socket.io/docs/server-api/</param>
