@@ -6,7 +6,7 @@ namespace SocketIOClient
 {
     public class UrlConverter
     {
-        public Uri HttpToWs(Uri httpUri, string eio, Dictionary<string, string> parameters)
+        public Uri HttpToWs(Uri httpUri, string eio, string path, Dictionary<string, string> parameters)
         {
             var builder = new StringBuilder();
             if (httpUri.Scheme == "https" || httpUri.Scheme == "wss")
@@ -23,7 +23,8 @@ namespace SocketIOClient
                 builder.Append(":").Append(httpUri.Port);
             }
             builder
-                .Append("/socket.io/?EIO=")
+                .Append(string.IsNullOrWhiteSpace(path) ? "/socket.io" : path)
+                .Append("/?EIO=")
                 .Append(eio)
                 .Append("&transport=websocket");
 

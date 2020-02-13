@@ -119,3 +119,32 @@ server.listen(3000);
 //https://stackoverflow.com/questions/19150220/creating-rooms-in-socket-io
 
 console.log('Socket IO server started');
+
+
+// path
+const serverWithPath = require('http').createServer();
+const ioWithPath = require('socket.io')(serverWithPath, {
+    path: "/test"
+});
+ioWithPath.on('connection', client => {
+
+    client.on('test', data => {
+        const type = typeof data;
+        if (type === "string") {
+            client.emit("test", data + " - server");
+        } else if (type === "object") {
+            data.source = "server";
+            client.emit("test", data);
+        } else if (type === "object") {
+            if (Array.isArray(data)) {
+                client.emit("test", data);
+            } else {
+                data.source = "server";
+                client.emit("test", data);
+            }
+        } else {
+            client.emit("test", "unknow type - server");
+        }
+    });
+});
+serverWithPath.listen(3001);
