@@ -415,5 +415,23 @@ namespace SocketIOClient.Test
             Assert.IsTrue(result);
             Assert.AreEqual("Authentication error -- Ns", resText);
         }
+
+        [TestMethod]
+        public async Task EmitStringWithPathTest()
+        {
+            var client = new SocketIO("http://localhost:3001")
+            {
+                Path = "/test"
+            };
+            string guid = Guid.NewGuid().ToString();
+            client.On("test", async res =>
+            {
+                Assert.AreEqual(guid + " - server", res.Text);
+                await client.CloseAsync();
+            });
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("test", guid);
+        }
     }
 }
