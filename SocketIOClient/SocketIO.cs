@@ -12,18 +12,11 @@ namespace SocketIOClient
 {
     public class SocketIO
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="uri">HTTP(s)服务地址，结尾不需要斜杠。例如：https://example.com/subpath</param>
-        /// <param name="path">Socket.io服务路径。socket.io在服务端的参数path，默认为/socket.io。例如：/subpath/which/provide/socket/io/service。参考https://socket.io/docs/server-api/</param>
-        /// <param name="sionamespace">命名空间，参考https://socket.io/docs/rooms-and-namespaces/</param>
-        public SocketIO(Uri uri, string path, string sionamespace)
+        public SocketIO(Uri uri)
         {
-
             if (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "wss" || uri.Scheme == "ws")
             {
-                _uri = new Uri(uri.AbsoluteUri + path);
+                _uri = uri;
             }
             else
             {
@@ -32,17 +25,15 @@ namespace SocketIOClient
             EventHandlers = new Dictionary<string, EventHandler>();
             Callbacks = new Dictionary<int, EventHandler>();
             _urlConverter = new UrlConverter();
-
-            if (sionamespace.Length > 0)
+            if (_uri.AbsolutePath != "/")
             {
-                _namespace = sionamespace + ',';
+                _namespace = _uri.AbsolutePath + ',';
             }
             _packetId = -1;
             ConnectTimeout = TimeSpan.FromSeconds(30);
         }
 
-        public SocketIO(string uri) : this(new Uri(uri), "/socket.io", "") { }
-        public SocketIO(string uri, string path) : this(new Uri(uri), path, "") { }
+        public SocketIO(string uri) : this(new Uri(uri)) { }
 
         private const int ReceiveChunkSize = 1024;
         private const int SendChunkSize = 1024;

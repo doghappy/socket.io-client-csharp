@@ -22,9 +22,8 @@ namespace SocketIOClient
             {
                 builder.Append(":").Append(httpUri.Port);
             }
-            builder.Append(httpUri.AbsolutePath);
             builder
-                .Append("/?EIO=")
+                .Append("/socket.io/?EIO=")
                 .Append(eio)
                 .Append("&transport=websocket");
 
