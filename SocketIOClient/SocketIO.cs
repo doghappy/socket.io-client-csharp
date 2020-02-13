@@ -47,6 +47,7 @@ namespace SocketIOClient
         public Dictionary<int, EventHandler> Callbacks { get; }
 
         public int EIO { get; set; } = 3;
+        public string Path { get; set; }
         public TimeSpan ConnectTimeout { get; set; }
         public Dictionary<string, string> Parameters { get; set; }
 
@@ -63,7 +64,7 @@ namespace SocketIOClient
         public Task ConnectAsync()
         {
             _tokenSource = new CancellationTokenSource();
-            Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Parameters);
+            Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Path, Parameters);
             if (_socket != null)
             {
                 _socket.Dispose();
