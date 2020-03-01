@@ -3,26 +3,14 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace SocketIOClient.Test
 {
     [TestClass]
     public class SocketIOTest
     {
-        //[TestMethod]
-        //public async Task ConnectTest()
-        //{
-        //    var client = new SocketIO("http://localhost:3000");
-        //    client.OnOpened += async arg =>
-        //    {
-        //        Assert.IsNotNull(arg);
-        //        Assert.IsFalse(string.IsNullOrEmpty(arg.Sid));
-        //        Assert.IsTrue(arg.PingInterval != 0);
-        //        await client.CloseAsync();
-        //    };
-        //    await client.ConnectAsync();
-        //}
-
         [TestMethod]
         public async Task OnConnectedTest()
         {
@@ -37,107 +25,109 @@ namespace SocketIOClient.Test
             Assert.IsTrue(result);
         }
 
-        //[TestMethod]
-        //public async Task OnClosedTest()
-        //{
-        //    bool result = false;
-        //    var client = new SocketIO("http://localhost:3000");
-        //    client.OnClosed += () =>
-        //    {
-        //        result = true;
-        //    };
-        //    await client.ConnectAsync();
-        //    await client.CloseAsync();
-        //    await Task.Delay(1000);
-        //    Assert.IsTrue(result);
-        //}
-
-        [TestMethod]
-        public async Task MessageTest()
-        {
-            var client = new SocketIO("http://localhost:3000");
-            string guid = Guid.NewGuid().ToString();
-            client.On("message", async res =>
-             {
-                 Assert.AreEqual("42[\"message\",\"connected - server\"]", res.RawText);
-                 Assert.AreEqual("\"connected - server\"", res.Text);
-                 await client.CloseAsync();
-             });
-            await client.ConnectAsync();
-        }
-
         [TestMethod]
         public async Task EmitStringTest()
         {
             var client = new SocketIO("http://localhost:3000");
             string guid = Guid.NewGuid().ToString();
+            string result = null;
             client.On("test", async res =>
             {
-                Assert.AreEqual(guid + " - server", res.Text);
+                result = JsonConvert.DeserializeObject<string>(res.Text);
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("test", guid);
+            await Task.Delay(1000);
+
+            Assert.AreEqual(guid + " - server", result);
+        }
+
+        [TestMethod]
+        public async Task Emit3StringTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+
+            var dic = new Dictionary<int, bool>();
+            for (int i = 0; i < 3; i++)
+            {
+                dic.Add(i, false);
+            }
+
+            client.On("test", res =>
+            {
+                string text = JsonConvert.DeserializeObject<string>(res.Text);
+                int id = int.Parse(text[0].ToString());
+                dic[id] = true;
+            });
+
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            foreach (var item in dic)
+            {
+                await client.EmitAsync("test", item.Key.ToString());
+            }
+            await Task.Delay(1000);
+            await client.CloseAsync();
+
+            Assert.IsTrue(dic.All(i => i.Value));
         }
 
         [TestMethod]
         public async Task EmitObjectTest()
         {
             var client = new SocketIO("http://localhost:3000");
+            JObject obj = null;
             client.On("test", async res =>
             {
-                Assert.AreEqual("{\"code\":200,\"message\":\"\\\"ok\",\"source\":\"server\"}", res.Text);
+                obj = JObject.Parse(res.Text);
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
-            await Task.Delay(1000);
             await client.EmitAsync("test", new
             {
                 code = 200,
                 message = "\"ok"
             });
+            await Task.Delay(1000);
+
+            Assert.AreEqual(200, obj.Value<int>("code"));
+            Assert.AreEqual("\"ok", obj.Value<string>("message"));
+            Assert.AreEqual("server", obj.Value<string>("source"));
         }
 
         [TestMethod]
         public async Task EmitArrayTest()
         {
             var client = new SocketIO("http://localhost:3000");
+            string result = null;
             client.On("test", async res =>
             {
-                Assert.AreEqual("[0,1,2]", res.Text);
+                result = res.Text;
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("test", new[] { 0, 1, 2 });
-        }
-
-        [TestMethod]
-        public async Task PathMessageTest()
-        {
-            var client = new SocketIO("http://localhost:3000/path");
-            string guid = Guid.NewGuid().ToString();
-            client.On("message", async res =>
-            {
-                Assert.AreEqual("42[\"message\",\"connected - server/path\"]", res.RawText);
-                Assert.AreEqual("\"connected - server/path\"", res.Text);
-                await client.CloseAsync();
-            });
-            await client.ConnectAsync();
+            await Task.Delay(1000);
+            Assert.AreEqual("[0,1,2]", result);
         }
 
         [TestMethod]
         public async Task CloseByServerTest()
         {
             var client = new SocketIO("http://localhost:3000");
+            bool result = false;
             client.OnClosed += reason =>
             {
-                Assert.IsTrue(true);
+                result = true;
             };
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("close", "close");
+            await Task.Delay(1000);
+            Assert.IsTrue(result);
         }
 
         [TestMethod]
@@ -239,18 +229,6 @@ namespace SocketIOClient.Test
             Assert.AreEqual(text, "\"message from server\"");
         }
 
-        //[TestMethod]
-        //public async Task ReConnectTest()
-        //{
-        //    string text = string.Empty;
-        //    var client = new SocketIO("http://localhost:3000");
-        //    await client.ConnectAsync();
-        //    await client.CloseAsync()
-        //    await client.EmitAsync("ws_message -new", "ws_message-new");
-        //    await Task.Delay(1000);
-        //    Assert.AreEqual(text, "\"message from server\"");
-        //}
-
         [TestMethod]
         public async Task CallbackTest()
         {
@@ -348,27 +326,27 @@ namespace SocketIOClient.Test
             await client.ConnectAsync();
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(TimeoutException))]
-        public async Task TimeoutTest()
-        {
-            var client = new SocketIO("http://localhost:3000")
-            {
-                ConnectTimeout = TimeSpan.FromMilliseconds(10)
-            };
-            TimeoutException timeoutException = null;
-            try
-            {
-                await client.ConnectAsync();
-            }
-            catch (TimeoutException e)
-            {
-                timeoutException = e;
-            }
-            await Task.Delay(1000);
-            Assert.IsNotNull(timeoutException);
-            await client.ConnectAsync();
-        }
+        //[TestMethod]
+        //[ExpectedException(typeof(TimeoutException))]
+        //public async Task TimeoutTest()
+        //{
+        //    var client = new SocketIO("http://localhost:3000")
+        //    {
+        //        ConnectTimeout = TimeSpan.FromMilliseconds(10)
+        //    };
+        //    TimeoutException timeoutException = null;
+        //    try
+        //    {
+        //        await client.ConnectAsync();
+        //    }
+        //    catch (TimeoutException e)
+        //    {
+        //        timeoutException = e;
+        //    }
+        //    await Task.Delay(1000);
+        //    Assert.IsNotNull(timeoutException);
+        //    await client.ConnectAsync();
+        //}
 
         [TestMethod]
         public async Task ErrorTest()
@@ -424,14 +402,18 @@ namespace SocketIOClient.Test
                 Path = "/test"
             };
             string guid = Guid.NewGuid().ToString();
+            string result = null;
             client.On("test", async res =>
             {
-                Assert.AreEqual(guid + " - server", res.Text);
+                result = JsonConvert.DeserializeObject<string>(res.Text);
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("test", guid);
+            await Task.Delay(1000);
+
+            Assert.AreEqual(guid + " - server", result);
         }
     }
 }
