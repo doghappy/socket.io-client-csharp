@@ -25,9 +25,9 @@ namespace SocketIOClient.Parsers
                 }
                 else
                 {
-                    rtp.Socket.InvokeUnhandledEvent(eventName, args);
+                    rtp.UncaughtHandler(eventName, args);
                 }
-                rtp.Socket.InvokeReceivedEvent(eventName, args);
+                rtp.ReceiveHandler(eventName, args);
                 return Task.CompletedTask;
             }
             else

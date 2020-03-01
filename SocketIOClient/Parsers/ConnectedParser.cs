@@ -8,10 +8,7 @@ namespace SocketIOClient.Parsers
         {
             if (rtp.Text == "40" + rtp.Namespace)
             {
-                return rtp.Socket.InvokeConnectedAsync();
-            }
-            else if (rtp.Text == "40")
-            {
+                rtp.ConnectHandler();
                 return Task.CompletedTask;
             }
             else

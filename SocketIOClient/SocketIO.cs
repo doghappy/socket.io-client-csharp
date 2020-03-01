@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SocketIOClient.Arguments;
 using SocketIOClient.Parsers;
+using Websocket.Client;
 
 namespace SocketIOClient
 {
-    public class SocketIO
+    public class SocketIO : IDisposable
     {
         public SocketIO(Uri uri)
         {
@@ -31,18 +32,16 @@ namespace SocketIOClient
             }
             _packetId = -1;
             ConnectTimeout = TimeSpan.FromSeconds(30);
+            _pingSource = new CancellationTokenSource();
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
 
-        private const int ReceiveChunkSize = 1024;
-        private const int SendChunkSize = 1024;
-
         readonly Uri _uri;
-        private ClientWebSocket _socket;
+        private WebsocketClient _client;
         readonly UrlConverter _urlConverter;
         readonly string _namespace;
-        private CancellationTokenSource _tokenSource;
+        private CancellationTokenSource _pingSource;
         private int _packetId;
         public Dictionary<int, EventHandler> Callbacks { get; }
 
@@ -61,175 +60,101 @@ namespace SocketIOClient
 
         public SocketIOState State { get; private set; }
 
-        public Task ConnectAsync()
+        public async Task ConnectAsync()
         {
-            _tokenSource = new CancellationTokenSource();
             Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Path, Parameters);
-            if (_socket != null)
+            _client = new WebsocketClient(wsUri)
             {
-                _socket.Dispose();
-            }
-            _socket = new ClientWebSocket();
-            bool executed = _socket.ConnectAsync(wsUri, CancellationToken.None).Wait(ConnectTimeout);
-            if (!executed)
-            {
-                throw new TimeoutException();
-            }
-            Listen();
-            return Task.CompletedTask;
+                IsReconnectionEnabled = false
+            };
+            _client.MessageReceived.Subscribe(Listen);
+            await _client.Start();
         }
 
         public Task CloseAsync()
         {
-            if (_socket == null)
+            if (_client == null)
             {
                 throw new InvalidOperationException("Close failed, must connect first.");
             }
             else
             {
-                _tokenSource.Cancel();
-                _tokenSource.Dispose();
-                _socket.Abort();
-                _socket.Dispose();
-                _socket = null;
+                _client.Stop(WebSocketCloseStatus.NormalClosure, string.Empty);
+                _pingSource.Cancel();
                 OnClosed?.Invoke(ServerCloseReason.ClosedByClient);
                 return Task.CompletedTask;
             }
         }
 
-        private void Listen()
+        private void Listen(ResponseMessage message)
         {
-            // Listen State
-            Task.Factory.StartNew(async () =>
+            if (message.MessageType == WebSocketMessageType.Text)
             {
-                while (true)
+                //Console.WriteLine($"Message received: {message.Text}");
+                var parser = new ResponseTextParser(_namespace, this)
                 {
-                    await Task.Delay(500);
-                    if (_socket.State == WebSocketState.Aborted || _socket.State == WebSocketState.Closed)
-                    {
-                        if (State != SocketIOState.Closed)
-                        {
-                            State = SocketIOState.Closed;
-                            _tokenSource.Cancel();
-                            OnClosed?.Invoke(ServerCloseReason.Aborted);
-                        }
-                    }
-                }
-            }, _tokenSource.Token);
-
-            // Listen Message
-            Task.Factory.StartNew(async () =>
-            {
-                var buffer = new byte[ReceiveChunkSize];
-                while (true)
-                {
-                    if (_socket.State == WebSocketState.Open)
-                    {
-                        WebSocketReceiveResult result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), _tokenSource.Token);
-                        if (result.MessageType == WebSocketMessageType.Text)
-                        {
-                            var builder = new StringBuilder();
-                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            builder.Append(str);
-
-                            while (!result.EndOfMessage)
-                            {
-                                result = await _socket.ReceiveAsync(new ArraySegment<byte>(buffer), _tokenSource.Token);
-                                str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                                builder.Append(str);
-                            }
-
-                            var parser = new ResponseTextParser(_namespace, this)
-                            {
-                                Text = builder.ToString()
-                            };
-                            await parser.ParseAsync();
-                        }
-                    }
-                }
-            }, _tokenSource.Token);
-        }
-
-        private async Task SendMessageAsync(string text)
-        {
-            if (_socket.State == WebSocketState.Open)
-            {
-                var messageBuffer = Encoding.UTF8.GetBytes(text);
-                var messagesCount = (int)Math.Ceiling((double)messageBuffer.Length / SendChunkSize);
-
-                for (var i = 0; i < messagesCount; i++)
-                {
-                    int offset = SendChunkSize * i;
-                    int count = SendChunkSize;
-                    bool isEndOfMessage = (i + 1) == messagesCount;
-
-                    if ((count * (i + 1)) > messageBuffer.Length)
-                    {
-                        count = messageBuffer.Length - offset;
-                    }
-
-                    await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, _tokenSource.Token);
-                }
+                    Text = message.Text,
+                    ConnectHandler = ConnectHandler,
+                    CloseHandler = CloseHandler,
+                    UncaughtHandler = UncaughtHandler,
+                    ReceiveHandler = ReceiveHandler,
+                    ErrorHandler = ErrorHandler,
+                    OpenHandler = OpenHandler
+                };
+                parser.ParseAsync().Wait();
             }
         }
 
-        public Task InvokeConnectedAsync()
+        private void ConnectHandler()
         {
             State = SocketIOState.Connected;
             OnConnected?.Invoke();
-            return Task.CompletedTask;
         }
 
-        public async Task InvokeClosedAsync()
+        private void CloseHandler()
         {
             if (State != SocketIOState.Closed)
             {
                 State = SocketIOState.Closed;
-                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, _tokenSource.Token);
-                _tokenSource.Cancel();
+                _client.Stop(WebSocketCloseStatus.NormalClosure, string.Empty);
+                _pingSource.Cancel();
                 OnClosed?.Invoke(ServerCloseReason.ClosedByServer);
             }
         }
 
-        public async Task InvokeOpenedAsync(OpenedArgs args)
+        private void UncaughtHandler(string eventName, ResponseArgs args) => UnhandledEvent?.Invoke(eventName, args);
+
+        private void ReceiveHandler(string eventName, ResponseArgs args) => OnReceivedEvent?.Invoke(eventName, args);
+
+        private void ErrorHandler(ResponseArgs args) => OnError?.Invoke(args);
+
+        private void OpenHandler(OpenedArgs args)
         {
-            await Task.Factory.StartNew(async () =>
+            var task = Task.Factory.StartNew(async () =>
             {
                 if (_namespace != null)
                 {
                     await SendMessageAsync("40" + _namespace);
                 }
-                State = SocketIOState.Connected;
-                while (true)
+                while (!_pingSource.Token.IsCancellationRequested)
                 {
-                    if (State == SocketIOState.Connected)
-                    {
-                        await Task.Delay(args.PingInterval);
-                        await SendMessageAsync(((int)EngineIOProtocol.Ping).ToString());
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    await Task.Delay(args.PingInterval);
+                    await SendMessageAsync("2");
                 }
-            });
+            }, _pingSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
-        public Task InvokeUnhandledEvent(string eventName, ResponseArgs args)
+        private Task SendMessageAsync(string text)
         {
-            UnhandledEvent?.Invoke(eventName, args);
-            return Task.CompletedTask;
-        }
-
-        public Task InvokeReceivedEvent(string eventName, ResponseArgs args)
-        {
-            OnReceivedEvent?.Invoke(eventName, args);
-            return Task.CompletedTask;
-        }
-
-        public Task InvokeErrorEvent(ResponseArgs args)
-        {
-            OnError?.Invoke(args);
+            if (_client.IsRunning && _client.IsStarted)
+            {
+                //Console.WriteLine($"Message sent: {text}");
+                _client.Send(text);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unable to send message, socket is disconnected.");
+            }
             return Task.CompletedTask;
         }
 
@@ -253,16 +178,8 @@ namespace SocketIOClient
                 .Append(',')
                 .Append(text)
                 .Append(']');
-
             string message = builder.ToString();
-            if (State == SocketIOState.Connected)
-            {
-                await SendMessageAsync(message);
-            }
-            else
-            {
-                throw new InvalidOperationException("Socket connection not ready, emit failure.");
-            }
+            await SendMessageAsync(message);
         }
 
         public async Task EmitAsync(string eventName, object obj)
@@ -276,6 +193,11 @@ namespace SocketIOClient
             _packetId++;
             Callbacks.Add(_packetId, callback);
             await EmitAsync(eventName, _packetId, obj);
+        }
+
+        public void Dispose()
+        {
+            _client.Dispose();
         }
     }
 }

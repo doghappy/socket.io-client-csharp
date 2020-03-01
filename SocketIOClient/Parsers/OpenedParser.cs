@@ -12,7 +12,8 @@ namespace SocketIOClient.Parsers
             {
                 string message = rtp.Text.TrimStart('0');
                 var args = JsonConvert.DeserializeObject<OpenedArgs>(message);
-                return rtp.Socket.InvokeOpenedAsync(args);
+                rtp.OpenHandler(args);
+                return Task.CompletedTask;
             }
             else
             {

@@ -8,7 +8,8 @@ namespace SocketIOClient.Parsers
         {
             if (rtp.Text == "41" + rtp.Namespace)
             {
-                return rtp.Socket.InvokeClosedAsync();
+                rtp.CloseHandler();
+                return Task.CompletedTask;
             }
             else
             {

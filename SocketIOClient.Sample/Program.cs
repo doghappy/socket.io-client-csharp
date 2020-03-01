@@ -9,30 +9,27 @@ namespace SocketIOClient.Sample
 {
     class Program
     {
-        static void Main(string[] args)
-        {
-            Test().Wait();
-            //var tokenSource = new CancellationTokenSource();
-            //Test1(tokenSource);
-            //Task.Delay(5000).Wait();
-            //tokenSource.Cancel();
-            Console.ReadLine();
-        }
-
-        static async Task Test()
+        static async Task Main(string[] args)
         {
             var client = new SocketIO("http://localhost:3000");
 
-            client.On("test", args => Console.WriteLine(args.Text));
-
-            await client.ConnectAsync();
+            client.On("test", args =>
+            {
+                string text = JsonConvert.DeserializeObject<string>(args.Text);
+                Console.WriteLine(text);
+            });
 
             client.OnConnected += async () =>
             {
-                //await Task.Delay(3000);
-                await client.EmitAsync("test", "cb");
+                for (int i = 0; i < 100; i++)
+                {
+                    await client.EmitAsync("test", i.ToString());
+                    await Task.Delay(1000);
+                }
             };
 
+            await client.ConnectAsync();
+            Console.ReadLine();
         }
     }
 }
