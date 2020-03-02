@@ -20,6 +20,4 @@ steps:
 - script: |
     cd server
     npm install
-    npm run server
-    cd ..
-    dotnet test SocketIOClient.Test
+    npm run server & dotnet test ../SocketIOClient.Test
