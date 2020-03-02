@@ -21,7 +21,7 @@ var client = new SocketIO("http://localhost:3000")
         { "uid", "" },
         { "token", "" }
     }
-}
+};
 
 client.OnClosed += Client_OnClosed;
 client.OnConnected += Client_OnConnected;
