@@ -13,10 +13,13 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-  - script: dotnet build SocketIOClient.Test --configuration $(buildConfiguration)
-    displayName: 'dotnet build SocketIOClient.Test $(buildConfiguration)'
-  - task: PublishPipelineArtifact@1
-    inputs:
-      targetPath: '$(Pipeline.Workspace)'
-      artifact: 'SocketIOClient.Test'
-      publishLocation: pipeline
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+- script: |
+    cd server
+    npm install
+    npm run server
+    cd ..
+    dotnet test SocketIOClient.Test
