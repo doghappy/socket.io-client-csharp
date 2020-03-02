@@ -21,7 +21,7 @@ var client = new SocketIO("http://localhost:3000")
         { "uid", "" },
         { "token", "" }
     }
-}
+};
 
 client.OnClosed += Client_OnClosed;
 client.OnConnected += Client_OnConnected;
@@ -40,9 +40,6 @@ client.On("test", res =>
     // ...
 });
 
-// Connect to the server
-await client.ConnectAsync();
-
 client.OnConnected += async () =>
 {
     // Emit test event, send string.
@@ -51,6 +48,9 @@ client.OnConnected += async () =>
     // Emit test event, send object.
     await client.EmitAsync("test", new { code = 200 });
 }
+
+// Connect to the server
+await client.ConnectAsync();
 
 // ...
 
