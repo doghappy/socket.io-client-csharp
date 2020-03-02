@@ -13,5 +13,10 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet build SocketIOClient.Test --configuration $(buildConfiguration)
-  displayName: 'dotnet build SocketIOClient.Test $(buildConfiguration)'
+  - script: dotnet build SocketIOClient.Test --configuration $(buildConfiguration)
+    displayName: 'dotnet build SocketIOClient.Test $(buildConfiguration)'
+  - task: PublishPipelineArtifact@1
+    inputs:
+      targetPath: '$(Pipeline.Workspace)'
+      artifact: 'SocketIOClient.Test'
+      publishLocation: pipeline
