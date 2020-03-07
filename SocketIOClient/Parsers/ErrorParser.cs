@@ -12,7 +12,7 @@ namespace SocketIOClient.Parsers
             if (regex.IsMatch(rtp.Text))
             {
                 var groups = regex.Match(rtp.Text).Groups;
-                rtp.Socket.InvokeErrorEvent(new ResponseArgs
+                rtp.ErrorHandler(new ResponseArgs
                 {
                     Text = groups[1].Value,
                     RawText = rtp.Text
