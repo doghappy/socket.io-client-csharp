@@ -21,15 +21,22 @@ namespace SocketIOClient.Sample
 
             client.OnConnected += async () =>
             {
-                for (int i = 0; i < 100; i++)
+                for (int i = 0; i < 5; i++)
                 {
                     await client.EmitAsync("test", i.ToString());
                     await Task.Delay(1000);
                 }
             };
 
+            client.OnClosed += Client_OnClosed;
+
             await client.ConnectAsync();
             Console.ReadLine();
+        }
+
+        private static void Client_OnClosed(ServerCloseReason reason)
+        {
+            Console.WriteLine("reason: " + reason.ToString());
         }
     }
 }

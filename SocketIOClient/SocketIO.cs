@@ -39,7 +39,7 @@ namespace SocketIOClient
         private const int SendChunkSize = 1024;
 
         readonly Uri _uri;
-        private System.Net.WebSockets.Managed.ClientWebSocket _socket;
+        private ClientWebSocket _socket;
         readonly UrlConverter _urlConverter;
         readonly string _namespace;
         private CancellationTokenSource _tokenSource;
@@ -69,7 +69,7 @@ namespace SocketIOClient
             {
                 _socket.Dispose();
             }
-            _socket = new System.Net.WebSockets.Managed.ClientWebSocket();
+            _socket = new ClientWebSocket();
             bool executed = _socket.ConnectAsync(wsUri, CancellationToken.None).Wait(ConnectTimeout);
             if (!executed)
             {
@@ -138,7 +138,9 @@ namespace SocketIOClient
                                 str = Encoding.UTF8.GetString(buffer, 0, result.Count);
                                 builder.Append(str);
                             }
-
+//#if DEBUG
+//                            Console.WriteLine($"Received: {builder.ToString()}");
+//#endif
                             var parser = new ResponseTextParser(_namespace, this)
                             {
                                 Text = builder.ToString()
@@ -169,6 +171,9 @@ namespace SocketIOClient
                     }
 
                     await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, _tokenSource.Token);
+//#if DEBUG
+//                    Console.WriteLine($"Send: {text}");
+//#endif
                 }
             }
         }
