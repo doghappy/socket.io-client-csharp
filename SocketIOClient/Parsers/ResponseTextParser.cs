@@ -1,6 +1,5 @@
 ﻿using SocketIOClient.Arguments;
 using System;
-using System.Threading.Tasks;
 
 namespace SocketIOClient.Parsers
 {
@@ -25,6 +24,6 @@ namespace SocketIOClient.Parsers
         public Action<string, ResponseArgs> ReceiveHandler { get; set; }
         public Action<ResponseArgs> ErrorHandler { get; set; }
 
-        public Task ParseAsync() => Parser.ParseAsync(this);
+        public void Parse() => Parser.Parse(this);
     }
 }

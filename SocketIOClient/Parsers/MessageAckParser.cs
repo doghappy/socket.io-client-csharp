@@ -1,12 +1,11 @@
 ﻿using SocketIOClient.Arguments;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SocketIOClient.Parsers
 {
     class MessageAckParser : IParser
     {
-        public Task ParseAsync(ResponseTextParser rtp)
+        public void Parse(ResponseTextParser rtp)
         {
             var regex = new Regex($@"^43{rtp.Namespace}(\d+)\[([\s\S]*)\]$");
             if (regex.IsMatch(rtp.Text))
@@ -23,12 +22,11 @@ namespace SocketIOClient.Parsers
                     });
                     rtp.Socket.Callbacks.Remove(packetId);
                 }
-                return Task.CompletedTask;
             }
             else
             {
                 rtp.Parser = new ErrorParser();
-                return rtp.ParseAsync();
+                rtp.Parse();
             }
         }
     }

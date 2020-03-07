@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -60,15 +61,41 @@ namespace SocketIOClient
 
         public SocketIOState State { get; private set; }
 
-        public async Task ConnectAsync()
+        public Task ConnectAsync()
         {
             Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Path, Parameters);
-            _client = new WebsocketClient(wsUri)
-            {
-                IsReconnectionEnabled = false
-            };
+            _client = new WebsocketClient(wsUri);
             _client.MessageReceived.Subscribe(Listen);
-            await _client.Start();
+            _client.DisconnectionHappened.Subscribe(info =>
+            {
+                //Websocket.Client.DisconnectionInfo
+                if (info.Type!= DisconnectionType.ByUser)
+                {
+                    CloseHandler();
+                }
+            });
+
+            var token = new CancellationTokenSource(ConnectTimeout).Token;
+            token.ThrowIfCancellationRequested();
+            _client.Start();
+            //try
+            //{
+            //    _client.Start();//.Wait(token);
+            //    Observable
+            //        .Interval(TimeSpan.FromMilliseconds(600))
+            //        .Subscribe(t =>
+            //        {
+            //            if (!_client.IsRunning)
+            //            {
+            //                CloseHandler();
+            //            }
+            //        });
+            //}
+            //catch (OperationCanceledException)
+            //{
+            //    throw new TimeoutException();
+            //}
+            return Task.CompletedTask;
         }
 
         public Task CloseAsync()
@@ -101,7 +128,7 @@ namespace SocketIOClient
                     ErrorHandler = ErrorHandler,
                     OpenHandler = OpenHandler
                 };
-                parser.ParseAsync().Wait();
+                parser.Parse();
             }
         }
 

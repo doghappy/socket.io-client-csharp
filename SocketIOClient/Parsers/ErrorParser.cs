@@ -1,12 +1,11 @@
 ﻿using SocketIOClient.Arguments;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SocketIOClient.Parsers
 {
     class ErrorParser : IParser
     {
-        public Task ParseAsync(ResponseTextParser rtp)
+        public void Parse(ResponseTextParser rtp)
         {
             var regex = new Regex($@"^44{rtp.Namespace}([\s\S]*)$");
             if (regex.IsMatch(rtp.Text))
@@ -18,7 +17,6 @@ namespace SocketIOClient.Parsers
                     RawText = rtp.Text
                 });
             }
-            return Task.CompletedTask;
         }
     }
 }

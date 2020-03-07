@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Websocket.Client" Version="4.1.85" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SocketIOClient\SocketIOClient.csproj" />
   </ItemGroup>
 

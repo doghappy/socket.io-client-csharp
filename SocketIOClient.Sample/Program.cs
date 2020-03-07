@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.IO;
-using System.Net.WebSockets;
-using System.Threading;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Sample
@@ -12,6 +10,7 @@ namespace SocketIOClient.Sample
         static async Task Main(string[] args)
         {
             var client = new SocketIO("http://localhost:3000");
+            client.ConnectTimeout = TimeSpan.FromSeconds(5);
 
             client.On("test", args =>
             {
@@ -26,6 +25,8 @@ namespace SocketIOClient.Sample
                     await client.EmitAsync("test", i.ToString());
                     await Task.Delay(1000);
                 }
+
+                await client.EmitAsync("close", "close");
             };
 
             client.OnClosed += Client_OnClosed;
