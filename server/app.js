@@ -48,6 +48,9 @@ io.on('connection', client => {
             client.disconnect();
         }
     });
+    client.on('emit-noting', data => {
+        client.emit("emit-noting");
+    });
     client.on('callback', (data, fn) => {
         fn(data + " - server");
     });

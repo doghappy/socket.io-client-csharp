@@ -415,5 +415,23 @@ namespace SocketIOClient.Test
 
             Assert.AreEqual(guid + " - server", result);
         }
+
+        [TestMethod]
+        public async Task EmitNotingTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            bool result = false;
+            client.On("emit-noting", async res =>
+            {
+                result = true;
+                await client.CloseAsync();
+            });
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("emit-noting", null);
+            await Task.Delay(1000);
+
+            Assert.IsTrue(result);
+        }
     }
 }
