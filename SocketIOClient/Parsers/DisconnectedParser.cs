@@ -1,19 +1,17 @@
-﻿using System.Threading.Tasks;
-
-namespace SocketIOClient.Parsers
+﻿namespace SocketIOClient.Parsers
 {
     class DisconnectedParser : IParser
     {
-        public Task ParseAsync(ResponseTextParser rtp)
+        public void Parse(ResponseTextParser rtp)
         {
             if (rtp.Text == "41" + rtp.Namespace)
             {
-                return rtp.Socket.InvokeClosedAsync();
+                rtp.CloseHandler();
             }
             else
             {
                 rtp.Parser = new MessageEventParser();
-                return rtp.ParseAsync();
+                rtp.Parse();
             }
         }
     }

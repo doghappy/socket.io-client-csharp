@@ -1,9 +1,7 @@
-﻿using System.Threading.Tasks;
-
-namespace SocketIOClient.Parsers
+﻿namespace SocketIOClient.Parsers
 {
     public interface IParser
     {
-        Task ParseAsync(ResponseTextParser rtp);
+        void Parse(ResponseTextParser rtp);
     }
 }
