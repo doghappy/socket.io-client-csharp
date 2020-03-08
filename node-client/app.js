@@ -11,5 +11,5 @@ socket.connect();
 //});
 //socket.emit("callback", "client");
 
-socket.on("test", d => console.log(d));
-socket.emit("test", "test", d => console.log(d));
+socket.on("emit\\args\"", (d, e) => console.log(d, e));
+socket.emit("emit\\args\"");

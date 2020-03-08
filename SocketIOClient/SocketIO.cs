@@ -24,7 +24,7 @@ namespace SocketIOClient
             {
                 throw new ArgumentException("Unsupported protocol");
             }
-            EventHandlers = new Dictionary<string, EventHandler>();
+            EventHandlers = new Dictionary<string, EventHandlerBox>();
             Callbacks = new Dictionary<int, EventHandler>();
             _urlConverter = new UrlConverter();
             if (_uri.AbsolutePath != "/")
@@ -57,7 +57,7 @@ namespace SocketIOClient
         public event Action<string, ResponseArgs> UnhandledEvent;
         public event Action<string, ResponseArgs> OnReceivedEvent;
 
-        public Dictionary<string, EventHandler> EventHandlers { get; }
+        public Dictionary<string, EventHandlerBox> EventHandlers { get; }
 
         public SocketIOState State { get; private set; }
 
@@ -68,8 +68,7 @@ namespace SocketIOClient
             _client.MessageReceived.Subscribe(Listen);
             _client.DisconnectionHappened.Subscribe(info =>
             {
-                //Websocket.Client.DisconnectionInfo
-                if (info.Type!= DisconnectionType.ByUser)
+                if (info.Type != DisconnectionType.ByUser)
                 {
                     CloseHandler();
                 }
@@ -77,24 +76,16 @@ namespace SocketIOClient
 
             var token = new CancellationTokenSource(ConnectTimeout).Token;
             token.ThrowIfCancellationRequested();
-            _client.Start();
-            //try
-            //{
-            //    _client.Start();//.Wait(token);
-            //    Observable
-            //        .Interval(TimeSpan.FromMilliseconds(600))
-            //        .Subscribe(t =>
-            //        {
-            //            if (!_client.IsRunning)
-            //            {
-            //                CloseHandler();
-            //            }
-            //        });
-            //}
-            //catch (OperationCanceledException)
-            //{
-            //    throw new TimeoutException();
-            //}
+            try
+            {
+                _client.Start().Wait(token);
+            }
+            catch(Exception e)
+            {
+                if (e is OperationCanceledException)
+                    throw new TimeoutException();
+                throw e;
+            }
             return Task.CompletedTask;
         }
 
@@ -117,7 +108,7 @@ namespace SocketIOClient
         {
             if (message.MessageType == WebSocketMessageType.Text)
             {
-                //Console.WriteLine($"Message received: {message.Text}");
+                Console.WriteLine($"Message received: {message.Text}");
                 var parser = new ResponseTextParser(_namespace, this)
                 {
                     Text = message.Text,
@@ -175,7 +166,7 @@ namespace SocketIOClient
         {
             if (_client.IsRunning && _client.IsStarted)
             {
-                //Console.WriteLine($"Message sent: {text}");
+                Console.WriteLine($"Message sent: {text}");
                 _client.Send(text);
             }
             else
@@ -185,34 +176,51 @@ namespace SocketIOClient
             return Task.CompletedTask;
         }
 
-        public void On(string eventName, EventHandler handler)
+        public void On(string eventName, EventHandler handler, params EventHandler[] moreHandlers)
         {
-            EventHandlers.Add(eventName, handler);
+            EventHandlers.Add(JsonConvert.SerializeObject(eventName), new EventHandlerBox
+            {
+                EventHandler = handler,
+                EventHandlers = moreHandlers
+            });
         }
 
-        private async Task EmitAsync(string eventName, int packetId, object obj)
+        private async Task EmitAsync(string eventName, int packetId, params object[] objs)
         {
-            string text = JsonConvert.SerializeObject(obj);
+            var paramsBuilder = new StringBuilder();
+            if (objs == null || objs.Length == 0)
+            {
+                paramsBuilder.Append("null");
+            }
+            else
+            {
+                for (int i = 0; i < objs.Length; i++)
+                {
+                    paramsBuilder.Append(JsonConvert.SerializeObject(objs[i]));
+                    if (i != objs.Length - 1)
+                    {
+                        paramsBuilder.Append(",");
+                    }
+                }
+            }
             var builder = new StringBuilder();
             builder
                 .Append("42")
                 .Append(_namespace)
                 .Append(packetId)
                 .Append('[')
-                .Append('"')
-                .Append(eventName)
-                .Append('"')
+                .Append(JsonConvert.SerializeObject(eventName))
                 .Append(',')
-                .Append(text)
+                .Append(paramsBuilder.ToString())
                 .Append(']');
             string message = builder.ToString();
             await SendMessageAsync(message);
         }
 
-        public async Task EmitAsync(string eventName, object obj)
+        public async Task EmitAsync(string eventName, params object[] objs)
         {
             _packetId++;
-            await EmitAsync(eventName, _packetId, obj);
+            await EmitAsync(eventName, _packetId, objs);
         }
 
         public async Task EmitAsync(string eventName, object obj, EventHandler callback)

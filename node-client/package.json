@@ -6,6 +6,9 @@
   "author": {
     "name": ""
   },
+  "scripts": {
+    "client": "node app"
+  },
   "dependencies": {
     "socket.io-client": "^2.2.0"
   }

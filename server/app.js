@@ -65,6 +65,13 @@ io.on('connection', client => {
         client.join(data);
         io.to(data).emit(data, "I joined the room: " + data);
     });
+    client.on('emit\\args\"', data => {
+        console.log(typeof (data), "-----");
+        client.emit("emit\\args\"", "channel", "emit-args-server");
+    });
+    client.on('args', data => {
+        client.emit("args", "string", 1, false, null, undefined, { code: 200, message: { text: "qe", data: true } });
+    });
     client.on('disconnect', () => {
         console.log(`disconnect: ${client.id}`);
     });
