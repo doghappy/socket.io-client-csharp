@@ -326,27 +326,16 @@ namespace SocketIOClient.Test
             await client.ConnectAsync();
         }
 
-        //[TestMethod]
-        //[ExpectedException(typeof(TimeoutException))]
-        //public async Task TimeoutTest()
-        //{
-        //    var client = new SocketIO("http://localhost:3000")
-        //    {
-        //        ConnectTimeout = TimeSpan.FromMilliseconds(10)
-        //    };
-        //    TimeoutException timeoutException = null;
-        //    try
-        //    {
-        //        await client.ConnectAsync();
-        //    }
-        //    catch (TimeoutException e)
-        //    {
-        //        timeoutException = e;
-        //    }
-        //    await Task.Delay(1000);
-        //    Assert.IsNotNull(timeoutException);
-        //    await client.ConnectAsync();
-        //}
+        [TestMethod]
+        [ExpectedException(typeof(TimeoutException))]
+        public async Task TimeoutTest()
+        {
+            var client = new SocketIO("http://localhost:3000")
+            {
+                ConnectTimeout = TimeSpan.FromMilliseconds(10)
+            };
+            await client.ConnectAsync();
+        }
 
         [TestMethod]
         public async Task ErrorTest()
@@ -432,6 +421,25 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
 
             Assert.IsTrue(result);
+        }
+
+        [TestMethod]
+        public async Task EmitMultipleArgsTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            string result1 = null;
+            string result2 = null;
+            string result3 = null;
+            client.On("emit\\args\"", res => result1 = res.Text, res => result2 = res.Text, res => result3 = res.Text);
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("emit\\args\"");
+            await Task.Delay(1000);
+            await client.CloseAsync();
+
+            Assert.AreEqual("\"channel\"", result1);
+            Assert.AreEqual("\"emit-args-server\"", result2);
+            Assert.IsNull(result3);
         }
     }
 }
