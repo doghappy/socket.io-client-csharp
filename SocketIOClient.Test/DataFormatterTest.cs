@@ -196,12 +196,17 @@ namespace SocketIOClient.Test
                     }
                 }
             };
-            string text = JsonConvert.SerializeObject(array);
+            string json = JsonConvert.SerializeObject(array);
+            string text = json + ",\"test\",123,true," + json;
 
             var list = new DataFormatter().Format(text);
 
-            Assert.AreEqual(1, list.Count);
-            Assert.AreEqual(text, list[0]);
+            Assert.AreEqual(5, list.Count);
+            Assert.AreEqual(json, list[0]);
+            Assert.AreEqual("\"test\"", list[1]);
+            Assert.AreEqual("123", list[2]);
+            Assert.AreEqual("true", list[3]);
+            Assert.AreEqual(json, list[4]);
         }
     }
 }
