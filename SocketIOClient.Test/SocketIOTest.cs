@@ -332,7 +332,7 @@ namespace SocketIOClient.Test
         {
             var client = new SocketIO("http://localhost:3000")
             {
-                ConnectTimeout = TimeSpan.FromMilliseconds(10)
+                ConnectTimeout = TimeSpan.FromMilliseconds(1)
             };
             await client.ConnectAsync();
         }
