@@ -34,37 +34,26 @@ namespace SocketIOClient.Sample
             //await client.ConnectAsync();
 
             //-----------------
-            //var client = new SocketIO("https://socket.stex.com/");
+            var client = new SocketIO("https://socket.stex.com/");
 
-            //client.On("App\\Events\\GlassRowChanged", res =>
-            //{
-            //    Console.WriteLine(res.Text);
-            //});
-
-            //client.OnConnected += async () =>
-            //{
-            //    var obj = new
-            //    {
-            //        channel = "orderbook_data250",
-            //        auth = new { }
-            //    };
-
-            //    await client.EmitAsync("subscribe", obj);
-            //};
-
-            //await client.ConnectAsync();
-            //-----------------
-            var client = new SocketIO("http://localhost:3000");
-            string result = null;
-            client.On("emit-noting", res =>
+            client.On("App\\Events\\GlassRowChanged", res =>
             {
-                result = res.Text;
-                Console.WriteLine(result);
-                //// await client.CloseAsync();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine(res.Text);
             });
+
+            client.OnConnected += async () =>
+            {
+                var obj = new
+                {
+                    channel = "orderbook_data250",
+                    auth = new { }
+                };
+
+                await client.EmitAsync("subscribe", obj);
+            };
+
             await client.ConnectAsync();
-            await Task.Delay(1000);
-            await client.EmitAsync("emit-noting", null);
 
             Console.ReadLine();
         }

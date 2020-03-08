@@ -80,7 +80,7 @@ namespace SocketIOClient
             {
                 _client.Start().Wait(token);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (e is OperationCanceledException)
                     throw new TimeoutException();
@@ -108,7 +108,7 @@ namespace SocketIOClient
         {
             if (message.MessageType == WebSocketMessageType.Text)
             {
-                Console.WriteLine($"Message received: {message.Text}");
+                // Console.WriteLine($"Message received: {message.Text}");
                 var parser = new ResponseTextParser(_namespace, this)
                 {
                     Text = message.Text,
@@ -166,7 +166,7 @@ namespace SocketIOClient
         {
             if (_client.IsRunning && _client.IsStarted)
             {
-                Console.WriteLine($"Message sent: {text}");
+                //Console.WriteLine($"Message sent: {text}");
                 _client.Send(text);
             }
             else
