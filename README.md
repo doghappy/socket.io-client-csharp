@@ -47,7 +47,7 @@ client.OnConnected += async () =>
 
     // Emit test event, send object.
     await client.EmitAsync("test", new { code = 200 });
-}
+};
 
 // Connect to the server
 await client.ConnectAsync();
@@ -59,7 +59,7 @@ private void Client_OnConnected()
     Console.WriteLine("Connected to server");
 }
 
-private async void Client_OnClosed()
+private async void Client_OnClosed(ServerCloseReason reason)
 {
     if (reason == ServerCloseReason.ClosedByServer)
     {
