@@ -1,17 +1,18 @@
-﻿namespace SocketIOClient.Parsers
+﻿using Websocket.Client;
+
+namespace SocketIOClient.Parsers
 {
-    class DisconnectedParser : IParser
+    class DisconnectedParser : Parser
     {
-        public void Parse(ResponseTextParser rtp)
+        public override void Parse(ParserContext ctx, ResponseMessage resMsg)
         {
-            if (rtp.Text == "41" + rtp.Namespace)
+            if (resMsg.Text == "41" + ctx.Namespace)
             {
-                rtp.CloseHandler();
+                ctx.CloseHandler();
             }
-            else
+            else if (Next != null)
             {
-                rtp.Parser = new MessageEventParser();
-                rtp.Parse();
+                Next.Parse(ctx, resMsg);
             }
         }
     }

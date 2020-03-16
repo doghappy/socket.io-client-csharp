@@ -59,7 +59,7 @@ io.on('connection', client => {
     });
     client.on('message send', data => {
         var buffer = Buffer.from("message send buffer string " + data, "utf-8");
-        client.emit("message send", buffer, "string", buffer, { "_placeholder": true, "num": 1 });
+        client.emit("message send", buffer, "string", { data: buffer });
     });
     client.on('UnhandledEvent', data => {
         client.emit("UnhandledEvent-Server", data + " - server");

@@ -449,18 +449,26 @@ namespace SocketIOClient.Test
         {
             var client = new SocketIO("http://localhost:3000");
             string guid = Guid.NewGuid().ToString();
-            ResponseArgs arg0 = null, arg1 = null, arg2 = null, arg3 = null;
-            client.On("message send", res => arg0 = res, res => arg1 = res, res => arg2 = res, res => arg3 = res);
+            ResponseArgs arg0 = null, arg1 = null, arg2 = null;
+            client.On("message send", res => arg0 = res, res => arg1 = res, res => arg2 = res);
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("message send", guid);
             await Task.Delay(1000);
             await client.CloseAsync();
 
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffer).Substring(1));
+            Assert.AreEqual(2, arg0.Buffers.Count);
+            Assert.AreEqual(2, arg1.Buffers.Count);
+            Assert.AreEqual(2, arg2.Buffers.Count);
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[1]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[0]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[1]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[0]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[1]).Substring(1));
+            Assert.AreEqual("{\"_placeholder\":true,\"num\":0}", arg0.Text);
             Assert.AreEqual("string", JsonConvert.DeserializeObject<string>(arg1.Text));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffer).Substring(1));
-            Assert.IsNull(arg3);
+            Assert.AreEqual("{\"data\":{\"_placeholder\":true,\"num\":1}}", arg2.Text);
         }
 
         [TestMethod]
@@ -476,7 +484,8 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             await client.CloseAsync();
 
-            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffer).Substring(1));
+            Assert.AreEqual(1, arg0.Buffers.Count);
+            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
         }
     }
 }

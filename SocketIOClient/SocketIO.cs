@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Text;
@@ -16,42 +17,32 @@ namespace SocketIOClient
     {
         public SocketIO(Uri uri)
         {
-            if (uri.Scheme == "https" || uri.Scheme == "http" || uri.Scheme == "wss" || uri.Scheme == "ws")
-            {
-                _uri = uri;
-            }
-            else
-            {
-                throw new ArgumentException("Unsupported protocol");
-            }
-            EventHandlers = new Dictionary<string, EventHandlerBox>();
-            Callbacks = new Dictionary<int, EventHandler>();
-            _urlConverter = new UrlConverter();
-            if (_uri.AbsolutePath != "/")
-            {
-                _namespace = _uri.AbsolutePath + ',';
-            }
-            _packetId = -1;
+            _ctx = new ParserContext();
+            _builder = new ParserContextBuilder(uri, _ctx);
             ConnectTimeout = TimeSpan.FromSeconds(30);
             _pingSource = new CancellationTokenSource();
-            _bufferHandlerQueue = new Queue<EventHandler>();
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
 
-        readonly Uri _uri;
+        private ParserContext _ctx;
+        private readonly ParserContextBuilder _builder;
         private WebsocketClient _client;
-        readonly UrlConverter _urlConverter;
-        readonly string _namespace;
-        private CancellationTokenSource _pingSource;
-        private int _packetId;
-        private Queue<EventHandler> _bufferHandlerQueue;
-        public Dictionary<int, EventHandler> Callbacks { get; }
+        private readonly CancellationTokenSource _pingSource;
 
-        public int EIO { get; set; } = 3;
-        public string Path { get; set; }
+        public string Path
+        {
+            get => _ctx.Path;
+            set => _ctx.Path = value;
+        }
+
+        public Dictionary<string, string> Parameters
+        {
+            get => _ctx.Parameters;
+            set => _ctx.Parameters = value;
+        }
+
         public TimeSpan ConnectTimeout { get; set; }
-        public Dictionary<string, string> Parameters { get; set; }
 
         public event Action OnConnected;
         public event Action<ResponseArgs> OnError;
@@ -59,14 +50,23 @@ namespace SocketIOClient
         public event Action<string, ResponseArgs> UnhandledEvent;
         public event Action<string, ResponseArgs> OnReceivedEvent;
 
-        public Dictionary<string, EventHandlerBox> EventHandlers { get; }
-
         public SocketIOState State { get; private set; }
+
+        private void BuildHandlers()
+        {
+            _ctx.ConnectHandler = ConnectHandler;
+            _ctx.CloseHandler = CloseHandler;
+            _ctx.UncaughtHandler = UncaughtHandler;
+            _ctx.ReceiveHandler = ReceiveHandler;
+            _ctx.ErrorHandler = ErrorHandler;
+            _ctx.OpenHandler = OpenHandler;
+        }
 
         public Task ConnectAsync()
         {
-            Uri wsUri = _urlConverter.HttpToWs(_uri, EIO.ToString(), Path, Parameters);
-            _client = new WebsocketClient(wsUri);
+            _ctx = _builder.Build();
+            BuildHandlers();
+            _client = new WebsocketClient(_ctx.WsUri);
             _client.MessageReceived.Subscribe(Listen);
             _client.DisconnectionHappened.Subscribe(info =>
             {
@@ -106,35 +106,36 @@ namespace SocketIOClient
             }
         }
 
-        private void Listen(ResponseMessage message)
+        private void Listen(ResponseMessage resMsg)
         {
-            if (message.MessageType == WebSocketMessageType.Text)
+            if (resMsg.MessageType == WebSocketMessageType.Text)
             {
-                _bufferHandlerQueue.Clear();
-                //Console.WriteLine($"Message received: {message.Text}");
-                var parser = new ResponseTextParser(_namespace, this)
-                {
-                    Text = message.Text,
-                    BufferHandlerQueue = _bufferHandlerQueue,
-                    ConnectHandler = ConnectHandler,
-                    CloseHandler = CloseHandler,
-                    UncaughtHandler = UncaughtHandler,
-                    ReceiveHandler = ReceiveHandler,
-                    ErrorHandler = ErrorHandler,
-                    OpenHandler = OpenHandler
-                };
-                parser.Parse();
+                var parser = new OpenedParser();
+                var connectedParser = new ConnectedParser();
+                var errorParser = new ErrorParser();
+                var disconnectedParser = new DisconnectedParser();
+                var msgEventParser = new MessageEventParser();
+                var msgAckParser = new MessageAckParser();
+                var msgEventBinaryParser = new MessageEventBinaryParser();
+                parser.Next = connectedParser;
+                connectedParser.Next = errorParser;
+                errorParser.Next = disconnectedParser;
+                disconnectedParser.Next = msgEventParser;
+                msgEventParser.Next = msgAckParser;
+                msgAckParser.Next = msgEventBinaryParser;
+                parser.Parse(_ctx, resMsg);
             }
-            else if (message.MessageType == WebSocketMessageType.Binary)
+            else if (resMsg.MessageType == WebSocketMessageType.Binary)
             {
-                //Console.WriteLine("Buffer received: " + Encoding.UTF8.GetString(message.Binary));
-                if (_bufferHandlerQueue.Count > 0)
+                _ctx.ReceivedBuffers.Add(resMsg.Binary);
+                if (_ctx.ReceivedBuffers.Count == _ctx.BufferCount)
                 {
-                    var handler = _bufferHandlerQueue.Dequeue();
-                    handler(new ResponseArgs
+                    var buffers = _ctx.ReceivedBuffers.ToList();
+                    foreach (var item in _ctx.BinaryEvents)
                     {
-                        Buffer = message.Binary
-                    });
+                        item.ResponseArgs.Buffers = buffers;
+                        item.EventHandler?.Invoke(item.ResponseArgs);
+                    }
                 }
             }
         }
@@ -166,9 +167,9 @@ namespace SocketIOClient
         {
             var task = Task.Factory.StartNew(async () =>
             {
-                if (_namespace != null)
+                if (_ctx.Namespace != null)
                 {
-                    await SendMessageAsync("40" + _namespace);
+                    await SendMessageAsync("40" + _ctx.Namespace);
                 }
                 while (!_pingSource.Token.IsCancellationRequested)
                 {
@@ -182,7 +183,6 @@ namespace SocketIOClient
         {
             if (_client.IsRunning && _client.IsStarted)
             {
-                //Console.WriteLine($"Message sent: {text}");
                 _client.Send(text);
             }
             else
@@ -194,7 +194,7 @@ namespace SocketIOClient
 
         public void On(string eventName, EventHandler handler, params EventHandler[] moreHandlers)
         {
-            EventHandlers.Add(JsonConvert.SerializeObject(eventName), new EventHandlerBox
+            _ctx.EventHandlers.Add(JsonConvert.SerializeObject(eventName), new EventHandlerBox
             {
                 EventHandler = handler,
                 EventHandlers = moreHandlers
@@ -222,7 +222,7 @@ namespace SocketIOClient
             var builder = new StringBuilder();
             builder
                 .Append("42")
-                .Append(_namespace)
+                .Append(_ctx.Namespace)
                 .Append(packetId)
                 .Append('[')
                 .Append(JsonConvert.SerializeObject(eventName))
@@ -235,15 +235,13 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, params object[] objs)
         {
-            _packetId++;
-            await EmitAsync(eventName, _packetId, objs);
+            await EmitAsync(eventName, ++_ctx.PacketId, objs);
         }
 
         public async Task EmitAsync(string eventName, object obj, EventHandler callback)
         {
-            _packetId++;
-            Callbacks.Add(_packetId, callback);
-            await EmitAsync(eventName, _packetId, obj);
+            _ctx.Callbacks.Add(++_ctx.PacketId, callback);
+            await EmitAsync(eventName, _ctx.PacketId, obj);
         }
 
         public void Dispose()
