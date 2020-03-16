@@ -111,7 +111,7 @@ namespace SocketIOClient
             if (message.MessageType == WebSocketMessageType.Text)
             {
                 _bufferHandlerQueue.Clear();
-                Console.WriteLine($"Message received: {message.Text}");
+                //Console.WriteLine($"Message received: {message.Text}");
                 var parser = new ResponseTextParser(_namespace, this)
                 {
                     Text = message.Text,
@@ -127,7 +127,7 @@ namespace SocketIOClient
             }
             else if (message.MessageType == WebSocketMessageType.Binary)
             {
-                Console.WriteLine("Buffer received: " + Encoding.UTF8.GetString(message.Binary));
+                //Console.WriteLine("Buffer received: " + Encoding.UTF8.GetString(message.Binary));
                 if (_bufferHandlerQueue.Count > 0)
                 {
                     var handler = _bufferHandlerQueue.Dequeue();
