@@ -13,16 +13,16 @@
     <RepositoryType>github</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Version>1.0.3.5</Version>
-    <AssemblyVersion>1.0.3.5</AssemblyVersion>
-    <FileVersion>1.0.3.5</FileVersion>
+    <Version>1.0.3.6</Version>
+    <AssemblyVersion>1.0.3.6</AssemblyVersion>
+    <FileVersion>1.0.3.6</FileVersion>
     <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
-    <PackageReference Include="Websocket.Client" Version="4.1.85" />
+    <PackageReference Include="Websocket.Client" Version="4.2.3" />
   </ItemGroup>
 
   <ItemGroup>

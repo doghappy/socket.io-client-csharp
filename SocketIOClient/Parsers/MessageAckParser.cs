@@ -1,32 +1,32 @@
 ﻿using SocketIOClient.Arguments;
 using System.Text.RegularExpressions;
+using Websocket.Client;
 
 namespace SocketIOClient.Parsers
 {
-    class MessageAckParser : IParser
+    class MessageAckParser : Parser
     {
-        public void Parse(ResponseTextParser rtp)
+        public override void Parse(ParserContext ctx, ResponseMessage resMsg)
         {
-            var regex = new Regex($@"^43{rtp.Namespace}(\d+)\[([\s\S]*)\]$");
-            if (regex.IsMatch(rtp.Text))
+            var regex = new Regex($@"^43{ctx.Namespace}(\d+)\[([\s\S]*)\]$");
+            if (regex.IsMatch(resMsg.Text))
             {
-                var groups = regex.Match(rtp.Text).Groups;
+                var groups = regex.Match(resMsg.Text).Groups;
                 int packetId = int.Parse(groups[1].Value);
-                if (rtp.Socket.Callbacks.ContainsKey(packetId))
+                if (ctx.Callbacks.ContainsKey(packetId))
                 {
-                    var handler = rtp.Socket.Callbacks[packetId];
+                    var handler = ctx.Callbacks[packetId];
                     handler(new ResponseArgs
                     {
                         Text = groups[2].Value,
-                        RawText = rtp.Text
+                        RawText = resMsg.Text
                     });
-                    rtp.Socket.Callbacks.Remove(packetId);
+                    ctx.Callbacks.Remove(packetId);
                 }
             }
-            else
+            else if (Next != null)
             {
-                rtp.Parser = new ErrorParser();
-                rtp.Parse();
+                Next.Parse(ctx, resMsg);
             }
         }
     }
