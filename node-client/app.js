@@ -6,10 +6,11 @@ const io = require("socket.io-client");
 const socket = io('http://localhost:3000');
 socket.connect();
 
-//socket.emit("callback", "client", data => {
-//    console.log(data);
-//});
-//socket.emit("callback", "client");
+socket.on("message send", (d1, d2, d3, d4) => {
+    console.log(d1.toString());
+    console.log(d2.toString());
+    console.log(d3.toString());
+    console.log(d4.toString());
+});
 
-socket.on("emit\\args\"", (d, e) => console.log(d, e));
-socket.emit("emit\\args\"");
+socket.emit("message send", "node client");

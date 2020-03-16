@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using SocketIOClient.Arguments;
+using System.Text;
 
 namespace SocketIOClient.Test
 {
@@ -326,16 +328,16 @@ namespace SocketIOClient.Test
             await client.ConnectAsync();
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(TimeoutException))]
-        public async Task TimeoutTest()
-        {
-            var client = new SocketIO("http://localhost:3000")
-            {
-                ConnectTimeout = TimeSpan.FromMilliseconds(1)
-            };
-            await client.ConnectAsync();
-        }
+        //[TestMethod]
+        //[ExpectedException(typeof(TimeoutException))]
+        //public async Task TimeoutTest()
+        //{
+        //    var client = new SocketIO("http://localhost:3000")
+        //    {
+        //        ConnectTimeout = TimeSpan.FromMilliseconds(1)
+        //    };
+        //    await client.ConnectAsync();
+        //}
 
         [TestMethod]
         public async Task ErrorTest()
@@ -440,6 +442,41 @@ namespace SocketIOClient.Test
             Assert.AreEqual("\"channel\"", result1);
             Assert.AreEqual("\"emit-args-server\"", result2);
             Assert.IsNull(result3);
+        }
+
+        [TestMethod]
+        public async Task MessageEventBinaryTest()
+        {
+            var client = new SocketIO("http://localhost:3000");
+            string guid = Guid.NewGuid().ToString();
+            ResponseArgs arg0 = null, arg1 = null, arg2 = null, arg3 = null;
+            client.On("message send", res => arg0 = res, res => arg1 = res, res => arg2 = res, res => arg3 = res);
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("message send", guid);
+            await Task.Delay(1000);
+            await client.CloseAsync();
+
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffer).Substring(1));
+            Assert.AreEqual("string", JsonConvert.DeserializeObject<string>(arg1.Text));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffer).Substring(1));
+            Assert.IsNull(arg3);
+        }
+
+        [TestMethod]
+        public async Task MessageEventBinaryPathTest()
+        {
+            var client = new SocketIO("http://localhost:3000/path");
+            string guid = Guid.NewGuid().ToString();
+            ResponseArgs arg0 = null;
+            client.On("message send", res => arg0 = res);
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("message send", guid);
+            await Task.Delay(1000);
+            await client.CloseAsync();
+
+            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffer).Substring(1));
         }
     }
 }

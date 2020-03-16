@@ -57,6 +57,10 @@ io.on('connection', client => {
     client.on('*', data => {
         client.emit("*", "**");
     });
+    client.on('message send', data => {
+        var buffer = Buffer.from("message send buffer string " + data, "utf-8");
+        client.emit("message send", buffer, "string", buffer, { "_placeholder": true, "num": 1 });
+    });
     client.on('UnhandledEvent', data => {
         client.emit("UnhandledEvent-Server", data + " - server");
     });
@@ -114,6 +118,10 @@ pathNsp.on('connection', client => {
         if (data === "close") {
             client.disconnect();
         }
+    });
+    client.on('message send', data => {
+        var buffer = Buffer.from("message send buffer string", "utf-8");
+        client.emit("message send", buffer);
     });
     client.on('ws_message -new', data => {
         console.log(data);

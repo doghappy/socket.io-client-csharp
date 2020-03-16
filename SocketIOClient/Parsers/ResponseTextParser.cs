@@ -1,5 +1,6 @@
 ﻿using SocketIOClient.Arguments;
 using System;
+using System.Collections.Generic;
 
 namespace SocketIOClient.Parsers
 {
@@ -23,6 +24,7 @@ namespace SocketIOClient.Parsers
         public Action<string, ResponseArgs> UncaughtHandler { get; set; }
         public Action<string, ResponseArgs> ReceiveHandler { get; set; }
         public Action<ResponseArgs> ErrorHandler { get; set; }
+        public Queue<EventHandler> BufferHandlerQueue { get; set; }
 
         public void Parse() => Parser.Parse(this);
     }

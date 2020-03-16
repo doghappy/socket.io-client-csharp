@@ -34,6 +34,7 @@ namespace SocketIOClient
             _packetId = -1;
             ConnectTimeout = TimeSpan.FromSeconds(30);
             _pingSource = new CancellationTokenSource();
+            _bufferHandlerQueue = new Queue<EventHandler>();
         }
 
         public SocketIO(string uri) : this(new Uri(uri)) { }
@@ -44,6 +45,7 @@ namespace SocketIOClient
         readonly string _namespace;
         private CancellationTokenSource _pingSource;
         private int _packetId;
+        private Queue<EventHandler> _bufferHandlerQueue;
         public Dictionary<int, EventHandler> Callbacks { get; }
 
         public int EIO { get; set; } = 3;
@@ -108,10 +110,12 @@ namespace SocketIOClient
         {
             if (message.MessageType == WebSocketMessageType.Text)
             {
-                // Console.WriteLine($"Message received: {message.Text}");
+                _bufferHandlerQueue.Clear();
+                Console.WriteLine($"Message received: {message.Text}");
                 var parser = new ResponseTextParser(_namespace, this)
                 {
                     Text = message.Text,
+                    BufferHandlerQueue = _bufferHandlerQueue,
                     ConnectHandler = ConnectHandler,
                     CloseHandler = CloseHandler,
                     UncaughtHandler = UncaughtHandler,
@@ -120,6 +124,18 @@ namespace SocketIOClient
                     OpenHandler = OpenHandler
                 };
                 parser.Parse();
+            }
+            else if (message.MessageType == WebSocketMessageType.Binary)
+            {
+                Console.WriteLine("Buffer received: " + Encoding.UTF8.GetString(message.Binary));
+                if (_bufferHandlerQueue.Count > 0)
+                {
+                    var handler = _bufferHandlerQueue.Dequeue();
+                    handler(new ResponseArgs
+                    {
+                        Buffer = message.Binary
+                    });
+                }
             }
         }
 
