@@ -128,7 +128,7 @@ namespace SocketIOClient
             else if (resMsg.MessageType == WebSocketMessageType.Binary)
             {
                 _ctx.ReceivedBuffers.Add(resMsg.Binary);
-                if (_ctx.ReceivedBuffers.Count == _ctx.BufferCount)
+                if (_ctx.ReceivedBuffers.Count == _ctx.ReceivedBufferCount)
                 {
                     var buffers = _ctx.ReceivedBuffers.ToList();
                     foreach (var item in _ctx.BinaryEvents)
@@ -192,6 +192,19 @@ namespace SocketIOClient
             return Task.CompletedTask;
         }
 
+        private Task SendMessageAsync(byte[] buffer)
+        {
+            if (_client.IsRunning && _client.IsStarted)
+            {
+                _client.Send(buffer);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unable to send message, socket is disconnected.");
+            }
+            return Task.CompletedTask;
+        }
+
         public void On(string eventName, EventHandler handler, params EventHandler[] moreHandlers)
         {
             _ctx.EventHandlers.Add(JsonConvert.SerializeObject(eventName), new EventHandlerBox
@@ -212,7 +225,7 @@ namespace SocketIOClient
             {
                 for (int i = 0; i < objs.Length; i++)
                 {
-                    paramsBuilder.Append(JsonConvert.SerializeObject(objs[i]));
+                    paramsBuilder.Append(JsonConvert.SerializeObject(objs[i], new ByteArrayJsonConverter(_ctx)));
                     if (i != objs.Length - 1)
                     {
                         paramsBuilder.Append(",");
@@ -220,8 +233,11 @@ namespace SocketIOClient
                 }
             }
             var builder = new StringBuilder();
+            if (_ctx.SendBufferCount > -1)
+                builder.Append("45").Append(_ctx.SendBuffers.Count).Append("-");
+            else
+                builder.Append("42");
             builder
-                .Append("42")
                 .Append(_ctx.Namespace)
                 .Append(packetId)
                 .Append('[')
@@ -231,6 +247,15 @@ namespace SocketIOClient
                 .Append(']');
             string message = builder.ToString();
             await SendMessageAsync(message);
+            if (_ctx.SendBufferCount > -1)
+            {
+                foreach (var item in _ctx.SendBuffers)
+                {
+                    await SendMessageAsync(item);
+                }
+                _ctx.SendBufferCount = -1;
+                _ctx.SendBuffers.Clear();
+            }
         }
 
         public async Task EmitAsync(string eventName, params object[] objs)

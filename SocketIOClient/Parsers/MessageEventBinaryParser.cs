@@ -14,7 +14,7 @@ namespace SocketIOClient.Parsers
             {
                 ClearBinary(ctx);
                 var groups = regex.Match(resMsg.Text).Groups;
-                ctx.BufferCount = int.Parse(groups[1].Value);
+                ctx.ReceivedBufferCount = int.Parse(groups[1].Value);
                 string text = groups[2].Value;
                 var formatter = new DataFormatter();
                 var data = formatter.Format(text);
@@ -57,7 +57,7 @@ namespace SocketIOClient.Parsers
 
         private void ClearBinary(ParserContext ctx)
         {
-            ctx.BufferCount = 0;
+            ctx.ReceivedBufferCount = 0;
             ctx.ReceivedBuffers.Clear();
             ctx.BinaryEvents.Clear();
         }

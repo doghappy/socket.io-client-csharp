@@ -61,6 +61,15 @@ io.on('connection', client => {
         var buffer = Buffer.from("message send buffer string " + data, "utf-8");
         client.emit("message send", buffer, "string", { data: buffer });
     });
+    client.on('buffer to server', (data1, data2, data3) => {
+        var str1 = data1.data1.toString() + " - str1";
+        var str2 = data2.data2.toString() + " - str2";
+        var str3 = data3.data3.toString() + " - str3";
+        var buffer1 = Buffer.from(str1, 'utf-8');
+        var buffer2 = Buffer.from(str2, 'utf-8');
+        var buffer3 = Buffer.from(str3, 'utf-8');
+        client.emit("buffer to client", { data1: buffer1 }, { data2: buffer2 }, { data3: buffer3 });
+    });
     client.on('UnhandledEvent', data => {
         client.emit("UnhandledEvent-Server", data + " - server");
     });
@@ -122,6 +131,15 @@ pathNsp.on('connection', client => {
     client.on('message send', data => {
         var buffer = Buffer.from("message send buffer string", "utf-8");
         client.emit("message send", buffer);
+    });
+    client.on('buffer to server', (data1, data2, data3) => {
+        var str1 = data1.data1.toString() + " - str1";
+        var str2 = data2.data2.toString() + " - str2";
+        var str3 = data3.data3.toString() + " - str3";
+        var buffer1 = Buffer.from(str1, 'utf-8');
+        var buffer2 = Buffer.from(str2, 'utf-8');
+        var buffer3 = Buffer.from(str3, 'utf-8');
+        client.emit("buffer to client", { data1: buffer1 }, { data2: buffer2 }, { data3: buffer3 });
     });
     client.on('ws_message -new', data => {
         console.log(data);

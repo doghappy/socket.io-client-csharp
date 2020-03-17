@@ -494,5 +494,45 @@ namespace SocketIOClient.Test
 
             await client.CloseAsync();
         }
+
+        [TestMethod]
+        [DataRow("http://localhost:3000")]
+        [DataRow("http://localhost:3000/path")]
+        public async Task EmitBufferTest(string uri)
+        {
+            var client = new SocketIO(uri);
+            ResponseArgs arg0 = null, arg1 = null, arg2 = null;
+            client.On("buffer to client", res => arg0 = res, res => arg1 = res, res => arg2 = res);
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+            await client.EmitAsync("buffer to server", new
+            {
+                data1 = Encoding.UTF8.GetBytes("1")
+            }, new
+            {
+                data2 = Encoding.UTF8.GetBytes("2")
+            }, new
+            {
+                data3 = Encoding.UTF8.GetBytes("3")
+            });
+            await Task.Delay(1000);
+            await client.CloseAsync();
+
+            Assert.AreEqual(3, arg0.Buffers.Count);
+            Assert.AreEqual(3, arg1.Buffers.Count);
+            Assert.AreEqual(3, arg2.Buffers.Count);
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg0.Buffers[1]).Substring(1));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg0.Buffers[2]).Substring(1));
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg1.Buffers[0]).Substring(1));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg1.Buffers[1]).Substring(1));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg1.Buffers[2]).Substring(1));
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg2.Buffers[0]).Substring(1));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg2.Buffers[1]).Substring(1));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg2.Buffers[2]).Substring(1));
+            Assert.AreEqual("{\"data1\":{\"_placeholder\":true,\"num\":0}}", arg0.Text);
+            Assert.AreEqual("{\"data2\":{\"_placeholder\":true,\"num\":1}}", arg1.Text);
+            Assert.AreEqual("{\"data3\":{\"_placeholder\":true,\"num\":2}}", arg2.Text);
+        }
     }
 }
