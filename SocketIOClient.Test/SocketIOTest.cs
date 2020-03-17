@@ -482,10 +482,17 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             await client.EmitAsync("message send", guid);
             await Task.Delay(1000);
-            await client.CloseAsync();
 
             Assert.AreEqual(1, arg0.Buffers.Count);
             Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+
+            await Task.Delay(1000);
+            await client.EmitAsync("message send", guid);
+
+            Assert.AreEqual(1, arg0.Buffers.Count);
+            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+
+            await client.CloseAsync();
         }
     }
 }
