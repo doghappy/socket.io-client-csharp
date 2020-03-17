@@ -58,6 +58,7 @@ namespace SocketIOClient.Parsers
         private void ClearBinary(ParserContext ctx)
         {
             ctx.BufferCount = 0;
+            ctx.ReceivedBuffers.Clear();
             ctx.BinaryEvents.Clear();
         }
     }
