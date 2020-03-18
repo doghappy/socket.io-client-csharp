@@ -58,31 +58,28 @@ private void Client_OnConnected()
 {
     Console.WriteLine("Connected to server");
 }
+```
 
-private async void Client_OnClosed(ServerCloseReason reason)
+#### Emit byte array
+
+```cs
+await client.EmitAsync("message send", new
 {
-    if (reason == ServerCloseReason.ClosedByServer)
+    body = new
     {
-        // ...
+        data = Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()),
+        mimeType = "text/plain"
     }
-    else if (reason == ServerCloseReason.Aborted)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            try
-            {
-                await client.ConnectAsync();
-                break;
-            }
-            catch (WebSocketException ex)
-            {
-                // show tips
-                Console.WriteLine(ex.Message);
-                await Task.Delay(2000);
-            }
-        }
-        // show tips
-        Console.WriteLine("Tried to reconnect 3 times, unable to connect to the server");
-    }
-}
+});
+```
+
+#### Parse the received byte array
+
+```cs
+io.On("message send", a =>
+{
+    Console.WriteLine("Message: " + a.Text);
+    int num = JObject.Parse(a.Text)["body"]["data"].Value<int>("num");
+    Console.WriteLine("Buffer: " + Encoding.UTF8.GetString(a.Buffers[num]));
+});
 ```
