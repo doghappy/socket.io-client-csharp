@@ -29,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.js" />
+    <Content Include="Dockerfile" />
     <Content Include="package.json" />
     <Content Include="README.md" />
   </ItemGroup>

@@ -127,7 +127,7 @@ namespace SocketIOClient
             }
             else if (resMsg.MessageType == WebSocketMessageType.Binary)
             {
-                _ctx.ReceivedBuffers.Add(resMsg.Binary);
+                _ctx.ReceivedBuffers.Add(resMsg.Binary.Skip(1).ToArray());
                 if (_ctx.ReceivedBuffers.Count == _ctx.ReceivedBufferCount)
                 {
                     var buffers = _ctx.ReceivedBuffers.ToList();

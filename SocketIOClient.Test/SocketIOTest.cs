@@ -460,12 +460,12 @@ namespace SocketIOClient.Test
             Assert.AreEqual(2, arg0.Buffers.Count);
             Assert.AreEqual(2, arg1.Buffers.Count);
             Assert.AreEqual(2, arg2.Buffers.Count);
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[1]).Substring(1));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[0]).Substring(1));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[1]).Substring(1));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[0]).Substring(1));
-            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[1]).Substring(1));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[0]));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg0.Buffers[1]));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[0]));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[1]));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[0]));
+            Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[1]));
             Assert.AreEqual("{\"_placeholder\":true,\"num\":0}", arg0.Text);
             Assert.AreEqual("string", JsonConvert.DeserializeObject<string>(arg1.Text));
             Assert.AreEqual("{\"data\":{\"_placeholder\":true,\"num\":1}}", arg2.Text);
@@ -484,13 +484,13 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
 
             Assert.AreEqual(1, arg0.Buffers.Count);
-            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]));
 
             await Task.Delay(1000);
             await client.EmitAsync("message send", guid);
 
             Assert.AreEqual(1, arg0.Buffers.Count);
-            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
+            Assert.AreEqual("message send buffer string", Encoding.UTF8.GetString(arg0.Buffers[0]));
 
             await client.CloseAsync();
         }
@@ -521,15 +521,15 @@ namespace SocketIOClient.Test
             Assert.AreEqual(3, arg0.Buffers.Count);
             Assert.AreEqual(3, arg1.Buffers.Count);
             Assert.AreEqual(3, arg2.Buffers.Count);
-            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg0.Buffers[0]).Substring(1));
-            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg0.Buffers[1]).Substring(1));
-            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg0.Buffers[2]).Substring(1));
-            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg1.Buffers[0]).Substring(1));
-            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg1.Buffers[1]).Substring(1));
-            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg1.Buffers[2]).Substring(1));
-            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg2.Buffers[0]).Substring(1));
-            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg2.Buffers[1]).Substring(1));
-            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg2.Buffers[2]).Substring(1));
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg0.Buffers[0]));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg0.Buffers[1]));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg0.Buffers[2]));
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg1.Buffers[0]));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg1.Buffers[1]));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg1.Buffers[2]));
+            Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg2.Buffers[0]));
+            Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg2.Buffers[1]));
+            Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg2.Buffers[2]));
             Assert.AreEqual("{\"data1\":{\"_placeholder\":true,\"num\":0}}", arg0.Text);
             Assert.AreEqual("{\"data2\":{\"_placeholder\":true,\"num\":1}}", arg1.Text);
             Assert.AreEqual("{\"data3\":{\"_placeholder\":true,\"num\":2}}", arg2.Text);

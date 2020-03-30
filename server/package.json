@@ -4,7 +4,7 @@
   "description": "server",
   "main": "app.js",
   "scripts": {
-    "server": "node app"
+    "start": "node app"
   },
   "author": {
     "name": ""
