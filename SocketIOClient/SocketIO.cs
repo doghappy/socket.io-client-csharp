@@ -70,7 +70,11 @@ namespace SocketIOClient
             _client.MessageReceived.Subscribe(Listen);
             _client.DisconnectionHappened.Subscribe(info =>
             {
-                if (info.Type != DisconnectionType.ByUser)
+                if (info.Type == DisconnectionType.Error)
+                {
+                    throw info.Exception;
+                }
+                else if (info.Type != DisconnectionType.ByUser)
                 {
                     CloseHandler();
                 }
