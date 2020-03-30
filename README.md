@@ -76,7 +76,7 @@ await client.EmitAsync("message send", new
 #### Parse the received byte array
 
 ```cs
-io.On("message send", a =>
+client.On("message send", a =>
 {
     Console.WriteLine("Message: " + a.Text);
     int num = JObject.Parse(a.Text)["body"]["data"].Value<int>("num");
