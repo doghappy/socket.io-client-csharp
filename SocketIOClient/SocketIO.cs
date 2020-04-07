@@ -138,9 +138,9 @@ namespace SocketIOClient
                                 str = Encoding.UTF8.GetString(buffer, 0, result.Count);
                                 builder.Append(str);
                             }
-#if DEBUG
-                            Console.WriteLine($"Received: {builder.ToString()}");
-#endif
+//#if DEBUG
+//                            Console.WriteLine($"Received: {builder.ToString()}");
+//#endif
                             var parser = new ResponseTextParser(_namespace, this)
                             {
                                 Text = builder.ToString()
@@ -171,9 +171,9 @@ namespace SocketIOClient
                     }
 
                     await _socket.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, isEndOfMessage, _tokenSource.Token);
-#if DEBUG
-                    Console.WriteLine($"Send: {text}");
-#endif
+//#if DEBUG
+//                    Console.WriteLine($"Send: {text}");
+//#endif
                 }
             }
         }
