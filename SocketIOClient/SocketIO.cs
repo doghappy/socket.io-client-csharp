@@ -39,7 +39,7 @@ namespace SocketIOClient
         private const int SendChunkSize = 1024;
 
         readonly Uri _uri;
-        private System.Net.WebSockets.Managed.ClientWebSocket _socket;
+        private ClientWebSocket _socket;
         readonly UrlConverter _urlConverter;
         readonly string _namespace;
         private CancellationTokenSource _tokenSource;
@@ -69,7 +69,7 @@ namespace SocketIOClient
             {
                 _socket.Dispose();
             }
-            _socket = new System.Net.WebSockets.Managed.ClientWebSocket();
+            _socket = new ClientWebSocket();
             bool executed = _socket.ConnectAsync(wsUri, CancellationToken.None).Wait(ConnectTimeout);
             if (!executed)
             {
