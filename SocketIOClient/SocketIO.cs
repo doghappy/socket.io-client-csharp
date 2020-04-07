@@ -64,22 +64,17 @@ namespace SocketIOClient
 
         public Task ConnectAsync()
         {
-            _ctx = _builder.Build();
-            BuildHandlers();
-            _client = new WebsocketClient(_ctx.WsUri);
-            _client.MessageReceived.Subscribe(Listen);
-            _client.DisconnectionHappened.Subscribe(info =>
+            if (State == SocketIOState.None)
             {
-                if (info.Type == DisconnectionType.Error)
-                {
-                    throw info.Exception;
-                }
-                else if (info.Type != DisconnectionType.ByUser)
-                {
-                    CloseHandler();
-                }
-            });
-
+                _builder.Build();
+                BuildHandlers();
+            }
+            _client = new WebsocketClient(_ctx.WsUri)
+            {
+                IsReconnectionEnabled = false
+            };
+            _client.MessageReceived.Subscribe(Listen);
+            _client.DisconnectionHappened.Subscribe(DisconnectionHappened);
             var token = new CancellationTokenSource(ConnectTimeout).Token;
             token.ThrowIfCancellationRequested();
             try
@@ -93,6 +88,18 @@ namespace SocketIOClient
                 throw e;
             }
             return Task.CompletedTask;
+        }
+
+        private void DisconnectionHappened(DisconnectionInfo info)
+        {
+            if (info.Type == DisconnectionType.Error)
+            {
+                throw info.Exception;
+            }
+            else if (info.Type != DisconnectionType.ByUser)
+            {
+                CloseHandler();
+            }
         }
 
         public Task CloseAsync()
@@ -169,18 +176,29 @@ namespace SocketIOClient
 
         private void OpenHandler(OpenedArgs args)
         {
-            var task = Task.Factory.StartNew(async () =>
+            Task.Factory.StartNew(async () =>
             {
                 if (_ctx.Namespace != null)
                 {
                     await SendMessageAsync("40" + _ctx.Namespace);
                 }
-                while (!_pingSource.Token.IsCancellationRequested)
+                while (true)
                 {
-                    await Task.Delay(args.PingInterval);
-                    await SendMessageAsync("2");
+                    if (State == SocketIOState.Connected)
+                    {
+                        await Task.Delay(args.PingInterval);
+                        try
+                        {
+                            await SendMessageAsync("2");
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
-            }, _pingSource.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            });
         }
 
         private Task SendMessageAsync(string text)
