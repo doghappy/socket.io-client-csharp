@@ -31,6 +31,7 @@ namespace SocketIOClient.Parsers
 
         public Action ConnectHandler { get; set; }
         public Action CloseHandler { get; set; }
+        public Action PongHandler { get; set; }
         public Action<OpenedArgs> OpenHandler { get; set; }
         public Action<string, ResponseArgs> UncaughtHandler { get; set; }
         public Action<string, ResponseArgs> ReceiveHandler { get; set; }

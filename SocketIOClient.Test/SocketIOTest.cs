@@ -534,5 +534,19 @@ namespace SocketIOClient.Test
             Assert.AreEqual("{\"data2\":{\"_placeholder\":true,\"num\":1}}", arg1.Text);
             Assert.AreEqual("{\"data3\":{\"_placeholder\":true,\"num\":2}}", arg2.Text);
         }
+
+        [TestMethod]
+        public async Task OnPongTest()
+        {
+            bool result = false;
+            var client = new SocketIO("http://localhost:3000");
+            client.OnPong += () =>
+            {
+                result = true;
+            };
+            await client.ConnectAsync();
+            await Task.Delay(30000);
+            Assert.IsTrue(result);
+        }
     }
 }
