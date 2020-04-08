@@ -536,17 +536,20 @@ namespace SocketIOClient.Test
         }
 
         [TestMethod]
-        public async Task OnPongTest()
+        public async Task OnOpenedTest()
         {
-            bool result = false;
+            OpenedArgs result = null;
             var client = new SocketIO("http://localhost:3000");
-            client.OnPong += () =>
+            client.OnOpend += async args =>
             {
-                result = true;
+                result = args;
+                await client.CloseAsync();
             };
             await client.ConnectAsync();
-            await Task.Delay(30000);
-            Assert.IsTrue(result);
+            await Task.Delay(1000);
+            // default interval and timeout: https://socket.io/docs/server-api/
+            Assert.AreEqual(25000, result.PingInterval);
+            Assert.AreEqual(5000, result.PingTimeout);
         }
     }
 }

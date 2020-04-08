@@ -45,7 +45,7 @@ namespace SocketIOClient
         public TimeSpan ConnectTimeout { get; set; }
 
         public event Action OnConnected;
-        public event Action OnPong;
+        public event Action<OpenedArgs> OnOpend;
         public event Action<ResponseArgs> OnError;
         public event Action<ServerCloseReason> OnClosed;
         public event Action<string, ResponseArgs> UnhandledEvent;
@@ -55,7 +55,6 @@ namespace SocketIOClient
 
         private void BuildHandlers()
         {
-            _ctx.PongHandler = PongHandler;
             _ctx.ConnectHandler = ConnectHandler;
             _ctx.CloseHandler = CloseHandler;
             _ctx.UncaughtHandler = UncaughtHandler;
@@ -123,16 +122,14 @@ namespace SocketIOClient
         {
             if (resMsg.MessageType == WebSocketMessageType.Text)
             {
-                var parser = new PongParser();
-                var openedParser = new OpenedParser();
+                var parser = new OpenedParser();
                 var connectedParser = new ConnectedParser();
                 var errorParser = new ErrorParser();
                 var disconnectedParser = new DisconnectedParser();
                 var msgEventParser = new MessageEventParser();
                 var msgAckParser = new MessageAckParser();
                 var msgEventBinaryParser = new MessageEventBinaryParser();
-                parser.Next = openedParser;
-                openedParser.Next = connectedParser;
+                parser.Next = connectedParser;
                 connectedParser.Next = errorParser;
                 errorParser.Next = disconnectedParser;
                 disconnectedParser.Next = msgEventParser;
@@ -161,8 +158,6 @@ namespace SocketIOClient
             OnConnected?.Invoke();
         }
 
-        private void PongHandler() => OnPong?.Invoke();
-
         private void CloseHandler()
         {
             if (State != SocketIOState.Closed)
@@ -182,6 +177,7 @@ namespace SocketIOClient
 
         private void OpenHandler(OpenedArgs args)
         {
+            OnOpend?.Invoke(args);
             Task.Factory.StartNew(async () =>
             {
                 if (_ctx.Namespace != null)
