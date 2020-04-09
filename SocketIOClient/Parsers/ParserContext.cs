@@ -37,5 +37,8 @@ namespace SocketIOClient.Parsers
         public Action<ResponseArgs> ErrorHandler { get; set; }
         public Dictionary<string, EventHandlerBox> EventHandlers { get; }
         public List<BinaryEvent> BinaryEvents { get; }
+        public DateTimeOffset PingAt { get; set; }
+        public DateTimeOffset PongAt { get; set; }
+        public Action PongHandler { get; set; }
     }
 }

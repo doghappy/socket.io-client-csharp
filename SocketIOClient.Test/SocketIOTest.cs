@@ -551,5 +551,21 @@ namespace SocketIOClient.Test
             Assert.AreEqual(25000, result.PingInterval);
             Assert.AreEqual(5000, result.PingTimeout);
         }
+
+
+        [TestMethod]
+        public async Task OnPongTest()
+        {
+            // default interval and timeout: https://socket.io/docs/server-api/
+            double ms = 0;
+            var client = new SocketIO("http://localhost:3000");
+            client.OnPong += span =>
+            {
+                ms = span.TotalMilliseconds;
+            };
+            await client.ConnectAsync();
+            await Task.Delay(26000);
+            Assert.IsTrue(ms > 0);
+        }
     }
 }

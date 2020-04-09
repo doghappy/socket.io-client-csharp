@@ -50,6 +50,9 @@ namespace SocketIOClient
         public event Action<ServerCloseReason> OnClosed;
         public event Action<string, ResponseArgs> UnhandledEvent;
         public event Action<string, ResponseArgs> OnReceivedEvent;
+        public event Action OnPing;
+        public event Action<TimeSpan> OnPong;
+
 
         public SocketIOState State { get; private set; }
 
@@ -61,6 +64,7 @@ namespace SocketIOClient
             _ctx.ReceiveHandler = ReceiveHandler;
             _ctx.ErrorHandler = ErrorHandler;
             _ctx.OpenHandler = OpenHandler;
+            _ctx.PongHandler = PongHandler;
         }
 
         public Task ConnectAsync()
@@ -122,14 +126,16 @@ namespace SocketIOClient
         {
             if (resMsg.MessageType == WebSocketMessageType.Text)
             {
-                var parser = new OpenedParser();
+                var parser = new PongParser();
+                var openedParser = new OpenedParser();
                 var connectedParser = new ConnectedParser();
                 var errorParser = new ErrorParser();
                 var disconnectedParser = new DisconnectedParser();
                 var msgEventParser = new MessageEventParser();
                 var msgAckParser = new MessageAckParser();
                 var msgEventBinaryParser = new MessageEventBinaryParser();
-                parser.Next = connectedParser;
+                parser.Next = openedParser;
+                openedParser.Next = connectedParser;
                 connectedParser.Next = errorParser;
                 errorParser.Next = disconnectedParser;
                 disconnectedParser.Next = msgEventParser;
@@ -156,6 +162,12 @@ namespace SocketIOClient
         {
             State = SocketIOState.Connected;
             OnConnected?.Invoke();
+        }
+
+        private void PongHandler()
+        {
+            var diff = _ctx.PongAt - _ctx.PingAt;
+            OnPong?.Invoke(diff);
         }
 
         private void CloseHandler()
@@ -192,6 +204,8 @@ namespace SocketIOClient
                         try
                         {
                             await SendMessageAsync("2");
+                            _ctx.PingAt = DateTimeOffset.Now;
+                            OnPing?.Invoke();
                         }
                         catch { }
                     }
