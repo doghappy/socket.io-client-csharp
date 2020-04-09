@@ -45,7 +45,6 @@ namespace SocketIOClient
         public TimeSpan ConnectTimeout { get; set; }
 
         public event Action OnConnected;
-        public event Action<OpenedArgs> OnOpend;
         public event Action<ResponseArgs> OnError;
         public event Action<ServerCloseReason> OnClosed;
         public event Action<string, ResponseArgs> UnhandledEvent;
@@ -189,7 +188,6 @@ namespace SocketIOClient
 
         private void OpenHandler(OpenedArgs args)
         {
-            OnOpend?.Invoke(args);
             Task.Factory.StartNew(async () =>
             {
                 if (_ctx.Namespace != null)
