@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace SocketIOClient.Parsers
 {
-    class ParserContext
+    public class ParserContext
     {
         public ParserContext()
         {

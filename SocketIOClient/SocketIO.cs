@@ -29,6 +29,7 @@ namespace SocketIOClient
         private readonly ParserContextBuilder _builder;
         private WebsocketClient _client;
         private readonly CancellationTokenSource _pingSource;
+        private static readonly object _sendLock = new object();
 
         public string Path
         {
@@ -215,30 +216,28 @@ namespace SocketIOClient
             });
         }
 
-        private Task SendMessageAsync(string text)
+        private async Task SendMessageAsync(string text)
         {
             if (_client.IsRunning && _client.IsStarted)
             {
-                _client.Send(text);
+                await _client.SendInstant(text);
             }
             else
             {
                 throw new InvalidOperationException("Unable to send message, socket is disconnected.");
             }
-            return Task.CompletedTask;
         }
 
-        private Task SendMessageAsync(byte[] buffer)
+        private async Task SendMessageAsync(byte[] buffer)
         {
             if (_client.IsRunning && _client.IsStarted)
             {
-                _client.Send(buffer);
+                await _client.SendInstant(buffer);
             }
             else
             {
                 throw new InvalidOperationException("Unable to send message, socket is disconnected.");
             }
-            return Task.CompletedTask;
         }
 
         public void On(string eventName, EventHandler handler, params EventHandler[] moreHandlers)
@@ -250,8 +249,10 @@ namespace SocketIOClient
             });
         }
 
-        private async Task EmitAsync(string eventName, int packetId, params object[] objs)
+        private async Task EmitCoreAsync(string eventName, params object[] objs)
         {
+            //lock (_sendLock)
+            //{
             var paramsBuilder = new StringBuilder();
             if (objs == null || objs.Length == 0)
             {
@@ -275,7 +276,7 @@ namespace SocketIOClient
                 builder.Append("42");
             builder
                 .Append(_ctx.Namespace)
-                .Append(packetId)
+                .Append(_ctx.PacketId)
                 .Append('[')
                 .Append(JsonConvert.SerializeObject(eventName))
                 .Append(',')
@@ -292,17 +293,20 @@ namespace SocketIOClient
                 _ctx.SendBufferCount = -1;
                 _ctx.SendBuffers.Clear();
             }
+            //}
+            //return Task.CompletedTask;
         }
 
         public async Task EmitAsync(string eventName, params object[] objs)
         {
-            await EmitAsync(eventName, ++_ctx.PacketId, objs);
+            _ctx.PacketId++;
+            await EmitCoreAsync(eventName, objs);
         }
 
         public async Task EmitAsync(string eventName, object obj, EventHandler callback)
         {
             _ctx.Callbacks.Add(++_ctx.PacketId, callback);
-            await EmitAsync(eventName, _ctx.PacketId, obj);
+            await EmitCoreAsync(eventName, obj);
         }
 
         public void Dispose()

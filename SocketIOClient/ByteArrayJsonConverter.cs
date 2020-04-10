@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace SocketIOClient
 {
-    class ByteArrayJsonConverter : JsonConverter
+    public class ByteArrayJsonConverter : JsonConverter
     {
         public ByteArrayJsonConverter(ParserContext ctx)
         {
