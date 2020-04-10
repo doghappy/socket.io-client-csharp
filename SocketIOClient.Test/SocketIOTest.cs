@@ -545,7 +545,7 @@ namespace SocketIOClient.Test
             client.OnPing += () => pinged = true;
             client.OnPong += span => ms = span.TotalMilliseconds;
             await client.ConnectAsync();
-            await Task.Delay(26000);
+            await Task.Delay(30000);
             Assert.IsTrue(pinged);
             Assert.IsTrue(ms > 0);
         }
