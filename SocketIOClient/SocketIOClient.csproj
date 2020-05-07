@@ -13,7 +13,7 @@
     <RepositoryType>github</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <Version>1.0.3.12</Version>
+    <Version>1.0.3.13-alpha</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
