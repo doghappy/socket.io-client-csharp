@@ -99,6 +99,7 @@ namespace SocketIOClient
         {
             if (info.Type == DisconnectionType.Error)
             {
+                //Console.WriteLine(info.Exception);
                 throw info.Exception;
             }
             else if (info.Type != DisconnectionType.ByUser)
