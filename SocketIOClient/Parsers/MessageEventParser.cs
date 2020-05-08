@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using Newtonsoft.Json.Linq;
 using SocketIOClient.Arguments;
 using System.Text.RegularExpressions;
 using Websocket.Client;
@@ -9,28 +9,25 @@ namespace SocketIOClient.Parsers
     {
         public override void Parse(ParserContext ctx, ResponseMessage resMsg)
         {
-            var regex = new Regex($@"^42{ctx.Namespace}\d*\[(.+)\]$");
+            var regex = new Regex($@"^42{ctx.Namespace}\d*(\[.+\])$");
             if (regex.IsMatch(resMsg.Text))
             {
-                var groups = regex.Match(resMsg.Text).Groups;
-                string text = groups[1].Value;
-                var formatter = new DataFormatter();
-                var data = formatter.Format(text);
+                var array = JArray.Parse(regex.Match(resMsg.Text).Groups[1].Value);
                 var eventHandlerArg = new ResponseArgs { RawText = resMsg.Text };
-                string eventName = JsonConvert.DeserializeObject<string>(data[0]);
-                if (data.Count > 1)
-                    eventHandlerArg.Text = data[1];
-                if (ctx.EventHandlers.ContainsKey(data[0]))
+                string eventName = array[0].Value<string>();
+                if (array.Count > 1)
+                    eventHandlerArg.Text = array[1].ToString();
+                if (ctx.EventHandlers.ContainsKey(eventName))
                 {
-                    var handlerBox = ctx.EventHandlers[data[0]];
+                    var handlerBox = ctx.EventHandlers[eventName];
                     handlerBox.EventHandler?.Invoke(eventHandlerArg);
                     if (handlerBox.EventHandlers != null)
                     {
                         for (int i = 0; i < handlerBox.EventHandlers.Count; i++)
                         {
                             var arg = new ResponseArgs { RawText = resMsg.Text };
-                            if (i + 2 <= data.Count - 1)
-                                arg.Text = data[i + 2];
+                            if (i + 2 <= array.Count - 1)
+                                arg.Text = array[i + 2].ToString();
                             handlerBox.EventHandlers[i](arg);
                         }
                     }

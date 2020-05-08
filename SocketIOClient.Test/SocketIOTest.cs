@@ -35,7 +35,7 @@ namespace SocketIOClient.Test
             string result = null;
             client.On("test", async res =>
             {
-                result = JsonConvert.DeserializeObject<string>(res.Text);
+                result = res.Text;
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
@@ -59,8 +59,7 @@ namespace SocketIOClient.Test
 
             client.On("test", res =>
             {
-                string text = JsonConvert.DeserializeObject<string>(res.Text);
-                int id = int.Parse(text[0].ToString());
+                int id = int.Parse(res.Text[0].ToString());
                 dic[id] = true;
             });
 
@@ -90,12 +89,12 @@ namespace SocketIOClient.Test
             await client.EmitAsync("test", new
             {
                 code = 200,
-                message = "\"ok"
+                message = "\"ok\\\\"
             });
             await Task.Delay(1000);
 
             Assert.AreEqual(200, obj.Value<int>("code"));
-            Assert.AreEqual("\"ok", obj.Value<string>("message"));
+            Assert.AreEqual("\"ok\\\\", obj.Value<string>("message"));
             Assert.AreEqual("server", obj.Value<string>("source"));
         }
 
@@ -103,17 +102,20 @@ namespace SocketIOClient.Test
         public async Task EmitArrayTest()
         {
             var client = new SocketIO("http://localhost:3000");
-            string result = null;
+            int[] result = null;
             client.On("test", async res =>
             {
-                result = res.Text;
+                result = JsonConvert.DeserializeObject<int[]>(res.Text);
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
             await Task.Delay(1000);
             await client.EmitAsync("test", new[] { 0, 1, 2 });
             await Task.Delay(1000);
-            Assert.AreEqual("[0,1,2]", result);
+            Assert.AreEqual(3, result.Length);
+            Assert.AreEqual(0, result[0]);
+            Assert.AreEqual(1, result[1]);
+            Assert.AreEqual(2, result[2]);
         }
 
         [TestMethod]
@@ -187,7 +189,7 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             await client.EmitAsync("create room", room);
             await Task.Delay(1000);
-            Assert.AreEqual("\"I joined the room: " + room + "\"", roomMsg);
+            Assert.AreEqual("I joined the room: " + room, roomMsg);
         }
 
         [TestMethod]
@@ -228,7 +230,7 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             await client.EmitAsync("ws_message -new", "ws_message-new");
             await Task.Delay(1000);
-            Assert.AreEqual(text, "\"message from server\"");
+            Assert.AreEqual(text, "message from server");
         }
 
         [TestMethod]
@@ -297,7 +299,7 @@ namespace SocketIOClient.Test
             await client.EmitAsync("UnhandledEvent", guid);
             await Task.Delay(1000);
             Assert.AreEqual("UnhandledEvent-Server", en);
-            Assert.AreEqual($"\"{guid} - server\"", text);
+            Assert.AreEqual($"{guid} - server", text);
             await client.ConnectAsync();
         }
 
@@ -323,7 +325,7 @@ namespace SocketIOClient.Test
             await client.EmitAsync("test", guid);
             await Task.Delay(1000);
             Assert.AreEqual("test", en1);
-            Assert.AreEqual($"\"{guid} - server\"", text1);
+            Assert.AreEqual($"{guid} - server", text1);
             Assert.AreEqual(text1, text2);
             await client.ConnectAsync();
         }
@@ -396,7 +398,7 @@ namespace SocketIOClient.Test
             string result = null;
             client.On("test", async res =>
             {
-                result = JsonConvert.DeserializeObject<string>(res.Text);
+                result = res.Text;
                 await client.CloseAsync();
             });
             await client.ConnectAsync();
@@ -439,8 +441,8 @@ namespace SocketIOClient.Test
             await Task.Delay(1000);
             await client.CloseAsync();
 
-            Assert.AreEqual("\"channel\"", result1);
-            Assert.AreEqual("\"emit-args-server\"", result2);
+            Assert.AreEqual("channel", result1);
+            Assert.AreEqual("emit-args-server", result2);
             Assert.IsNull(result3);
         }
 
@@ -466,9 +468,16 @@ namespace SocketIOClient.Test
             Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg1.Buffers[1]));
             Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[0]));
             Assert.AreEqual("message send buffer string " + guid, Encoding.UTF8.GetString(arg2.Buffers[1]));
-            Assert.AreEqual("{\"_placeholder\":true,\"num\":0}", arg0.Text);
-            Assert.AreEqual("string", JsonConvert.DeserializeObject<string>(arg1.Text));
-            Assert.AreEqual("{\"data\":{\"_placeholder\":true,\"num\":1}}", arg2.Text);
+
+            var data0 = JObject.Parse(arg0.Text);
+            Assert.IsTrue(data0.Value<bool>("_placeholder"));
+            Assert.AreEqual(0, data0.Value<int>("num"));
+
+            Assert.AreEqual("string", arg1.Text);
+
+            var data2 = JObject.Parse(arg2.Text);
+            Assert.IsTrue(data2["data"].Value<bool>("_placeholder"));
+            Assert.AreEqual(1, data2["data"].Value<int>("num"));
         }
 
         [TestMethod]
@@ -530,9 +539,18 @@ namespace SocketIOClient.Test
             Assert.AreEqual("1 - str1", Encoding.UTF8.GetString(arg2.Buffers[0]));
             Assert.AreEqual("2 - str2", Encoding.UTF8.GetString(arg2.Buffers[1]));
             Assert.AreEqual("3 - str3", Encoding.UTF8.GetString(arg2.Buffers[2]));
-            Assert.AreEqual("{\"data1\":{\"_placeholder\":true,\"num\":0}}", arg0.Text);
-            Assert.AreEqual("{\"data2\":{\"_placeholder\":true,\"num\":1}}", arg1.Text);
-            Assert.AreEqual("{\"data3\":{\"_placeholder\":true,\"num\":2}}", arg2.Text);
+
+            var data1 = JObject.Parse(arg0.Text);
+            Assert.IsTrue(data1["data1"].Value<bool>("_placeholder"));
+            Assert.AreEqual(0, data1["data1"].Value<int>("num"));
+
+            var data2 = JObject.Parse(arg1.Text);
+            Assert.IsTrue(data2["data2"].Value<bool>("_placeholder"));
+            Assert.AreEqual(1, data2["data2"].Value<int>("num"));
+
+            var data3 = JObject.Parse(arg2.Text);
+            Assert.IsTrue(data3["data3"].Value<bool>("_placeholder"));
+            Assert.AreEqual(2, data3["data3"].Value<int>("num"));
         }
 
         [TestMethod]

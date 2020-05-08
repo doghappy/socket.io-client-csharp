@@ -243,7 +243,7 @@ namespace SocketIOClient
 
         public void On(string eventName, EventHandler handler, params EventHandler[] moreHandlers)
         {
-            _ctx.EventHandlers.Add(JsonConvert.SerializeObject(eventName), new EventHandlerBox
+            _ctx.EventHandlers.Add(eventName, new EventHandlerBox
             {
                 EventHandler = handler,
                 EventHandlers = moreHandlers
