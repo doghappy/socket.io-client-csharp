@@ -23,7 +23,7 @@ namespace SocketIOClient.Test
                 await client.EmitAsync("hi", ".net core");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.AreEqual("hi .net core, You are connected to the server - nsp", result);

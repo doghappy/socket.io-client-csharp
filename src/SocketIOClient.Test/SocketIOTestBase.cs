@@ -19,11 +19,13 @@ namespace SocketIOClient.Test
             var client = new SocketIO(Uri);
             client.OnConnected += (sender, e) => result = true;
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
             Assert.IsTrue(result);
         }
 
+        [TestMethod]
+        [Timeout(1000)]
         public abstract Task EventHiTest();
 
         [TestMethod]
@@ -40,7 +42,7 @@ namespace SocketIOClient.Test
                 }, ".net core");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.IsTrue(result.Value<bool>("result"));
@@ -68,7 +70,7 @@ namespace SocketIOClient.Test
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.AreEqual("client001", result.ClientSource);
@@ -89,7 +91,7 @@ namespace SocketIOClient.Test
             };
             client.OnDisconnected += (sender, e) => reason = e;
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.AreEqual("io server disconnect", reason);
@@ -118,7 +120,7 @@ namespace SocketIOClient.Test
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.AreEqual("client001", result.ClientSource);
