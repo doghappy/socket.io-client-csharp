@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test
 {
     [TestClass]
-    public class SocketIOTest : SocketIOTestBase
+    public class SocketIONspTest : SocketIOTestBase
     {
-        protected override string Uri => "http://localhost:11000/";
+        protected override string Uri => "http://localhost:11000/nsp";
 
         [TestMethod]
         [Timeout(1000)]
@@ -26,7 +26,7 @@ namespace SocketIOClient.Test
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("hi .net core, You are connected to the server", result);
+            Assert.AreEqual("hi .net core, You are connected to the server - nsp", result);
         }
     }
 }
