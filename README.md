@@ -113,3 +113,8 @@ socket.on("bytes", (name, data) => {
     });
 });
 ```
+
+### More examples
+
+[SocketIOClient.Sample](src/SocketIOClinet.Sample/Programe.cs)  
+[SocketIOClient.Test](src/SocketIOClinet.Sample/SocketIOTest.cs)
