@@ -1,8 +1,10 @@
-# Socket.IO-client C#
+# Socket.IO-client for .NET
 
-This is the Socket.IO client for .NET, provide a simple way to connect to the Socket.IO server. The target framework is **.NET Standard 2.0**
+An elegant socket.io client for .NET
 
 [![Build Status](https://herowong.visualstudio.com/socket.io-client/_apis/build/status/doghappy.socket.io-client-csharp?branchName=master)](https://herowong.visualstudio.com/socket.io-client/_build/latest?definitionId=15&branchName=master)
+
+## How to use
 
 ### Nuget
 
@@ -10,76 +12,104 @@ This is the Socket.IO client for .NET, provide a simple way to connect to the So
 Install-Package SocketIOClient
 ```
 
-### Usage
+### Example of usage
+
+#### Emit an event
+
+**Client:**
 
 ```cs
-var client = new SocketIO("http://localhost:3000")
+var client = new SocketIO("http://localhost:11000/");
+client.On("hi", response =>
 {
-    // if server need some parameters, you can add to here
-    Parameters = new Dictionary<string, string>
+    string text = response.GetValue<string>();
+});
+client.OnConnected += async (sender, e) =>
+{
+    await client.EmitAsync("hi", ".net core");
+};
+await client.ConnectAsync();
+```
+
+**Server:**
+
+```ts
+socket.on("hi", name => {
+    socket.emit("hi", `hi ${name}, You are connected to the server`);
+});
+```
+
+#### Emit with Ack
+
+**Client:**
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+client.OnConnected += async (sender, e) =>
+{
+    await client.EmitAsync("ack", response =>
     {
-        { "uid", "" },
-        { "token", "" }
-    }
+        result = response.GetValue();
+    }, ".net core");
+};
+await client.ConnectAsync();
+```
+
+**Server:**
+
+```ts
+socket.on("ack", (name, fn) => {
+    fn({
+        result: true,
+        message: `ack(${name})`
+    });
+});
+```
+
+#### Emit with Binary
+
+**Client:**
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+client.OnConnected += async (sender, e) =>
+{
+    await client.EmitAsync("bytes", name, new
+    {
+        source = "client001",
+        bytes = Encoding.UTF8.GetBytes(".net core")
+    });
 };
 
-client.OnClosed += Client_OnClosed;
-client.OnConnected += Client_OnConnected;
-
-// Listen server events
-client.On("test", res =>
+client.On("bytes", response =>
 {
-    Console.WriteLine(res.Text);
-    // Next, you might parse the data in this way.
-    var obj = JsonConvert.DeserializeObject<T>(res.Text);
-    // Or, read some fields
-    var jobj = JObject.Parse(res.Text);
-    int code = jobj.Value<int>("code");
-    bool hasMore = jobj["data"].Value<bool>("hasMore");
-    var data = jobj["data"].ToObject<ResponseData>();
-    // ...
+    var result = response.GetValue<ByteResponse>();
 });
 
-client.OnConnected += async () =>
-{
-    // Emit test event, send string.
-    await client.EmitAsync("test", "EmitTest");
-
-    // Emit test event, send object.
-    await client.EmitAsync("test", new { code = 200 });
-};
-
-// Connect to the server
 await client.ConnectAsync();
+```
 
-// ...
-
-private void Client_OnConnected()
+```cs
+class ByteResponse
 {
-    Console.WriteLine("Connected to server");
+    public string ClientSource { get; set; }
+
+    public string Source { get; set; }
+
+    [JsonProperty("bytes")]
+    public byte[] Buffer { get; set; }
 }
 ```
 
-#### Emit byte array
+**Server:**
 
-```cs
-await client.EmitAsync("message send", new
-{
-    body = new
-    {
-        data = Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()),
-        mimeType = "text/plain"
-    }
-});
-```
-
-#### Parse the received byte array
-
-```cs
-client.On("message send", a =>
-{
-    Console.WriteLine("Message: " + a.Text);
-    int num = JObject.Parse(a.Text)["body"]["data"].Value<int>("num");
-    Console.WriteLine("Buffer: " + Encoding.UTF8.GetString(a.Buffers[num]));
+```ts
+socket.on("bytes", (name, data) => {
+    const bytes = Buffer.from(data.bytes.toString() + " - server - " + name, "utf-8");
+    socket.emit("bytes", {
+        clientSource: data.source,
+        source: "server",
+        bytes
+    });
 });
 ```
