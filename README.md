@@ -116,5 +116,5 @@ socket.on("bytes", (name, data) => {
 
 ### More examples
 
-[SocketIOClient.Sample](src/SocketIOClinet.Sample/Programe.cs)  
-[SocketIOClient.Test](src/SocketIOClinet.Sample/SocketIOTest.cs)
+[SocketIOClient.Sample](src/SocketIOClient.Sample/Program.cs)  
+[SocketIOClient.Test](src/SocketIOClient.Test/SocketIOTest.cs)
