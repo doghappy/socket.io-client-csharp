@@ -4,7 +4,10 @@ const host = "localhost";
 
 const socket = io(`http://${host}:11000`, {
     path: "/path",
-    transports: ["websocket"]
+    transports: ["websocket"],
+    query: {
+        token: "io"
+    }
 });
 
 socket.on("connect", () => {
@@ -24,7 +27,10 @@ socket.on("connect", () => {
 
 const nspSocket = io(`http://${host}:11000/nsp`, {
     path: "/path",
-    transports: ["websocket"]
+    transports: ["websocket"],
+    query: {
+        token: "io"
+    }
 });
 
 nspSocket.on("connect", () => {

@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient.Test.Models;
+using System.Collections.Generic;
 
 namespace SocketIOClient.Test
 {
@@ -15,7 +16,13 @@ namespace SocketIOClient.Test
         public async Task OnConnectedTest()
         {
             bool result = false;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
             client.OnConnected += (sender, e) => result = true;
             await client.ConnectAsync();
             await Task.Delay(200);
@@ -29,7 +36,13 @@ namespace SocketIOClient.Test
         public async Task EventAckTest()
         {
             JToken result = null;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("ack", response =>
@@ -49,7 +62,13 @@ namespace SocketIOClient.Test
         public async Task BinaryEventTest()
         {
             ByteResponse result = null;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
             client.On("bytes", response => result = response.GetValue<ByteResponse>());
 
             const string dotNetCore = ".net core";
@@ -77,7 +96,13 @@ namespace SocketIOClient.Test
         public async Task ServerDisconectTest()
         {
             string reason = null;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
 
             client.OnConnected += async (sender, e) =>
             {
@@ -95,7 +120,13 @@ namespace SocketIOClient.Test
         public async Task BinaryAckTest()
         {
             ByteResponse result = null;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
 
             const string dotNetCore = ".net core";
             const string client001 = "client001";

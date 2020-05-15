@@ -10,6 +10,14 @@ const io = socket(server, {
     transports: ["websocket"]
 });
 
+io.use((socket, next) => {
+    if (socket.handshake.query.token === "io") {
+        next();
+    } else {
+        next(new Error("Authentication error"));
+    }
+})
+
 io.on("connection", socket => {
     console.log(`connect: ${socket.id}`);
 
@@ -48,12 +56,6 @@ io.on("connection", socket => {
 });
 
 const nsp = io.of("/nsp");
-nsp.use((socket, next) => {
-    if (socket.handshake.query.throw) {
-        next(new Error("Authentication error"));
-    }
-    next();
-})
 nsp.on("connection", socket => {
     console.log(`connect: ${socket.id}`);
 

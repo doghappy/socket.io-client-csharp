@@ -151,6 +151,42 @@ namespace SocketIOClient
             await EmitAsync(eventName, data);
         }
 
+        private async Task SendNamespaceAsync()
+        {
+            if (!string.IsNullOrEmpty(Namespace))
+            {
+                var builder = new StringBuilder();
+                builder.Append("40");
+
+                if (!string.IsNullOrEmpty(Namespace))
+                {
+                    builder.Append(Namespace.TrimEnd(','));
+                }
+                if (_options.Query != null && _options.Query.Count > 0)
+                {
+                    builder.Append('?');
+                    int index = -1;
+                    foreach (var item in _options.Query)
+                    {
+                        index++;
+                        builder
+                            .Append(item.Key)
+                            .Append('=')
+                            .Append(item.Value);
+                        if (index < _options.Query.Count - 1)
+                        {
+                            builder.Append('&');
+                        }
+                    }
+                }
+                if (!string.IsNullOrEmpty(Namespace))
+                {
+                    builder.Append(',');
+                }
+                await Socket.SendMessageAsync(builder.ToString());
+            }
+        }
+
         internal void Open(OpenResponse openResponse)
         {
             Id = openResponse.Sid;
@@ -164,7 +200,7 @@ namespace SocketIOClient
             }
             Task.Factory.StartNew(async () =>
             {
-                await Socket.SendMessageAsync("40" + Namespace);
+                await SendNamespaceAsync();
                 while (true)
                 {
                     await Task.Delay(openResponse.PingInterval);

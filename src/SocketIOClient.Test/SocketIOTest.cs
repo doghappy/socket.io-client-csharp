@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test
@@ -12,7 +13,13 @@ namespace SocketIOClient.Test
         public override async Task EventHiTest()
         {
             string result = null;
-            var client = new SocketIO(Uri);
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
             client.On("hi", response =>
             {
                 result = response.GetValue<string>();
