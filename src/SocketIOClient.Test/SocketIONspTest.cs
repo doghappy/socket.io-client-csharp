@@ -9,7 +9,6 @@ namespace SocketIOClient.Test
         protected override string Uri => "http://localhost:11000/nsp";
 
         [TestMethod]
-        [Timeout(1000)]
         public override async Task EventHiTest()
         {
             string result = null;
@@ -23,7 +22,7 @@ namespace SocketIOClient.Test
                 await client.EmitAsync("hi", ".net core");
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
             Assert.AreEqual("hi .net core, You are connected to the server - nsp", result);

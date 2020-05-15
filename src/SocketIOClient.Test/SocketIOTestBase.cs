@@ -12,24 +12,20 @@ namespace SocketIOClient.Test
         protected abstract string Uri { get; }
 
         [TestMethod]
-        [Timeout(1000)]
         public async Task OnConnectedTest()
         {
             bool result = false;
             var client = new SocketIO(Uri);
             client.OnConnected += (sender, e) => result = true;
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
             Assert.IsTrue(result);
         }
 
-        [TestMethod]
-        [Timeout(1000)]
         public abstract Task EventHiTest();
 
         [TestMethod]
-        [Timeout(1000)]
         public async Task EventAckTest()
         {
             JToken result = null;
@@ -42,7 +38,7 @@ namespace SocketIOClient.Test
                 }, ".net core");
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
             Assert.IsTrue(result.Value<bool>("result"));
@@ -50,7 +46,6 @@ namespace SocketIOClient.Test
         }
 
         [TestMethod]
-        [Timeout(1000)]
         public async Task BinaryEventTest()
         {
             ByteResponse result = null;
@@ -70,7 +65,7 @@ namespace SocketIOClient.Test
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
             Assert.AreEqual("client001", result.ClientSource);
@@ -79,7 +74,6 @@ namespace SocketIOClient.Test
         }
 
         [TestMethod]
-        [Timeout(1000)]
         public async Task ServerDisconectTest()
         {
             string reason = null;
@@ -91,14 +85,13 @@ namespace SocketIOClient.Test
             };
             client.OnDisconnected += (sender, e) => reason = e;
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
             Assert.AreEqual("io server disconnect", reason);
         }
 
         [TestMethod]
-        [Timeout(1000)]
         public async Task BinaryAckTest()
         {
             ByteResponse result = null;
@@ -120,7 +113,7 @@ namespace SocketIOClient.Test
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
             Assert.AreEqual("client001", result.ClientSource);
