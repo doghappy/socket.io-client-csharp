@@ -9,7 +9,7 @@ An elegant socket.io client for .NET
 ### Nuget
 
 ```
-Install-Package SocketIOClient
+Install-Package SocketIOClient -Version 2.0.0-alpha
 ```
 
 ### Example of usage
