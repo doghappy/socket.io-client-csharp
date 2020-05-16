@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIOClient.EventArguments;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -33,6 +34,30 @@ namespace SocketIOClient.Test
             await client.DisconnectAsync();
 
             Assert.AreEqual("hi .net core, You are connected to the server", result);
+        }
+
+        [TestMethod]
+        public async Task OnReceivedEventTest()
+        {
+            ReceivedEventArgs args = null;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("hi", "unit test");
+            };
+            client.OnReceivedEvent += (sender, e) => args = e;
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("hi", args.Event);
+            Assert.AreEqual("hi unit test, You are connected to the server", args.Response.GetValue<string>());
         }
     }
 }

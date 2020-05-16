@@ -18,10 +18,9 @@ namespace SocketIOClient.Sample
             var uri = new Uri("http://localhost:11000/nsp");
             var socket = new SocketIO(uri, new SocketIOOptions
             {
-                Path = "/path",
                 Query = new Dictionary<string, string>
                 {
-                    {"throw", "true" }
+                    {"token", "io" }
                 },
                 ConnectionTimeout = TimeSpan.FromSeconds(10)
             });

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SocketIOClient.EventArguments;
+using System;
 
 namespace SocketIOClient.Packgers
 {
@@ -37,6 +38,16 @@ namespace SocketIOClient.Packgers
                 if (unpackger != null)
                 {
                     unpackger.Unpack(client, content);
+                }
+
+                if (protocol == SocketIOProtocol.Event || protocol == SocketIOProtocol.BinaryEvent)
+                {
+                    var receivedEvent = unpackger as IReceivedEvent;
+                    client.InvokeReceivedEvent(new ReceivedEventArgs
+                    {
+                        Event = receivedEvent.EventName,
+                        Response = receivedEvent.Response
+                    });
                 }
             }
         }

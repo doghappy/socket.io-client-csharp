@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient.Test.Models;
 using System.Collections.Generic;
+using SocketIOClient.EventArguments;
 
 namespace SocketIOClient.Test
 {
@@ -184,6 +185,43 @@ namespace SocketIOClient.Test
             Assert.AreEqual("val2", resVal1);
             Assert.AreEqual(200, resVal2.Code);
             Assert.AreEqual("val1", resVal2.Message);
+        }
+
+        [TestMethod]
+        public async Task OnReceivedBinaryEventTest()
+        {
+            ReceivedEventArgs args = null;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.OnReceivedEvent += (sender, e) => args = e;
+
+            const string dotNetCore = ".net core";
+            const string client001 = "client001";
+            const string name = "unit test";
+
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("bytes", name, new
+                {
+                    source = client001,
+                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
+                });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("bytes", args.Event);
+
+            var result = args.Response.GetValue<ByteResponse>();
+            Assert.AreEqual("client001", result.ClientSource);
+            Assert.AreEqual("server", result.Source);
+            Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
         }
     }
 }

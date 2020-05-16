@@ -2,8 +2,11 @@
 
 namespace SocketIOClient.Packgers
 {
-    public class MessageEventPackger : IUnpackable
+    public class MessageEventPackger : IUnpackable, IReceivedEvent
     {
+        public string EventName { get; private set; }
+        public SocketIOResponse Response { get; private set; }
+
         public void Unpack(SocketIO client, string text)
         {
             if (!string.IsNullOrEmpty(client.Namespace) && text.StartsWith(client.Namespace))
@@ -11,11 +14,12 @@ namespace SocketIOClient.Packgers
                 text = text.Substring(client.Namespace.Length);
             }
             var array = JArray.Parse(text);
-            string eventName = array[0].ToString();
-            if (client.Handlers.ContainsKey(eventName))
+            EventName = array[0].ToString();
+            array.RemoveAt(0);
+            Response = new SocketIOResponse(array);
+            if (client.Handlers.ContainsKey(EventName))
             {
-                array.RemoveAt(0);
-                client.Handlers[eventName](new SocketIOResponse(array));
+                client.Handlers[EventName](Response);
             }
         }
     }

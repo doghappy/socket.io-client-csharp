@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SocketIOClient.EventArguments;
 using SocketIOClient.JsonConverters;
 using SocketIOClient.Packgers;
 using SocketIOClient.Response;
@@ -58,7 +59,7 @@ namespace SocketIOClient
         CancellationTokenSource _pingToken;
 
         #region Socket.IO event
-        public event System.EventHandler OnConnected;
+        public event EventHandler OnConnected;
         //public event EventHandler<string> OnConnectError;
         //public event EventHandler<string> OnConnectTimeout;
         //public event EventHandler<string> OnError;
@@ -68,8 +69,9 @@ namespace SocketIOClient
         //public event EventHandler<string> OnReconnecting;
         //public event EventHandler<string> OnReconnectError;
         //public event EventHandler<string> OnReconnectFailed;
-        public event System.EventHandler OnPing;
+        public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
+        public event EventHandler<ReceivedEventArgs> OnReceivedEvent;
         internal event EventHandler<byte[]> OnBytesReceived;
         #endregion
 
@@ -238,6 +240,11 @@ namespace SocketIOClient
         internal void InvokePong(TimeSpan ms)
         {
             OnPong?.Invoke(this, ms);
+        }
+
+        internal void InvokeReceivedEvent(ReceivedEventArgs args)
+        {
+            OnReceivedEvent?.Invoke(this, args);
         }
     }
 }

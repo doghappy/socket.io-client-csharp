@@ -2,12 +2,13 @@
 
 namespace SocketIOClient.Packgers
 {
-    public class MessageBinaryEventPackger : IUnpackable
+    public class MessageBinaryEventPackger : IUnpackable, IReceivedEvent
     {
+        public string EventName { get; private set; }
+        public SocketIOResponse Response { get; private set; }
+
         int _totalCount;
         JArray _array;
-        string _event;
-        SocketIOResponse _response;
 
         public void Unpack(SocketIO client, string text)
         {
@@ -22,11 +23,11 @@ namespace SocketIOClient.Packgers
                         data = data.Substring(client.Namespace.Length);
                     }
                     _array = JArray.Parse(data);
-                    _event = _array[0].ToString();
-                    if (client.Handlers.ContainsKey(_event))
+                    EventName = _array[0].ToString();
+                    _array.RemoveAt(0);
+                    Response = new SocketIOResponse(_array);
+                    if (_totalCount > 0)
                     {
-                        _array.RemoveAt(0);
-                        _response = new SocketIOResponse(_array);
                         client.OnBytesReceived += Client_OnBytesReceived;
                     }
                 }
@@ -36,11 +37,14 @@ namespace SocketIOClient.Packgers
 
         private void Client_OnBytesReceived(object sender, byte[] e)
         {
-            _response.InComingBytes.Add(e);
-            if (_response.InComingBytes.Count == _totalCount)
+            Response.InComingBytes.Add(e);
+            if (Response.InComingBytes.Count == _totalCount)
             {
                 var client = sender as SocketIO;
-                client.Handlers[_event](_response);
+                if (client.Handlers.ContainsKey(EventName))
+                {
+                    client.Handlers[EventName](Response);
+                }
                 client.OnBytesReceived -= Client_OnBytesReceived;
             }
         }
