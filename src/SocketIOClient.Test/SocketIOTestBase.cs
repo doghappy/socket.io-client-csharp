@@ -151,5 +151,39 @@ namespace SocketIOClient.Test
             Assert.AreEqual("server", result.Source);
             Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
         }
+
+        [TestMethod]
+        public async Task EventChangeTest()
+        {
+            string resVal1 = null;
+            ChangeResponse resVal2 = null;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("change", new
+                {
+                    code = 200,
+                    message = "val1"
+                }, "val2");
+            };
+            client.On("change", response =>
+            {
+                resVal1 = response.GetValue<string>();
+                resVal2 = response.GetValue<ChangeResponse>(1);
+            });
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("val2", resVal1);
+            Assert.AreEqual(200, resVal2.Code);
+            Assert.AreEqual("val1", resVal2.Message);
+        }
     }
 }

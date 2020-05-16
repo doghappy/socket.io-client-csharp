@@ -53,6 +53,10 @@ io.on("connection", socket => {
             bytes
         });
     });
+
+    socket.on("change", (val1, val2) => {
+        socket.emit("change", val2, val1);
+    })
 });
 
 const nsp = io.of("/nsp");
@@ -98,6 +102,10 @@ nsp.on("connection", socket => {
             bytes
         });
     });
+
+    socket.on("change", (val1, val2) => {
+        socket.emit("change", val2, val1);
+    })
 });
 
 server.listen(11000);

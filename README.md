@@ -114,6 +114,53 @@ socket.on("bytes", (name, data) => {
 });
 ```
 
+#### Get multiple response values
+
+**Client:**
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+client.OnConnected += async (sender, e) =>
+{
+    await client.EmitAsync("change", new
+    {
+        code = 200,
+        message = "val1"
+    }, "val2");
+};
+client.On("change", response =>
+{
+    // You can get the JSON string of the response by calling response.ToString()
+    // After that you can decide how to parse the response data.
+    // For example: ["val2", { "code": 200, "message": "val1" }]
+    string resVal1 = response.GetValue<string>();
+    ChangeResponse resVal2 = response.GetValue<ChangeResponse>(1);
+
+    // If you don't want to create a model, you can parse it like this
+    string message = response.GetValue(1).Value<string>("message");
+    int code = response.GetValue(1).Value<int>("code");
+
+    // More specific usage: https://github.com/jamesnk/newtonsoft.json
+});
+await client.ConnectAsync();
+```
+
+```cs
+class ChangeResponse
+{
+    public int Code { get; set; }
+    public string Message { get; set; }
+}
+```
+
+**Server:**
+
+```ts
+socket.on("change", (val1, val2) => {
+    socket.emit("change", val2, val1);
+})
+```
+
 ### More examples
 
 [SocketIOClient.Sample](src/SocketIOClient.Sample/Program.cs)  
