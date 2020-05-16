@@ -164,4 +164,4 @@ socket.on("change", (val1, val2) => {
 ### More examples
 
 [SocketIOClient.Sample](src/SocketIOClient.Sample/Program.cs)  
-[SocketIOClient.Test](src/SocketIOClient.Test/SocketIOTest.cs)
+[SocketIOClient.Test](src/SocketIOClient.Test)
