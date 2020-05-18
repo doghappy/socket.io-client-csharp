@@ -37,17 +37,19 @@ namespace SocketIOClient.Packgers
                 }
                 if (unpackger != null)
                 {
-                    unpackger.Unpack(client, content);
-                }
-
-                if (protocol == SocketIOProtocol.Event || protocol == SocketIOProtocol.BinaryEvent)
-                {
-                    var receivedEvent = unpackger as IReceivedEvent;
-                    client.InvokeReceivedEvent(new ReceivedEventArgs
+                    if (protocol == SocketIOProtocol.Event || protocol == SocketIOProtocol.BinaryEvent)
                     {
-                        Event = receivedEvent.EventName,
-                        Response = receivedEvent.Response
-                    });
+                        var receivedEvent = unpackger as IReceivedEvent;
+                        receivedEvent.OnEnd += () =>
+                        {
+                            client.InvokeReceivedEvent(new ReceivedEventArgs
+                            {
+                                Event = receivedEvent.EventName,
+                                Response = receivedEvent.Response
+                            });
+                        };
+                    }
+                    unpackger.Unpack(client, content);
                 }
             }
         }

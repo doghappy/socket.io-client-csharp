@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
 
 namespace SocketIOClient.Packgers
 {
@@ -9,6 +10,7 @@ namespace SocketIOClient.Packgers
 
         int _totalCount;
         JArray _array;
+        public event Action OnEnd;
 
         public void Unpack(SocketIO client, string text)
         {
@@ -26,10 +28,7 @@ namespace SocketIOClient.Packgers
                     EventName = _array[0].ToString();
                     _array.RemoveAt(0);
                     Response = new SocketIOResponse(_array);
-                    if (_totalCount > 0)
-                    {
-                        client.OnBytesReceived += Client_OnBytesReceived;
-                    }
+                    client.OnBytesReceived += Client_OnBytesReceived;
                 }
             }
 
@@ -46,6 +45,7 @@ namespace SocketIOClient.Packgers
                     client.Handlers[EventName](Response);
                 }
                 client.OnBytesReceived -= Client_OnBytesReceived;
+                OnEnd();
             }
         }
     }

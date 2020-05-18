@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
 
 namespace SocketIOClient.Packgers
 {
@@ -6,6 +7,8 @@ namespace SocketIOClient.Packgers
     {
         public string EventName { get; private set; }
         public SocketIOResponse Response { get; private set; }
+
+        public event Action OnEnd;
 
         public void Unpack(SocketIO client, string text)
         {
@@ -21,6 +24,7 @@ namespace SocketIOClient.Packgers
             {
                 client.Handlers[EventName](Response);
             }
+            OnEnd();
         }
     }
 }
