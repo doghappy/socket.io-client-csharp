@@ -204,14 +204,14 @@ namespace SocketIOClient
             Task.Factory.StartNew(async () =>
             {
                 await SendNamespaceAsync();
-                while (true)
+                while (!_pingToken.IsCancellationRequested)
                 {
                     await Task.Delay(openResponse.PingInterval);
                     try
                     {
                         PingTime = DateTime.Now;
-                        OnPing?.Invoke(this, new EventArgs());
                         await Socket.SendMessageAsync("2");
+                        OnPing?.Invoke(this, new EventArgs());
                     }
                     catch { }
                 }

@@ -6,10 +6,10 @@ An elegant socket.io client for .NET
 
 ## How to use
 
-### Nuget
+### NuGet
 
 ```
-Install-Package SocketIOClient -Version 2.0.0-beta.3
+Install-Package SocketIOClient
 ```
 
 ### Example of usage

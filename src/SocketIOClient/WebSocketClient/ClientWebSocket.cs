@@ -32,6 +32,7 @@ namespace SocketIOClient.WebSocketClient
             _connectionToken = new CancellationTokenSource();
             await _ws.ConnectAsync(uri, _connectionToken.Token);
             await Task.Factory.StartNew(ListenAsync, _connectionToken.Token);
+            await Task.Factory.StartNew(ListenStateAsync, _connectionToken.Token);
         }
 
         public async Task SendMessageAsync(string text)
@@ -98,7 +99,7 @@ namespace SocketIOClient.WebSocketClient
         public async Task DisconnectAsync()
         {
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-            _connectionToken.Cancel();
+            Close();
         }
 
         private async Task ListenAsync()
@@ -114,12 +115,9 @@ namespace SocketIOClient.WebSocketClient
                     do
                     {
                         result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
-
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-                            _connectionToken.Cancel();
-                            _io.InvokeDisconnect("io server disconnect");
+                            Close();
                         }
                         else if (result.MessageType == WebSocketMessageType.Text)
                         {
@@ -150,13 +148,29 @@ namespace SocketIOClient.WebSocketClient
                     }
                 }
             }
-            //catch (Exception e)
-            //{
-            //    CallOnDisconnected();
-            //}
             finally
             {
                 _ws.Dispose();
+            }
+        }
+
+        private void Close()
+        {
+            _io.InvokeDisconnect("io server disconnect");
+            _connectionToken.Cancel();
+            _ws.Dispose();
+        }
+
+        private async Task ListenStateAsync()
+        {
+            while (true)
+            {
+                await Task.Delay(200);
+                if (_ws.State == WebSocketState.Closed)
+                {
+                    Close();
+                    return;
+                }
             }
         }
     }

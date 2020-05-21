@@ -27,6 +27,7 @@ namespace SocketIOClient.Sample
 
             socket.OnConnected += Socket_OnConnected;
             socket.OnPing += Socket_OnPing;
+            socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
 
             await socket.ConnectAsync();
@@ -100,7 +101,12 @@ namespace SocketIOClient.Sample
 
         private static void Socket_OnPing(object sender, EventArgs e)
         {
-            Console.WriteLine("Socket_OnPing");
+            Console.WriteLine("Ping");
+        }
+
+        private static void Socket_OnPong(object sender, TimeSpan e)
+        {
+            Console.WriteLine("Pong: " + e.TotalMilliseconds);
         }
     }
 
