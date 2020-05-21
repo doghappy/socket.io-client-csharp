@@ -60,11 +60,14 @@ namespace SocketIOClient.Sample
             });
             client.OnReceivedEvent += (sender, e) =>
             {
-                var bytes = e.Response.GetValue<ByteResponse>();
-                Console.WriteLine($"OnReceivedEvent.Source = {bytes.Source}");
-                Console.WriteLine($"OnReceivedEvent.ClientSource = {bytes.ClientSource}");
-                Console.WriteLine($"OnReceivedEvent.Buffer.Length = {bytes.Buffer.Length}");
-                Console.WriteLine($"OnReceivedEvent.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
+                if (e.Event == "bytes")
+                {
+                    var bytes = e.Response.GetValue<ByteResponse>();
+                    Console.WriteLine($"OnReceivedEvent.Source = {bytes.Source}");
+                    Console.WriteLine($"OnReceivedEvent.ClientSource = {bytes.ClientSource}");
+                    Console.WriteLine($"OnReceivedEvent.Buffer.Length = {bytes.Buffer.Length}");
+                    Console.WriteLine($"OnReceivedEvent.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
+                }
             };
 
 

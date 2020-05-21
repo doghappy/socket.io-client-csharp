@@ -24,7 +24,8 @@ namespace SocketIOClient
             ServerUri = uri;
             UrlConverter = new UrlConverter();
             _options = options;
-            Socket = new WebSocketClient.WebSocketClient(this, new PackgeManager(this));
+            //Socket = new WebSocketClient.WebSocketClient(this, new PackgeManager(this));
+            Socket = new WebSocketClient.ClientWebSocket(this, new PackgeManager(this));
             if (uri.AbsolutePath != "/")
             {
                 Namespace = uri.AbsolutePath + ',';
