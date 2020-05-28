@@ -23,12 +23,12 @@ namespace SocketIOClient.WebSocketClient
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;
-        System.Net.WebSockets.Managed.ClientWebSocket _ws;
+        System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _connectionToken;
 
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
-            _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
+            _ws = new System.Net.WebSockets.ClientWebSocket();
             _connectionToken = new CancellationTokenSource();
             await _ws.ConnectAsync(uri, _connectionToken.Token);
             await Task.Factory.StartNew(ListenAsync, _connectionToken.Token);
