@@ -172,7 +172,7 @@ namespace SocketIOClient.WebSocketClient
             while (true)
             {
                 await Task.Delay(200);
-                if (_ws.State != WebSocketState.Open)
+                if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
                 {
                     Close();
                     return;
