@@ -13,6 +13,8 @@ Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server", "socket.
 EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-client", "socket.io-client\socket.io-client.njsproj", "{DA937A68-654F-4955-9F74-BE209A696C4D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Web", "SocketIOClient.Web\SocketIOClient.Web.csproj", "{89A823C2-2C7A-45A4-A939-A137CDA75997}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{DA937A68-654F-4955-9F74-BE209A696C4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA937A68-654F-4955-9F74-BE209A696C4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA937A68-654F-4955-9F74-BE209A696C4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
