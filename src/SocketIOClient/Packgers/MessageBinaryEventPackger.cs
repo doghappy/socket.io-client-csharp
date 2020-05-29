@@ -19,15 +19,26 @@ namespace SocketIOClient.Packgers
             {
                 if (int.TryParse(text.Substring(0, index), out _totalCount))
                 {
-                    string data = text.Substring(index + 1);
+                    text = text.Substring(index + 1);
                     if (!string.IsNullOrEmpty(client.Namespace))
                     {
-                        data = data.Substring(client.Namespace.Length);
+                        text = text.Substring(client.Namespace.Length);
                     }
-                    _array = JArray.Parse(data);
+                    int packetIndex = text.IndexOf('[');
+                    string id = null;
+                    if (packetIndex > 0)
+                    {
+                        id = text.Substring(0, index);
+                        text = text.Substring(index);
+                    }
+                    _array = JArray.Parse(text);
                     EventName = _array[0].ToString();
                     _array.RemoveAt(0);
-                    Response = new SocketIOResponse(_array);
+                    Response = new SocketIOResponse(_array, client);
+                    if (int.TryParse(id, out int packetId))
+                    {
+                        Response.PacketId = packetId;
+                    }
                     client.OnBytesReceived += Client_OnBytesReceived;
                 }
             }

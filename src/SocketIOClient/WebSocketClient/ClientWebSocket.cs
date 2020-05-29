@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Text;
 using System.Collections.Generic;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
+using System.Security.Cryptography;
 
 namespace SocketIOClient.WebSocketClient
 {
@@ -29,6 +33,10 @@ namespace SocketIOClient.WebSocketClient
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
             _ws = new System.Net.WebSockets.ClientWebSocket();
+            //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
+            //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
+            //privateKey.en
+            //_ws.Options.ClientCertificates.Add(cert);
             _connectionToken = new CancellationTokenSource();
             await _ws.ConnectAsync(uri, _connectionToken.Token);
             await Task.Factory.StartNew(ListenAsync, _connectionToken.Token);
@@ -92,7 +100,7 @@ namespace SocketIOClient.WebSocketClient
                 await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _connectionToken.Token);
             }
 #if DEBUG
-            Trace.WriteLine($"⬆ {DateTime.Now} {bytes}");
+            Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
         }
 
@@ -140,9 +148,7 @@ namespace SocketIOClient.WebSocketClient
                     else if (result.MessageType == WebSocketMessageType.Binary)
                     {
 #if DEBUG
-                        var builder = new StringBuilder();
-                        binaryResult.ForEach(b => builder.Append(b));
-                        Trace.WriteLine($"⬇ {DateTime.Now} {builder}");
+                        Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
                         _io.InvokeBytesReceived(binaryResult.Skip(1).ToArray());
                     }

@@ -271,5 +271,67 @@ namespace SocketIOClient.Test
             Assert.AreEqual("server", result.Source);
             Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
         }
+
+        [TestMethod]
+        public async Task ClientMessageCallbackTest()
+        {
+            SocketIOResponse res = null;
+            bool called = false;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("client message callback", "SocketIOClient.Test");
+            };
+            client.On("client message callback", async response =>
+            {
+                res = response;
+                await response.CallbackAsync();
+            });
+            client.On("server message callback called", response => called = true);
+            await client.ConnectAsync();
+            await Task.Delay(400);
+
+            Assert.IsTrue(called);
+            Assert.AreEqual("SocketIOClient.Test - server", res.GetValue<string>());
+        }
+
+        [TestMethod]
+        public async Task ClientBinnaryCallbackTest()
+        {
+            SocketIOResponse res = null;
+            bool called = false;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            client.OnConnected += async (sender, e) =>
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes("SocketIOClient.Test");
+                await client.EmitAsync("client binnary callback", bytes);
+            };
+            client.On("client binnary callback", async response =>
+            {
+                res = response;
+                await response.CallbackAsync();
+            });
+            client.On("server binnary callback called", response => called = true);
+            await client.ConnectAsync();
+            await Task.Delay(400);
+
+            Assert.IsTrue(called);
+            byte[] resBytes = res.GetValue<byte[]>();
+            Assert.AreEqual("SocketIOClient.Test - server", Encoding.UTF8.GetString(resBytes));
+        }
     }
 }

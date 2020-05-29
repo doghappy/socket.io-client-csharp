@@ -28,7 +28,7 @@ namespace SocketIOClient.Packgers
                         _array = JArray.Parse(data);
                         if (client.Acks.ContainsKey(_packetId))
                         {
-                            _response = new SocketIOResponse(_array);
+                            _response = new SocketIOResponse(_array, client);
                             client.OnBytesReceived += Client_OnBytesReceived;
                         }
                     }

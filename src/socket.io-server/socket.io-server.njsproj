@@ -31,10 +31,21 @@
   <ItemGroup>
     <None Include="app.ts" />
     <Content Include=".dockerignore" />
+    <Content Include="cert\ca-crt.pem" />
+    <Content Include="cert\ca-crt.srl" />
+    <Content Include="cert\ca-key.pem" />
+    <Content Include="cert\ca.cnf" />
+    <Content Include="cert\server-crt.pem" />
+    <Content Include="cert\server-csr.pem" />
+    <Content Include="cert\server-key.pem" />
+    <Content Include="cert\server.cnf" />
     <Content Include="Dockerfile" />
     <Content Include="package.json" />
     <Content Include="README.md" />
     <Content Include="tsconfig.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="cert\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
   <ProjectExtensions>

@@ -19,7 +19,7 @@ namespace SocketIOClient.Packgers
                 {
                     if (client.Acks.ContainsKey(packetId))
                     {
-                        client.Acks[packetId](new SocketIOResponse(JArray.Parse(data)));
+                        client.Acks[packetId](new SocketIOResponse(JArray.Parse(data), client));
                     }
                 }
             }

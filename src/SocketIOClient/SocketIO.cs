@@ -24,8 +24,7 @@ namespace SocketIOClient
             ServerUri = uri;
             UrlConverter = new UrlConverter();
             _options = options;
-            //Socket = new WebSocketClient.WebSocketClient(this, new PackgeManager(this));
-            Socket = new WebSocketClient.ClientWebSocket(this, new PackgeManager(this));
+            Socket = new ClientWebSocket(this, new PackgeManager(this));
             if (uri.AbsolutePath != "/")
             {
                 Namespace = uri.AbsolutePath + ',';
@@ -96,7 +95,7 @@ namespace SocketIOClient
             Handlers.Add(eventName, callback);
         }
 
-        private async Task EmityAsync(string eventName, string data)
+        private async Task EmityCoreAsync(string eventName, int packetId, string data)
         {
             if (string.IsNullOrWhiteSpace(eventName))
             {
@@ -107,12 +106,12 @@ namespace SocketIOClient
                 builder.Append("45").Append(OutGoingBytes.Count).Append("-");
             else
                 builder.Append("42");
-            builder
-                .Append(Namespace)
-                .Append(PacketId)
-                .Append("[\"")
-                .Append(eventName)
-                .Append("\"");
+            builder.Append(Namespace);
+            if (packetId > -1)
+            {
+                builder.Append(packetId);
+            }
+            builder.Append("[\"").Append(eventName).Append("\"");
             if (!string.IsNullOrEmpty(data))
             {
                 builder.Append(',').Append(data);
@@ -130,9 +129,35 @@ namespace SocketIOClient
             }
         }
 
-        public async Task EmitAsync(string eventName, params object[] data)
+        internal async Task EmitCallbackAsync(int packetId, params object[] data)
         {
-            PacketId++;
+            string dataString = GetDataString(data);
+
+            var builder = new StringBuilder();
+            if (OutGoingBytes.Count > 0)
+                builder.Append("46").Append(OutGoingBytes.Count).Append("-");
+            else
+                builder.Append("43");
+            builder
+                .Append(Namespace)
+                .Append(packetId)
+                .Append("[")
+                .Append(dataString)
+                .Append("]");
+            string message = builder.ToString();
+            await Socket.SendMessageAsync(message);
+            if (OutGoingBytes.Count > 0)
+            {
+                foreach (var item in OutGoingBytes)
+                {
+                    await Socket.SendMessageAsync(item);
+                }
+                OutGoingBytes.Clear();
+            }
+        }
+
+        private string GetDataString(params object[] data)
+        {
             var builder = new StringBuilder();
             if (data != null && data.Length > 0)
             {
@@ -145,13 +170,20 @@ namespace SocketIOClient
                     }
                 }
             }
-            await EmityAsync(eventName, builder.ToString());
+            return builder.ToString();
+        }
+
+        public async Task EmitAsync(string eventName, params object[] data)
+        {
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, -1, dataString);
         }
 
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
-            Acks.Add(PacketId + 1, ack);
-            await EmitAsync(eventName, data);
+            Acks.Add(++PacketId, ack);
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, PacketId, dataString);
         }
 
         private async Task SendNamespaceAsync()
