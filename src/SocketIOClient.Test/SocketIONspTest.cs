@@ -303,7 +303,7 @@ namespace SocketIOClient.Test
         }
 
         [TestMethod]
-        public async Task ClientBinnaryCallbackTest()
+        public async Task ClientBinaryCallbackTest()
         {
             SocketIOResponse res = null;
             bool called = false;
@@ -318,14 +318,14 @@ namespace SocketIOClient.Test
             client.OnConnected += async (sender, e) =>
             {
                 byte[] bytes = Encoding.UTF8.GetBytes("SocketIOClient.Test");
-                await client.EmitAsync("client binnary callback", bytes);
+                await client.EmitAsync("client binary callback", bytes);
             };
-            client.On("client binnary callback", async response =>
+            client.On("client binary callback", async response =>
             {
                 res = response;
                 await response.CallbackAsync();
             });
-            client.On("server binnary callback called", response => called = true);
+            client.On("server binary callback called", response => called = true);
             await client.ConnectAsync();
             await Task.Delay(400);
 

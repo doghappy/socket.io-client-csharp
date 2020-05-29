@@ -76,11 +76,11 @@ io.on("connection", socket => {
         });
     });
 
-    socket.on("client binnary callback", (msg) => {
+    socket.on("client binary callback", (msg) => {
         const binaryMessage = Buffer.from(msg.toString() + " - server", "utf-8");
-        socket.emit("client binnary callback", binaryMessage, clientMsg => {
+        socket.emit("client binary callback", binaryMessage, clientMsg => {
             console.log(clientMsg);
-            socket.emit("server binnary callback called");
+            socket.emit("server binary callback called");
         });
     });
 });
@@ -144,11 +144,11 @@ nsp.on("connection", socket => {
         });
     });
 
-    socket.on("client binnary callback", (msg) => {
+    socket.on("client binary callback", (msg) => {
         const binaryMessage = Buffer.from(msg.toString() + " - server", "utf-8");
-        socket.emit("client binnary callback", binaryMessage, clientMsg => {
+        socket.emit("client binary callback", binaryMessage, clientMsg => {
             console.log(clientMsg);
-            socket.emit("server binnary callback called");
+            socket.emit("server binary callback called");
         });
     });
 });
