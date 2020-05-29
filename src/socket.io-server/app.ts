@@ -1,13 +1,23 @@
 import * as socket from "socket.io"
 import * as http from "http";
+import * as https from "https";
+import * as fs from "fs";
 
 console.log('socket.io-server');
 
 const server = http.createServer();
+//const server = https.createServer({
+//    key: fs.readFileSync("cert/server-key.pem").toString(),
+//    cert: fs.readFileSync("cert/server-crt.pem").toString(),
+//    ca: fs.readFileSync("cert/ca-crt.pem").toString(),
+//    requestCert: true,
+//    rejectUnauthorized: true
+//});
 const io = socket(server, {
     pingInterval: 10000,
     pingTimeout: 5000,
-    transports: ["websocket"]
+    transports: ["websocket"],
+    //path: "/path"
 });
 
 io.use((socket, next) => {
@@ -20,6 +30,7 @@ io.use((socket, next) => {
 
 io.on("connection", socket => {
     console.log(`connect: ${socket.id}`);
+    //console.log(`cert: ${socket.client.request.client.getPeerCertificate().toString()}`)
 
     socket.on("hi", name => {
         socket.emit("hi", `hi ${name}, You are connected to the server`);
@@ -56,7 +67,22 @@ io.on("connection", socket => {
 
     socket.on("change", (val1, val2) => {
         socket.emit("change", val2, val1);
-    })
+    });
+
+    socket.on("client message callback", (msg) => {
+        socket.emit("client message callback", msg + " - server", clientMsg => {
+            console.log(clientMsg);
+            socket.emit("server message callback called");
+        });
+    });
+
+    socket.on("client binnary callback", (msg) => {
+        const binaryMessage = Buffer.from(msg.toString() + " - server", "utf-8");
+        socket.emit("client binnary callback", binaryMessage, clientMsg => {
+            console.log(clientMsg);
+            socket.emit("server binnary callback called");
+        });
+    });
 });
 
 const nsp = io.of("/nsp");
@@ -106,6 +132,27 @@ nsp.on("connection", socket => {
     socket.on("change", (val1, val2) => {
         socket.emit("change", val2, val1);
     });
+
+    socket.on("change", (val1, val2) => {
+        socket.emit("change", val2, val1);
+    });
+
+    socket.on("client message callback", (msg) => {
+        socket.emit("client message callback", msg + " - server", clientMsg => {
+            console.log(clientMsg);
+            socket.emit("server message callback called");
+        });
+    });
+
+    socket.on("client binnary callback", (msg) => {
+        const binaryMessage = Buffer.from(msg.toString() + " - server", "utf-8");
+        socket.emit("client binnary callback", binaryMessage, clientMsg => {
+            console.log(clientMsg);
+            socket.emit("server binnary callback called");
+        });
+    });
 });
 
-server.listen(11000);
+server.listen(11000, () => {
+    console.log(`Listening HTTPS on 11000`);
+});

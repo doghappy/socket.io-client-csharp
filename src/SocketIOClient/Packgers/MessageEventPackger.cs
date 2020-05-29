@@ -16,10 +16,21 @@ namespace SocketIOClient.Packgers
             {
                 text = text.Substring(client.Namespace.Length);
             }
+            int index = text.IndexOf('[');
+            string id = null;
+            if (index > 0)
+            {
+                id = text.Substring(0, index);
+                text = text.Substring(index);
+            }
             var array = JArray.Parse(text);
             EventName = array[0].ToString();
             array.RemoveAt(0);
-            Response = new SocketIOResponse(array);
+            Response = new SocketIOResponse(array, client);
+            if (int.TryParse(id, out int packetId))
+            {
+                Response.PacketId = packetId;
+            }
             if (client.Handlers.ContainsKey(EventName))
             {
                 client.Handlers[EventName](Response);
