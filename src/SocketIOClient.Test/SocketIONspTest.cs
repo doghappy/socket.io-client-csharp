@@ -333,5 +333,33 @@ namespace SocketIOClient.Test
             byte[] resBytes = res.GetValue<byte[]>();
             Assert.AreEqual("SocketIOClient.Test - server", Encoding.UTF8.GetString(resBytes));
         }
+
+        [TestMethod]
+        public async Task DisconnectionTest()
+        {
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            Assert.IsFalse(client.Connected);
+            Assert.IsTrue(client.Disconnected);
+
+            client.OnConnected += async (sender, e) =>
+            {
+                Assert.IsTrue(client.Connected);
+                Assert.IsFalse(client.Disconnected);
+                await client.EmitAsync("sever disconnect");
+            };
+            await client.ConnectAsync();
+
+            await Task.Delay(200);
+
+            Assert.IsFalse(client.Connected);
+            Assert.IsTrue(client.Disconnected);
+        }
     }
 }

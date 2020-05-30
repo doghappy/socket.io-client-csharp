@@ -37,6 +37,7 @@ namespace SocketIOClient
             {
                 Client = this
             };
+            Disconnected = true;
         }
 
         public Uri ServerUri { get; set; }
@@ -236,9 +237,11 @@ namespace SocketIOClient
             Task.Factory.StartNew(async () =>
             {
                 await SendNamespaceAsync();
-                while (!_pingToken.IsCancellationRequested)
+                while (true)
                 {
                     await Task.Delay(openResponse.PingInterval);
+                    if (_pingToken.IsCancellationRequested)
+                        return;
                     try
                     {
                         PingTime = DateTime.Now;
@@ -264,10 +267,13 @@ namespace SocketIOClient
 
         internal void InvokeDisconnect(string reason)
         {
-            Connected = false;
-            Disconnected = true;
-            OnDisconnected?.Invoke(this, reason);
-            _pingToken.Cancel();
+            if (Connected)
+            {
+                Connected = false;
+                Disconnected = true;
+                OnDisconnected?.Invoke(this, reason);
+                _pingToken.Cancel();
+            }
         }
 
         internal void InvokePong(TimeSpan ms)
