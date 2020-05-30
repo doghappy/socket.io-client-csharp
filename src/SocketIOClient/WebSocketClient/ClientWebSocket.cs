@@ -32,6 +32,8 @@ namespace SocketIOClient.WebSocketClient
 
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
+            if (_ws != null)
+                _ws.Dispose();
             _ws = new System.Net.WebSockets.ClientWebSocket();
             //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
@@ -113,46 +115,39 @@ namespace SocketIOClient.WebSocketClient
         private async Task ListenAsync()
         {
             var buffer = new byte[ReceiveChunkSize];
-            try
+            while (_ws.State == WebSocketState.Open)
             {
-                while (_ws.State == WebSocketState.Open)
+                var stringResult = new StringBuilder();
+                var binaryResult = new List<byte>();
+                WebSocketReceiveResult result;
+                do
                 {
-                    var stringResult = new StringBuilder();
-                    var binaryResult = new List<byte>();
-                    WebSocketReceiveResult result;
-                    do
-                    {
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
-                        if (result.MessageType == WebSocketMessageType.Text)
-                        {
-                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            stringResult.Append(str);
-                        }
-                        else if (result.MessageType == WebSocketMessageType.Binary)
-                        {
-                            binaryResult.AddRange(buffer.Take(result.Count));
-                        }
-                    } while (!result.EndOfMessage);
+                    result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
-                        string message = stringResult.ToString();
-#if DEBUG
-                        Trace.WriteLine($"⬇ {DateTime.Now} {message}");
-#endif
-                        _parser.Unpack(message);
+                        string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        stringResult.Append(str);
                     }
                     else if (result.MessageType == WebSocketMessageType.Binary)
                     {
-#if DEBUG
-                        Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
-#endif
-                        _io.InvokeBytesReceived(binaryResult.Skip(1).ToArray());
+                        binaryResult.AddRange(buffer.Take(result.Count));
                     }
+                } while (!result.EndOfMessage);
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    string message = stringResult.ToString();
+#if DEBUG
+                    Trace.WriteLine($"⬇ {DateTime.Now} {message}");
+#endif
+                    _parser.Unpack(message);
                 }
-            }
-            finally
-            {
-                _ws.Dispose();
+                else if (result.MessageType == WebSocketMessageType.Binary)
+                {
+#if DEBUG
+                    Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
+#endif
+                    _io.InvokeBytesReceived(binaryResult.Skip(1).ToArray());
+                }
             }
         }
 
