@@ -123,7 +123,11 @@ namespace SocketIOClient.WebSocketClient
                 do
                 {
                     result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
-                    if (result.MessageType == WebSocketMessageType.Text)
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        Close();
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Text)
                     {
                         string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
                         stringResult.Append(str);
