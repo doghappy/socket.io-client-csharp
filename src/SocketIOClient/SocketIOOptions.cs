@@ -10,5 +10,9 @@ namespace SocketIOClient
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(20);
 
         public Dictionary<string, string> Query { get; set; }
+
+        public bool Reconnection { get; set; } = true;
+
+        public int ReconnectionTimes { get; set; } = 10;
     }
 }

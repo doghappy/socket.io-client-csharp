@@ -6,6 +6,7 @@ using SocketIOClient.Response;
 using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,7 @@ namespace SocketIOClient
                 Client = this
             };
             Disconnected = true;
+            OnDisconnected += SocketIO_OnDisconnected;
         }
 
         public Uri ServerUri { get; set; }
@@ -87,6 +89,9 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
+            await Socket.SendMessageAsync("41" + Namespace);
+            Connected = false;
+            Disconnected = true;
             await Socket.DisconnectAsync();
             _pingToken.Cancel();
         }
@@ -266,6 +271,39 @@ namespace SocketIOClient
                 Disconnected = true;
                 OnDisconnected?.Invoke(this, reason);
                 _pingToken.Cancel();
+            }
+        }
+
+        private async void SocketIO_OnDisconnected(object sender, string e)
+        {
+            if (_options.Reconnection)
+            {
+                int exponent = -3;
+                for (int i = 0; i < _options.ReconnectionTimes; i++)
+                {
+                    if (!Connected && Disconnected)
+                    {
+                        try
+                        {
+                            await ConnectAsync();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
+                            {
+                                int ms = (int)(Math.Pow(2, exponent) * 1000);
+                                Trace.WriteLine($"{DateTime.Now} Reconnection wait {ms} ms");
+                                await Task.Delay(ms);
+                                Console.WriteLine("Thread: " + Process.GetCurrentProcess().Threads.Count);
+                            }
+                        }
+                        exponent++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
         }
 
