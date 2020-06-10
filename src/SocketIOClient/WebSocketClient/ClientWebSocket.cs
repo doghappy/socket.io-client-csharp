@@ -109,7 +109,7 @@ namespace SocketIOClient.WebSocketClient
         public async Task DisconnectAsync()
         {
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-            Close();
+            Close(null);
         }
 
         private async Task ListenAsync()
@@ -125,7 +125,7 @@ namespace SocketIOClient.WebSocketClient
                     result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        Close();
+                        Close("io server disconnect");
                     }
                     else if (result.MessageType == WebSocketMessageType.Text)
                     {
@@ -155,9 +155,12 @@ namespace SocketIOClient.WebSocketClient
             }
         }
 
-        private void Close()
+        private void Close(string reason)
         {
-            _io.InvokeDisconnect("io server disconnect");
+            if (reason != null)
+            {
+                _io.InvokeDisconnect(reason);
+            }
             _connectionToken.Cancel();
             _ws.Dispose();
         }
@@ -169,7 +172,7 @@ namespace SocketIOClient.WebSocketClient
                 await Task.Delay(200);
                 if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
                 {
-                    Close();
+                    Close("io server disconnect");
                     return;
                 }
             }

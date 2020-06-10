@@ -32,6 +32,10 @@ io.on("connection", socket => {
     console.log(`connect: ${socket.id}`);
     //console.log(`cert: ${socket.client.request.client.getPeerCertificate().toString()}`)
 
+    socket.on("disconnect", reason => {
+        console.log(`disconnect: ${reason}`);
+    });
+
     socket.on("hi", name => {
         socket.emit("hi", `hi ${name}, You are connected to the server`);
     });

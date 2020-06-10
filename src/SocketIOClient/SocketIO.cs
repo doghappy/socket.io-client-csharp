@@ -6,6 +6,7 @@ using SocketIOClient.Response;
 using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,7 @@ namespace SocketIOClient
                 Client = this
             };
             Disconnected = true;
+            OnDisconnected += SocketIO_OnDisconnected;
         }
 
         public Uri ServerUri { get; set; }
@@ -67,7 +69,7 @@ namespace SocketIOClient
         public event EventHandler<string> OnDisconnected;
         //public event EventHandler<string> OnReconnected;
         //public event EventHandler<string> OnReconnectAttempt;
-        //public event EventHandler<string> OnReconnecting;
+        public event EventHandler<int> OnReconnecting;
         //public event EventHandler<string> OnReconnectError;
         //public event EventHandler<string> OnReconnectFailed;
         public event EventHandler OnPing;
@@ -87,6 +89,9 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
+            await Socket.SendMessageAsync("41" + Namespace);
+            Connected = false;
+            Disconnected = true;
             await Socket.DisconnectAsync();
             _pingToken.Cancel();
         }
@@ -266,6 +271,45 @@ namespace SocketIOClient
                 Disconnected = true;
                 OnDisconnected?.Invoke(this, reason);
                 _pingToken.Cancel();
+            }
+        }
+
+        private async void SocketIO_OnDisconnected(object sender, string e)
+        {
+            if (_options.Reconnection)
+            {
+                double delayDouble = _options.ReconnectionDelay;
+                int attempt = 0;
+                while (true)
+                {
+                    int delay = (int)delayDouble;
+                    Trace.WriteLine($"{DateTime.Now} Reconnection wait {delay} ms");
+                    await Task.Delay(delay);
+                    Trace.WriteLine($"{DateTime.Now} Delay done");
+                    try
+                    {
+                        if (!Connected && Disconnected)
+                        {
+                            OnReconnecting?.Invoke(this, ++attempt);
+                            await ConnectAsync();
+                        }
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
+                        {
+                            if (delayDouble < _options.ReconnectionDelayMax)
+                            {
+                                delayDouble += 2 * _options.RandomizationFactor;
+                            }
+                        }
+                        else
+                        {
+                            throw ex;
+                        }
+                    }
+                }
             }
         }
 

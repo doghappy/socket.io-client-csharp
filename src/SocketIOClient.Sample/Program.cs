@@ -8,14 +8,17 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Sample
 {
+
     class Program
     {
         static async Task Main(string[] args)
         {
+            Console.WriteLine(Environment.OSVersion);
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
             var uri = new Uri("http://localhost:11000/nsp");
+
             var socket = new SocketIO(uri, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
@@ -29,29 +32,15 @@ namespace SocketIOClient.Sample
             socket.OnPing += Socket_OnPing;
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
-
+            socket.OnReconnecting += Socket_OnReconnecting;
             await socket.ConnectAsync();
 
-            Console.ReadLine();
-        }
-
-        private static void Socket_OnDisconnected(object sender, string e)
-        {
-            Console.WriteLine("disconnect: " + e);
-        }
-
-        private static async void Socket_OnConnected(object sender, EventArgs e)
-        {
-            Console.WriteLine("Socket_OnConnected");
-            var client = sender as SocketIO;
-            Console.WriteLine("Socket.Id:" + client.Id);
-
-            client.On("hi", response =>
+            socket.On("hi", response =>
             {
                 Console.WriteLine($"server: {response.GetValue<string>()}");
             });
 
-            client.On("bytes", response =>
+            socket.On("bytes", response =>
             {
                 var bytes = response.GetValue<ByteResponse>();
                 Console.WriteLine($"bytes.Source = {bytes.Source}");
@@ -59,7 +48,7 @@ namespace SocketIOClient.Sample
                 Console.WriteLine($"bytes.Buffer.Length = {bytes.Buffer.Length}");
                 Console.WriteLine($"bytes.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
             });
-            client.OnReceivedEvent += (sender, e) =>
+            socket.OnReceivedEvent += (sender, e) =>
             {
                 if (e.Event == "bytes")
                 {
@@ -72,31 +61,50 @@ namespace SocketIOClient.Sample
             };
 
 
-            await client.EmitAsync("hi", "SocketIOClient.Sample");
+            await socket.EmitAsync("hi", "SocketIOClient.Sample");
 
-            await client.EmitAsync("ack", response =>
+            await socket.EmitAsync("ack", response =>
             {
                 Console.WriteLine(response.ToString());
             }, "SocketIOClient.Sample");
 
-            await client.EmitAsync("bytes", "c#", new
+            await socket.EmitAsync("bytes", "c#", new
             {
                 source = "client007",
                 bytes = Encoding.UTF8.GetBytes("dot net")
             });
 
-            await client.EmitAsync("binary ack", response =>
+            socket.On("client binary callback", async response =>
             {
-                var bytes = response.GetValue<ByteResponse>();
-                Console.WriteLine($"(binary ack).Source = {bytes.Source}");
-                Console.WriteLine($"(binary ack).ClientSource = {bytes.ClientSource}");
-                Console.WriteLine($"(binary ack).Buffer.Length = {bytes.Buffer.Length}");
-                Console.WriteLine($"(binary ack).Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
-            }, "C#", new
-            {
-                source = "client007",
-                bytes = Encoding.UTF8.GetBytes("dot net")
+                await response.CallbackAsync();
             });
+
+            await socket.EmitAsync("client binary callback", Encoding.UTF8.GetBytes("SocketIOClient.Sample"));
+
+            socket.On("client message callback", async response =>
+            {
+                await response.CallbackAsync(Encoding.UTF8.GetBytes("CallbackAsync();"));
+            });
+            await socket.EmitAsync("client message callback", "SocketIOClient.Sample");
+
+            Console.ReadLine();
+        }
+
+        private static void Socket_OnReconnecting(object sender, int e)
+        {
+            Console.WriteLine($"Reconnecting: attempt = {e}");
+        }
+
+        private static void Socket_OnDisconnected(object sender, string e)
+        {
+            Console.WriteLine("disconnect: " + e);
+        }
+
+        private static void Socket_OnConnected(object sender, EventArgs e)
+        {
+            Console.WriteLine("Socket_OnConnected");
+            var client = sender as SocketIO;
+            Console.WriteLine("Socket.Id:" + client.Id);
         }
 
         private static void Socket_OnPing(object sender, EventArgs e)
@@ -118,5 +126,14 @@ namespace SocketIOClient.Sample
 
         [JsonProperty("bytes")]
         public byte[] Buffer { get; set; }
+    }
+
+    class ClientCallbackResponse
+    {
+        [JsonProperty("text")]
+        public string Text { get; set; }
+
+        [JsonProperty("bytes")]
+        public byte[] Bytes { get; set; }
     }
 }

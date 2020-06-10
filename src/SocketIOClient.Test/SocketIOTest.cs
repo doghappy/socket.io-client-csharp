@@ -19,6 +19,7 @@ namespace SocketIOClient.Test
             string result = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -45,6 +46,7 @@ namespace SocketIOClient.Test
             ReceivedEventArgs args = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -69,6 +71,7 @@ namespace SocketIOClient.Test
             bool result = false;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -87,6 +90,7 @@ namespace SocketIOClient.Test
             JToken result = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -113,6 +117,7 @@ namespace SocketIOClient.Test
             ByteResponse result = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -147,6 +152,7 @@ namespace SocketIOClient.Test
             string reason = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -171,6 +177,7 @@ namespace SocketIOClient.Test
             ByteResponse result = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -208,6 +215,7 @@ namespace SocketIOClient.Test
             ChangeResponse resVal2 = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -241,6 +249,7 @@ namespace SocketIOClient.Test
             ReceivedEventArgs args = null;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -279,6 +288,7 @@ namespace SocketIOClient.Test
             bool called = false;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -297,6 +307,7 @@ namespace SocketIOClient.Test
             client.On("server message callback called", response => called = true);
             await client.ConnectAsync();
             await Task.Delay(400);
+            await client.DisconnectAsync();
 
             Assert.IsTrue(called);
             Assert.AreEqual("SocketIOClient.Test - server", res.GetValue<string>());
@@ -309,6 +320,7 @@ namespace SocketIOClient.Test
             bool called = false;
             var client = new SocketIO(Uri, new SocketIOOptions
             {
+                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "io" }
@@ -328,10 +340,147 @@ namespace SocketIOClient.Test
             client.On("server binary callback called", response => called = true);
             await client.ConnectAsync();
             await Task.Delay(400);
+            await client.DisconnectAsync();
 
             Assert.IsTrue(called);
             byte[] resBytes = res.GetValue<byte[]>();
             Assert.AreEqual("SocketIOClient.Test - server", Encoding.UTF8.GetString(resBytes));
+        }
+
+        [TestMethod]
+        public async Task ReconnectionTrueTest()
+        {
+            int hiCount = 0;
+            string res = null;
+            int disconnectionCount = 0;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("hi", response =>
+            {
+                res = response.GetValue<string>();
+                hiCount++;
+            });
+
+            client.OnDisconnected += (sender, e) =>
+            {
+                disconnectionCount++;
+            };
+
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("hi", "SocketIOClient.Test");
+                await Task.Delay(10);
+                if (hiCount >= 2)
+                {
+                    await client.DisconnectAsync();
+                }
+                else
+                {
+                    await client.EmitAsync("sever disconnect", true);
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(2400);
+
+            Assert.IsFalse(client.Connected);
+            Assert.IsTrue(client.Disconnected);
+            Assert.AreEqual(2, hiCount);
+            Assert.AreEqual(1, disconnectionCount);
+            Assert.AreEqual("hi SocketIOClient.Test, You are connected to the server", res);
+        }
+
+        [TestMethod]
+        public async Task ReconnectionFalseTest()
+        {
+            int hiCount = 0;
+            string res = null;
+            int disconnectionCount = 0;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("hi", response =>
+            {
+                res = response.GetValue<string>();
+                hiCount++;
+            });
+
+            client.OnDisconnected += (sender, e) =>
+            {
+                disconnectionCount++;
+            };
+
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("hi", "SocketIOClient.Test");
+                await Task.Delay(10);
+                if (hiCount >= 2)
+                {
+                    await client.DisconnectAsync();
+                }
+                else
+                {
+                    await client.EmitAsync("sever disconnect", true);
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(1000);
+
+            Assert.IsFalse(client.Connected);
+            Assert.IsTrue(client.Disconnected);
+            Assert.AreEqual(1, hiCount);
+            Assert.AreEqual(1, disconnectionCount);
+            Assert.AreEqual("hi SocketIOClient.Test, You are connected to the server", res);
+        }
+
+        [TestMethod]
+        public async Task ReconnectingTest()
+        {
+            int disconnectionCount = 0;
+            int reconnectingCount = 0;
+            int attempt = 0;
+            bool connectedFlag = false;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            client.OnDisconnected += (sender, e) => disconnectionCount++;
+
+            client.OnReconnecting += (sender, e) =>
+            {
+                reconnectingCount++;
+                attempt = e;
+            };
+
+            client.OnConnected += async (sender, e) =>
+            {
+                if (!connectedFlag)
+                {
+                    await Task.Delay(200);
+                    connectedFlag = true;
+                    await client.EmitAsync("sever disconnect", true);
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(2400);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, disconnectionCount);
+            Assert.AreEqual(1, reconnectingCount);
+            Assert.AreEqual(1, attempt);
         }
     }
 }
