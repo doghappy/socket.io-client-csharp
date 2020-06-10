@@ -5,7 +5,7 @@
     <AssemblyName>SocketIOClient</AssemblyName>
     <RootNamespace>SocketIOClient</RootNamespace>
     <Authors>HeroWong</Authors>
-    <Description>Provide a simple way to connect to the Socket.IO server using C#</Description>
+    <Description>socket.io-client implemention for .NET</Description>
     <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
