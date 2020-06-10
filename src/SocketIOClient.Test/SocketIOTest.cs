@@ -385,7 +385,7 @@ namespace SocketIOClient.Test
                 }
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(2400);
 
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);

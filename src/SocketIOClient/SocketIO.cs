@@ -278,30 +278,31 @@ namespace SocketIOClient
         {
             if (_options.Reconnection)
             {
-                int exponent = -3;
-                for (int i = 0; i < _options.ReconnectionTimes; i++)
+                double delayDouble = _options.ReconnectionDelay;
+                while (true)
                 {
-                    if (!Connected && Disconnected)
+                    int delay = (int)delayDouble;
+                    Trace.WriteLine($"{DateTime.Now} Reconnection wait {delay} ms");
+                    await Task.Delay(delay);
+                    Trace.WriteLine($"{DateTime.Now} Delay done");
+                    try
                     {
-                        try
+                        if (!Connected && Disconnected)
                         {
                             await ConnectAsync();
                         }
-                        catch (Exception ex)
-                        {
-                            if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
-                            {
-                                int ms = (int)(Math.Pow(2, exponent) * 1000);
-                                Trace.WriteLine($"{DateTime.Now} Reconnection wait {ms} ms");
-                                await Task.Delay(ms);
-                                Console.WriteLine("Thread: " + Process.GetCurrentProcess().Threads.Count);
-                            }
-                        }
-                        exponent++;
-                    }
-                    else
-                    {
                         break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
+                        {
+                            delayDouble += 2 * _options.RandomizationFactor;
+                        }
+                        else
+                        {
+                            throw ex;
+                        }
                     }
                 }
             }
