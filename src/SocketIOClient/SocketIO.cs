@@ -69,7 +69,7 @@ namespace SocketIOClient
         public event EventHandler<string> OnDisconnected;
         //public event EventHandler<string> OnReconnected;
         //public event EventHandler<string> OnReconnectAttempt;
-        //public event EventHandler<string> OnReconnecting;
+        public event EventHandler<int> OnReconnecting;
         //public event EventHandler<string> OnReconnectError;
         //public event EventHandler<string> OnReconnectFailed;
         public event EventHandler OnPing;
@@ -279,6 +279,7 @@ namespace SocketIOClient
             if (_options.Reconnection)
             {
                 double delayDouble = _options.ReconnectionDelay;
+                int attempt = 0;
                 while (true)
                 {
                     int delay = (int)delayDouble;
@@ -289,6 +290,7 @@ namespace SocketIOClient
                     {
                         if (!Connected && Disconnected)
                         {
+                            OnReconnecting?.Invoke(this, ++attempt);
                             await ConnectAsync();
                         }
                         break;
@@ -297,7 +299,10 @@ namespace SocketIOClient
                     {
                         if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            delayDouble += 2 * _options.RandomizationFactor;
+                            if (delayDouble < _options.ReconnectionDelayMax)
+                            {
+                                delayDouble += 2 * _options.RandomizationFactor;
+                            }
                         }
                         else
                         {

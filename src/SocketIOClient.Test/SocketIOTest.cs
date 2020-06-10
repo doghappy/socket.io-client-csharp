@@ -434,13 +434,53 @@ namespace SocketIOClient.Test
             };
             await client.ConnectAsync();
             await Task.Delay(1000);
-            //await client.DisconnectAsync();
 
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
             Assert.AreEqual(1, hiCount);
             Assert.AreEqual(1, disconnectionCount);
             Assert.AreEqual("hi SocketIOClient.Test, You are connected to the server", res);
+        }
+
+        [TestMethod]
+        public async Task ReconnectingTest()
+        {
+            int disconnectionCount = 0;
+            int reconnectingCount = 0;
+            int attempt = 0;
+            bool connectedFlag = false;
+            var client = new SocketIO(Uri, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            client.OnDisconnected += (sender, e) => disconnectionCount++;
+
+            client.OnReconnecting += (sender, e) =>
+            {
+                reconnectingCount++;
+                attempt = e;
+            };
+
+            client.OnConnected += async (sender, e) =>
+            {
+                if (!connectedFlag)
+                {
+                    await Task.Delay(200);
+                    connectedFlag = true;
+                    await client.EmitAsync("sever disconnect", true);
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(2400);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, disconnectionCount);
+            Assert.AreEqual(1, reconnectingCount);
+            Assert.AreEqual(1, attempt);
         }
     }
 }
