@@ -13,7 +13,7 @@
     <RepositoryType>github</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
-    <Version>2.0.2</Version>
+    <Version>2.0.2.1-alpha.1</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
