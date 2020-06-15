@@ -101,6 +101,14 @@ namespace SocketIOClient
             Handlers.Add(eventName, callback);
         }
 
+        public void Off(string eventName)
+        {
+            if (Handlers.ContainsKey(eventName))
+            {
+                Handlers.Remove(eventName);
+            }
+        }
+
         private async Task EmityCoreAsync(string eventName, int packetId, string data)
         {
             if (string.IsNullOrWhiteSpace(eventName))
