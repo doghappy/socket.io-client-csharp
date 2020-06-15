@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{6E6BAA1A-ED83-4204-8674-77E899BFBD54}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SocketIOClient.NetFx</RootNamespace>
+    <AssemblyName>SocketIOClient.NetFx</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\SocketIOClient\EngineIOProtocol.cs">
+      <Link>EngineIOProtocol.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\EventArguments\ReceivedEventArgs.cs">
+      <Link>EventArguments\ReceivedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\JsonConverters\ByteArrayConverter.cs">
+      <Link>JsonConverters\ByteArrayConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\IPackable.cs">
+      <Link>Packgers\IPackable.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\IPackger.cs">
+      <Link>Packgers\IPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\IReceivedEvent.cs">
+      <Link>Packgers\IReceivedEvent.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\IUnpackable.cs">
+      <Link>Packgers\IUnpackable.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageAckPackger.cs">
+      <Link>Packgers\MessageAckPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageBinaryAckPackger.cs">
+      <Link>Packgers\MessageBinaryAckPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageBinaryEventPackger.cs">
+      <Link>Packgers\MessageBinaryEventPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageConnectedPackger.cs">
+      <Link>Packgers\MessageConnectedPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageDisconnectedPackger.cs">
+      <Link>Packgers\MessageDisconnectedPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageErrorPackger.cs">
+      <Link>Packgers\MessageErrorPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessageEventPackger.cs">
+      <Link>Packgers\MessageEventPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\MessagePackger.cs">
+      <Link>Packgers\MessagePackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\OpenedPackger.cs">
+      <Link>Packgers\OpenedPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\PackgeManager.cs">
+      <Link>Packgers\PackgeManager.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Packgers\PongPackger.cs">
+      <Link>Packgers\PongPackger.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Response\MessageType.cs">
+      <Link>Response\MessageType.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Response\OpenResponse.cs">
+      <Link>Response\OpenResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\SocketIO.cs">
+      <Link>SocketIO.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\SocketIOOptions.cs">
+      <Link>SocketIOOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\SocketIOProtocol.cs">
+      <Link>SocketIOProtocol.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\SocketIOResponse.cs">
+      <Link>SocketIOResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\UrlConverter.cs">
+      <Link>UrlConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\WebSocketClient\IWebSocketClient.cs">
+      <Link>WebSocketClient\IWebSocketClient.cs</Link>
+    </Compile>
+    <Compile Include="WebSocketClient\ClientWebSocket.cs" />
+    <Compile Include="WebSocketClient\WebSocketSharpClient.cs" />
+    <Compile Include="..\SocketIOClient\WebSocketClient\WebSocketConnectionOptions.cs">
+      <Link>WebSocketClient\WebSocketConnectionOptions.cs</Link>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

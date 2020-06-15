@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -60,7 +59,24 @@ namespace SocketIOClient.Sample
                 }
             };
 
+            Console.ReadLine();
+        }
 
+        private static void Socket_OnReconnecting(object sender, int e)
+        {
+            Console.WriteLine($"Reconnecting: attempt = {e}");
+        }
+
+        private static void Socket_OnDisconnected(object sender, string e)
+        {
+            Console.WriteLine("disconnect: " + e);
+        }
+
+        private static async void Socket_OnConnected(object sender, EventArgs e)
+        {
+            Console.WriteLine("Socket_OnConnected");
+            var socket = sender as SocketIO;
+            Console.WriteLine("Socket.Id:" + socket.Id);
             await socket.EmitAsync("hi", "SocketIOClient.Sample");
 
             await socket.EmitAsync("ack", response =>
@@ -86,25 +102,6 @@ namespace SocketIOClient.Sample
                 await response.CallbackAsync(Encoding.UTF8.GetBytes("CallbackAsync();"));
             });
             await socket.EmitAsync("client message callback", "SocketIOClient.Sample");
-
-            Console.ReadLine();
-        }
-
-        private static void Socket_OnReconnecting(object sender, int e)
-        {
-            Console.WriteLine($"Reconnecting: attempt = {e}");
-        }
-
-        private static void Socket_OnDisconnected(object sender, string e)
-        {
-            Console.WriteLine("disconnect: " + e);
-        }
-
-        private static void Socket_OnConnected(object sender, EventArgs e)
-        {
-            Console.WriteLine("Socket_OnConnected");
-            var client = sender as SocketIO;
-            Console.WriteLine("Socket.Id:" + client.Id);
         }
 
         private static void Socket_OnPing(object sender, EventArgs e)
