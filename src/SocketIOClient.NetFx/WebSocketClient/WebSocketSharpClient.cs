@@ -27,15 +27,19 @@ namespace SocketIOClient.NetFx.WebSocketClient
         {
             _ws = new WebSocket(uri.ToString());
             _ws.OnMessage += OnMessage;
-            _ws.OnClose += OnClose;
             _ws.Connect();
+            if (_ws.ReadyState == WebSocketState.Closed || _ws.ReadyState == WebSocketState.Closing)
+            {
+                throw new System.Net.WebSockets.WebSocketException("Unable to connect to the remote server.");
+            }
+            _ws.OnClose += OnClose;
             _connectionToken = new CancellationTokenSource();
             await Task.Factory.StartNew(ListenStateAsync, _connectionToken.Token);
         }
 
         private void OnClose(object sender, CloseEventArgs e)
         {
-            throw new NotImplementedException();
+            Close("io server disconnect");
         }
 
         private void OnMessage(object sender, MessageEventArgs e)
@@ -103,7 +107,7 @@ namespace SocketIOClient.NetFx.WebSocketClient
             {
                 _io.InvokeDisconnect(reason);
             }
-            _connectionToken.Cancel();
+            _connectionToken?.Cancel();
             var ws = _ws as IDisposable;
             ws.Dispose();
         }

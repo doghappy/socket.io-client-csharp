@@ -23,39 +23,46 @@ namespace SocketIOClient
         public SocketIO(Uri uri, SocketIOOptions options)
         {
             ServerUri = uri;
-            UrlConverter = new UrlConverter();
-            _options = options;
-            Socket = new ClientWebSocket(this, new PackgeManager(this));
-            if (uri.AbsolutePath != "/")
-            {
-                Namespace = uri.AbsolutePath + ',';
-            }
-            PacketId = -1;
-            Acks = new Dictionary<int, Action<SocketIOResponse>>();
-            Handlers = new Dictionary<string, Action<SocketIOResponse>>();
-            OutGoingBytes = new List<byte[]>();
-            _byteArrayConverter = new ByteArrayConverter
-            {
-                Client = this
-            };
-            Disconnected = true;
-            OnDisconnected += SocketIO_OnDisconnected;
+            Options = options;
+            Initialize();
         }
 
-        public Uri ServerUri { get; set; }
+        public SocketIO()
+        {
+            Options = new SocketIOOptions();
+            Initialize();
+        }
+
+        Uri _serverUri;
+        public Uri ServerUri
+        {
+            get => _serverUri;
+            set
+            {
+                if (_serverUri != value)
+                {
+                    _serverUri = value;
+                    if (value != null && value.AbsolutePath != "/")
+                    {
+                        Namespace = value.AbsolutePath + ',';
+                    }
+                }
+            }
+        }
+
         public UrlConverter UrlConverter { get; set; }
         public IWebSocketClient Socket { get; set; }
         public string Id { get; set; }
-        public string Namespace { get; }
+        public string Namespace { get; private set; }
         public bool Connected { get; private set; }
         public bool Disconnected { get; private set; }
         internal int PacketId { get; private set; }
-        internal List<byte[]> OutGoingBytes { get; }
-        internal Dictionary<int, Action<SocketIOResponse>> Acks { get; }
+        internal List<byte[]> OutGoingBytes { get; private set; }
+        internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
         internal DateTime PingTime { get; set; }
 
-        readonly SocketIOOptions _options;
-        readonly ByteArrayConverter _byteArrayConverter;
+        public SocketIOOptions Options { get; }
+        ByteArrayConverter _byteArrayConverter;
 
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
@@ -78,12 +85,32 @@ namespace SocketIOClient
         internal event EventHandler<byte[]> OnBytesReceived;
         #endregion
 
+        private void Initialize()
+        {
+            UrlConverter = new UrlConverter();
+            Socket = new ClientWebSocket(this, new PackgeManager(this));
+            PacketId = -1;
+            Acks = new Dictionary<int, Action<SocketIOResponse>>();
+            Handlers = new Dictionary<string, Action<SocketIOResponse>>();
+            OutGoingBytes = new List<byte[]>();
+            _byteArrayConverter = new ByteArrayConverter
+            {
+                Client = this
+            };
+            Disconnected = true;
+            OnDisconnected += SocketIO_OnDisconnected;
+        }
+
         public async Task ConnectAsync()
         {
-            Uri wsUri = UrlConverter.HttpToWs(ServerUri, _options);
+            if (ServerUri == null)
+            {
+                throw new ArgumentException("Invalid ServerUri");
+            }
+            Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
             await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
             {
-                ConnectionTimeout = _options.ConnectionTimeout
+                ConnectionTimeout = Options.ConnectionTimeout
             });
         }
 
@@ -98,6 +125,10 @@ namespace SocketIOClient
 
         public void On(string eventName, Action<SocketIOResponse> callback)
         {
+            if (Handlers.ContainsKey(eventName))
+            {
+                Handlers.Remove(eventName);
+            }
             Handlers.Add(eventName, callback);
         }
 
@@ -211,18 +242,18 @@ namespace SocketIOClient
                 {
                     builder.Append(Namespace.TrimEnd(','));
                 }
-                if (_options.Query != null && _options.Query.Count > 0)
+                if (Options.Query != null && Options.Query.Count > 0)
                 {
                     builder.Append('?');
                     int index = -1;
-                    foreach (var item in _options.Query)
+                    foreach (var item in Options.Query)
                     {
                         index++;
                         builder
                             .Append(item.Key)
                             .Append('=')
                             .Append(item.Value);
-                        if (index < _options.Query.Count - 1)
+                        if (index < Options.Query.Count - 1)
                         {
                             builder.Append('&');
                         }
@@ -289,9 +320,9 @@ namespace SocketIOClient
 
         private async void SocketIO_OnDisconnected(object sender, string e)
         {
-            if (_options.Reconnection)
+            if (Options.Reconnection)
             {
-                double delayDouble = _options.ReconnectionDelay;
+                double delayDouble = Options.ReconnectionDelay;
                 int attempt = 0;
                 while (true)
                 {
@@ -312,9 +343,9 @@ namespace SocketIOClient
                     {
                         if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            if (delayDouble < _options.ReconnectionDelayMax)
+                            if (delayDouble < Options.ReconnectionDelayMax)
                             {
-                                delayDouble += 2 * _options.RandomizationFactor;
+                                delayDouble += 2 * Options.RandomizationFactor;
                             }
                         }
                         else
