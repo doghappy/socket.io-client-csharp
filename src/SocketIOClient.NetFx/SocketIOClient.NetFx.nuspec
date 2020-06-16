@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>1.0.0-alpha1</version>
+    <title>$title$</title>
+    <authors>DogHappy</authors>
+    <owners>DogHappy</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/doghappy/socket.io-client-csharp</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>socketio-client</tags>
+  </metadata>
+</package>

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
 [assembly: AssemblyTitle("SocketIOClient.NetFx")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("socket.io-client implemention for .NET Framework 4.5")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("SocketIOClient.NetFx")]
