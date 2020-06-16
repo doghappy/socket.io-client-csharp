@@ -27,6 +27,7 @@ namespace SocketIOClient.Packgers
                         unpackger = new MessageAckPackger();
                         break;
                     case SocketIOProtocol.Error:
+                        unpackger = new MessageErrorPackger();
                         break;
                     case SocketIOProtocol.BinaryEvent:
                         unpackger = new MessageBinaryEventPackger();

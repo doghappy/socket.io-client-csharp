@@ -65,7 +65,7 @@ namespace SocketIOClient
         public event EventHandler OnConnected;
         //public event EventHandler<string> OnConnectError;
         //public event EventHandler<string> OnConnectTimeout;
-        //public event EventHandler<string> OnError;
+        public event EventHandler<string> OnError;
         public event EventHandler<string> OnDisconnected;
         //public event EventHandler<string> OnReconnected;
         //public event EventHandler<string> OnReconnectAttempt;
@@ -280,6 +280,11 @@ namespace SocketIOClient
                 OnDisconnected?.Invoke(this, reason);
                 _pingToken.Cancel();
             }
+        }
+
+        internal void InvokeError(string error)
+        {
+            OnError?.Invoke(this, error);
         }
 
         private async void SocketIO_OnDisconnected(object sender, string e)
