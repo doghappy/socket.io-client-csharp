@@ -8,12 +8,6 @@ An elegant socket.io client for .NET
 
 ## How to use
 
-### NuGet
-
-```
-Install-Package SocketIOClient
-```
-
 ### Example of usage
 
 #### Emit an event
