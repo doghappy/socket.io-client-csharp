@@ -15,5 +15,15 @@ namespace SocketIOClient.Test
             manager.Unpack(msg);
             Assert.AreEqual("mzxOPB0FoNcYh4IKAAAG", socket.Id);
         }
+
+        [TestMethod]
+        public void MessageBinaryEventPackagerTest()
+        {
+            var socket = new SocketIO("http://localhost:11000");
+            var packger = new MessageBinaryEventPackger();
+            string msg = "1-92[\"v1/read/receive\",{\"_placeholder\":true,\"num\":0}]";
+            packger.Unpack(socket,msg);
+            Assert.AreEqual(92, packger.Response.PacketId);
+        }
     }
 }

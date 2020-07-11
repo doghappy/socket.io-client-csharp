@@ -28,8 +28,8 @@ namespace SocketIOClient.Packgers
                     string id = null;
                     if (packetIndex > 0)
                     {
-                        id = text.Substring(0, index);
-                        text = text.Substring(index);
+                        id = text.Substring(0, packetIndex);
+                        text = text.Substring(packetIndex);
                     }
                     _array = JArray.Parse(text);
                     EventName = _array[0].ToString();
