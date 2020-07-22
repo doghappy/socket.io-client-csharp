@@ -34,7 +34,15 @@ namespace SocketIOClient.WebSocketClient
         {
             if (_ws != null)
                 _ws.Dispose();
-            _ws = new System.Net.WebSockets.ClientWebSocket();
+
+            //ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) =>
+            //{
+            //    //// local dev, just approve all certs
+            //    //if (development) return true;
+            //    //return errors == SslPolicyErrors.None;
+            //    return true;
+            //};
+            _ws = CreateClient();
             //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
             //privateKey.en
@@ -43,6 +51,11 @@ namespace SocketIOClient.WebSocketClient
             await _ws.ConnectAsync(uri, _connectionToken.Token);
             await Task.Factory.StartNew(ListenAsync, _connectionToken.Token);
             await Task.Factory.StartNew(ListenStateAsync, _connectionToken.Token);
+        }
+
+        public virtual System.Net.WebSockets.ClientWebSocket CreateClient()
+        {
+            return new System.Net.WebSockets.ClientWebSocket();
         }
 
         public async Task SendMessageAsync(string text)
