@@ -22,11 +22,15 @@ namespace SocketIOClient.NetFx.WebSocketClient
         WebSocket _ws;
         CancellationTokenSource _connectionToken;
         readonly static Task _completedTask = Task.FromResult(false);
+        public Action<WebSocket> WebSocketConfiger { get; set; }
 
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
             _ws = new WebSocket(uri.ToString());
+            WebSocketConfiger?.Invoke(_ws);
             _ws.OnMessage += OnMessage;
+            _ws.OnError += OnError;
+            _ws.OnClose += OnClose;
             _ws.Connect();
             if (_ws.ReadyState == WebSocketState.Closed || _ws.ReadyState == WebSocketState.Closing)
             {
@@ -40,6 +44,11 @@ namespace SocketIOClient.NetFx.WebSocketClient
         private void OnClose(object sender, CloseEventArgs e)
         {
             Close("io server disconnect");
+        }
+
+        private void OnError(object sender, ErrorEventArgs e)
+        {
+            _io.InvokeError(e.Message);
         }
 
         private void OnMessage(object sender, MessageEventArgs e)

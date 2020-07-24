@@ -3,10 +3,12 @@
 An elegant socket.io client for .NET
 
 [![Build Status](https://herowong.visualstudio.com/socket.io-client/_apis/build/status/doghappy.socket.io-client-csharp?branchName=master)](https://herowong.visualstudio.com/socket.io-client/_build/latest?definitionId=15&branchName=master)
-[![Target Framework](https://img.shields.io/badge/Target%20Framework-.NET%20Standard%202.0-%237014e8)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
-[![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
 
 ## How to use
+
+If your TargetFramework is `.NET Framework` and it runs on `Windows7/Windows Server 2008 R2`, please install [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient.NetFx-%23004880)](https://www.nuget.org/packages/SocketIOClient.NetFx)
+
+Otherwise, we recommend you to install [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
 
 ### Example of usage
 
