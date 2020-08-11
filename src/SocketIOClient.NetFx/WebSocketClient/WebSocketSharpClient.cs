@@ -31,6 +31,8 @@ namespace SocketIOClient.NetFx.WebSocketClient
             _ws.OnMessage += OnMessage;
             _ws.OnError += OnError;
             _ws.OnClose += OnClose;
+            // set enabled client Ssl protocols as defined via options
+            _ws.SslConfiguration.EnabledSslProtocols = _io.Options.EnabledSslProtocols;
             _ws.Connect();
             if (_ws.ReadyState == WebSocketState.Closed || _ws.ReadyState == WebSocketState.Closing)
             {
