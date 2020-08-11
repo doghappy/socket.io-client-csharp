@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Authentication;
 
 namespace SocketIOClient
 {
@@ -20,6 +21,8 @@ namespace SocketIOClient
 
         public int ReconnectionDelay { get; set; } = 1000;
         public int ReconnectionDelayMax { get; set; } = 5000;
+
+        public SslProtocols EnabledSslProtocols { get; set; } = SslProtocols.None;
 
         double _randomizationFactor;
         public double RandomizationFactor
