@@ -116,11 +116,26 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            await Socket.SendMessageAsync("41" + Namespace);
-            Connected = false;
-            Disconnected = true;
-            await Socket.DisconnectAsync();
-            _pingToken.Cancel();
+            // throw if not connected
+            if (!Connected) throw new InvalidOperationException("SocketIO is not connected");
+
+            try
+            {
+                _pingToken.Cancel();
+                await Socket.SendMessageAsync("41" + Namespace);
+                await Socket.DisconnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine(ex.Message);
+                throw;
+            }
+            finally
+            {
+                Connected = false;
+                Disconnected = true;
+            }
+
         }
 
         public void On(string eventName, Action<SocketIOResponse> callback)
@@ -270,22 +285,27 @@ namespace SocketIOClient
         internal void Open(OpenResponse openResponse)
         {
             Id = openResponse.Sid;
+            _pingToken?.Cancel();
+            _pingToken?.Dispose();
             _pingToken = new CancellationTokenSource();
             Task.Factory.StartNew(async () =>
             {
-                await SendNamespaceAsync();
-                while (true)
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_pingToken.Token))
                 {
-                    await Task.Delay(openResponse.PingInterval);
-                    if (_pingToken.IsCancellationRequested)
-                        return;
-                    try
+                    await SendNamespaceAsync();
+                    while (true)
                     {
-                        PingTime = DateTime.Now;
-                        await Socket.SendMessageAsync("2");
-                        OnPing?.Invoke(this, new EventArgs());
+                        await Task.Delay(openResponse.PingInterval);
+                        if (cts.Token.IsCancellationRequested)
+                            return;
+                        try
+                        {
+                            PingTime = DateTime.Now;
+                            await Socket.SendMessageAsync("2");
+                            OnPing?.Invoke(this, new EventArgs());
+                        }
+                        catch { }
                     }
-                    catch { }
                 }
             }, _pingToken.Token);
         }
