@@ -116,24 +116,21 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            // throw if not connected
-            if (Connected)
+            if (Connected && !Disconnected)
             {
                 try
                 {
-                    _pingToken.Cancel();
                     await Socket.SendMessageAsync("41" + Namespace);
+                }
+                catch (Exception ex) { Trace.WriteLine(ex.Message); }
+                Connected = false;
+                Disconnected = true;
+                try
+                {
                     await Socket.DisconnectAsync();
                 }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex.Message);
-                }
-                finally
-                {
-                    Connected = false;
-                    Disconnected = true;
-                }
+                catch (Exception ex) { Trace.WriteLine(ex.Message); }
+                _pingToken.Cancel();
             }
         }
 
