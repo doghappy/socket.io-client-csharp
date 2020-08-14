@@ -128,7 +128,7 @@ namespace SocketIOClient.WebSocketClient
         private async Task ListenAsync()
         {
             var buffer = new byte[ReceiveChunkSize];
-            while (_ws.State == WebSocketState.Open)
+            while (_ws.State == WebSocketState.Open && !_connectionToken.IsCancellationRequested)
             {
                 var stringResult = new StringBuilder();
                 var binaryResult = new List<byte>();
