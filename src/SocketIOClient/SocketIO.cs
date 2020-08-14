@@ -116,11 +116,22 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            await Socket.SendMessageAsync("41" + Namespace);
-            Connected = false;
-            Disconnected = true;
-            await Socket.DisconnectAsync();
-            _pingToken.Cancel();
+            if (Connected && !Disconnected)
+            {
+                try
+                {
+                    await Socket.SendMessageAsync("41" + Namespace);
+                }
+                catch (Exception ex) { Trace.WriteLine(ex.Message); }
+                Connected = false;
+                Disconnected = true;
+                try
+                {
+                    await Socket.DisconnectAsync();
+                }
+                catch (Exception ex) { Trace.WriteLine(ex.Message); }
+                _pingToken.Cancel();
+            }
         }
 
         public void On(string eventName, Action<SocketIOResponse> callback)
@@ -285,7 +296,7 @@ namespace SocketIOClient
                         await Socket.SendMessageAsync("2");
                         OnPing?.Invoke(this, new EventArgs());
                     }
-                    catch { }
+                    catch (Exception ex) { Trace.WriteLine(ex); }
                 }
             }, _pingToken.Token);
         }
