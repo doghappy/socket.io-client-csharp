@@ -49,8 +49,8 @@ namespace SocketIOClient.WebSocketClient
             //_ws.Options.ClientCertificates.Add(cert);
             _connectionToken = new CancellationTokenSource();
             await _ws.ConnectAsync(uri, _connectionToken.Token);
-            await Task.Factory.StartNew(ListenAsync, _connectionToken.Token);
-            await Task.Factory.StartNew(ListenStateAsync, _connectionToken.Token);
+            await Task.Factory.StartNew(ListenAsync);
+            await Task.Factory.StartNew(ListenStateAsync);
         }
 
         public virtual System.Net.WebSockets.ClientWebSocket CreateClient()
@@ -183,10 +183,12 @@ namespace SocketIOClient.WebSocketClient
             while (true)
             {
                 await Task.Delay(200);
+                if (_connectionToken.IsCancellationRequested)
+                    break;
                 if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
                 {
                     Close("io server disconnect");
-                    return;
+                    break;
                 }
             }
         }
