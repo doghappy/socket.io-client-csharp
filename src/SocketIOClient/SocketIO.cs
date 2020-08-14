@@ -117,25 +117,24 @@ namespace SocketIOClient
         public async Task DisconnectAsync()
         {
             // throw if not connected
-            if (!Connected) throw new InvalidOperationException("SocketIO is not connected");
-
-            try
+            if (Connected)
             {
-                _pingToken.Cancel();
-                await Socket.SendMessageAsync("41" + Namespace);
-                await Socket.DisconnectAsync();
+                try
+                {
+                    _pingToken.Cancel();
+                    await Socket.SendMessageAsync("41" + Namespace);
+                    await Socket.DisconnectAsync();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    Connected = false;
+                    Disconnected = true;
+                }
             }
-            catch (Exception ex)
-            {
-                Trace.WriteLine(ex.Message);
-                throw;
-            }
-            finally
-            {
-                Connected = false;
-                Disconnected = true;
-            }
-
         }
 
         public void On(string eventName, Action<SocketIOResponse> callback)
