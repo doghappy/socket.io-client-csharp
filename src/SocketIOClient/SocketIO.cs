@@ -67,6 +67,7 @@ namespace SocketIOClient
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
         CancellationTokenSource _pingToken;
+        static readonly object _lock = new object();
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -231,15 +232,31 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, params object[] data)
         {
-            string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, -1, dataString);
+            Monitor.Enter(_lock);
+            try
+            {
+                string dataString = GetDataString(data);
+                await EmityCoreAsync(eventName, -1, dataString);
+            }
+            finally
+            {
+                Monitor.Exit(_lock);
+            }
         }
 
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
-            Acks.Add(++PacketId, ack);
-            string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, PacketId, dataString);
+            Monitor.Enter(_lock);
+            try
+            {
+                Acks.Add(++PacketId, ack);
+                string dataString = GetDataString(data);
+                await EmityCoreAsync(eventName, PacketId, dataString);
+            }
+            finally
+            {
+                Monitor.Exit(_lock);
+            }
         }
 
         private async Task SendNamespaceAsync()
