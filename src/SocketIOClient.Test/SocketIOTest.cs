@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using SocketIOClient.EventArguments;
 using SocketIOClient.Test.Models;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -514,6 +515,54 @@ namespace SocketIOClient.Test
             Assert.AreEqual(1, disconnectionCount);
             Assert.AreEqual(1, reconnectingCount);
             Assert.AreEqual(1, attempt);
+        }
+
+        [TestMethod]
+        public async Task ConcurrencySendTest()
+        {
+            int endIndex = -1;
+            int bytesCallbackCount = 0;
+            var client = new SocketIO("https://socket-io.doghappy.wang", new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("bytes", response => bytesCallbackCount++);
+
+            client.OnConnected += async (sender, e) =>
+            {
+                string data = File.ReadAllText("Files/data.txt");
+                byte[] buffer = Encoding.UTF8.GetBytes(data);
+                await Task.Factory.StartNew(async () =>
+                {
+                    for (int i = 0; i < 100; i++)
+                    {
+                        await client.EmitAsync("bytes", "c#", new
+                        {
+                            source = "client007",
+                            bytes = buffer
+                        });
+                        //await Task.Delay(20);
+                    }
+                });
+
+                for (int i = 0; i < 100; i++)
+                {
+                    await client.EmitAsync("hi", i);
+                    endIndex = i;
+                    //await Task.Delay(20);
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(10000);
+
+            Assert.AreEqual(99, endIndex);
+            Assert.AreEqual(100, bytesCallbackCount);
+            Assert.IsTrue(client.Connected);
+            await client.DisconnectAsync();
         }
     }
 }

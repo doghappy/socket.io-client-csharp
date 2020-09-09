@@ -67,7 +67,7 @@ namespace SocketIOClient
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
         CancellationTokenSource _pingToken;
-        static readonly object _lock = new object();
+        static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -232,7 +232,7 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, params object[] data)
         {
-            Monitor.Enter(_lock);
+            await _semaphoreSlim.WaitAsync();
             try
             {
                 string dataString = GetDataString(data);
@@ -240,13 +240,13 @@ namespace SocketIOClient
             }
             finally
             {
-                Monitor.Exit(_lock);
+                _semaphoreSlim.Release();
             }
         }
 
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
-            Monitor.Enter(_lock);
+            await _semaphoreSlim.WaitAsync();
             try
             {
                 Acks.Add(++PacketId, ack);
@@ -255,7 +255,8 @@ namespace SocketIOClient
             }
             finally
             {
-                Monitor.Exit(_lock);
+                _semaphoreSlim.Release();
+
             }
         }
 

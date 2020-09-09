@@ -18,4 +18,18 @@
     <ProjectReference Include="..\SocketIOClient\SocketIOClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Files\data.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Files\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Files\data.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
