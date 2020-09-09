@@ -166,5 +166,5 @@ socket.on("change", (val1, val2) => {
 
 ### Change log
 
-[SocketIOClient](./CHANGELOG.md)
+[SocketIOClient](./CHANGELOG.md)  
 [SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
