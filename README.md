@@ -163,3 +163,8 @@ socket.on("change", (val1, val2) => {
 
 [SocketIOClient.Sample](https://github.com/doghappy/socket.io-client-csharp/tree/master/src/SocketIOClient.Sample/Program.cs)  
 [SocketIOClient.Test](https://github.com/doghappy/socket.io-client-csharp/tree/master/src/SocketIOClient.Test)
+
+### Change log
+
+[SocketIOClient](./CHANGELOG.md)
+[SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
