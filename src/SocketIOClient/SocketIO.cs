@@ -111,7 +111,8 @@ namespace SocketIOClient
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
             await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
             {
-                ConnectionTimeout = Options.ConnectionTimeout
+                ConnectionTimeout = Options.ConnectionTimeout,
+                Proxy = Options.Proxy
             });
         }
 

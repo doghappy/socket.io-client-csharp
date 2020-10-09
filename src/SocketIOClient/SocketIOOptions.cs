@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Authentication;
 
 namespace SocketIOClient
@@ -14,6 +15,7 @@ namespace SocketIOClient
         public string Path { get; set; } = "/socket.io";
 
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(20);
+        public IWebProxy Proxy { get; set; } = null;
 
         public Dictionary<string, string> Query { get; set; }
 

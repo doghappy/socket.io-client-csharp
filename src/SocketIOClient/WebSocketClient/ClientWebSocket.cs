@@ -43,6 +43,9 @@ namespace SocketIOClient.WebSocketClient
             //    return true;
             //};
             _ws = CreateClient();
+            if(options.Proxy != null) {
+                _ws.Options.Proxy = options.Proxy;
+            }
             //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
             //privateKey.en
