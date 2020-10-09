@@ -168,3 +168,18 @@ socket.on("change", (val1, val2) => {
 
 [SocketIOClient](./CHANGELOG.md)  
 [SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
+
+### Pack £¦ Release
+
+#### SocketIOClient
+
+```bash
+nuget push SocketIOClient.2.0.2.7.nupkg -Source nuget.org -ApiKey ***
+```
+
+#### SocketIOClient.NetFx
+
+```bash
+nuget pack -Prop Configuration=Release
+nuget push SocketIOClient.NetFx.1.0.0.5.nupkg -Source nuget.org -ApiKey ***
+```
