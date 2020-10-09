@@ -169,7 +169,7 @@ socket.on("change", (val1, val2) => {
 [SocketIOClient](./CHANGELOG.md)  
 [SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
 
-### Pack £¦ Release
+### Pack & Release
 
 #### SocketIOClient
 
