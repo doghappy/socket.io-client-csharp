@@ -11,9 +11,13 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Security.Cryptography;
+using SocketIOClient.Exceptions;
 
 namespace SocketIOClient.WebSocketClient
 {
+    /// <summary>
+    /// Internally uses 'System.Net.WebSockets.ClientWebSocket' as websocket client
+    /// </summary>
     public class ClientWebSocket : IWebSocketClient
     {
         public ClientWebSocket(SocketIO io, PackgeManager parser)
@@ -65,11 +69,11 @@ namespace SocketIOClient.WebSocketClient
         {
             if (_ws == null)
             {
-                throw new InvalidOperationException("Faild to emit, websocket is not connected yet.");
+                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
             }
             if (_ws.State != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                throw new InvalidSocketStateException("Connection is not open.");
             }
 
             var messageBuffer = Encoding.UTF8.GetBytes(text);
