@@ -18,6 +18,10 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>D:\repo\socket.io-client-csharp\src\SocketIOClient\SocketIOClient.xml</DocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Remove="WebSocketClient\WebSocketClient.cs" />
   </ItemGroup>

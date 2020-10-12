@@ -13,13 +13,35 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient
 {
+    /// <summary>
+    /// socket.io client class
+    /// </summary>
     public class SocketIO
     {
+        /// <summary>
+        /// Create SocketIO object with default options
+        /// </summary>
+        /// <param name="uri"></param>
         public SocketIO(string uri) : this(new Uri(uri)) { }
 
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
         public SocketIO(Uri uri) : this(uri, new SocketIOOptions()) { }
+
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
         public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options) { }
 
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
         public SocketIO(Uri uri, SocketIOOptions options)
         {
             ServerUri = uri;
@@ -27,6 +49,9 @@ namespace SocketIOClient
             Initialize();
         }
 
+        /// <summary>
+        /// Create SocketIO object with default options
+        /// </summary>
         public SocketIO()
         {
             Options = new SocketIOOptions();
@@ -51,10 +76,24 @@ namespace SocketIOClient
         }
 
         public UrlConverter UrlConverter { get; set; }
+
         public IWebSocketClient Socket { get; set; }
+
+        /// <summary>
+        /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
+        /// </summary>
         public string Id { get; set; }
+
         public string Namespace { get; private set; }
+
+        /// <summary>
+        /// Whether or not the socket is connected to the server.
+        /// </summary>
         public bool Connected { get; private set; }
+
+        /// <summary>
+        /// Whether or not the socket is disconnected from the server.
+        /// </summary>
         public bool Disconnected { get; private set; }
         internal int PacketId { get; private set; }
         internal List<byte[]> OutGoingBytes { get; private set; }
@@ -102,6 +141,11 @@ namespace SocketIOClient
             OnDisconnected += SocketIO_OnDisconnected;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
         public async Task ConnectAsync()
         {
             if (ServerUri == null)
@@ -136,6 +180,11 @@ namespace SocketIOClient
             }
         }
 
+        /// <summary>
+        /// Register a new handler for the given event.
+        /// </summary>
+        /// <param name="eventName"></param>
+        /// <param name="callback"></param>
         public void On(string eventName, Action<SocketIOResponse> callback)
         {
             if (Handlers.ContainsKey(eventName))
@@ -145,6 +194,10 @@ namespace SocketIOClient
             Handlers.Add(eventName, callback);
         }
 
+        /// <summary>
+        /// Unregister a new handler for the given event.
+        /// </summary>
+        /// <param name="eventName"></param>
         public void Off(string eventName)
         {
             if (Handlers.ContainsKey(eventName))
@@ -231,6 +284,12 @@ namespace SocketIOClient
             return builder.ToString();
         }
 
+        /// <summary>
+        /// Emits an event to the socket
+        /// </summary>
+        /// <param name="eventName"></param>
+        /// <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
+        /// <returns></returns>
         public async Task EmitAsync(string eventName, params object[] data)
         {
             await _semaphoreSlim.WaitAsync();
@@ -245,6 +304,13 @@ namespace SocketIOClient
             }
         }
 
+        /// <summary>
+        /// Emits an event to the socket
+        /// </summary>
+        /// <param name="eventName"></param>
+        /// <param name="ack">will be called with the server answer.</param>
+        /// <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
+        /// <returns></returns>
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
             await _semaphoreSlim.WaitAsync();
