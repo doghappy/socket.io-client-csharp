@@ -47,17 +47,29 @@ namespace SocketIOClient.WebSocketClient
             //    return true;
             //};
             _ws = CreateClient();
-            if(options.Proxy != null) {
+            if (options.Proxy != null)
+            {
                 _ws.Options.Proxy = options.Proxy;
             }
             //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
             //privateKey.en
             //_ws.Options.ClientCertificates.Add(cert);
-            _connectionToken = new CancellationTokenSource();
-            await _ws.ConnectAsync(uri, _connectionToken.Token);
-            await Task.Factory.StartNew(ListenAsync);
-            await Task.Factory.StartNew(ListenStateAsync);
+            _connectionToken = new CancellationTokenSource(_io.Options.ConnectionTimeout);
+            try
+            {
+                await _ws.ConnectAsync(uri, _connectionToken.Token);
+                await Task.Factory.StartNew(ListenAsync);
+                await Task.Factory.StartNew(ListenStateAsync);
+            }
+            catch (TaskCanceledException)
+            {
+                throw new TimeoutException();
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public virtual System.Net.WebSockets.ClientWebSocket CreateClient()

@@ -5,7 +5,7 @@ using System.Security.Authentication;
 
 namespace SocketIOClient
 {
-    public class SocketIOOptions
+    public sealed class SocketIOOptions
     {
         public SocketIOOptions()
         {

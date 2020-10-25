@@ -146,6 +146,7 @@ namespace SocketIOClient
         /// </summary>
         /// <returns></returns>
         /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="TimeoutException"></exception>
         public async Task ConnectAsync()
         {
             if (ServerUri == null)
