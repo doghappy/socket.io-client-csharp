@@ -13,13 +13,14 @@
     <RepositoryType>github</RepositoryType>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
-    <Version>2.0.2.7</Version>
+    <Version>2.0.2.8</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>D:\repo\socket.io-client-csharp\src\SocketIOClient\SocketIOClient.xml</DocumentationFile>
+    <DocumentationFile>C:\Users\HeroWong\source\repos\socket.io-client-csharp\src\SocketIOClient\SocketIOClient.xml</DocumentationFile>
+    <OutputPath></OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
