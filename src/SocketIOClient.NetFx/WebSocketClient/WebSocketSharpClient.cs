@@ -24,6 +24,13 @@ namespace SocketIOClient.NetFx.WebSocketClient
         readonly static Task _completedTask = Task.FromResult(false);
         public Action<WebSocket> WebSocketConfiger { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        /// <exception cref="System.Net.WebSockets.WebSocketException"></exception>
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
             _ws = new WebSocket(uri.ToString());

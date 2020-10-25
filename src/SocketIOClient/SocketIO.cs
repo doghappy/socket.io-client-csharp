@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SocketIOClient.EventArguments;
+using SocketIOClient.Exceptions;
 using SocketIOClient.JsonConverters;
 using SocketIOClient.Packgers;
 using SocketIOClient.Response;
@@ -114,11 +115,10 @@ namespace SocketIOClient
         //public event EventHandler<string> OnConnectTimeout;
         public event EventHandler<string> OnError;
         public event EventHandler<string> OnDisconnected;
-        //public event EventHandler<string> OnReconnected;
         //public event EventHandler<string> OnReconnectAttempt;
         public event EventHandler<int> OnReconnecting;
         //public event EventHandler<string> OnReconnectError;
-        //public event EventHandler<string> OnReconnectFailed;
+        public event EventHandler<Exception> OnReconnectFailed;
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
         public event EventHandler<ReceivedEventArgs> OnReceivedEvent;
@@ -145,20 +145,60 @@ namespace SocketIOClient
         /// 
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        /// <exception cref="TimeoutException"></exception>
+        /// <exception cref="ConnectException"></exception>
         public async Task ConnectAsync()
         {
             if (ServerUri == null)
             {
-                throw new ArgumentException("Invalid ServerUri");
+                var innerException = new ArgumentException("Invalid ServerUri");
+                throw new ConnectException("Invalid ServerUri, For more information, please see innerException.", innerException);
             }
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
-            await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
+            if (Options.AllowedRetryFirstConnection)
             {
-                ConnectionTimeout = Options.ConnectionTimeout,
-                Proxy = Options.Proxy
-            });
+                double delayDouble = Options.ReconnectionDelay;
+                while (true)
+                {
+                    try
+                    {
+                        await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
+                        {
+                            ConnectionTimeout = Options.ConnectionTimeout,
+                            Proxy = Options.Proxy
+                        });
+                        break;
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        int delay = (int)delayDouble;
+                        await Task.Delay(delay);
+                        delayDouble += 2 * Options.RandomizationFactor;
+                        if (delayDouble > Options.ReconnectionDelayMax)
+                        {
+                            OnReconnectFailed?.Invoke(this, ex);
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                try
+                {
+                    await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
+                    {
+                        ConnectionTimeout = Options.ConnectionTimeout,
+                        Proxy = Options.Proxy
+                    });
+                }
+                catch (TimeoutException ex)
+                {
+                    throw new ConnectException("Timeout, please see innerException.", ex)
+                    {
+                        IsTimeout = true
+                    };
+                }
+            }
         }
 
         public async Task DisconnectAsync()
@@ -438,16 +478,17 @@ namespace SocketIOClient
                     }
                     catch (Exception ex)
                     {
-                        if (ex is TaskCanceledException || ex is System.Net.WebSockets.WebSocketException)
+                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            if (delayDouble < Options.ReconnectionDelayMax)
+                            delayDouble += 2 * Options.RandomizationFactor;
+                            if (delayDouble > Options.ReconnectionDelayMax)
                             {
-                                delayDouble += 2 * Options.RandomizationFactor;
+                                OnReconnectFailed?.Invoke(this, ex);
                             }
                         }
                         else
                         {
-                            throw ex;
+                            throw;
                         }
                     }
                 }

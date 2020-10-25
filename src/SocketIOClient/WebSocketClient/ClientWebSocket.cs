@@ -34,6 +34,13 @@ namespace SocketIOClient.WebSocketClient
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _connectionToken;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        /// <exception cref="TimeoutException"></exception>
+        /// <returns></returns>
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
             if (_ws != null)
@@ -65,6 +72,10 @@ namespace SocketIOClient.WebSocketClient
             catch (TaskCanceledException)
             {
                 throw new TimeoutException();
+            }
+            catch (WebSocketException ex)
+            {
+                throw new TimeoutException("Unable to connect to the remote server", ex);
             }
             catch
             {
