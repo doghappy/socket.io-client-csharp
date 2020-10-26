@@ -59,6 +59,12 @@
     <Compile Include="..\SocketIOClient\EventArguments\ReceivedEventArgs.cs">
       <Link>EventArguments\ReceivedEventArgs.cs</Link>
     </Compile>
+    <Compile Include="..\SocketIOClient\Exceptions\ConnectException.cs">
+      <Link>Exceptions\ConnectException.cs</Link>
+    </Compile>
+    <Compile Include="..\SocketIOClient\Exceptions\InvalidSocketStateException.cs">
+      <Link>Exceptions\InvalidSocketStateException.cs</Link>
+    </Compile>
     <Compile Include="..\SocketIOClient\JsonConverters\ByteArrayConverter.cs">
       <Link>JsonConverters\ByteArrayConverter.cs</Link>
     </Compile>

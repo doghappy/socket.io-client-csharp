@@ -60,7 +60,7 @@
             
             </summary>
             <returns></returns>
-            <exception cref="T:System.ArgumentException"></exception>
+            <exception cref="T:SocketIOClient.Exceptions.ConnectException"></exception>
         </member>
         <member name="M:SocketIOClient.SocketIO.On(System.String,System.Action{SocketIOClient.SocketIOResponse})">
             <summary>
@@ -90,6 +90,31 @@
             <param name="eventName"></param>
             <param name="ack">will be called with the server answer.</param>
             <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
+            <returns></returns>
+        </member>
+        <member name="P:SocketIOClient.SocketIOOptions.Reconnection">
+            <summary>
+            Whether to allow reconnection if accidentally disconnected
+            </summary>
+        </member>
+        <member name="P:SocketIOClient.SocketIOOptions.AllowedRetryFirstConnection">
+            <summary>
+            Allow reconnection when the first connection fails.
+            Generally speaking, the usage scenario is if the server starts later than the client.
+            </summary>
+        </member>
+        <member name="T:SocketIOClient.WebSocketClient.ClientWebSocket">
+            <summary>
+            Internally uses 'System.Net.WebSockets.ClientWebSocket' as websocket client
+            </summary>
+        </member>
+        <member name="M:SocketIOClient.WebSocketClient.ClientWebSocket.ConnectAsync(System.Uri,SocketIOClient.WebSocketClient.WebSocketConnectionOptions)">
+            <summary>
+            
+            </summary>
+            <param name="uri"></param>
+            <param name="options"></param>
+            <exception cref="T:System.TimeoutException"></exception>
             <returns></returns>
         </member>
     </members>

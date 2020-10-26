@@ -34,6 +34,13 @@ namespace SocketIOClient.WebSocketClient
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _connectionToken;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        /// <exception cref="TimeoutException"></exception>
+        /// <returns></returns>
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
             if (_ws != null)
@@ -47,17 +54,33 @@ namespace SocketIOClient.WebSocketClient
             //    return true;
             //};
             _ws = CreateClient();
-            if(options.Proxy != null) {
+            if (options.Proxy != null)
+            {
                 _ws.Options.Proxy = options.Proxy;
             }
             //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
             //privateKey.en
             //_ws.Options.ClientCertificates.Add(cert);
-            _connectionToken = new CancellationTokenSource();
-            await _ws.ConnectAsync(uri, _connectionToken.Token);
-            await Task.Factory.StartNew(ListenAsync);
-            await Task.Factory.StartNew(ListenStateAsync);
+            _connectionToken = new CancellationTokenSource(_io.Options.ConnectionTimeout);
+            try
+            {
+                await _ws.ConnectAsync(uri, _connectionToken.Token);
+                await Task.Factory.StartNew(ListenAsync);
+                await Task.Factory.StartNew(ListenStateAsync);
+            }
+            catch (TaskCanceledException)
+            {
+                throw new TimeoutException();
+            }
+            catch (WebSocketException ex)
+            {
+                throw new TimeoutException("Unable to connect to the remote server", ex);
+            }
+            catch
+            {
+                throw;
+            }
         }
 
         public virtual System.Net.WebSockets.ClientWebSocket CreateClient()

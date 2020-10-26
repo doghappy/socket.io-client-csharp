@@ -16,7 +16,7 @@ namespace SocketIOClient.Sample
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            var uri = new Uri("https://socket-io.doghappy.wang");
+            var uri = new Uri("http://localhost:11000");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
@@ -24,7 +24,6 @@ namespace SocketIOClient.Sample
                 {
                     {"token", "io" }
                 },
-                ConnectionTimeout = TimeSpan.FromSeconds(10),
                 EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls
             });
 
@@ -80,29 +79,29 @@ namespace SocketIOClient.Sample
             Console.WriteLine("Socket.Id:" + socket.Id);
             await socket.EmitAsync("hi", "SocketIOClient.Sample");
 
-            await socket.EmitAsync("ack", response =>
-            {
-                Console.WriteLine(response.ToString());
-            }, "SocketIOClient.Sample");
+            //await socket.EmitAsync("ack", response =>
+            //{
+            //    Console.WriteLine(response.ToString());
+            //}, "SocketIOClient.Sample");
 
-            await socket.EmitAsync("bytes", "c#", new
-            {
-                source = "client007",
-                bytes = Encoding.UTF8.GetBytes("dot net")
-            });
+            //await socket.EmitAsync("bytes", "c#", new
+            //{
+            //    source = "client007",
+            //    bytes = Encoding.UTF8.GetBytes("dot net")
+            //});
 
-            socket.On("client binary callback", async response =>
-            {
-                await response.CallbackAsync();
-            });
+            //socket.On("client binary callback", async response =>
+            //{
+            //    await response.CallbackAsync();
+            //});
 
-            await socket.EmitAsync("client binary callback", Encoding.UTF8.GetBytes("SocketIOClient.Sample"));
+            //await socket.EmitAsync("client binary callback", Encoding.UTF8.GetBytes("SocketIOClient.Sample"));
 
-            socket.On("client message callback", async response =>
-            {
-                await response.CallbackAsync(Encoding.UTF8.GetBytes("CallbackAsync();"));
-            });
-            await socket.EmitAsync("client message callback", "SocketIOClient.Sample");
+            //socket.On("client message callback", async response =>
+            //{
+            //    await response.CallbackAsync(Encoding.UTF8.GetBytes("CallbackAsync();"));
+            //});
+            //await socket.EmitAsync("client message callback", "SocketIOClient.Sample");
         }
 
         private static void Socket_OnPing(object sender, EventArgs e)

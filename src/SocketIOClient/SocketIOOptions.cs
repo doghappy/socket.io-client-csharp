@@ -5,7 +5,7 @@ using System.Security.Authentication;
 
 namespace SocketIOClient
 {
-    public class SocketIOOptions
+    public sealed class SocketIOOptions
     {
         public SocketIOOptions()
         {
@@ -19,6 +19,9 @@ namespace SocketIOClient
 
         public Dictionary<string, string> Query { get; set; }
 
+        /// <summary>
+        /// Whether to allow reconnection if accidentally disconnected
+        /// </summary>
         public bool Reconnection { get; set; } = true;
 
         public int ReconnectionDelay { get; set; } = 1000;
@@ -42,5 +45,11 @@ namespace SocketIOClient
                 }
             }
         }
+
+        /// <summary>
+        /// Allow reconnection when the first connection fails.
+        /// Generally speaking, the usage scenario is if the server starts later than the client.
+        /// </summary>
+        public bool AllowedRetryFirstConnection { get; set; }
     }
 }
