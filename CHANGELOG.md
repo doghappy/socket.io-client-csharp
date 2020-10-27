@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2.9] - 2020-10-27
+
+### Fixed
+
+- Fixed a serious error that caused connection and sending message to become unusable. The error originated from the last update(v2.0.2.8).
+
 ## [2.0.2.8] - 2020-10-25
 
 ### Added
