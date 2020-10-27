@@ -32,7 +32,7 @@ namespace SocketIOClient.WebSocketClient
         readonly PackgeManager _parser;
         readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
-        CancellationTokenSource _connectionToken;
+        CancellationTokenSource _wsWorkTokenSource;
 
         /// <summary>
         /// 
@@ -62,10 +62,11 @@ namespace SocketIOClient.WebSocketClient
             //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
             //privateKey.en
             //_ws.Options.ClientCertificates.Add(cert);
-            _connectionToken = new CancellationTokenSource(_io.Options.ConnectionTimeout);
+            _wsWorkTokenSource = new CancellationTokenSource();
+            var wsConnectionTokenSource = new CancellationTokenSource(_io.Options.ConnectionTimeout);
             try
             {
-                await _ws.ConnectAsync(uri, _connectionToken.Token);
+                await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
                 await Task.Factory.StartNew(ListenAsync);
                 await Task.Factory.StartNew(ListenStateAsync);
             }
@@ -119,7 +120,7 @@ namespace SocketIOClient.WebSocketClient
                     count = messageBuffer.Length - offset;
                 }
 
-                await _ws.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, lastMessage, _connectionToken.Token);
+                await _ws.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, lastMessage, _wsWorkTokenSource.Token);
             }
 #if DEBUG
             Trace.WriteLine($"⬆ {DateTime.Now} {text}");
@@ -154,7 +155,7 @@ namespace SocketIOClient.WebSocketClient
                     count = bytes.Length - offset;
                 }
 
-                await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _connectionToken.Token);
+                await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _wsWorkTokenSource.Token);
             }
 #if DEBUG
             Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
@@ -170,14 +171,14 @@ namespace SocketIOClient.WebSocketClient
         private async Task ListenAsync()
         {
             var buffer = new byte[ReceiveChunkSize];
-            while (_ws.State == WebSocketState.Open && !_connectionToken.IsCancellationRequested)
+            while (_ws.State == WebSocketState.Open && !_wsWorkTokenSource.IsCancellationRequested)
             {
                 var stringResult = new StringBuilder();
                 var binaryResult = new List<byte>();
                 WebSocketReceiveResult result;
                 do
                 {
-                    result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _connectionToken.Token);
+                    result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsWorkTokenSource.Token);
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
                         Close("io server disconnect");
@@ -216,7 +217,7 @@ namespace SocketIOClient.WebSocketClient
             {
                 _io.InvokeDisconnect(reason);
             }
-            _connectionToken.Cancel();
+            _wsWorkTokenSource.Cancel();
             _ws.Dispose();
         }
 
@@ -225,7 +226,7 @@ namespace SocketIOClient.WebSocketClient
             while (true)
             {
                 await Task.Delay(200);
-                if (_connectionToken.IsCancellationRequested)
+                if (_wsWorkTokenSource.IsCancellationRequested)
                     break;
                 if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
                 {

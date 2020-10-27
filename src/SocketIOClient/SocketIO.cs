@@ -148,13 +148,18 @@ namespace SocketIOClient
         /// <exception cref="ConnectException"></exception>
         public async Task ConnectAsync()
         {
+            await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
+        }
+
+        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection)
+        {
             if (ServerUri == null)
             {
                 var innerException = new ArgumentException("Invalid ServerUri");
                 throw new ConnectException("Invalid ServerUri, For more information, please see innerException.", innerException);
             }
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
-            if (Options.AllowedRetryFirstConnection)
+            if (allowedRetryFirstConnection)
             {
                 double delayDouble = Options.ReconnectionDelay;
                 while (true)
@@ -422,7 +427,7 @@ namespace SocketIOClient
                         await Socket.SendMessageAsync("2");
                         OnPing?.Invoke(this, new EventArgs());
                     }
-                    catch (Exception ex) { Trace.WriteLine(ex); }
+                    catch (Exception ex) { Trace.TraceError(ex.ToString()); }
                 }
             }, _pingToken.Token);
         }
@@ -472,23 +477,16 @@ namespace SocketIOClient
                         if (!Connected && Disconnected)
                         {
                             OnReconnecting?.Invoke(this, ++attempt);
-                            await ConnectAsync();
+                            await ConnectCoreAsync(false);
                         }
                         break;
                     }
-                    catch (Exception ex)
+                    catch (ConnectException ex)
                     {
-                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
+                        delayDouble += 2 * Options.RandomizationFactor;
+                        if (delayDouble > Options.ReconnectionDelayMax)
                         {
-                            delayDouble += 2 * Options.RandomizationFactor;
-                            if (delayDouble > Options.ReconnectionDelayMax)
-                            {
-                                OnReconnectFailed?.Invoke(this, ex);
-                            }
-                        }
-                        else
-                        {
-                            throw;
+                            OnReconnectFailed?.Invoke(this, ex);
                         }
                     }
                 }
