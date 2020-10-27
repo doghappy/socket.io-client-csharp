@@ -88,6 +88,12 @@ namespace SocketIOClient.WebSocketClient
             return new System.Net.WebSockets.ClientWebSocket();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(string text)
         {
             if (_ws == null)
@@ -120,15 +126,21 @@ namespace SocketIOClient.WebSocketClient
 #endif
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(byte[] bytes)
         {
             if (_ws == null)
             {
-                throw new InvalidOperationException("Faild to emit, websocket is not connected yet.");
+                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
             }
             if (_ws.State != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                throw new InvalidSocketStateException("Connection is not open.");
             }
             var messagesCount = (int)Math.Ceiling((double)bytes.Length / SendChunkSize);
             for (var i = 0; i < messagesCount; i++)

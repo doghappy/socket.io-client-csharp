@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using WebSocketSharp;
 using SocketIOClient.WebSocketClient;
+using SocketIOClient.Exceptions;
 
 namespace SocketIOClient.NetFx.WebSocketClient
 {
@@ -82,11 +83,11 @@ namespace SocketIOClient.NetFx.WebSocketClient
         {
             if (_ws == null)
             {
-                throw new InvalidOperationException("Faild to emit, websocket is not connected yet.");
+                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
             }
             if (_ws.ReadyState != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                throw new InvalidSocketStateException("Connection is not open.");
             }
             _ws.Send(text);
 #if DEBUG
@@ -99,11 +100,11 @@ namespace SocketIOClient.NetFx.WebSocketClient
         {
             if (_ws == null)
             {
-                throw new InvalidOperationException("Faild to emit, websocket is not connected yet.");
+                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
             }
             if (_ws.ReadyState != WebSocketState.Open)
             {
-                throw new Exception("Connection is not open.");
+                throw new InvalidSocketStateException("Connection is not open.");
             }
             _ws.Send(bytes);
 #if DEBUG
