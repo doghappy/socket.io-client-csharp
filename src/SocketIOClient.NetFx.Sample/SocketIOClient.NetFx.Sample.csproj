@@ -35,9 +35,6 @@
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="SocketIOClient.NetFx, Version=1.0.0.2, Culture=neutral, PublicKeyToken=ce453294e4652142, processorArchitecture=MSIL">
-      <HintPath>..\packages\SocketIOClient.NetFx.1.0.0.2\lib\net45\SocketIOClient.NetFx.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -59,6 +56,12 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SocketIOClient.NetFx\SocketIOClient.NetFx.csproj">
+      <Project>{6e6baa1a-ed83-4204-8674-77e899bfbd54}</Project>
+      <Name>SocketIOClient.NetFx</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

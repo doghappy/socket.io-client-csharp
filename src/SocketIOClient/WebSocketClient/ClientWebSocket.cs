@@ -40,6 +40,7 @@ namespace SocketIOClient.WebSocketClient
         /// <param name="uri"></param>
         /// <param name="options"></param>
         /// <exception cref="TimeoutException"></exception>
+        /// <exception cref="WebSocketException"></exception>
         /// <returns></returns>
         public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
         {
@@ -73,14 +74,6 @@ namespace SocketIOClient.WebSocketClient
             catch (TaskCanceledException)
             {
                 throw new TimeoutException();
-            }
-            catch (WebSocketException ex)
-            {
-                throw new TimeoutException("Unable to connect to the remote server", ex);
-            }
-            catch
-            {
-                throw;
             }
         }
 

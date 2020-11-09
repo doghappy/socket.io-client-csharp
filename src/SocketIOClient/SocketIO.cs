@@ -173,15 +173,22 @@ namespace SocketIOClient
                         });
                         break;
                     }
-                    catch (TimeoutException ex)
+                    catch (SystemException ex)
                     {
-                        int delay = (int)delayDouble;
-                        await Task.Delay(delay);
-                        delayDouble += 2 * Options.RandomizationFactor;
-                        if (delayDouble > Options.ReconnectionDelayMax)
+                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            OnReconnectFailed?.Invoke(this, ex);
-                            break;
+                            int delay = (int)delayDouble;
+                            await Task.Delay(delay);
+                            delayDouble += 2 * Options.RandomizationFactor;
+                            if (delayDouble > Options.ReconnectionDelayMax)
+                            {
+                                OnReconnectFailed?.Invoke(this, ex);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            throw;
                         }
                     }
                 }
@@ -196,12 +203,19 @@ namespace SocketIOClient
                         Proxy = Options.Proxy
                     });
                 }
-                catch (TimeoutException ex)
+                catch (SystemException ex)
                 {
-                    throw new ConnectException("Timeout, please see innerException.", ex)
+                    if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                     {
-                        IsTimeout = true
-                    };
+                        throw new ConnectException("Timeout, please see innerException.", ex)
+                        {
+                            IsTimeout = true
+                        };
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
         }
