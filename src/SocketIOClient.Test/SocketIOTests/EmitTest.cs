@@ -282,7 +282,7 @@ namespace SocketIOClient.Test.SocketIOTests
         {
             int endIndex = -1;
             int bytesCallbackCount = 0;
-            var client = new SocketIO("https://socket-io.doghappy.wang", new SocketIOOptions
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
             {
                 Reconnection = false,
                 Query = new Dictionary<string, string>

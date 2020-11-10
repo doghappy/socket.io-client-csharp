@@ -3,6 +3,7 @@ using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,27 +25,18 @@ namespace SocketIOClient.Sample
                 Query = new Dictionary<string, string>
                 {
                     {"token", "io" }
-                },
-                //EnabledSslProtocols = System.Security.Authentication.SslProtocols.None,
-                //RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-                //{
-                //    if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-                //    {
-                //        return true;
-                //    }
-                //    return false;
-                //}
+                }
             });
 
-            var client = socket.Socket as ClientWebSocket;
-            client.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+            //var client = socket.Socket as ClientWebSocket;
+            ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
             {
                 Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
                 if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
                 {
                     return true;
                 }
-                return true;
+                return false;
             };
 
             socket.OnConnected += Socket_OnConnected;
@@ -52,7 +44,15 @@ namespace SocketIOClient.Sample
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
             socket.OnReconnecting += Socket_OnReconnecting;
-            await socket.ConnectAsync();
+            try
+            {
+                await socket.ConnectAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
 
             socket.On("hi", response =>
             {

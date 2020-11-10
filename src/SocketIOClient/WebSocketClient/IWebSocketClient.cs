@@ -5,7 +5,7 @@ namespace SocketIOClient.WebSocketClient
 {
     public interface IWebSocketClient
     {
-        Task ConnectAsync(Uri uri, WebSocketConnectionOptions options);
+        Task ConnectAsync(Uri uri);
         Task SendMessageAsync(string text);
         Task SendMessageAsync(byte[] bytes);
         Task DisconnectAsync();

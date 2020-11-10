@@ -7,10 +7,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Text;
 using System.Collections.Generic;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-using System.Net.Security;
-using System.Security.Cryptography;
 using SocketIOClient.Exceptions;
 
 namespace SocketIOClient.WebSocketClient
@@ -18,7 +14,7 @@ namespace SocketIOClient.WebSocketClient
     /// <summary>
     /// Internally uses 'System.Net.WebSockets.ClientWebSocket' as websocket client
     /// </summary>
-    public class ClientWebSocket : IWebSocketClient
+    public sealed class ClientWebSocket : IWebSocketClient
     {
         public ClientWebSocket(SocketIO io, PackgeManager parser)
         {
@@ -34,6 +30,8 @@ namespace SocketIOClient.WebSocketClient
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
 
+        public ClientWebSocketOptions Options { get; private set; }
+
         /// <summary>
         /// 
         /// </summary>
@@ -42,27 +40,20 @@ namespace SocketIOClient.WebSocketClient
         /// <exception cref="TimeoutException"></exception>
         /// <exception cref="WebSocketException"></exception>
         /// <returns></returns>
-        public async Task ConnectAsync(Uri uri, WebSocketConnectionOptions options)
+        public async Task ConnectAsync(Uri uri)
         {
+            //#if NET45
+
+            //#elif NETSTANDARD2_0
+            //#endif
+            //if (_io.Options.Proxy != null)
+            //{
+            //    _ws.Options.Proxy = _io.Options.Proxy;
+            //}
             if (_ws != null)
                 _ws.Dispose();
-
-            //ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, errors) =>
-            //{
-            //    //// local dev, just approve all certs
-            //    //if (development) return true;
-            //    //return errors == SslPolicyErrors.None;
-            //    return true;
-            //};
-            _ws = CreateClient();
-            if (options.Proxy != null)
-            {
-                _ws.Options.Proxy = options.Proxy;
-            }
-            //var cert = new X509Certificate2(@"C:\Users\41608\Downloads\cert\client1-crt.pem");
-            //var privateKey = cert.PrivateKey as RSACryptoServiceProvider;
-            //privateKey.en
-            //_ws.Options.ClientCertificates.Add(cert);
+            _ws = new System.Net.WebSockets.ClientWebSocket();
+            Options = _ws.Options;
             _wsWorkTokenSource = new CancellationTokenSource();
             var wsConnectionTokenSource = new CancellationTokenSource(_io.Options.ConnectionTimeout);
             try
@@ -75,11 +66,6 @@ namespace SocketIOClient.WebSocketClient
             {
                 throw new TimeoutException();
             }
-        }
-
-        public virtual System.Net.WebSockets.ClientWebSocket CreateClient()
-        {
-            return new System.Net.WebSockets.ClientWebSocket();
         }
 
         /// <summary>

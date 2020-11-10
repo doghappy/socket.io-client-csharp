@@ -129,6 +129,7 @@ namespace SocketIOClient
         {
             UrlConverter = new UrlConverter();
             Socket = new ClientWebSocket(this, new PackgeManager(this));
+            //Socket = new WebSocketSharpClient(this, new PackgeManager(this));
             PacketId = -1;
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();
@@ -145,7 +146,6 @@ namespace SocketIOClient
         /// 
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="ConnectException"></exception>
         public async Task ConnectAsync()
         {
             await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
@@ -155,8 +155,7 @@ namespace SocketIOClient
         {
             if (ServerUri == null)
             {
-                var innerException = new ArgumentException("Invalid ServerUri");
-                throw new ConnectException("Invalid ServerUri, For more information, please see innerException.", innerException);
+                throw new ArgumentException("Invalid ServerUri");
             }
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
             if (allowedRetryFirstConnection)
@@ -166,11 +165,7 @@ namespace SocketIOClient
                 {
                     try
                     {
-                        await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
-                        {
-                            ConnectionTimeout = Options.ConnectionTimeout,
-                            Proxy = Options.Proxy
-                        });
+                        await Socket.ConnectAsync(wsUri);
                         break;
                     }
                     catch (SystemException ex)
@@ -195,28 +190,7 @@ namespace SocketIOClient
             }
             else
             {
-                try
-                {
-                    await Socket.ConnectAsync(wsUri, new WebSocketConnectionOptions
-                    {
-                        ConnectionTimeout = Options.ConnectionTimeout,
-                        Proxy = Options.Proxy
-                    });
-                }
-                catch (SystemException ex)
-                {
-                    if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
-                    {
-                        throw new ConnectException("Timeout, please see innerException.", ex)
-                        {
-                            IsTimeout = true
-                        };
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                await Socket.ConnectAsync(wsUri);
             }
         }
 
@@ -495,12 +469,15 @@ namespace SocketIOClient
                         }
                         break;
                     }
-                    catch (ConnectException ex)
+                    catch (SystemException ex)
                     {
-                        delayDouble += 2 * Options.RandomizationFactor;
-                        if (delayDouble > Options.ReconnectionDelayMax)
+                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            OnReconnectFailed?.Invoke(this, ex);
+                            delayDouble += 2 * Options.RandomizationFactor;
+                            if (delayDouble > Options.ReconnectionDelayMax)
+                            {
+                                OnReconnectFailed?.Invoke(this, ex);
+                            }
                         }
                     }
                 }

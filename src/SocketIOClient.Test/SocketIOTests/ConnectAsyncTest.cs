@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,9 +29,9 @@ namespace SocketIOClient.Test.SocketIOTests
             {
                 await client.ConnectAsync();
             }
-            catch (ConnectException ex)
+            catch (TimeoutException)
             {
-                isTimeout = ex.IsTimeout;
+                isTimeout = true;
             }
 
             Assert.IsTrue(isTimeout);
