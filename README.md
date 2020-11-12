@@ -6,10 +6,6 @@ An elegant socket.io client for .NET
 
 ## How to use
 
-If your TargetFramework is `.NET Framework` and it runs on `Windows7/Windows Server 2008 R2`, please install [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient.NetFx-%23004880)](https://www.nuget.org/packages/SocketIOClient.NetFx)
-
-Otherwise, we recommend you to install [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
-
 ### Example of usage
 
 #### Emit an event
@@ -232,5 +228,4 @@ await client.ConnectAsync();
 
 ### Change log
 
-[SocketIOClient](./CHANGELOG.md)  
-[SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
+[SocketIOClient](./CHANGELOG.md)
