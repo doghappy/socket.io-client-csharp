@@ -24,27 +24,21 @@ namespace SocketIOClient.Sample
                 Query = new Dictionary<string, string>
                 {
                     {"token", "io" }
-                },
-                //EnabledSslProtocols = System.Security.Authentication.SslProtocols.None,
-                //RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-                //{
-                //    if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-                //    {
-                //        return true;
-                //    }
-                //    return false;
-                //}
+                }
             });
 
             var client = socket.Socket as ClientWebSocket;
-            client.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+            client.Config = options =>
             {
-                Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
-                if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+                options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
                 {
-                    return true;
-                }
-                return true;
+                    Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
+                    if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+                    {
+                        return true;
+                    }
+                    return false;
+                };
             };
 
             socket.OnConnected += Socket_OnConnected;

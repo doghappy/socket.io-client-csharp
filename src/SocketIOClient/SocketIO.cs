@@ -4,6 +4,7 @@ using SocketIOClient.Exceptions;
 using SocketIOClient.JsonConverters;
 using SocketIOClient.Packgers;
 using SocketIOClient.Response;
+using SocketIOClient.Util;
 using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
@@ -128,8 +129,14 @@ namespace SocketIOClient
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-            Socket = new ClientWebSocket(this, new PackgeManager(this));
-            //Socket = new WebSocketSharpClient(this, new PackgeManager(this));
+
+#if NET45
+            if (SystemUtil.IsWindows7)
+                Socket = WebSocketClientFactory.CreateWebSocketSharpClient(this);
+#endif
+            if (Socket == null)
+                Socket = WebSocketClientFactory.CreateClientWebSocket(this);
+
             PacketId = -1;
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();

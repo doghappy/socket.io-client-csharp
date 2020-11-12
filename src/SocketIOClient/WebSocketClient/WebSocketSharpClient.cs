@@ -4,13 +4,15 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Security.Authentication;
 using System.Threading;
 using System.Threading.Tasks;
 using WebSocketSharp;
 
 namespace SocketIOClient.WebSocketClient
 {
-    public class WebSocketSharpClient : IWebSocketClient
+    public sealed class WebSocketSharpClient : IWebSocketClient
     {
         public WebSocketSharpClient(SocketIO io, PackgeManager parser)
         {
@@ -24,6 +26,10 @@ namespace SocketIOClient.WebSocketClient
         CancellationTokenSource _connectionToken;
         readonly static Task _completedTask = Task.FromResult(false);
 
+        public SslProtocols EnabledSslProtocols { get; set; }
+        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
+        public WebProxy Proxy { get; set; }
+
         public async Task ConnectAsync(Uri uri)
         {
             _ws = new WebSocket(uri.ToString());
@@ -33,18 +39,18 @@ namespace SocketIOClient.WebSocketClient
             if (_ws.IsSecure)
             {
                 // set enabled client Ssl protocols as defined via options
-                _ws.SslConfiguration.EnabledSslProtocols = _io.Options.EnabledSslProtocols;
-                if (_io.Options.RemoteCertificateValidationCallback != null)
+                _ws.SslConfiguration.EnabledSslProtocols = EnabledSslProtocols;
+                if (RemoteCertificateValidationCallback != null)
                 {
-                    _ws.SslConfiguration.ServerCertificateValidationCallback = _io.Options.RemoteCertificateValidationCallback;
+                    _ws.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 }
             }
-            if (_io.Options.Proxy != null)
+            if (Proxy != null)
             {
-                var credential = _io.Options.Proxy.Credentials as NetworkCredential;
-                if (credential!=null)
+                var credential = Proxy.Credentials as NetworkCredential;
+                if (credential != null)
                 {
-                    _ws.SetProxy(_io.Options.Proxy.Address.ToString(), credential.UserName, credential.Password);
+                    _ws.SetProxy(Proxy.Address.ToString(), credential.UserName, credential.Password);
                 }
             }
             _ws.Connect();

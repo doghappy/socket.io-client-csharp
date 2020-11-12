@@ -16,7 +16,6 @@ namespace SocketIOClient
         public string Path { get; set; } = "/socket.io";
 
         public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(20);
-        public WebProxy Proxy { get; set; }
 
         public Dictionary<string, string> Query { get; set; }
 
@@ -27,8 +26,6 @@ namespace SocketIOClient
 
         public int ReconnectionDelay { get; set; } = 1000;
         public int ReconnectionDelayMax { get; set; } = 5000;
-
-        public SslProtocols EnabledSslProtocols { get; set; }
 
         double _randomizationFactor;
         public double RandomizationFactor
@@ -52,7 +49,5 @@ namespace SocketIOClient
         /// Generally speaking, the usage scenario is if the server starts later than the client.
         /// </summary>
         public bool AllowedRetryFirstConnection { get; set; }
-
-        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
     }
 }

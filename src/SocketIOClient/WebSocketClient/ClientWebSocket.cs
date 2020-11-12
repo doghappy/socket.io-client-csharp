@@ -30,7 +30,7 @@ namespace SocketIOClient.WebSocketClient
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
 
-        public ClientWebSocketOptions Options { get; private set; }
+        public Action<ClientWebSocketOptions> Config { get; set; }
 
         /// <summary>
         /// 
@@ -42,18 +42,10 @@ namespace SocketIOClient.WebSocketClient
         /// <returns></returns>
         public async Task ConnectAsync(Uri uri)
         {
-            //#if NET45
-
-            //#elif NETSTANDARD2_0
-            //#endif
-            //if (_io.Options.Proxy != null)
-            //{
-            //    _ws.Options.Proxy = _io.Options.Proxy;
-            //}
             if (_ws != null)
                 _ws.Dispose();
             _ws = new System.Net.WebSockets.ClientWebSocket();
-            Options = _ws.Options;
+            Config?.Invoke(_ws.Options);
             _wsWorkTokenSource = new CancellationTokenSource();
             var wsConnectionTokenSource = new CancellationTokenSource(_io.Options.ConnectionTimeout);
             try

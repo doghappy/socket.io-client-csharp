@@ -159,27 +159,78 @@ socket.on("change", (val1, val2) => {
 })
 ```
 
-### More examples
+#### SSL & Proxy
 
-[SocketIOClient.Sample](https://github.com/doghappy/socket.io-client-csharp/tree/master/src/SocketIOClient.Sample/Program.cs)  
-[SocketIOClient.Test](https://github.com/doghappy/socket.io-client-csharp/tree/master/src/SocketIOClient.Test)
+SSL and Proxy are related to your program
+
+**.NET Core**
+
+```cs
+var proxy = new System.Net.WebProxy("http://example.com");
+proxy.Credentials = new NetworkCredential("username", "password");
+
+var socket = client.Socket as ClientWebSocket;
+socket.Config = options =>
+{
+    options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+    {
+        Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
+        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+        {
+            return true;
+        }
+        return true;
+    };
+	
+	// Set Proxy
+    options.Proxy = proxy;
+};
+await client.ConnectAsync();
+```
+
+**.NET Framework**
+
+.NET Framework is more complicated
+
+```cs
+var proxy = new System.Net.WebProxy("http://example.com");
+proxy.Credentials = new NetworkCredential("username", "password");
+
+if (client.Socket is WebSocketSharpClient)
+{
+    var socket = client.Socket as WebSocketSharpClient;
+    socket.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls;
+    socket.Proxy = proxy;
+    socket.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+    {
+        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+        {
+            return true;
+        }
+        Console.WriteLine(sslPolicyErrors);
+        return false;
+    };
+}
+else
+{
+    var socket = client.Socket as ClientWebSocket;
+    System.Net.ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+    {
+        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+        {
+            return true;
+        }
+        Console.WriteLine(sslPolicyErrors);
+        return false;
+    };
+
+    // Set Proxy
+	socket.Config = options => options.Proxy = proxy;
+}
+await client.ConnectAsync();
+```
 
 ### Change log
 
 [SocketIOClient](./CHANGELOG.md)  
 [SocketIOClient.NetFx](./CHANGELOG-NetFx.md)
-
-### Pack & Release
-
-#### SocketIOClient
-
-```bash
-nuget push SocketIOClient.2.0.2.7.nupkg -Source nuget.org -ApiKey ***
-```
-
-#### SocketIOClient.NetFx
-
-```bash
-nuget pack -Prop Configuration=Release
-nuget push SocketIOClient.NetFx.1.0.0.5.nupkg -Source nuget.org -ApiKey ***
-```

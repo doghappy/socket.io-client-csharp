@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2020-11-11
+
+No longer maintain `SocketIOClient.NetFx`, it is replaced by `SocketIOClient`. For users, you don’t have to worry about choosing `SocketIOClient` or `SocketIOClient.NetFx`
+
+### Added
+
+- Support verify the server certificate
+
+### Changed
+
+- The usage of `Options.EnabledSslProtocols` has changed
+- `ClientWebSocket` becomes a sealed class
+- Changed the way to configure the proxy
+
+### Removed
+
+- Removed `ClientWebSocket.CreatClient()` virtual method
+
 ## [2.0.2.9] - 2020-10-27
 
 ### Fixed
