@@ -17,8 +17,8 @@ namespace SocketIOClient.Sample
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            //var uri = new Uri("http://localhost:11000");
-            var uri = new Uri("https://socket-io.doghappy.wang");
+            var uri = new Uri("http://localhost:11000");
+            //var uri = new Uri("https://socket-io.doghappy.wang");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {

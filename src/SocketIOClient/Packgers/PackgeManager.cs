@@ -28,6 +28,7 @@ namespace SocketIOClient.Packgers
                         case EngineIOProtocol.Close:
                             break;
                         case EngineIOProtocol.Ping:
+                            unpackger = new PingPackger();
                             break;
                         case EngineIOProtocol.Pong:
                             unpackger = new PongPackger();

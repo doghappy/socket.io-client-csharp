@@ -6,6 +6,15 @@ An elegant socket.io client for .NET
 
 ## How to use
 
+* If the server uses socket.io v3, please set EIO explicitly
+
+```cs
+var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
+{
+    EIO = 4
+});
+```
+
 ### Example of usage
 
 #### Emit an event

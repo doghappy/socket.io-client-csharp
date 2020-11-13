@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SocketIOClient.EioHandler;
+using System;
 
 namespace SocketIOClient.Packgers
 {
@@ -6,7 +7,8 @@ namespace SocketIOClient.Packgers
     {
         public void Unpack(SocketIO client, string text)
         {
-            client.InvokePong(DateTime.Now - client.PingTime);
+            var v3 = client.Options.EioHandler as Eio3Handler;
+            client.InvokePong(DateTime.Now - v3.PingTime);
         }
     }
 }
