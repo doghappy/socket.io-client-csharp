@@ -1,23 +1,12 @@
-﻿namespace SocketIOClient.Packgers
+﻿using SocketIOClient.EioHandler;
+
+namespace SocketIOClient.Packgers
 {
     public class MessageConnectedPackger : IUnpackable
     {
         public void Unpack(SocketIO client, string text)
         {
-            if (string.IsNullOrEmpty(client.Namespace))
-            {
-                if (text == string.Empty)
-                {
-                    client.InvokeConnect();
-                }
-            }
-            else
-            {
-                if (text == client.Namespace)
-                {
-                    client.InvokeConnect();
-                }
-            }
+            client.Options.EioHandler.Unpack(client, text);
         }
     }
 }

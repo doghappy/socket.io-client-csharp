@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
 using SocketIOClient.Exceptions;
 using SocketIOClient.JsonConverters;
@@ -100,14 +101,13 @@ namespace SocketIOClient
         internal int PacketId { get; private set; }
         internal List<byte[]> OutGoingBytes { get; private set; }
         internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
-        internal DateTime PingTime { get; set; }
 
         public SocketIOOptions Options { get; }
         ByteArrayConverter _byteArrayConverter;
 
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
-        CancellationTokenSource _pingToken;
+        //CancellationTokenSource _pingToken;
         static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
         #region Socket.IO event
@@ -217,7 +217,11 @@ namespace SocketIOClient
                     await Socket.DisconnectAsync();
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
-                _pingToken.Cancel();
+                if (Options.EioHandler is Eio3Handler)
+                {
+                    var v3 = Options.EioHandler as Eio3Handler;
+                    v3.StopPingInterval();
+                }
             }
         }
 
@@ -368,63 +372,16 @@ namespace SocketIOClient
             }
         }
 
-        private async Task SendNamespaceAsync()
-        {
-            if (!string.IsNullOrEmpty(Namespace))
-            {
-                var builder = new StringBuilder();
-                builder.Append("40");
-
-                if (!string.IsNullOrEmpty(Namespace))
-                {
-                    builder.Append(Namespace.TrimEnd(','));
-                }
-                if (Options.Query != null && Options.Query.Count > 0)
-                {
-                    builder.Append('?');
-                    int index = -1;
-                    foreach (var item in Options.Query)
-                    {
-                        index++;
-                        builder
-                            .Append(item.Key)
-                            .Append('=')
-                            .Append(item.Value);
-                        if (index < Options.Query.Count - 1)
-                        {
-                            builder.Append('&');
-                        }
-                    }
-                }
-                if (!string.IsNullOrEmpty(Namespace))
-                {
-                    builder.Append(',');
-                }
-                await Socket.SendMessageAsync(builder.ToString());
-            }
-        }
-
         internal void Open(OpenResponse openResponse)
         {
             Id = openResponse.Sid;
-            _pingToken = new CancellationTokenSource();
-            Task.Factory.StartNew(async () =>
+            Options.EioHandler.IOConnectAsync(this).Wait();
+            if (Options.EioHandler is Eio3Handler)
             {
-                await SendNamespaceAsync();
-                while (true)
-                {
-                    await Task.Delay(openResponse.PingInterval);
-                    if (_pingToken.IsCancellationRequested)
-                        return;
-                    try
-                    {
-                        PingTime = DateTime.Now;
-                        await Socket.SendMessageAsync("2");
-                        OnPing?.Invoke(this, new EventArgs());
-                    }
-                    catch (Exception ex) { Trace.TraceError(ex.ToString()); }
-                }
-            }, _pingToken.Token);
+                var v3 = Options.EioHandler as Eio3Handler;
+                v3.PingInterval = openResponse.PingInterval;
+                v3.StartPingInterval(this);
+            }
         }
 
         internal void InvokeConnect()
@@ -446,7 +403,11 @@ namespace SocketIOClient
                 Connected = false;
                 Disconnected = true;
                 OnDisconnected?.Invoke(this, reason);
-                _pingToken.Cancel();
+                if (Options.EioHandler is Eio3Handler)
+                {
+                    var v3 = Options.EioHandler as Eio3Handler;
+                    v3.StopPingInterval();
+                }
             }
         }
 
@@ -494,6 +455,18 @@ namespace SocketIOClient
         internal void InvokePong(TimeSpan ms)
         {
             OnPong?.Invoke(this, ms);
+        }
+
+        internal void InvokePingV3()
+        {
+            OnPing?.Invoke(this, new EventArgs());
+        }
+
+        internal void InvokePingV4(DateTime pingTime)
+        {
+            OnPing?.Invoke(this, new EventArgs());
+            Socket.SendMessageAsync("3").Wait();
+            InvokePong(DateTime.Now - pingTime);
         }
 
         internal void InvokeReceivedEvent(ReceivedEventArgs args)

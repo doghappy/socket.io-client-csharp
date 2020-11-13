@@ -23,7 +23,9 @@ namespace SocketIOClient
             }
             builder
                 .Append(options.Path)
-                .Append("/?EIO=3&transport=websocket");
+                .Append("/?EIO=")
+                .Append(options.EIO)
+                .Append("&transport=websocket");
 
             if (options.Query != null)
             {

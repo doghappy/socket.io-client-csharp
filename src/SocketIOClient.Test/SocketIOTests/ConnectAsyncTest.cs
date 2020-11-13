@@ -10,6 +10,8 @@ namespace SocketIOClient.Test.SocketIOTests
     {
         public const string URL = "http://localhost:11000";
         public const string NSP_URL = "http://localhost:11000/nsp";
+        public const string V4_URL = "http://localhost:11003";
+        public const string V4_NSP_URL = "http://localhost:11003/nsp";
 
         [TestMethod]
         public async Task TimeoutTest()

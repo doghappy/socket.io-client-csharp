@@ -1,8 +1,6 @@
-﻿using System;
+﻿using SocketIOClient.EioHandler;
+using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Security;
-using System.Security.Authentication;
 
 namespace SocketIOClient
 {
@@ -11,6 +9,7 @@ namespace SocketIOClient
         public SocketIOOptions()
         {
             RandomizationFactor = new Random().NextDouble();
+            EIO = 3;
         }
 
         public string Path { get; set; } = "/socket.io";
@@ -49,5 +48,26 @@ namespace SocketIOClient
         /// Generally speaking, the usage scenario is if the server starts later than the client.
         /// </summary>
         public bool AllowedRetryFirstConnection { get; set; }
+
+        int eio;
+        public int EIO
+        {
+            get => eio;
+            set
+            {
+                if (eio != value)
+                {
+                    eio = value;
+                    if (EioHandler is Eio3Handler)
+                    {
+                        var v3 = EioHandler as Eio3Handler;
+                        v3.StopPingInterval();
+                    }
+                    EioHandler = EioHandlerFactory.GetHandler(value);
+                }
+            }
+        }
+
+        internal IEioHandler EioHandler { get; set; }
     }
 }
