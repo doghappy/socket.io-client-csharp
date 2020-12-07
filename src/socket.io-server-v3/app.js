@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
 });
 
 io.use((socket, next) => {
-    if (socket.handshake.query.token === "v4") {
+    if (socket.handshake.query.token === "v3") {
         next();
     } else {
         next(new Error("Authentication error"));

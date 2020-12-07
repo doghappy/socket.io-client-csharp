@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests
 {
     [TestClass]
-    public class V4EmitTest
+    public class V3EmitTest
     {
         [TestMethod]
         public async Task HiTest()
@@ -17,7 +17,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 EIO = 4,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "v4" }
+                    { "token", "v3" }
                 }
             });
             client.On("hi", response =>

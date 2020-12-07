@@ -23,59 +23,123 @@ namespace SocketIOClient.Sample
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
-                Query = new Dictionary<string, string>
-                {
-                    //{"token", "io" }
-                    {"token", "v4" }
-                },
+                //Query = new Dictionary<string, string>
+                //{
+                //    //{"token", "io" }
+                //    {"token", "v4" }
+                //},
                 EIO = 4
             });
 
-            var client = socket.Socket as ClientWebSocket;
-            client.Config = options =>
+            socket.OnConnected += async (sender, e) =>
             {
-                options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-                {
-                    Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
-                    if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-                    {
-                        return true;
-                    }
-                    return false;
-                };
+                Console.WriteLine("sending link req");
+                await socket.EmitAsync("link", socket.Id);
             };
 
-            socket.OnConnected += Socket_OnConnected;
-            socket.OnPing += Socket_OnPing;
-            socket.OnPong += Socket_OnPong;
-            socket.OnDisconnected += Socket_OnDisconnected;
-            socket.OnReconnecting += Socket_OnReconnecting;
-            await socket.ConnectAsync();
-
-            socket.On("hi", response =>
-            {
-                Console.WriteLine($"server: {response.GetValue<string>()}");
-            });
-
-            socket.On("bytes", response =>
-            {
-                var bytes = response.GetValue<ByteResponse>();
-                Console.WriteLine($"bytes.Source = {bytes.Source}");
-                Console.WriteLine($"bytes.ClientSource = {bytes.ClientSource}");
-                Console.WriteLine($"bytes.Buffer.Length = {bytes.Buffer.Length}");
-                Console.WriteLine($"bytes.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
-            });
             socket.OnReceivedEvent += (sender, e) =>
             {
-                if (e.Event == "bytes")
-                {
-                    var bytes = e.Response.GetValue<ByteResponse>();
-                    Console.WriteLine($"OnReceivedEvent.Source = {bytes.Source}");
-                    Console.WriteLine($"OnReceivedEvent.ClientSource = {bytes.ClientSource}");
-                    Console.WriteLine($"OnReceivedEvent.Buffer.Length = {bytes.Buffer.Length}");
-                    Console.WriteLine($"OnReceivedEvent.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
-                }
+                Console.WriteLine(e.Event);
             };
+
+            socket.OnDisconnected += (sender, e) =>
+            {
+                Console.WriteLine("disconnect");
+
+                //Stop heartbeat
+                //heartBeatTimer.Stop();
+                //heartBeatTimer.Dispose();
+            };
+
+            //On matchmaking start
+            socket.On("start_mm", _ =>
+            {
+
+                ////Heartbeat
+                //heartBeatTimer = new Timer(Utilities.matchmakeTimerDelayMs / 2);
+                //heartBeatTimer.Elapsed += async (object src, ElapsedEventArgs e) =>
+                //{
+                //    await socket.EmitAsync("hb");
+                //    Console.WriteLine("heartbeat");
+                //};
+                //heartBeatTimer.AutoReset = true;
+                //heartBeatTimer.Enabled = true;
+                Console.WriteLine("start_mm callback");
+            });
+
+            //On queue count
+            socket.On("count", res =>
+            {
+                //queueCount.text = res.GetValue<string>();
+                Console.WriteLine(res.GetValue<string>());
+            });
+
+            //On match ready for joining
+            socket.On("m_ready", res =>
+            {
+
+                //Stop heartbeat
+                //heartBeatTimer.Stop();
+                //heartBeatTimer.Dispose();
+                Console.WriteLine("m_ready callback");
+            });
+
+            //On error
+            socket.On("err", _ =>
+            {
+                //Stop heartbeat
+                //heartBeatTimer.Stop();
+                //heartBeatTimer.Dispose();
+                Console.WriteLine("err callback");
+            });
+
+            socket.ConnectAsync();
+
+            //var client = socket.Socket as ClientWebSocket;
+            //client.Config = options =>
+            //{
+            //    options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+            //    {
+            //        Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
+            //        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+            //        {
+            //            return true;
+            //        }
+            //        return false;
+            //    };
+            //};
+
+            //socket.OnConnected += Socket_OnConnected;
+            //socket.OnPing += Socket_OnPing;
+            //socket.OnPong += Socket_OnPong;
+            //socket.OnDisconnected += Socket_OnDisconnected;
+            //socket.OnReconnecting += Socket_OnReconnecting;
+            //await socket.ConnectAsync();
+
+            //socket.On("hi", response =>
+            //{
+            //    Console.WriteLine($"server: {response.GetValue<string>()}");
+            //});
+
+            //socket.On("bytes", response =>
+            //{
+            //    var bytes = response.GetValue<ByteResponse>();
+            //    Console.WriteLine($"bytes.Source = {bytes.Source}");
+            //    Console.WriteLine($"bytes.ClientSource = {bytes.ClientSource}");
+            //    Console.WriteLine($"bytes.Buffer.Length = {bytes.Buffer.Length}");
+            //    Console.WriteLine($"bytes.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
+            //});
+            //socket.OnReceivedEvent += (sender, e) =>
+            //{
+            //    if (e.Event == "bytes")
+            //    {
+            //        var bytes = e.Response.GetValue<ByteResponse>();
+            //        Console.WriteLine($"OnReceivedEvent.Source = {bytes.Source}");
+            //        Console.WriteLine($"OnReceivedEvent.ClientSource = {bytes.ClientSource}");
+            //        Console.WriteLine($"OnReceivedEvent.Buffer.Length = {bytes.Buffer.Length}");
+            //        Console.WriteLine($"OnReceivedEvent.Buffer.ToString() = {Encoding.UTF8.GetString(bytes.Buffer)}");
+            //    }
+            //};
 
             Console.ReadLine();
         }

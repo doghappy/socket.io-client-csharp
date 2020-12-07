@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Web", "Socke
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.NetFx.Sample", "SocketIOClient.NetFx.Sample\SocketIOClient.NetFx.Sample.csproj", "{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v4", "socket.io-server-v4\socket.io-server-v4.njsproj", "{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v3", "socket.io-server-v3\socket.io-server-v3.njsproj", "{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

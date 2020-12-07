@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests
 {
     [TestClass]
-    public class V4ReconnectionTest
+    public class V3ReconnectionTest
     {
         [TestMethod]
         [Timeout(30000)]
@@ -16,7 +16,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "v4" }
+                    { "token", "v3" }
                 },
                 EIO = 4
             });
