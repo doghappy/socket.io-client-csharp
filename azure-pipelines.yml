@@ -20,6 +20,6 @@ steps:
 - script: |
     cd src/socket.io-server
     npm install
-    npm start & cd ../socket.io-server-v4
+    npm start & cd ../socket.io-server-v3
     npm install
     npm start & dotnet test ../SocketIOClient.Test
