@@ -420,10 +420,10 @@ namespace SocketIOClient
         {
             if (Options.Reconnection)
             {
-                double delayDouble = Options.ReconnectionDelay;
                 int attempt = 0;
                 while (true)
                 {
+                    double delayDouble = Options.ReconnectionDelay;
                     int delay = (int)delayDouble;
                     Trace.WriteLine($"{DateTime.Now} Reconnection wait {delay} ms");
                     await Task.Delay(delay);
