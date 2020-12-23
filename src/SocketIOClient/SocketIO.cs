@@ -405,12 +405,12 @@ namespace SocketIOClient
             {
                 Connected = false;
                 Disconnected = true;
-                OnDisconnected?.Invoke(this, reason);
                 if (Options.EioHandler is Eio3Handler)
                 {
                     var v3 = Options.EioHandler as Eio3Handler;
                     v3.StopPingInterval();
                 }
+                OnDisconnected?.Invoke(this, reason);
             }
         }
 
