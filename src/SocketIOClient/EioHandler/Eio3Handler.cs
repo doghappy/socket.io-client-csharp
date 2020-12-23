@@ -1,5 +1,4 @@
-﻿using SocketIOClient.WebSocketClient;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -9,9 +8,9 @@ namespace SocketIOClient.EioHandler
 {
     class Eio3Handler : IEioHandler
     {
-        CancellationTokenSource _pingToken;
         internal DateTime PingTime;
         internal int PingInterval;
+        Timer timer;
 
         public async Task IOConnectAsync(SocketIO io)
         {
@@ -66,31 +65,21 @@ namespace SocketIOClient.EioHandler
 
         public void StartPingInterval(SocketIO io)
         {
-            _pingToken = new CancellationTokenSource();
-            Task.Factory.StartNew(async () =>
+            timer = new Timer(async _ =>
             {
-                while (true)
+                try
                 {
-                    await Task.Delay(PingInterval);
-                    if (_pingToken.IsCancellationRequested)
-                        return;
-                    try
-                    {
-                        PingTime = DateTime.Now;
-                        await io.Socket.SendMessageAsync("2");
-                        io.InvokePingV3();
-                    }
-                    catch (Exception ex) { Trace.TraceError(ex.ToString()); }
+                    PingTime = DateTime.Now;
+                    await io.Socket.SendMessageAsync("2");
+                    io.InvokePingV3();
                 }
-            }, _pingToken.Token);
+                catch (Exception ex) { Trace.TraceError(ex.ToString()); }
+            }, null, PingInterval, PingInterval);
         }
 
         public void StopPingInterval()
         {
-            if (_pingToken != null)
-            {
-                _pingToken.Cancel();
-            }
+            timer?.Dispose();
         }
     }
 }

@@ -18,7 +18,7 @@ io.use((socket, next) => {
 })
 
 io.on('connection', socket => {
-    console.log('connection');
+    console.log('connected: ' + socket.id);
     socket.on('hi', (msg) => {
         console.log('console log message: ' + msg);
         io.emit('hi', 'io: ' + msg);
