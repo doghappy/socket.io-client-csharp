@@ -29,6 +29,7 @@ namespace SocketIOClient.WebSocketClient
         readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
+        Timer stateTimer;
 
         public Action<ClientWebSocketOptions> Config { get; set; }
 
@@ -52,7 +53,7 @@ namespace SocketIOClient.WebSocketClient
             {
                 await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
                 await Task.Factory.StartNew(ListenAsync);
-                await Task.Factory.StartNew(ListenStateAsync);
+                ListenState();
             }
             catch (TaskCanceledException)
             {
@@ -192,19 +193,17 @@ namespace SocketIOClient.WebSocketClient
             _ws.Dispose();
         }
 
-        private async Task ListenStateAsync()
+        private void ListenState()
         {
-            while (true)
+            stateTimer?.Dispose();
+            stateTimer = new Timer(_ =>
             {
-                await Task.Delay(200);
-                if (_wsWorkTokenSource.IsCancellationRequested)
-                    break;
                 if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
                 {
                     Close("io server disconnect");
-                    break;
+                    stateTimer.Dispose();
                 }
-            }
+            }, null, 200, 200);
         }
     }
 }

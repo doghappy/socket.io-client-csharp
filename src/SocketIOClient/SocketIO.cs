@@ -403,7 +403,7 @@ namespace SocketIOClient
         {
             if (Connected)
             {
-                Connected = false;
+                Connected  = false;
                 Disconnected = true;
                 if (Options.EioHandler is Eio3Handler)
                 {
