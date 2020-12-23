@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SocketIOClient.ConnectInterval;
 using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
 using SocketIOClient.Exceptions;
@@ -110,6 +111,8 @@ namespace SocketIOClient
         //CancellationTokenSource _pingToken;
         static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
+        public Func<IConnectInterval> GetConnectInterval { get; set; }
+
         #region Socket.IO event
         public event EventHandler OnConnected;
         //public event EventHandler<string> OnConnectError;
@@ -147,6 +150,7 @@ namespace SocketIOClient
             };
             Disconnected = true;
             OnDisconnected += SocketIO_OnDisconnected;
+            GetConnectInterval = () => new DefaultConnectInterval(Options);
         }
 
         /// <summary>
@@ -155,10 +159,10 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task ConnectAsync()
         {
-            await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
+            await ConnectCoreAsync(Options.AllowedRetryFirstConnection, null);
         }
 
-        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection)
+        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection, Action connectBefore)
         {
             if (ServerUri == null)
             {
@@ -167,11 +171,12 @@ namespace SocketIOClient
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
             if (allowedRetryFirstConnection)
             {
-                double delayDouble = Options.ReconnectionDelay;
+                var connectInterval = GetConnectInterval();
                 while (true)
                 {
                     try
                     {
+                        connectBefore?.Invoke();
                         await Socket.ConnectAsync(wsUri);
                         break;
                     }
@@ -179,10 +184,8 @@ namespace SocketIOClient
                     {
                         if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            int delay = (int)delayDouble;
-                            await Task.Delay(delay);
-                            delayDouble += 2 * Options.RandomizationFactor;
-                            if (delayDouble > Options.ReconnectionDelayMax)
+                            await Task.Delay(connectInterval.GetDelay());
+                            if (connectInterval.NextDealy() > Options.ReconnectionDelayMax)
                             {
                                 OnReconnectFailed?.Invoke(this, ex);
                                 break;
@@ -420,35 +423,8 @@ namespace SocketIOClient
         {
             if (Options.Reconnection)
             {
-                double delayDouble = Options.ReconnectionDelay;
                 int attempt = 0;
-                while (true)
-                {
-                    int delay = (int)delayDouble;
-                    Trace.WriteLine($"{DateTime.Now} Reconnection wait {delay} ms");
-                    await Task.Delay(delay);
-                    Trace.WriteLine($"{DateTime.Now} Delay done");
-                    try
-                    {
-                        if (!Connected && Disconnected)
-                        {
-                            OnReconnecting?.Invoke(this, ++attempt);
-                            await ConnectCoreAsync(false);
-                        }
-                        break;
-                    }
-                    catch (SystemException ex)
-                    {
-                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
-                        {
-                            delayDouble += 2 * Options.RandomizationFactor;
-                            if (delayDouble > Options.ReconnectionDelayMax)
-                            {
-                                OnReconnectFailed?.Invoke(this, ex);
-                            }
-                        }
-                    }
-                }
+                await ConnectCoreAsync(true, () => OnReconnecting?.Invoke(this, ++attempt));
             }
         }
 
