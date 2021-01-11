@@ -24,6 +24,15 @@ io.on('connection', socket => {
         io.emit('hi', 'io: ' + msg);
     });
 
+    socket.on("bytes", (name, data) => {
+        const bytes = Buffer.from(data.bytes.toString() + " - server - " + name, "utf-8");
+        socket.emit("bytes", {
+            clientSource: data.source,
+            source: "server",
+            bytes
+        });
+    });
+
     socket.on("sever disconnect", close => {
         socket.disconnect(close)
     });
