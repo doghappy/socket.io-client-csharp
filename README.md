@@ -9,6 +9,22 @@ An elegant socket.io client for .NET, Supports `.NET Framework 4.5` and `.NET St
 
 [QuickStart](./QuickStart.md)
 
+## Development
+
+Before development or testing, you need to install the nodejs.
+
+```bash
+# start socket.io v2 server
+cd src/socket.io-server
+npm i # If the dependencies are already installed, you can ignore this step.
+npm start
+
+# start socket.io v3 server
+cd src/socket.io-server-v3
+npm i # If the dependencies are already installed, you can ignore this step.
+npm start
+```
+
 ## Change log
 
 [SocketIOClient](./CHANGELOG.md)
