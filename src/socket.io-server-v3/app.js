@@ -53,6 +53,14 @@ io.on('connection', socket => {
         });
     });
 
+    socket.on("client binary callback", (msg) => {
+        const binaryMessage = Buffer.from(msg.toString() + " - server", "utf-8");
+        socket.emit("client binary callback", binaryMessage, clientMsg => {
+            console.log(clientMsg);
+            socket.emit("server binary callback called");
+        });
+    });
+
     socket.on("sever disconnect", close => {
         socket.disconnect(close)
     });

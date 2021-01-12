@@ -122,5 +122,40 @@ namespace SocketIOClient.Test.SocketIOTests
 
             Assert.AreEqual("return all the characters", result);
         }
+
+        [TestMethod]
+        public async Task ClientBinaryCallbackTest()
+        {
+            SocketIOResponse res = null;
+            bool called = false;
+            var client = new SocketIO(ConnectAsyncTest.V4_URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                EIO = 4,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "v3" }
+                }
+            });
+
+            client.OnConnected += async (sender, e) =>
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes("SocketIOClient.Test");
+                await client.EmitAsync("client binary callback", bytes);
+            };
+            client.On("client binary callback", async response =>
+            {
+                res = response;
+                await response.CallbackAsync();
+            });
+            client.On("server binary callback called", response => called = true);
+            await client.ConnectAsync();
+            await Task.Delay(400);
+            await client.DisconnectAsync();
+
+            Assert.IsTrue(called);
+            byte[] resBytes = res.GetValue<byte[]>();
+            Assert.AreEqual("SocketIOClient.Test - server", Encoding.UTF8.GetString(resBytes));
+        }
     }
 }
