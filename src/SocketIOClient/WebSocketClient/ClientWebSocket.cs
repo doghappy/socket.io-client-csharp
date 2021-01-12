@@ -178,7 +178,7 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                     Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
-                    _io.InvokeBytesReceived(binaryResult.Skip(1).ToArray());
+                   _io.InvokeBytesReceived(_io.Options.EIO == 4 ? binaryResult.ToArray() : binaryResult.Skip(1).ToArray());
                 }
             }
         }
