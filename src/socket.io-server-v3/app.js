@@ -33,6 +33,26 @@ io.on('connection', socket => {
         });
     });
 
+    socket.on('binary', (data) => {
+        io.emit("binary", Buffer.from(data));
+    });
+
+    socket.on('binary-obj', (data) => {
+        io.emit("binary-obj", {
+            data: Buffer.from(data)
+        });
+    });
+
+    socket.on('binary', (data) => {
+        io.emit("binary", Buffer.from(data));
+    });
+
+    socket.on('binary-obj', (data) => {
+        io.emit("binary-obj", {
+            data: Buffer.from(data)
+        });
+    });
+
     socket.on("sever disconnect", close => {
         socket.disconnect(close)
     });

@@ -20,10 +20,10 @@ namespace SocketIOClient.Packgers
                 if (int.TryParse(text.Substring(0, index), out _totalCount))
                 {
                     text = text.Substring(index + 1);
-                    if (!string.IsNullOrEmpty(client.Namespace))
-                    {
-                        text = text.Substring(client.Namespace.Length);
-                    }
+                    //if (!string.IsNullOrEmpty(client.Namespace))
+                    //{
+                    //    text = text.Substring(client.Namespace.Length);
+                    //}
                     int packetIndex = text.IndexOf('[');
                     string id = null;
                     if (packetIndex > 0)

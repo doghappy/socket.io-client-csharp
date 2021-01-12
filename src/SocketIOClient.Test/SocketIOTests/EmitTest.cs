@@ -67,9 +67,9 @@ namespace SocketIOClient.Test.SocketIOTests
         }
 
         [TestMethod]
-        public async Task BinaryEventTest()
+        public async Task BinaryTest()
         {
-            ByteResponse result = null;
+            string result = null;
             var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
             {
                 Reconnection = false,
@@ -78,27 +78,48 @@ namespace SocketIOClient.Test.SocketIOTests
                     { "token", "io" }
                 }
             });
-            client.On("bytes", response => result = response.GetValue<ByteResponse>());
-
-            const string dotNetCore = ".net core";
-            const string client001 = "client001";
-            const string name = "unit test";
-
+            client.On("binary", response =>
+            {
+                var bytes = response.GetValue<byte[]>();
+                result = Encoding.UTF8.GetString(bytes);
+            });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("bytes", name, new
-                {
-                    source = client001,
-                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
-                });
+                await client.EmitAsync("binary", "return all the characters");
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("client001", result.ClientSource);
-            Assert.AreEqual("server", result.Source);
-            Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
+            Assert.AreEqual("return all the characters", result);
+        }
+
+        [TestMethod]
+        public async Task BinaryObjTest()
+        {
+            string result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("binary-obj", response =>
+            {
+                var data = response.GetValue<BinaryObjectResponse>();
+                result = Encoding.UTF8.GetString(data.Data);
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("binary-obj", "return all the characters");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("return all the characters", result);
         }
 
         [TestMethod]
