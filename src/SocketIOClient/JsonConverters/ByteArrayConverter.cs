@@ -48,7 +48,8 @@ namespace SocketIOClient.JsonConverters
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var source = (value as byte[]).ToList();
-            source.Insert(0, 4);
+            if (Client.Options.EIO != 4)
+                source.Insert(0, 4);
             Client.OutGoingBytes.Add(source.ToArray());
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
