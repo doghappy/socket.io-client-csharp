@@ -7,7 +7,7 @@ An elegant socket.io client for .NET, Supports `.NET Framework 4.5` and `.NET St
 
 ## How to use
 
-[QuickStart](./QuickStart.md)
+[QuickStart](https://github.com/doghappy/socket.io-client-csharp/wiki)
 
 ## Development
 
