@@ -31,7 +31,7 @@ namespace SocketIOClient.WebSocketClient
         public WebProxy Proxy { get; set; }
         Timer stateTimer;
 
-        public async Task ConnectAsync(Uri uri)
+        public Task ConnectAsync(Uri uri)
         {
             _ws = new WebSocket(uri.ToString());
             _ws.OnMessage += OnMessage;
@@ -61,7 +61,7 @@ namespace SocketIOClient.WebSocketClient
             }
             _ws.OnClose += OnClose;
             _connectionToken = new CancellationTokenSource();
-            ListenState();
+            return _completedTask;
         }
 
         public Task SendMessageAsync(string text)
