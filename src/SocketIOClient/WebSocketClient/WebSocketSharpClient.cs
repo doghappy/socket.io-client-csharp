@@ -29,6 +29,7 @@ namespace SocketIOClient.WebSocketClient
         public SslProtocols EnabledSslProtocols { get; set; }
         public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
         public WebProxy Proxy { get; set; }
+        Timer stateTimer;
 
         public async Task ConnectAsync(Uri uri)
         {
@@ -60,7 +61,7 @@ namespace SocketIOClient.WebSocketClient
             }
             _ws.OnClose += OnClose;
             _connectionToken = new CancellationTokenSource();
-            await Task.Factory.StartNew(ListenStateAsync, _connectionToken.Token);
+            ListenState();
         }
 
         public Task SendMessageAsync(string text)
@@ -143,17 +144,17 @@ namespace SocketIOClient.WebSocketClient
             ws.Dispose();
         }
 
-        private async Task ListenStateAsync()
+        private void ListenState()
         {
-            while (true)
+            stateTimer?.Dispose();
+            stateTimer = new Timer(_ =>
             {
-                await Task.Delay(200);
                 if (_ws.ReadyState == WebSocketState.Closed)
                 {
                     Close("io server disconnect");
-                    return;
+                    stateTimer.Dispose();
                 }
-            }
+            }, null, 200, 200);
         }
     }
 }
