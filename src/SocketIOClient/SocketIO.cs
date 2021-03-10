@@ -2,9 +2,7 @@
 using SocketIOClient.ConnectInterval;
 using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
-using SocketIOClient.Exceptions;
 using SocketIOClient.JsonConverters;
-using SocketIOClient.Packgers;
 using SocketIOClient.Response;
 using SocketIOClient.Util;
 using SocketIOClient.WebSocketClient;
@@ -403,7 +401,7 @@ namespace SocketIOClient
         {
             if (Connected)
             {
-                Connected  = false;
+                Connected = false;
                 Disconnected = true;
                 if (Options.EioHandler is Eio3Handler)
                 {

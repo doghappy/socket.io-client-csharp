@@ -29,7 +29,6 @@ namespace SocketIOClient.WebSocketClient
         readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
-        Timer stateTimer;
 
         public Action<ClientWebSocketOptions> Config { get; set; }
 
@@ -47,13 +46,13 @@ namespace SocketIOClient.WebSocketClient
                 _ws.Dispose();
             _ws = new System.Net.WebSockets.ClientWebSocket();
             Config?.Invoke(_ws.Options);
+
             _wsWorkTokenSource = new CancellationTokenSource();
             var wsConnectionTokenSource = new CancellationTokenSource(_io.Options.ConnectionTimeout);
             try
             {
                 await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
-                await Task.Factory.StartNew(ListenAsync);
-                ListenState();
+                _ = Task.Run(ListenAsync);
             }
             catch (TaskCanceledException)
             {
@@ -142,29 +141,47 @@ namespace SocketIOClient.WebSocketClient
 
         private async Task ListenAsync()
         {
-            var buffer = new byte[ReceiveChunkSize];
-            while (_ws.State == WebSocketState.Open && !_wsWorkTokenSource.IsCancellationRequested)
+            while (true)
             {
+                var buffer = new byte[ReceiveChunkSize];
                 var stringResult = new StringBuilder();
                 var binaryResult = new List<byte>();
-                WebSocketReceiveResult result;
-                do
+                WebSocketReceiveResult result = null;
+                while (_ws.State == WebSocketState.Open)
                 {
-                    result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsWorkTokenSource.Token);
-                    if (result.MessageType == WebSocketMessageType.Close)
+                    try
                     {
-                        Close("io server disconnect");
+                        //result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsWorkTokenSource.Token);
+                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            Close("io server disconnect");
+                            break;
+                        }
+                        else if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            stringResult.Append(str);
+                        }
+                        else if (result.MessageType == WebSocketMessageType.Binary)
+                        {
+                            binaryResult.AddRange(buffer.Take(result.Count));
+                        }
+                        if (result.EndOfMessage)
+                        {
+                            break;
+                        }
                     }
-                    else if (result.MessageType == WebSocketMessageType.Text)
+                    catch (WebSocketException e)
                     {
-                        string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        stringResult.Append(str);
+                        Close(e.Message);
+                        break;
                     }
-                    else if (result.MessageType == WebSocketMessageType.Binary)
-                    {
-                        binaryResult.AddRange(buffer.Take(result.Count));
-                    }
-                } while (!result.EndOfMessage);
+                }
+                if (result == null)
+                {
+                    break;
+                }
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
                     string message = stringResult.ToString();
@@ -178,7 +195,7 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                     Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
-                   _io.InvokeBytesReceived(_io.Options.EIO == 4 ? binaryResult.ToArray() : binaryResult.Skip(1).ToArray());
+                    _io.InvokeBytesReceived(_io.Options.EIO == 4 ? binaryResult.ToArray() : binaryResult.Skip(1).ToArray());
                 }
             }
         }
@@ -189,21 +206,6 @@ namespace SocketIOClient.WebSocketClient
             {
                 _io.InvokeDisconnect(reason);
             }
-            _wsWorkTokenSource.Cancel();
-            _ws.Dispose();
-        }
-
-        private void ListenState()
-        {
-            stateTimer?.Dispose();
-            stateTimer = new Timer(_ =>
-            {
-                if (_ws.State == WebSocketState.Closed || _ws.State == WebSocketState.Aborted)
-                {
-                    Close("io server disconnect");
-                    stateTimer.Dispose();
-                }
-            }, null, 200, 200);
         }
     }
 }
