@@ -16,8 +16,8 @@
     <Version>2.1.5</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <SignAssembly>false</SignAssembly>
-    <AssemblyOriginatorKeyFile>SocketIOClient.pfx</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
