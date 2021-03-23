@@ -144,7 +144,7 @@ namespace SocketIOClient.WebSocketClient
             while (true)
             {
                 var buffer = new byte[ReceiveChunkSize];
-                var stringResult = new StringBuilder();
+                var stringResult = new List<byte>();
                 var binaryResult = new List<byte>();
                 WebSocketReceiveResult result = null;
                 while (_ws.State == WebSocketState.Open)
@@ -160,8 +160,7 @@ namespace SocketIOClient.WebSocketClient
                         }
                         else if (result.MessageType == WebSocketMessageType.Text)
                         {
-                            string str = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                            stringResult.Append(str);
+                            stringResult.AddRange(buffer.Take(result.Count));
                         }
                         else if (result.MessageType == WebSocketMessageType.Binary)
                         {
@@ -184,7 +183,7 @@ namespace SocketIOClient.WebSocketClient
                 }
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    string message = stringResult.ToString();
+                    string message = Encoding.UTF8.GetString(stringResult.ToArray());
 #if DEBUG
                     Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
