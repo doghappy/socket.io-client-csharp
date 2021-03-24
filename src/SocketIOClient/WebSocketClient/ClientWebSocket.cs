@@ -1,12 +1,10 @@
 ﻿using SocketIOClient.Packgers;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Text;
-using System.Collections.Generic;
 using SocketIOClient.Exceptions;
 
 namespace SocketIOClient.WebSocketClient
@@ -23,7 +21,7 @@ namespace SocketIOClient.WebSocketClient
         }
 
         const int ReceiveChunkSize = 1024;
-        const int SendChunkSize = 1024;
+        //const int SendChunkSize = 1024;
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;
@@ -77,22 +75,24 @@ namespace SocketIOClient.WebSocketClient
                 throw new InvalidSocketStateException("Connection is not open.");
             }
 
-            var messageBuffer = Encoding.UTF8.GetBytes(text);
-            var messagesCount = (int)Math.Ceiling((double)messageBuffer.Length / SendChunkSize);
+            byte[] bytes = Encoding.UTF8.GetBytes(text);
+            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _wsWorkTokenSource.Token);
+            //var messageBuffer = Encoding.UTF8.GetBytes(text);
+            //var messagesCount = (int)Math.Ceiling((double)messageBuffer.Length / SendChunkSize);
 
-            for (var i = 0; i < messagesCount; i++)
-            {
-                var offset = (SendChunkSize * i);
-                var count = SendChunkSize;
-                var lastMessage = ((i + 1) == messagesCount);
+            //for (var i = 0; i < messagesCount; i++)
+            //{
+            //    var offset = (SendChunkSize * i);
+            //    var count = SendChunkSize;
+            //    var lastMessage = ((i + 1) == messagesCount);
 
-                if ((count * (i + 1)) > messageBuffer.Length)
-                {
-                    count = messageBuffer.Length - offset;
-                }
+            //    if ((count * (i + 1)) > messageBuffer.Length)
+            //    {
+            //        count = messageBuffer.Length - offset;
+            //    }
 
-                await _ws.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, lastMessage, _wsWorkTokenSource.Token);
-            }
+            //    await _ws.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, lastMessage, _wsWorkTokenSource.Token);
+            //}
 #if DEBUG
             Trace.WriteLine($"⬆ {DateTime.Now} {text}");
 #endif
@@ -114,20 +114,21 @@ namespace SocketIOClient.WebSocketClient
             {
                 throw new InvalidSocketStateException("Connection is not open.");
             }
-            var messagesCount = (int)Math.Ceiling((double)bytes.Length / SendChunkSize);
-            for (var i = 0; i < messagesCount; i++)
-            {
-                var offset = (SendChunkSize * i);
-                var count = SendChunkSize;
-                var lastMessage = ((i + 1) == messagesCount);
+            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, _wsWorkTokenSource.Token);
+            //var messagesCount = (int)Math.Ceiling((double)bytes.Length / SendChunkSize);
+            //for (var i = 0; i < messagesCount; i++)
+            //{
+            //    var offset = (SendChunkSize * i);
+            //    var count = SendChunkSize;
+            //    var lastMessage = ((i + 1) == messagesCount);
 
-                if ((count * (i + 1)) > bytes.Length)
-                {
-                    count = bytes.Length - offset;
-                }
+            //    if ((count * (i + 1)) > bytes.Length)
+            //    {
+            //        count = bytes.Length - offset;
+            //    }
 
-                await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _wsWorkTokenSource.Token);
-            }
+            //    await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _wsWorkTokenSource.Token);
+            //}
 #if DEBUG
             Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
@@ -144,27 +145,28 @@ namespace SocketIOClient.WebSocketClient
             while (true)
             {
                 var buffer = new byte[ReceiveChunkSize];
-                var stringResult = new List<byte>();
-                var binaryResult = new List<byte>();
+                int count = 0;
                 WebSocketReceiveResult result = null;
                 while (_ws.State == WebSocketState.Open)
                 {
                     try
                     {
                         //result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsWorkTokenSource.Token);
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        var subBuffer = new byte[ReceiveChunkSize];
+                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), CancellationToken.None);
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             Close("io server disconnect");
                             break;
                         }
-                        else if (result.MessageType == WebSocketMessageType.Text)
+                        else if (result.MessageType == WebSocketMessageType.Text || result.MessageType == WebSocketMessageType.Binary)
                         {
-                            stringResult.AddRange(buffer.Take(result.Count));
-                        }
-                        else if (result.MessageType == WebSocketMessageType.Binary)
-                        {
-                            binaryResult.AddRange(buffer.Take(result.Count));
+                            if (buffer.Length - count < result.Count)
+                            {
+                                Array.Resize(ref buffer, buffer.Length + result.Count);
+                            }
+                            Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
+                            count += result.Count;
                         }
                         if (result.EndOfMessage)
                         {
@@ -183,7 +185,7 @@ namespace SocketIOClient.WebSocketClient
                 }
                 if (result.MessageType == WebSocketMessageType.Text)
                 {
-                    string message = Encoding.UTF8.GetString(stringResult.ToArray());
+                    string message = Encoding.UTF8.GetString(buffer, 0, count);
 #if DEBUG
                     Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
@@ -194,7 +196,19 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                     Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
-                    _io.InvokeBytesReceived(_io.Options.EIO == 4 ? binaryResult.ToArray() : binaryResult.Skip(1).ToArray());
+                    byte[] bytes;
+                    if (_io.Options.EIO == 3)
+                    {
+                        count -= 1;
+                        bytes = new byte[count];
+                        Buffer.BlockCopy(buffer, 1, bytes, 0, count);
+                    }
+                    else
+                    {
+                        bytes = new byte[count];
+                        Buffer.BlockCopy(buffer, 0, bytes, 0, count);
+                    }
+                    _io.InvokeBytesReceived(bytes);
                 }
             }
         }
