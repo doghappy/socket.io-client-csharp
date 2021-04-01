@@ -206,6 +206,11 @@ namespace SocketIOClient
         {
             if (Connected && !Disconnected)
             {
+                if (Options.EioHandler is Eio3Handler)
+                {
+                    var v3 = Options.EioHandler as Eio3Handler;
+                    v3.StopPingInterval();
+                }
                 try
                 {
                     await Socket.SendMessageAsync("41" + Namespace);
@@ -218,11 +223,6 @@ namespace SocketIOClient
                     await Socket.DisconnectAsync();
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
-                if (Options.EioHandler is Eio3Handler)
-                {
-                    var v3 = Options.EioHandler as Eio3Handler;
-                    v3.StopPingInterval();
-                }
             }
         }
 

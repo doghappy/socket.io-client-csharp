@@ -67,13 +67,20 @@ namespace SocketIOClient.EioHandler
         {
             timer = new Timer(async _ =>
             {
-                try
+                if (io.Connected)
                 {
-                    PingTime = DateTime.Now;
-                    await io.Socket.SendMessageAsync("2");
-                    io.InvokePingV3();
+                    try
+                    {
+                        PingTime = DateTime.Now;
+                        await io.Socket.SendMessageAsync("2");
+                        io.InvokePingV3();
+                    }
+                    catch (Exception ex) { Trace.TraceError(ex.ToString()); } 
                 }
-                catch (Exception ex) { Trace.TraceError(ex.ToString()); }
+                else
+                {
+                    StopPingInterval();
+                }
             }, null, PingInterval, PingInterval);
         }
 
