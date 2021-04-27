@@ -252,7 +252,7 @@ namespace SocketIOClient
             }
         }
 
-        private async Task EmityCoreAsync(string eventName, int packetId, string data)
+        private async Task EmityCoreAsync(string eventName, int packetId, string data, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(eventName))
             {
@@ -275,12 +275,12 @@ namespace SocketIOClient
             }
             builder.Append(']');
             string message = builder.ToString();
-            await Socket.SendMessageAsync(message);
+            await Socket.SendMessageAsync(message, cancellationToken);
             if (OutGoingBytes.Count > 0)
             {
                 foreach (var item in OutGoingBytes)
                 {
-                    await Socket.SendMessageAsync(item);
+                    await Socket.SendMessageAsync(item, cancellationToken);
                 }
                 OutGoingBytes.Clear();
             }
@@ -338,11 +338,16 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task EmitAsync(string eventName, params object[] data)
         {
+            await EmitAsync(eventName, CancellationToken.None, data);
+        }
+
+        public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
+        {
             await _semaphoreSlim.WaitAsync();
             try
             {
                 string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, -1, dataString);
+                await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
             }
             finally
             {
@@ -359,17 +364,21 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
+            await EmitAsync(eventName, CancellationToken.None, ack, data);
+        }
+
+        public async Task EmitAsync(string eventName, CancellationToken cancellationToken, Action<SocketIOResponse> ack, params object[] data)
+        {
             await _semaphoreSlim.WaitAsync();
             try
             {
                 Acks.Add(++PacketId, ack);
                 string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, PacketId, dataString);
+                await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
             }
             finally
             {
                 _semaphoreSlim.Release();
-
             }
         }
 

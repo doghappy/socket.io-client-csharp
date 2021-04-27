@@ -81,6 +81,16 @@ namespace SocketIOClient.WebSocketClient
             return _completedTask;
         }
 
+        public async Task SendMessageAsync(string text, CancellationToken cancellationToken)
+        {
+            await SendMessageAsync(text);
+        }
+
+        public async Task SendMessageAsync(byte[] bytes, CancellationToken cancellationToken)
+        {
+            await SendMessageAsync(bytes);
+        }
+
         public Task SendMessageAsync(byte[] bytes)
         {
             if (_ws == null)

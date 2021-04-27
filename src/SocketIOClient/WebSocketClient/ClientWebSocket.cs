@@ -66,6 +66,11 @@ namespace SocketIOClient.WebSocketClient
         /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(string text)
         {
+            await SendMessageAsync(text, _wsWorkTokenSource.Token);
+        }
+
+        public async Task SendMessageAsync(string text, CancellationToken cancellationToken)
+        {
             if (_ws == null)
             {
                 throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
@@ -76,26 +81,19 @@ namespace SocketIOClient.WebSocketClient
             }
 
             byte[] bytes = Encoding.UTF8.GetBytes(text);
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, _wsWorkTokenSource.Token);
-            //var messageBuffer = Encoding.UTF8.GetBytes(text);
-            //var messagesCount = (int)Math.Ceiling((double)messageBuffer.Length / SendChunkSize);
-
-            //for (var i = 0; i < messagesCount; i++)
-            //{
-            //    var offset = (SendChunkSize * i);
-            //    var count = SendChunkSize;
-            //    var lastMessage = ((i + 1) == messagesCount);
-
-            //    if ((count * (i + 1)) > messageBuffer.Length)
-            //    {
-            //        count = messageBuffer.Length - offset;
-            //    }
-
-            //    await _ws.SendAsync(new ArraySegment<byte>(messageBuffer, offset, count), WebSocketMessageType.Text, lastMessage, _wsWorkTokenSource.Token);
-            //}
+            try
+            {
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 #if DEBUG
-            Trace.WriteLine($"⬆ {DateTime.Now} {text}");
+                Trace.WriteLine($"⬆ {DateTime.Now} {text}");
 #endif
+            }
+            catch (TaskCanceledException)
+            {
+#if DEBUG
+                Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
+#endif
+            }
         }
 
         /// <summary>
@@ -106,6 +104,17 @@ namespace SocketIOClient.WebSocketClient
         /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(byte[] bytes)
         {
+            await SendMessageAsync(bytes, _wsWorkTokenSource.Token);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidSocketStateException"></exception>
+        public async Task SendMessageAsync(byte[] bytes, CancellationToken cancellationToken)
+        {
             if (_ws == null)
             {
                 throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
@@ -114,24 +123,19 @@ namespace SocketIOClient.WebSocketClient
             {
                 throw new InvalidSocketStateException("Connection is not open.");
             }
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, _wsWorkTokenSource.Token);
-            //var messagesCount = (int)Math.Ceiling((double)bytes.Length / SendChunkSize);
-            //for (var i = 0; i < messagesCount; i++)
-            //{
-            //    var offset = (SendChunkSize * i);
-            //    var count = SendChunkSize;
-            //    var lastMessage = ((i + 1) == messagesCount);
-
-            //    if ((count * (i + 1)) > bytes.Length)
-            //    {
-            //        count = bytes.Length - offset;
-            //    }
-
-            //    await _ws.SendAsync(new ArraySegment<byte>(bytes, offset, count), WebSocketMessageType.Binary, lastMessage, _wsWorkTokenSource.Token);
-            //}
+            try
+            {
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
 #if DEBUG
-            Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
+                Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
+            }
+            catch (TaskCanceledException)
+            {
+#if DEBUG
+                Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
+#endif
+            }
         }
 
         public async Task DisconnectAsync()

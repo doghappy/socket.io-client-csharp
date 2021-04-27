@@ -5,6 +5,7 @@ using SocketIOClient.Test.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
@@ -37,6 +38,35 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual("hi .net core, You are connected to the server", result);
+        }
+
+        [TestMethod]
+        public async Task CancelTextMessageTest()
+        {
+            string result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("hi", response =>
+            {
+                result = response.GetValue<string>();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                var cts = new CancellationTokenSource();
+                cts.Cancel();
+                await client.EmitAsync("hi", cts.Token, ".net core");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsNull(result);
         }
 
         [TestMethod]
@@ -117,6 +147,35 @@ namespace SocketIOClient.Test.SocketIOTests
         }
 
         [TestMethod]
+        public async Task CancelBinaryMessageTest()
+        {
+            string result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.On("binary", response =>
+            {
+                var bytes = response.GetValue<byte[]>();
+                result = Encoding.UTF8.GetString(bytes);
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                var cts = new CancellationTokenSource();
+                cts.Cancel();
+                await client.EmitAsync("binary", cts.Token, "return all the characters");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+            Assert.IsNull(result);
+        }
+
+        [TestMethod]
         public async Task BinaryObjTest()
         {
             string result = null;
@@ -179,6 +238,43 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual("client001", result.ClientSource);
             Assert.AreEqual("server", result.Source);
             Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
+        }
+
+        [TestMethod]
+        public async Task CancelAckTest()
+        {
+            ByteResponse result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+
+            const string dotNetCore = ".net core";
+            const string client001 = "client001";
+            const string name = "unit test";
+
+            client.OnConnected += async (sender, e) =>
+            {
+                var cts = new CancellationTokenSource();
+                cts.Cancel();
+                await client.EmitAsync("binary ack", cts.Token, response =>
+                {
+                    result = response.GetValue<ByteResponse>();
+                }, name, new
+                {
+                    source = client001,
+                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
+                });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsNull(result);
         }
 
         [TestMethod]
