@@ -12,7 +12,7 @@ namespace SocketIOClient
             EIO = 3;
         }
 
-        public IJsonSerializer Serializer { get; set; } = new JsonConverters.DefaultSerizalizer();
+        public IJsonSerializer Serializer { get; set; } = new JsonConverters.DefaultSerializer();
 
         public string Path { get; set; } = "/socket.io";
 

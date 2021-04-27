@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SocketIOClient.JsonConverters
 {
-    public class DefaultSerizalizer : IJsonSerializer
+    public class DefaultSerializer : IJsonSerializer
     {
         public string SerializeObject<T>(T data, IList<byte[]> outgoingBytes)
         {
