@@ -46,6 +46,21 @@ namespace SocketIOClient
         /// <param name="options"></param>
         public SocketIO(Uri uri, SocketIOOptions options)
         {
+            if (uri == null)
+            {
+                throw new ArgumentNullException("uri");
+            }
+
+            if (options == null)
+            {
+                throw new ArgumentNullException("options");
+            }
+
+            if (options.Serializer == null)
+            {
+                throw new ArgumentNullException("options.Serializer");
+            }
+
             ServerUri = uri;
             Options = options;
             Initialize();
@@ -102,7 +117,6 @@ namespace SocketIOClient
         internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
 
         public SocketIOOptions Options { get; }
-        ByteArrayConverter _byteArrayConverter;
 
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
@@ -142,10 +156,9 @@ namespace SocketIOClient
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();
             OutGoingBytes = new List<byte[]>();
-            _byteArrayConverter = new ByteArrayConverter
-            {
-                Client = this
-            };
+
+            Options.Serializer.Initialize(this);
+            
             Disconnected = true;
             OnDisconnected += SocketIO_OnDisconnected;
             GetConnectInterval = () => new DefaultConnectInterval(Options);
@@ -320,7 +333,15 @@ namespace SocketIOClient
             {
                 for (int i = 0; i < data.Length; i++)
                 {
-                    builder.Append(JsonConvert.SerializeObject(data[i], _byteArrayConverter));
+                    var dataOnce = data[i];
+                    var dataType = dataOnce.GetType();
+
+                    var jsonData = Options.Serializer.GetType()
+                                                     .GetMethod("SerializeObject")
+                                                     .MakeGenericMethod(dataType)
+                                                     .Invoke(Options.Serializer, new object[] { dataOnce, OutGoingBytes }) as string;
+
+                    builder.Append(jsonData);
                     if (i != data.Length - 1)
                     {
                         builder.Append(",");

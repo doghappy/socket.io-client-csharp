@@ -8,7 +8,7 @@ namespace SocketIOClient.JsonConverters
     public class ByteArrayConverter : JsonConverter
     {
         public SocketIO Client { get; set; }
-        public IList<byte[]> InComingBytes { get; set; }
+        public IList<byte[]> BinaryBytes { get; set; }
 
         public override bool CanConvert(Type objectType)
         {
@@ -34,7 +34,7 @@ namespace SocketIOClient.JsonConverters
                             {
                                 if (int.TryParse(reader.Value.ToString(), out int num))
                                 {
-                                    bytes = InComingBytes[num];
+                                    bytes = BinaryBytes[num];
                                     reader.Read();
                                 }
                             }
@@ -50,12 +50,12 @@ namespace SocketIOClient.JsonConverters
             var source = (value as byte[]).ToList();
             if (Client.Options.EIO != 4)
                 source.Insert(0, 4);
-            Client.OutGoingBytes.Add(source.ToArray());
+            BinaryBytes.Add(source.ToArray());
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
             writer.WriteValue(true);
             writer.WritePropertyName("num");
-            writer.WriteValue(Client.OutGoingBytes.Count - 1);
+            writer.WriteValue(BinaryBytes.Count - 1);
             writer.WriteEndObject();
         }
     }
