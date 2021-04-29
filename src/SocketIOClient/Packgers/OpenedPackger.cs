@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json;
 using SocketIOClient.Response;
 
 namespace SocketIOClient.Packgers
@@ -9,7 +9,13 @@ namespace SocketIOClient.Packgers
         {
             if (text.StartsWith("{\"sid\":\""))
             {
-                client.Open(JsonConvert.DeserializeObject<OpenResponse>(text));
+                var openResponse = new OpenResponse();
+                var doc = JsonDocument.Parse(text);
+                var root = doc.RootElement;
+                openResponse.Sid = root.GetProperty("sid").GetString();
+                openResponse.PingInterval = root.GetProperty("pingInterval").GetInt32();
+                openResponse.PingTimeout = root.GetProperty("pingTimeout").GetInt32();
+                client.Open(openResponse);
             }
         }
     }

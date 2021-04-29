@@ -3,19 +3,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SocketIOClient.JsonConverters
+namespace SocketIOClient.Newtonsoft.Json
 {
-    public class ByteArrayConverter : JsonConverter
+    class ByteArrayConverter : JsonConverter
     {
-        public SocketIO Client { get; set; }
-        public IList<byte[]> BinaryBytes { get; set; }
+        public ByteArrayConverter(int eio)
+        {
+            this.eio = eio;
+            Bytes = new List<byte[]>();
+        }
+
+        readonly int eio;
+        internal IList<byte[]> Bytes { get; }
 
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(byte[]);
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, global::Newtonsoft.Json.JsonSerializer serializer)
         {
             byte[] bytes = null;
             if (reader.TokenType == JsonToken.StartObject)
@@ -34,7 +40,7 @@ namespace SocketIOClient.JsonConverters
                             {
                                 if (int.TryParse(reader.Value.ToString(), out int num))
                                 {
-                                    bytes = BinaryBytes[num];
+                                    bytes = Bytes[num];
                                     reader.Read();
                                 }
                             }
@@ -45,17 +51,17 @@ namespace SocketIOClient.JsonConverters
             return bytes;
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object value, global::Newtonsoft.Json.JsonSerializer serializer)
         {
             var source = (value as byte[]).ToList();
-            if (Client.Options.EIO != 4)
+            if (eio != 4)
                 source.Insert(0, 4);
-            BinaryBytes.Add(source.ToArray());
+            Bytes.Add(source.ToArray());
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
             writer.WriteValue(true);
             writer.WritePropertyName("num");
-            writer.WriteValue(BinaryBytes.Count - 1);
+            writer.WriteValue(Bytes.Count - 1);
             writer.WriteEndObject();
         }
     }

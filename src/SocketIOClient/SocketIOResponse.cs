@@ -1,21 +1,19 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SocketIOClient.JsonConverters;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SocketIOClient
 {
     public class SocketIOResponse
     {
-        public SocketIOResponse(JArray array, SocketIO socket)
+        public SocketIOResponse(IList<JsonElement> array, SocketIO socket)
         {
             _array = array;
             InComingBytes = new List<byte[]>();
             SocketIO = socket;
         }
 
-        readonly JArray _array;
+        readonly IList<JsonElement> _array;
 
         public List<byte[]> InComingBytes { get; }
         public SocketIO SocketIO { get; }
@@ -23,23 +21,12 @@ namespace SocketIOClient
 
         public T GetValue<T>(int index = 0)
         {
-            var token = GetValue(index);
-            if (token.Type == JTokenType.Object)
-            {
-                string jsonData = token.ToString();
-
-                return SocketIO.Options.Serializer.DeserializeObject<T>(jsonData, InComingBytes);
-            }
-            else
-            {
-                return token.ToObject<T>();
-            }
+            var element = GetValue(index);
+            string json = element.GetRawText();
+            return SocketIO.JsonSerializer.Deserialize<T>(json, InComingBytes);
         }
 
-        public JToken GetValue(int index = 0)
-        {
-            return _array[index];
-        }
+        public JsonElement GetValue(int index = 0) => _array[index];
 
         public int Count => _array.Count;
 

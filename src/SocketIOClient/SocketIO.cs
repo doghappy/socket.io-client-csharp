@@ -1,14 +1,14 @@
-﻿using Newtonsoft.Json;
-using SocketIOClient.ConnectInterval;
+﻿using SocketIOClient.ConnectInterval;
 using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
-using SocketIOClient.JsonConverters;
+using SocketIOClient.JsonSerializer;
+using SocketIOClient.Packgers;
 using SocketIOClient.Response;
-using SocketIOClient.Util;
 using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,23 +46,8 @@ namespace SocketIOClient
         /// <param name="options"></param>
         public SocketIO(Uri uri, SocketIOOptions options)
         {
-            if (uri == null)
-            {
-                throw new ArgumentNullException("uri");
-            }
-
-            if (options == null)
-            {
-                throw new ArgumentNullException("options");
-            }
-
-            if (options.Serializer == null)
-            {
-                throw new ArgumentNullException("options.Serializer");
-            }
-
-            ServerUri = uri;
-            Options = options;
+            ServerUri = uri ?? throw new ArgumentNullException("uri");
+            Options = options ?? throw new ArgumentNullException("options");
             Initialize();
         }
 
@@ -125,6 +110,8 @@ namespace SocketIOClient
 
         public Func<IConnectInterval> GetConnectInterval { get; set; }
 
+        public IJsonSerializer JsonSerializer { get; set; }
+
         #region Socket.IO event
         public event EventHandler OnConnected;
         //public event EventHandler<string> OnConnectError;
@@ -144,24 +131,16 @@ namespace SocketIOClient
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-
-#if NET45
-            if (SystemUtil.IsWindows7)
-                Socket = WebSocketClientFactory.CreateWebSocketSharpClient(this);
-#endif
-            if (Socket == null)
-                Socket = WebSocketClientFactory.CreateClientWebSocket(this);
-
+            Socket = new ClientWebSocket(this, new PackgeManager(this));
             PacketId = -1;
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();
             OutGoingBytes = new List<byte[]>();
 
-            Options.Serializer.Initialize(this);
-            
             Disconnected = true;
             OnDisconnected += SocketIO_OnDisconnected;
             GetConnectInterval = () => new DefaultConnectInterval(Options);
+            JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
         }
 
         /// <summary>
@@ -333,15 +312,12 @@ namespace SocketIOClient
             {
                 for (int i = 0; i < data.Length; i++)
                 {
-                    var dataOnce = data[i];
-                    var dataType = dataOnce.GetType();
-
-                    var jsonData = Options.Serializer.GetType()
-                                                     .GetMethod("SerializeObject")
-                                                     .MakeGenericMethod(dataType)
-                                                     .Invoke(Options.Serializer, new object[] { dataOnce, OutGoingBytes }) as string;
-
-                    builder.Append(jsonData);
+                    var result = JsonSerializer.Serialize(data[i]);
+                    if (result.Bytes.Count > 0)
+                    {
+                        OutGoingBytes.AddRange(result.Bytes);
+                    }
+                    builder.Append(result.Json);
                     if (i != data.Length - 1)
                     {
                         builder.Append(",");
