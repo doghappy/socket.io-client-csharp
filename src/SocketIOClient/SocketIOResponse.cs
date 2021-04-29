@@ -26,11 +26,9 @@ namespace SocketIOClient
             var token = GetValue(index);
             if (token.Type == JTokenType.Object)
             {
-                string json = token.ToString();
-                return JsonConvert.DeserializeObject<T>(json, new ByteArrayConverter
-                {
-                    InComingBytes = InComingBytes
-                });
+                string jsonData = token.ToString();
+
+                return SocketIO.Options.Serializer.DeserializeObject<T>(jsonData, InComingBytes);
             }
             else
             {
