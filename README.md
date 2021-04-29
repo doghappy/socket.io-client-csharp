@@ -9,6 +9,57 @@ An elegant socket.io client for .NET, Supports `.NET Framework 4.5` and `.NET St
 
 [QuickStart](https://github.com/doghappy/socket.io-client-csharp/wiki)
 
+# Breaking changes in 2.2.0
+
+SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If you'd like to continue to use `Newtonsoft.Json`, add the **SocketIOClient.Newtonsoft.Json** NuGet package and set your **JsonSerializer** to **NewtonsoftJsonSerializer** on your SocketIO instance. System.Text.Json is faster and uses less memory.
+
+### Custom JsonSerializerOptions/System.Text.Json
+
+```cs
+class MyJsonSerializer : SystemTextJsonSerializer
+{
+    public MyJsonSerializer(int eio) : base(eio) {}
+
+    public override JsonSerializerOptions CreateOptions()
+    {
+        var options = new JsonSerializerOption();
+        options.PropertyNameCaseInsensitive = true;
+        return options;
+    }
+}
+
+// ...
+
+var client = new SocketIO("http://localhost:11000/");
+client.JsonSerializer = new MyJsonSerializer();
+```
+
+### Custom JsonSerializerSettings/Newtonsoft.Json
+
+```cs
+class MyJsonSerializer : NewtonsoftJsonSerializer
+{
+    public MyJsonSerializer(int eio) : base(eio) {}
+
+    public override JsonSerializerSettings CreateOptions()
+    {
+        return new JsonSerializerSettings
+        {
+            ContractResolver = new global::Newtonsoft.Json.Serialization.DefaultContractResolver
+            {
+                NamingStrategy = new global::Newtonsoft.Json.Serialization.CamelCaseNamingStrategy()
+            },
+            Formatting = Formatting.Indented
+        };
+    }
+}
+
+// ...
+
+var client = new SocketIO("http://localhost:11000/");
+client.JsonSerializer = new MyJsonSerializer();
+```
+
 ## Development
 
 Before development or testing, you need to install the nodejs.
