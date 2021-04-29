@@ -5,6 +5,7 @@ using SocketIOClient.Test.Models;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
@@ -64,7 +65,7 @@ namespace SocketIOClient.Test.SocketIOTests
         [TestMethod]
         public async Task AckTest()
         {
-            JToken result = null;
+            JsonElement result = new JsonElement();
             var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
             {
                 Reconnection = false,
@@ -84,8 +85,8 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.IsTrue(result.Value<bool>("result"));
-            Assert.AreEqual("ack(.net core)", result.Value<string>("message"));
+            Assert.IsTrue(result.GetProperty("result").GetBoolean());
+            Assert.AreEqual("ack(.net core)", result.GetProperty("message").GetString());
         }
 
         [TestMethod]
@@ -194,6 +195,7 @@ namespace SocketIOClient.Test.SocketIOTests
                     { "token", "io" }
                 }
             });
+            client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("change", new

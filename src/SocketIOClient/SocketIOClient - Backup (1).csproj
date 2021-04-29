@@ -26,8 +26,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="WebSocketClient\WebSocketClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="WebSocketClient\WebSocketClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <PackageReference Include="WebSocketSharp-netstandard" Version="1.0.1" />
   </ItemGroup>
 
 </Project>
