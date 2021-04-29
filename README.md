@@ -17,7 +17,7 @@ SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If y
 
 ```cs
 var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new NewtonsoftJsonSerializer();
+client.JsonSerializer = new NewtonsoftJsonSerializer(client.Options.EIO);
 ```
 
 ### Custom JsonSerializerOptions/System.Text.Json
@@ -38,7 +38,7 @@ class MyJsonSerializer : SystemTextJsonSerializer
 // ...
 
 var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new MyJsonSerializer();
+client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
 ```
 
 ### Custom JsonSerializerSettings/Newtonsoft.Json
@@ -64,7 +64,7 @@ class MyJsonSerializer : NewtonsoftJsonSerializer
 // ...
 
 var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new MyJsonSerializer();
+client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
 ```
 
 ## Development
