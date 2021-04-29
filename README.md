@@ -13,6 +13,13 @@ An elegant socket.io client for .NET, Supports `.NET Framework 4.5` and `.NET St
 
 SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If you'd like to continue to use `Newtonsoft.Json`, add the **SocketIOClient.Newtonsoft.Json** NuGet package and set your **JsonSerializer** to **NewtonsoftJsonSerializer** on your SocketIO instance. System.Text.Json is faster and uses less memory.
 
+### Continue to use Newtonsoft.Json
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+client.JsonSerializer = new NewtonsoftJsonSerializer();
+```
+
 ### Custom JsonSerializerOptions/System.Text.Json
 
 ```cs
