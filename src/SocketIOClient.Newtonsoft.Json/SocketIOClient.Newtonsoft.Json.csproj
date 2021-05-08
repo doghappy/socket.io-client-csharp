@@ -3,13 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.2.0</Version>
+    <Version>2.2.1</Version>
     <Description>socket.io-client json serialization/deserialization for Newtonsoft.Json</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
     <RepositoryType>github</RepositoryType>
     <PackageTags>socket.io-client</PackageTags>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

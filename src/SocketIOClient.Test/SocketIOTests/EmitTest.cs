@@ -148,6 +148,35 @@ namespace SocketIOClient.Test.SocketIOTests
         }
 
         [TestMethod]
+        public async Task NewtonsoftBinaryTest()
+        {
+            string result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                {
+                    { "token", "io" }
+                }
+            });
+            client.JsonSerializer = new Newtonsoft.Json.NewtonsoftJsonSerializer(client.Options.EIO);
+            client.On("binary", response =>
+            {
+                var bytes = response.GetValue<byte[]>();
+                result = Encoding.UTF8.GetString(bytes);
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("binary", "return all the characters");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("return all the characters", result);
+        }
+
+        [TestMethod]
         public async Task CancelBinaryMessageTest()
         {
             string result = null;

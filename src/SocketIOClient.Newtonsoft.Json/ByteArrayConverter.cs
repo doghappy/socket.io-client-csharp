@@ -14,7 +14,7 @@ namespace SocketIOClient.Newtonsoft.Json
         }
 
         readonly int eio;
-        internal IList<byte[]> Bytes { get; }
+        internal List<byte[]> Bytes { get; }
 
         public override bool CanConvert(Type objectType)
         {

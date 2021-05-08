@@ -38,6 +38,7 @@ namespace SocketIOClient.Newtonsoft.Json
         public T Deserialize<T>(string json, IList<byte[]> bytes)
         {
             var converter = new ByteArrayConverter(eio);
+            converter.Bytes.AddRange(bytes);
             var settings = CreateOptions();
             settings.Converters.Add(converter);
             return JsonConvert.DeserializeObject<T>(json, settings);
