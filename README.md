@@ -67,7 +67,7 @@ var client = new SocketIO("http://localhost:11000/");
 client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
 ```
 
-## Development
+# Development
 
 Before development or testing, you need to install the nodejs.
 
@@ -83,11 +83,11 @@ npm i # If the dependencies are already installed, you can ignore this step.
 npm start
 ```
 
-## Change log
+# Change log
 
 [SocketIOClient](./CHANGELOG.md)
 
-## Sponsors
+# Sponsors
 
 - [gcoverd](https://github.com/gcoverd), 250 AUD
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455)
