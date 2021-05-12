@@ -90,3 +90,4 @@ npm start
 ## Sponsors
 
 - [gcoverd](https://github.com/gcoverd), 250 AUD
+- [darrachequesne(socket.io team)](https://github.com/darrachequesne), 500 USD
