@@ -10,7 +10,8 @@ namespace SocketIOClient.EioHandler
     {
         internal DateTime PingTime;
         internal int PingInterval;
-        Timer timer;
+        CancellationTokenSource pingTokenSorce;
+
 
         public async Task IOConnectAsync(SocketIO io)
         {
@@ -63,10 +64,15 @@ namespace SocketIOClient.EioHandler
             }
         }
 
-        public void StartPingInterval(SocketIO io)
+        public async Task StartPingAsync(SocketIO io)
         {
-            timer = new Timer(async _ =>
+            pingTokenSorce = new CancellationTokenSource();
+            while (!pingTokenSorce.IsCancellationRequested)
             {
+#if DEBUG
+                Console.WriteLine(".");
+#endif
+                await Task.Delay(PingInterval);
                 if (io.Connected)
                 {
                     try
@@ -75,18 +81,21 @@ namespace SocketIOClient.EioHandler
                         await io.Socket.SendMessageAsync("2");
                         io.InvokePingV3();
                     }
-                    catch (Exception ex) { Trace.TraceError(ex.ToString()); } 
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError(ex.ToString());
+                    }
                 }
                 else
                 {
                     StopPingInterval();
                 }
-            }, null, PingInterval, PingInterval);
+            }
         }
 
         public void StopPingInterval()
         {
-            timer?.Dispose();
+            pingTokenSorce?.Cancel();
         }
     }
 }

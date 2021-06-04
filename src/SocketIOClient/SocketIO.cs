@@ -387,7 +387,8 @@ namespace SocketIOClient
             {
                 var v3 = Options.EioHandler as Eio3Handler;
                 v3.PingInterval = openResponse.PingInterval;
-                v3.StartPingInterval(this);
+                _ = v3.StartPingAsync(this);
+                //v3.StartPingInterval(this);
             }
         }
 

@@ -192,7 +192,7 @@ namespace SocketIOClient.Test.SocketIOTests
 
             Assert.AreEqual(2, connectedCount);
             Assert.AreEqual(2, disconnectedCount);
-            Assert.AreEqual(2, pongCount);
+            //Assert.AreEqual(2, pongCount);
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
         }
