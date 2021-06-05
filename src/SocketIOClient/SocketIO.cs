@@ -105,9 +105,6 @@ namespace SocketIOClient
 
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
 
-        //CancellationTokenSource _pingToken;
-        static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
-
         public Func<IConnectInterval> GetConnectInterval { get; set; }
 
         public IJsonSerializer JsonSerializer { get; set; }
@@ -340,16 +337,8 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            await _semaphoreSlim.WaitAsync();
-            try
-            {
-                string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
-            }
-            finally
-            {
-                _semaphoreSlim.Release();
-            }
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
         }
 
         /// <summary>
@@ -366,17 +355,9 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, Action<SocketIOResponse> ack, params object[] data)
         {
-            await _semaphoreSlim.WaitAsync();
-            try
-            {
-                Acks.Add(++PacketId, ack);
-                string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
-            }
-            finally
-            {
-                _semaphoreSlim.Release();
-            }
+            Acks.Add(++PacketId, ack);
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
         }
 
         internal void Open(OpenResponse openResponse)
@@ -388,7 +369,6 @@ namespace SocketIOClient
                 var v3 = Options.EioHandler as Eio3Handler;
                 v3.PingInterval = openResponse.PingInterval;
                 _ = v3.StartPingAsync(this);
-                //v3.StartPingInterval(this);
             }
         }
 

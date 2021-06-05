@@ -21,12 +21,12 @@ namespace SocketIOClient.WebSocketClient
         }
 
         const int ReceiveChunkSize = 1024;
-        //const int SendChunkSize = 1024;
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
+        readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
 
         public Action<ClientWebSocketOptions> Config { get; set; }
 
@@ -83,6 +83,7 @@ namespace SocketIOClient.WebSocketClient
             byte[] bytes = Encoding.UTF8.GetBytes(text);
             try
             {
+                await sendLock.WaitAsync();
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 #if DEBUG
                 Trace.WriteLine($"⬆ {DateTime.Now} {text}");
@@ -93,6 +94,10 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                 Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
 #endif
+            }
+            finally
+            {
+                sendLock.Release();
             }
         }
 
@@ -125,6 +130,7 @@ namespace SocketIOClient.WebSocketClient
             }
             try
             {
+                await sendLock.WaitAsync();
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
 #if DEBUG
                 Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
@@ -135,6 +141,10 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                 Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
 #endif
+            }
+            finally
+            {
+                sendLock.Release();
             }
         }
 
