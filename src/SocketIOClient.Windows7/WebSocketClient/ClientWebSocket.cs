@@ -85,13 +85,13 @@ namespace SocketIOClient.WebSocketClient
                 await sendLock.WaitAsync();
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 #if DEBUG
-                Trace.WriteLine($"⬆ {DateTime.Now} {text}");
+                System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} {text}");
 #endif
             }
             catch (TaskCanceledException)
             {
 #if DEBUG
-                Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
+                System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
 #endif
             }
             finally
@@ -126,13 +126,13 @@ namespace SocketIOClient.WebSocketClient
                 await sendLock.WaitAsync();
                 await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
 #if DEBUG
-                Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
+                System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
             }
             catch (TaskCanceledException)
             {
 #if DEBUG
-                Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
+                System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
 #endif
             }
             finally
@@ -194,14 +194,14 @@ namespace SocketIOClient.WebSocketClient
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, count);
 #if DEBUG
-                    Trace.WriteLine($"⬇ {DateTime.Now} {message}");
+                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
                     _parser.Unpack(message);
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
 #if DEBUG
-                    Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
+                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
                     byte[] bytes;
                     if (_io.Options.EIO == 3)
