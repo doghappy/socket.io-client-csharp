@@ -1,6 +1,5 @@
 ﻿using SocketIOClient.Packgers;
 using System;
-using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System.Threading;
@@ -21,12 +20,12 @@ namespace SocketIOClient.WebSocketClient
         }
 
         const int ReceiveChunkSize = 1024;
-        //const int SendChunkSize = 1024;
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;
         System.Net.WebSockets.Managed.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
+        readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
 
         public Action<System.Net.WebSockets.Managed.ClientWebSocketOptions> Config { get; set; }
 
@@ -81,10 +80,35 @@ namespace SocketIOClient.WebSocketClient
             }
 
             byte[] bytes = Encoding.UTF8.GetBytes(text);
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+            try
+            {
+                await sendLock.WaitAsync();
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
 #if DEBUG
-            Trace.WriteLine($"⬆ {DateTime.Now} {text}");
+                Trace.WriteLine($"⬆ {DateTime.Now} {text}");
 #endif
+            }
+            catch (TaskCanceledException)
+            {
+#if DEBUG
+                Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
+#endif
+            }
+            finally
+            {
+                sendLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidSocketStateException"></exception>
+        public async Task SendMessageAsync(byte[] bytes)
+        {
+            await SendMessageAsync(bytes, _wsWorkTokenSource.Token);
         }
 
         public async Task SendMessageAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -97,21 +121,24 @@ namespace SocketIOClient.WebSocketClient
             {
                 throw new InvalidSocketStateException("Connection is not open.");
             }
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
+            try
+            {
+                await sendLock.WaitAsync();
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
 #if DEBUG
-            Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
+                Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidSocketStateException"></exception>
-        public async Task SendMessageAsync(byte[] bytes)
-        {
-            await SendMessageAsync(bytes, _wsWorkTokenSource.Token);
+            }
+            catch (TaskCanceledException)
+            {
+#if DEBUG
+                Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
+#endif
+            }
+            finally
+            {
+                sendLock.Release();
+            }
         }
 
         public async Task DisconnectAsync()

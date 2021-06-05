@@ -1,6 +1,5 @@
 ﻿using SocketIOClient.Packgers;
 using System;
-using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System.Threading;
