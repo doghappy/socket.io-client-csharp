@@ -4,6 +4,7 @@ using SocketIOClient.EventArguments;
 using SocketIOClient.Test.Models;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -493,6 +494,50 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(100, bytesCallbackCount);
             Assert.IsTrue(client.Connected);
             await client.DisconnectAsync();
+        }
+
+
+
+        [TestMethod]
+        public async Task ContinuousBinaryTest()
+        {
+            byte[] bytes = File.ReadAllBytes("Files/tianlongbabu.epub");
+            int connectedCount = 0;
+            int cbCount = 0;
+            ContinuousBinaryResponse result = null;
+            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            {
+                Reconnection = false,
+                Query = new Dictionary<string, string>
+                    {
+                        { "token", "io" }
+                    }
+            });
+            client.On("ContinuousBinary", response =>
+            {
+                cbCount++;
+                result = response.GetValue<ContinuousBinaryResponse>();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                connectedCount++;
+                for (int i = 0; i < 1000; i++)
+                {
+                    await client.EmitAsync("ContinuousBinary", new
+                    {
+                        progress = i,
+                        binary = bytes
+                    });
+                }
+            };
+            await client.ConnectAsync();
+            await Task.Delay(10000);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, connectedCount);
+            Assert.AreEqual(1000, cbCount);
+            Assert.AreEqual(999, result.Progress);
+            Assert.AreEqual(1754476, result.Length);
         }
     }
 }
