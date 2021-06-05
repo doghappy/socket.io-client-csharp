@@ -40,6 +40,13 @@ io.on("connection", socket => {
         socket.emit("hi", `hi ${name}, You are connected to the server`);
     });
 
+    socket.on("ContinuousBinary", data => {
+        socket.emit("ContinuousBinary", {
+            progress: data.progress,
+            length: data.binary.length
+        });
+    })
+
     socket.on("ack", (name, fn) => {
         fn({
             result: true,
