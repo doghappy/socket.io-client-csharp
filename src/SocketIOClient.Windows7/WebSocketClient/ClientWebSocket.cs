@@ -19,7 +19,7 @@ namespace SocketIOClient.WebSocketClient
             _io = io;
         }
 
-        const int ReceiveChunkSize = 1024;
+        const int ReceiveChunkSize = 1024 * 16;
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;

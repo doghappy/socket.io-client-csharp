@@ -19,7 +19,7 @@ namespace SocketIOClient.WebSocketClient
             _io = io;
         }
 
-        const int ReceiveChunkSize = 1024;
+        const int ReceiveChunkSize = 1024 * 16;
 
         readonly PackgeManager _parser;
         readonly SocketIO _io;
@@ -138,7 +138,7 @@ namespace SocketIOClient.WebSocketClient
             catch (TaskCanceledException)
             {
 #if DEBUG
-               System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
+                System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
 #endif
             }
             finally
