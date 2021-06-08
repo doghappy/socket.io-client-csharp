@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "SocketIOC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Sample", "SocketIOClient.Sample\SocketIOClient.Sample.csproj", "{94A6907C-FC8C-46C3-8A08-6B7BFE898932}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server", "socket.io-server\socket.io-server.njsproj", "{119C9355-7CEE-497E-B758-4C2590796934}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Web", "SocketIOClient.Web\SocketIOClient.Web.csproj", "{89A823C2-2C7A-45A4-A939-A137CDA75997}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.NetFx.Sample", "SocketIOClient.NetFx.Sample\SocketIOClient.NetFx.Sample.csproj", "{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}"
@@ -19,7 +17,15 @@ Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v3", "sock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Windows7", "SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-client-v2", "socket.io-client-v2\socket.io-client-v2.njsproj", "{FEBB342E-6455-4728-AA8B-208AB3216D2F}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-client-v3", "socket.io-client-v3\socket.io-client-v3.njsproj", "{E1950C38-0152-489E-87E6-E4F18B2444D7}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v2", "socket.io-server-v2\socket.io-server-v2.njsproj", "{34A53A83-E410-4B24-B970-F9EC3271A150}"
+EndProject
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v4", "socket.io-server-v4\socket.io-server-v4.njsproj", "{D9800B98-DD05-4507-B275-3C9567095FBE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,10 +45,6 @@ Global
 		{94A6907C-FC8C-46C3-8A08-6B7BFE898932}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94A6907C-FC8C-46C3-8A08-6B7BFE898932}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94A6907C-FC8C-46C3-8A08-6B7BFE898932}.Release|Any CPU.Build.0 = Release|Any CPU
-		{119C9355-7CEE-497E-B758-4C2590796934}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{119C9355-7CEE-497E-B758-4C2590796934}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{119C9355-7CEE-497E-B758-4C2590796934}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{119C9355-7CEE-497E-B758-4C2590796934}.Release|Any CPU.Build.0 = Release|Any CPU
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,6 +65,22 @@ Global
 		{8EA5705A-16D6-4477-9682-26E819402149}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EA5705A-16D6-4477-9682-26E819402149}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EA5705A-16D6-4477-9682-26E819402149}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEBB342E-6455-4728-AA8B-208AB3216D2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEBB342E-6455-4728-AA8B-208AB3216D2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEBB342E-6455-4728-AA8B-208AB3216D2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEBB342E-6455-4728-AA8B-208AB3216D2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1950C38-0152-489E-87E6-E4F18B2444D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1950C38-0152-489E-87E6-E4F18B2444D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1950C38-0152-489E-87E6-E4F18B2444D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1950C38-0152-489E-87E6-E4F18B2444D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34A53A83-E410-4B24-B970-F9EC3271A150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34A53A83-E410-4B24-B970-F9EC3271A150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34A53A83-E410-4B24-B970-F9EC3271A150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34A53A83-E410-4B24-B970-F9EC3271A150}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9800B98-DD05-4507-B275-3C9567095FBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9800B98-DD05-4507-B275-3C9567095FBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9800B98-DD05-4507-B275-3C9567095FBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9800B98-DD05-4507-B275-3C9567095FBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

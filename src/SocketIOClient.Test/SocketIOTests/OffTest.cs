@@ -4,20 +4,18 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    [TestClass]
-    public class OffTest
+    public abstract class OffTest : SocketIOTest
     {
-        [TestMethod]
-        public async Task Test()
+        public async virtual Task Test()
         {
             string result = null;
             int hiCount = 0;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
             client.On("hi", response =>
@@ -27,16 +25,18 @@ namespace SocketIOClient.Test.SocketIOTests
             });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("hi", ".net core");
+                await client.EmitAsync("hi", $".net core");
             };
             await client.ConnectAsync();
             await Task.Delay(200);
-            Assert.AreEqual("hi .net core, You are connected to the server", result);
+            Assert.AreEqual($"{Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
 
             client.Off("hi");
-            await client.EmitAsync("hi", ".net core");
+            await client.EmitAsync("hi", ".net core 1");
+            await Task.Delay(200);
             await client.DisconnectAsync();
+            Assert.AreEqual($"{Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
         }
     }

@@ -3,8 +3,8 @@
 const http = require('http');
 const socket = require('socket.io');
 const server = http.createServer();
-const port = 11003;
-const prefix = "V3: ";
+const port = 11002;
+const prefix = "V2: ";
 const nspPrefix = "/nsp," + prefix;
 
 var io = socket(server, {
@@ -13,7 +13,7 @@ var io = socket(server, {
 });
 
 io.use((socket, next) => {
-    if (socket.handshake.query.token === "V3") {
+    if (socket.handshake.query.token === "V2") {
         next();
     } else {
         next(new Error("Authentication error"));

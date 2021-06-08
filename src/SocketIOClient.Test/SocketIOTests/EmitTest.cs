@@ -1,30 +1,22 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json.Linq;
-using SocketIOClient.EventArguments;
 using SocketIOClient.Test.Models;
 using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    [TestClass]
-    public class EmitTest
+    public abstract class EmitTest : SocketIOTest
     {
-        [TestMethod]
-        public async Task HiTest()
+        public virtual async Task Hi()
         {
             string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
             client.On("hi", response =>
@@ -39,505 +31,926 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("hi .net core, You are connected to the server", result);
+            Assert.AreEqual($"{Prefix}.net core", result);
         }
 
-        [TestMethod]
-        public async Task CancelTextMessageTest()
+        public virtual async Task EmitWithoutParams()
         {
-            string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            bool result = false;
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-            client.On("hi", response =>
+            client.On("no params", response =>
+            {
+                result = true;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("no params");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsTrue(result);
+        }
+
+        #region Emit with 1 params
+        public virtual async Task EmitWith1ParamsNull()
+        {
+            JsonValueKind result = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                var element = response.GetValue();
+                result = element.ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", data: null);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.Null, result);
+        }
+
+        public virtual async Task EmitWith1ParamsTrue()
+        {
+            JsonValueKind result = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                var element = response.GetValue();
+                result = element.ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", true);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.True, result);
+        }
+
+        public virtual async Task EmitWith1ParamsFalse()
+        {
+            JsonValueKind result = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                var element = response.GetValue();
+                result = element.ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", false);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.False, result);
+        }
+
+        public virtual async Task EmitWith1ParamsNumber0()
+        {
+            int result = -1;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                result = response.GetValue<int>();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", 0);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(0, result);
+        }
+
+        public virtual async Task EmitWith1ParamsNumberMin()
+        {
+            int result = -1;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                result = response.GetValue<int>();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", int.MinValue);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(int.MinValue, result);
+        }
+
+        public virtual async Task EmitWith1ParamsNumberMax()
+        {
+            int result = -1;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                result = response.GetValue<int>();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", int.MaxValue);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(int.MaxValue, result);
+        }
+
+        public virtual async Task EmitWith1ParamsEmptyString()
+        {
+            string result = null;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
             {
                 result = response.GetValue<string>();
             });
             client.OnConnected += async (sender, e) =>
             {
-                var cts = new CancellationTokenSource();
-                cts.Cancel();
-                await client.EmitAsync("hi", cts.Token, ".net core");
+                await client.EmitAsync("1 params", "");
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.IsNull(result);
+            Assert.AreEqual(string.Empty, result);
         }
 
-        [TestMethod]
-        public async Task LongChinessStringTest()
-        {
-            string teststr = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901我的电脑坏了";
-
-            string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    {"token", "io"}
-                }
-            });
-            client.On("hi", response => { result = response.GetValue<string>(); });
-            client.OnConnected += async (sender, e) => { await client.EmitAsync("hi", teststr); };
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-            Assert.AreEqual("hi " + teststr + ", You are connected to the server", result);
-        }
-
-        [TestMethod]
-        public async Task AckTest()
-        {
-            JsonElement result = new JsonElement();
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", "io" }
-                }
-            });
-            client.OnConnected += async (sender, e) =>
-            {
-                await client.EmitAsync("ack", response =>
-                {
-                    result = response.GetValue();
-                }, ".net core");
-            };
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-
-            Assert.IsTrue(result.GetProperty("result").GetBoolean());
-            Assert.AreEqual("ack(.net core)", result.GetProperty("message").GetString());
-        }
-
-        [TestMethod]
-        public async Task BinaryTest()
+        public virtual async Task EmitWith1ParamsShortString()
         {
             string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-            client.On("binary", response =>
+            client.On("1 params", response =>
             {
-                var bytes = response.GetValue<byte[]>();
-                result = Encoding.UTF8.GetString(bytes);
+                result = response.GetValue<string>();
             });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("binary", "return all the characters");
+                await client.EmitAsync("1 params", "American, 中国, の");
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("return all the characters", result);
+            Assert.AreEqual("American, 中国, の", result);
         }
 
-        [TestMethod]
-        public async Task NewtonsoftBinaryTest()
+        public virtual async Task EmitWith1ParamsLongString()
         {
             string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-            client.JsonSerializer = new Newtonsoft.Json.NewtonsoftJsonSerializer(client.Options.EIO);
-            client.On("binary", response =>
+            client.On("1 params", response =>
             {
-                var bytes = response.GetValue<byte[]>();
-                result = Encoding.UTF8.GetString(bytes);
+                result = response.GetValue<string>();
             });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("binary", "return all the characters");
+                await client.EmitAsync("1 params", longString);
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("return all the characters", result);
+            Assert.AreEqual(longString, result);
         }
 
-        [TestMethod]
-        public async Task CancelBinaryMessageTest()
+        public virtual async Task EmitWith1ParamsEmptyObject()
         {
             string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-            client.On("binary", response =>
+            client.On("1 params", response =>
             {
-                var bytes = response.GetValue<byte[]>();
-                result = Encoding.UTF8.GetString(bytes);
+                var element = response.GetValue();
+                result = element.GetRawText();
             });
             client.OnConnected += async (sender, e) =>
             {
-                var cts = new CancellationTokenSource();
-                cts.Cancel();
-                await client.EmitAsync("binary", cts.Token, "return all the characters");
-            };
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-            Assert.IsNull(result);
-        }
-
-        [TestMethod]
-        public async Task BinaryObjTest()
-        {
-            string result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", "io" }
-                }
-            });
-            client.On("binary-obj", response =>
-            {
-                var data = response.GetValue<BinaryObjectResponse>();
-                result = Encoding.UTF8.GetString(data.Data);
-            });
-            client.OnConnected += async (sender, e) =>
-            {
-                await client.EmitAsync("binary-obj", "return all the characters");
+                await client.EmitAsync("1 params", new { });
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("return all the characters", result);
+            Assert.AreEqual("{}", result);
         }
 
-        [TestMethod]
-        public async Task BinaryAckTest()
+        public virtual async Task EmitWith1ParamsObject()
         {
-            ByteResponse result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            ObjectResponse result = null;
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
-                }
-            });
-
-            const string dotNetCore = ".net core";
-            const string client001 = "client001";
-            const string name = "unit test";
-
-            client.OnConnected += async (sender, e) =>
-            {
-                await client.EmitAsync("binary ack", response =>
-                {
-                    result = response.GetValue<ByteResponse>();
-                }, name, new
-                {
-                    source = client001,
-                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
-                });
-            };
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-
-            Assert.AreEqual("client001", result.ClientSource);
-            Assert.AreEqual("server", result.Source);
-            Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
-        }
-
-        [TestMethod]
-        public async Task CancelAckTest()
-        {
-            ByteResponse result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", "io" }
-                }
-            });
-
-            const string dotNetCore = ".net core";
-            const string client001 = "client001";
-            const string name = "unit test";
-
-            client.OnConnected += async (sender, e) =>
-            {
-                var cts = new CancellationTokenSource();
-                cts.Cancel();
-                await client.EmitAsync("binary ack", cts.Token, response =>
-                {
-                    result = response.GetValue<ByteResponse>();
-                }, name, new
-                {
-                    source = client001,
-                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
-                });
-            };
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-
-            Assert.IsNull(result);
-        }
-
-        [TestMethod]
-        public async Task EventChangeTest()
-        {
-            string resVal1 = null;
-            ChangeResponse resVal2 = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
             client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
+            client.On("1 params", response =>
+            {
+                result = response.GetValue<ObjectResponse>();
+            });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("change", new
+                await client.EmitAsync("1 params", new ObjectResponse
                 {
-                    code = 200,
-                    message = "val1"
-                }, "val2");
-            };
-            client.On("change", response =>
-            {
-                resVal1 = response.GetValue<string>();
-                resVal2 = response.GetValue<ChangeResponse>(1);
-            });
-            await client.ConnectAsync();
-            await Task.Delay(200);
-            await client.DisconnectAsync();
-
-            Assert.AreEqual("val2", resVal1);
-            Assert.AreEqual(200, resVal2.Code);
-            Assert.AreEqual("val1", resVal2.Message);
-        }
-
-        [TestMethod]
-        public async Task OnReceivedBinaryEventTest()
-        {
-            ReceivedEventArgs args = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", "io" }
-                }
-            });
-            client.OnReceivedEvent += (sender, e) => args = e;
-
-            const string dotNetCore = ".net core";
-            const string client001 = "client001";
-            const string name = "unit test";
-
-            client.OnConnected += async (sender, e) =>
-            {
-                await client.EmitAsync("bytes", name, new
-                {
-                    source = client001,
-                    bytes = Encoding.UTF8.GetBytes(dotNetCore)
+                    A = 97,
+                    B = "b",
+                    C = new ObjectC
+                    {
+                        D = "d",
+                        E = 2.71828182846
+                    }
                 });
             };
             await client.ConnectAsync();
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual("bytes", args.Event);
-
-            var result = args.Response.GetValue<ByteResponse>();
-            Assert.AreEqual("client001", result.ClientSource);
-            Assert.AreEqual("server", result.Source);
-            Assert.AreEqual($"{dotNetCore} - server - {name}", Encoding.UTF8.GetString(result.Buffer));
+            Assert.AreEqual(97, result.A);
+            Assert.AreEqual("b", result.B);
+            Assert.AreEqual("d", result.C.D);
+            Assert.AreEqual("2.71828182846", result.C.E.ToString());
         }
 
-        [TestMethod]
-        public async Task ClientMessageCallbackTest()
+        public virtual async Task EmitWith1ParamsBytes()
         {
-            SocketIOResponse res = null;
-            bool called = false;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            SocketIOResponse result = null;
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            byte[] bytes = Encoding.UTF8.GetBytes(longString);
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-
+            client.On("1 params", response =>
+            {
+                result = response;
+            });
             client.OnConnected += async (sender, e) =>
             {
-                await client.EmitAsync("client message callback", "SocketIOClient.Test");
+                await client.EmitAsync("1 params", bytes);
             };
-            client.On("client message callback", async response =>
-            {
-                res = response;
-                await response.CallbackAsync();
-            });
-            client.On("server message callback called", response => called = true);
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.IsTrue(called);
-            Assert.AreEqual("SocketIOClient.Test - server", res.GetValue<string>());
+            Assert.AreEqual(1, result.InComingBytes.Count);
+            Assert.AreEqual(longString, Encoding.UTF8.GetString(result.InComingBytes[0]));
+            Assert.AreEqual(longString, Encoding.UTF8.GetString(result.GetValue<byte[]>()));
         }
 
-        [TestMethod]
-        public async Task ClientBinaryCallbackTest()
+        public virtual async Task EmitWith1ParamsBytesInObject()
         {
-            SocketIOResponse res = null;
-            bool called = false;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            SocketIOResponse result = null;
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            byte[] bytes = Encoding.UTF8.GetBytes(longString);
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-
+            client.On("1 params", response =>
+            {
+                result = response;
+            });
             client.OnConnected += async (sender, e) =>
             {
-                byte[] bytes = Encoding.UTF8.GetBytes("SocketIOClient.Test");
-                await client.EmitAsync("client binary callback", bytes);
+                await client.EmitAsync("1 params", new BytesInObjectResponse
+                {
+                    Code = 6,
+                    Message = bytes
+                });
             };
-            client.On("client binary callback", async response =>
-            {
-                res = response;
-                await response.CallbackAsync();
-            });
-            client.On("server binary callback called", response => called = true);
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.IsTrue(called);
-            byte[] resBytes = res.GetValue<byte[]>();
-            Assert.AreEqual("SocketIOClient.Test - server", Encoding.UTF8.GetString(resBytes));
-        }
+            Assert.AreEqual(1, result.InComingBytes.Count);
+            Assert.AreEqual(longString, Encoding.UTF8.GetString(result.InComingBytes[0]));
 
-        [TestMethod]
-        public async Task ConcurrencySendTest()
+            var model = result.GetValue<BytesInObjectResponse>();
+            Assert.AreEqual(6, model.Code);
+            Assert.AreEqual(longString, Encoding.UTF8.GetString(model.Message));
+        }
+        #endregion
+
+        #region Emit with 2 params
+        public virtual async Task EmitWith2ParamsNull()
         {
-            int endIndex = -1;
-            int bytesCallbackCount = 0;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            JsonValueKind result0 = JsonValueKind.Undefined;
+            JsonValueKind result1 = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
-            client.On("bytes", response => bytesCallbackCount++);
-
+            client.On("2 params", response =>
+            {
+                var element0 = response.GetValue();
+                result0 = element0.ValueKind;
+                var element1 = response.GetValue(1);
+                result1 = element1.ValueKind;
+            });
             client.OnConnected += async (sender, e) =>
             {
-                string data = File.ReadAllText("Files/data.txt");
-                byte[] buffer = Encoding.UTF8.GetBytes(data);
-                await Task.Factory.StartNew(async () =>
+                await client.EmitAsync("2 params", null, null);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.Null, result0);
+            Assert.AreEqual(JsonValueKind.Null, result1);
+        }
+
+        public virtual async Task EmitWith2ParamsTrueTrue()
+        {
+            JsonValueKind result0 = JsonValueKind.Undefined;
+            JsonValueKind result1 = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
                 {
-                    for (int i = 0; i < 100; i++)
+                    { "token", Version }
+                }
+            });
+            client.On("2 params", response =>
+            {
+                result0 = response.GetValue().ValueKind;
+                result1 = response.GetValue(1).ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", true, true);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.True, result0);
+            Assert.AreEqual(JsonValueKind.True, result1);
+        }
+
+        public virtual async Task EmitWith2ParamsTrueFalse()
+        {
+            JsonValueKind result0 = JsonValueKind.Undefined;
+            JsonValueKind result1 = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("2 params", response =>
+            {
+                result0 = response.GetValue().ValueKind;
+                result1 = response.GetValue(1).ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", true, false);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.True, result0);
+            Assert.AreEqual(JsonValueKind.False, result1);
+        }
+
+        public virtual async Task EmitWith2ParamsFalseTrue()
+        {
+            JsonValueKind result0 = JsonValueKind.Undefined;
+            JsonValueKind result1 = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("2 params", response =>
+            {
+                result0 = response.GetValue().ValueKind;
+                result1 = response.GetValue(1).ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", false, true);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.False, result0);
+            Assert.AreEqual(JsonValueKind.True, result1);
+        }
+
+        public virtual async Task EmitWith2ParamsTrueNull()
+        {
+            JsonValueKind result0 = JsonValueKind.Undefined;
+            JsonValueKind result1 = JsonValueKind.Undefined;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("2 params", response =>
+            {
+                result0 = response.GetValue().ValueKind;
+                result1 = response.GetValue(1).ValueKind;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", true, null);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(JsonValueKind.True, result0);
+            Assert.AreEqual(JsonValueKind.Null, result1);
+        }
+
+        public virtual async Task EmitWith2ParamsStringObject()
+        {
+            string result0 = null;
+            ObjectResponse result1 = null;
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("2 params", response =>
+            {
+                result0 = response.GetValue<string>();
+                result1 = response.GetValue<ObjectResponse>(1);
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", longString, new ObjectResponse
+                {
+                    A = 97,
+                    B = "b",
+                    C = new ObjectC
                     {
-                        await client.EmitAsync("bytes", "c#", new
-                        {
-                            source = "client007",
-                            bytes = buffer
-                        });
-                        //await Task.Delay(20);
+                        D = "d",
+                        E = 2.71828182846
                     }
                 });
-
-                for (int i = 0; i < 100; i++)
-                {
-                    await client.EmitAsync("hi", i);
-                    endIndex = i;
-                    //await Task.Delay(20);
-                }
             };
             await client.ConnectAsync();
-            await Task.Delay(10000);
-
-            Assert.AreEqual(99, endIndex);
-            Assert.AreEqual(100, bytesCallbackCount);
-            Assert.IsTrue(client.Connected);
+            await Task.Delay(200);
             await client.DisconnectAsync();
+
+            Assert.AreEqual(longString, result0);
+            Assert.AreEqual(97, result1.A);
+            Assert.AreEqual("b", result1.B);
+            Assert.AreEqual("d", result1.C.D);
+            Assert.AreEqual("2.71828182846", result1.C.E.ToString());
         }
 
-
-
-        [TestMethod]
-        public async Task ContinuousBinaryTest()
+        public virtual async Task EmitWith2ParamsBytes()
         {
-            byte[] bytes = File.ReadAllBytes("Files/tianlongbabu.epub");
-            int connectedCount = 0;
-            int cbCount = 0;
-            ContinuousBinaryResponse result = null;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            SocketIOResponse result = null;
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            var client = new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = false,
                 Query = new Dictionary<string, string>
-                    {
-                        { "token", "io" }
-                    }
+                {
+                    { "token", Version }
+                }
             });
-            client.On("ContinuousBinary", response =>
+            client.On("2 params", response =>
             {
-                cbCount++;
-                result = response.GetValue<ContinuousBinaryResponse>();
+                result = response;
             });
             client.OnConnected += async (sender, e) =>
             {
-                connectedCount++;
-                for (int i = 0; i < 1000; i++)
+                await client.EmitAsync("2 params", Encoding.UTF8.GetBytes(longString + "abc"), new BytesInObjectResponse
                 {
-                    await client.EmitAsync("ContinuousBinary", new
-                    {
-                        progress = i,
-                        binary = bytes
-                    });
-                }
+                    Code = 64,
+                    Message = Encoding.UTF8.GetBytes(longString + "xyz")
+                });
             };
             await client.ConnectAsync();
-            await Task.Delay(10000);
+            await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(1, connectedCount);
-            Assert.AreEqual(1000, cbCount);
-            Assert.AreEqual(999, result.Progress);
-            Assert.AreEqual(1754476, result.Length);
+            Assert.AreEqual(2, result.InComingBytes.Count);
+            Assert.AreEqual(longString + "abc", Encoding.UTF8.GetString(result.InComingBytes[0]));
+            Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(result.InComingBytes[1]));
+
+            byte[] bytes = result.GetValue<byte[]>();
+            Assert.AreEqual(longString + "abc", Encoding.UTF8.GetString(bytes));
+
+            var model = result.GetValue<BytesInObjectResponse>(1);
+            Assert.AreEqual(64, model.Code);
+            Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(model.Message));
         }
+        #endregion
+
+        #region Server calls the client's callback
+        public virtual async Task NoParams_NoParams()
+        {
+            bool result = false;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("no params | cb: no params", response =>
+                {
+                    result = true;
+                });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsTrue(result);
+        }
+
+        public virtual async Task OneParams_OneParams_String()
+        {
+            string result = null;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params | cb: 1 params", response =>
+                {
+                    result = response.GetValue<string>();
+                }, "str1");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("str1", result);
+        }
+
+        public virtual async Task TwoParams_TwoParams_StringObject()
+        {
+            SocketIOResponse result = null;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params | cb: 2 params", response =>
+                {
+                    result = response;
+                },
+                "str1",
+                new ObjectResponse
+                {
+                    A = 97,
+                    B = "b",
+                    C = new ObjectC
+                    {
+                        D = "d",
+                        E = 2.71828182846
+                    }
+                });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual("str1", result.GetValue<string>());
+
+            var model = result.GetValue<ObjectResponse>(1);
+            Assert.AreEqual(97, model.A);
+            Assert.AreEqual("b", model.B);
+            Assert.AreEqual("d", model.C.D);
+            Assert.AreEqual("2.71828182846", model.C.E.ToString());
+        }
+
+        public virtual async Task TwoParams_TwoParams_2Binary()
+        {
+            SocketIOResponse result = null;
+            string longString = @"
+000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
+333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
+444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
+666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
+777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
+999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
+你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
+ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
+";
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params | cb: 2 params", response =>
+                {
+                    result = response;
+                },
+                Encoding.UTF8.GetBytes(longString + "abc"),
+                new BytesInObjectResponse
+                {
+                    Code = 64,
+                    Message = Encoding.UTF8.GetBytes(longString + "xyz")
+                });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(2, result.InComingBytes.Count);
+            Assert.AreEqual(longString + "abc", Encoding.UTF8.GetString(result.InComingBytes[0]));
+            Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(result.InComingBytes[1]));
+
+            byte[] bytes = result.GetValue<byte[]>();
+            Assert.AreEqual(longString + "abc", Encoding.UTF8.GetString(bytes));
+
+            var model = result.GetValue<BytesInObjectResponse>(1);
+            Assert.AreEqual(64, model.Code);
+            Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(model.Message));
+        }
+        #endregion
+
+        #region Client calls the server's callback
+        public virtual async Task ClientCallsServerCallback_NoParams_0()
+        {
+            bool flag0 = false;
+            bool flag1 = false;
+            bool flag2 = false;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("no params", response => flag0 = true);
+            client.On("client calls the server's callback 0", response => flag1 = true);
+            client.OnConnected += async (sender, e) =>
+            {
+                flag2 = true;
+                await client.EmitAsync("client calls the server's callback 0");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsTrue(flag2);
+            Assert.IsTrue(flag1);
+            Assert.IsFalse(flag0);
+        }
+
+        public virtual async Task ClientCallsServerCallback_NoParams_1()
+        {
+            bool flag0 = false;
+            bool flag1 = false;
+            bool flag2 = false;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("no params", response => flag0 = true);
+            client.On("client calls the server's callback 0", async response =>
+            {
+                flag1 = true;
+                await response.CallbackAsync();
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                flag2 = true;
+                await client.EmitAsync("client calls the server's callback 0");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.IsTrue(flag2);
+            Assert.IsTrue(flag1);
+            Assert.IsTrue(flag0);
+        }
+
+        public virtual async Task ClientCallsServerCallback_1Params_0()
+        {
+            SocketIOResponse result = null;
+            var client = new SocketIO(Url, new SocketIOOptions
+            {
+                Query = new Dictionary<string, string>
+                {
+                    { "token", Version }
+                }
+            });
+            client.On("1 params", response =>
+            {
+                result = response;
+            });
+            client.On("client calls the server's callback 1", async response =>
+            {
+                byte[] bytes = response.GetValue<byte[]>();
+                string text = Encoding.UTF8.GetString(bytes) + "...";
+                await response.CallbackAsync(Encoding.UTF8.GetBytes(text));
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
+                await client.EmitAsync("client calls the server's callback 1", bytes);
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, result.InComingBytes.Count);
+            Assert.AreEqual("ClientCallsServerCallback_1Params_0...", Encoding.UTF8.GetString(result.GetValue<byte[]>()));
+        }
+        #endregion
     }
 }

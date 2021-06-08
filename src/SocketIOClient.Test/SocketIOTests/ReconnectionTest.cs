@@ -4,20 +4,18 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    [TestClass]
-    public class ReconnectionTest
+    public abstract class ReconnectionTest : SocketIOTest
     {
-        [TestMethod]
-        public async Task ReconnectionTrueTest()
+        public virtual async Task ReconnectionTrueTest()
         {
             int hiCount = 0;
             string res = null;
             int disconnectionCount = 0;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
             client.On("hi", response =>
@@ -51,21 +49,20 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.IsTrue(client.Disconnected);
             Assert.AreEqual(2, hiCount);
             Assert.AreEqual(1, disconnectionCount);
-            Assert.AreEqual("hi SocketIOClient.Test, You are connected to the server", res);
+            Assert.AreEqual($"{Prefix}SocketIOClient.Test", res);
         }
 
-        [TestMethod]
-        public async Task ReconnectionFalseTest()
+        public virtual async Task ReconnectionFalseTest()
         {
             int hiCount = 0;
             string res = null;
             int disconnectionCount = 0;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
             client.On("hi", response =>
@@ -99,21 +96,20 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.IsTrue(client.Disconnected);
             Assert.AreEqual(1, hiCount);
             Assert.AreEqual(1, disconnectionCount);
-            Assert.AreEqual("hi SocketIOClient.Test, You are connected to the server", res);
+            Assert.AreEqual($"{Prefix}SocketIOClient.Test", res);
         }
 
-        [TestMethod]
-        public async Task ReconnectingTest()
+        public virtual async Task ReconnectingTest()
         {
             int disconnectionCount = 0;
             int reconnectingCount = 0;
             int attempt = 0;
             bool connectedFlag = false;
-            var client = new SocketIO(ConnectAsyncTest.URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
 
@@ -143,16 +139,15 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(1, attempt);
         }
 
-        [TestMethod]
         [Timeout(30000)]
-        public async Task ManuallyReconnectionTest()
+        public virtual async Task ManuallyReconnectionTest()
         {
-            var client = new SocketIO(ConnectAsyncTest.NSP_URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", "io" }
+                    { "token", Version }
                 }
             });
 

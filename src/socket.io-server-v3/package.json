@@ -6,7 +6,6 @@
         "start": "node app.js"
     },
     "dependencies": {
-        "express": "^4.15.2",
-        "socket.io": "3.0.1"
+        "socket.io": "3.1.2"
     }
 }

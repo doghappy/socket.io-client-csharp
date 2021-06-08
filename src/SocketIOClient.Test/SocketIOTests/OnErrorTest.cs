@@ -1,18 +1,15 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    [TestClass]
-    public class OnErrorTest
+    public abstract class OnErrorTest : SocketIOTest
     {
-        [TestMethod]
-        public async Task NspTest()
+        public virtual async Task Test()
         {
             bool connected = false;
             string error = null;
-            var client = new SocketIO(ConnectAsyncTest.NSP_URL, new SocketIOOptions
+            var client = new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = false
             });

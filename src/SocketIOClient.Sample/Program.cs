@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
-using SocketIOClient.WebSocketClient;
+﻿using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Sample
@@ -17,18 +17,19 @@ namespace SocketIOClient.Sample
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
             //var uri = new Uri("http://localhost:11003/nsp");
-            //var uri = new Uri("http://localhost:11000");
-            var uri = new Uri("http://localhost:11003");
+            var uri = new Uri("http://localhost:11000");
+            //var uri = new Uri("http://localhost:11003");
+            //var uri = new Uri("http://jd.doghappy.wang:11000");
             //var uri = new Uri("https://socket-io.doghappy.wang");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
                 {
-                    //{"token", "io" }
-                    {"token", "v3" }
+                    {"token", "io" }
+                    //{"token", "v3" }
                 },
-                EIO = 4
+                //EIO = 4
             });
 
             socket.GetConnectInterval = () => new MyConnectInterval();
@@ -53,11 +54,16 @@ namespace SocketIOClient.Sample
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
             socket.OnReconnecting += Socket_OnReconnecting;
+
+            //Console.WriteLine("Press any key to continue");
+            //Console.ReadLine();
+
             await socket.ConnectAsync();
 
-            socket.On("hi", response =>
+            socket.On("ContinuouslyReceiveData", response =>
             {
-                Console.WriteLine($"server: {response.GetValue<string>()}");
+                var data = response.GetValue<ContinuouslyReceiveData>();
+                Console.WriteLine(data.Index);
             });
 
             //socket.On("bytes", response =>
@@ -98,7 +104,26 @@ namespace SocketIOClient.Sample
             Console.WriteLine("Socket_OnConnected");
             var socket = sender as SocketIO;
             Console.WriteLine("Socket.Id:" + socket.Id);
-            await socket.EmitAsync("hi", "SocketIOClient.Sample");
+
+            await socket.EmitAsync("ContinuouslyReceiveData", new
+            {
+                count = 100,
+                path = "设计表.rar"
+            });
+            //string path = "设计表.rar";
+            //var bytes = System.IO.File.ReadAllBytes(path);
+            //int i = -1;
+            //while (true)
+            //{
+            //    i++;
+            //    await socket.EmitAsync("items_updated", new
+            //    {
+            //        progress = i,
+            //        binary = bytes
+            //    });
+            //}
+            //await socket.EmitAsync("hi", "SocketIOClient.Sample");
+
 
             //await socket.EmitAsync("ack", response =>
             //{
@@ -142,16 +167,22 @@ namespace SocketIOClient.Sample
 
         public string Source { get; set; }
 
-        [JsonProperty("bytes")]
         public byte[] Buffer { get; set; }
     }
 
     class ClientCallbackResponse
     {
-        [JsonProperty("text")]
         public string Text { get; set; }
 
-        [JsonProperty("bytes")]
         public byte[] Bytes { get; set; }
+    }
+
+    class ContinuouslyReceiveData
+    {
+        [JsonPropertyName("index")]
+        public int Index { get; set; }
+
+        [JsonPropertyName("file")]
+        public byte[] File { get; set; }
     }
 }
