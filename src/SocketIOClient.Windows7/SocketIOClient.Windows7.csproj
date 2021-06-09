@@ -13,6 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\SocketIOClient\BelowNormalEvent.cs" Link="BelowNormalEvent.cs" />
     <Compile Include="..\SocketIOClient\ConnectInterval\DefaultConnectInterval.cs" Link="ConnectInterval\DefaultConnectInterval.cs" />
     <Compile Include="..\SocketIOClient\ConnectInterval\IConnectInterval.cs" Link="ConnectInterval\IConnectInterval.cs" />
     <Compile Include="..\SocketIOClient\EioHandler\Eio3Handler.cs" Link="EioHandler\Eio3Handler.cs" />
@@ -21,27 +22,28 @@
     <Compile Include="..\SocketIOClient\EioHandler\IEioHandler.cs" Link="EioHandler\IEioHandler.cs" />
     <Compile Include="..\SocketIOClient\EngineIOProtocol.cs" Link="EngineIOProtocol.cs" />
     <Compile Include="..\SocketIOClient\EventArguments\ReceivedEventArgs.cs" Link="EventArguments\ReceivedEventArgs.cs" />
+    <Compile Include="..\SocketIOClient\EventHandlers.cs" Link="EventHandlers.cs" />
     <Compile Include="..\SocketIOClient\Exceptions\InvalidSocketStateException.cs" Link="Exceptions\InvalidSocketStateException.cs" />
     <Compile Include="..\SocketIOClient\JsonSerializer\ByteArrayConverter.cs" Link="JsonSerializer\ByteArrayConverter.cs" />
     <Compile Include="..\SocketIOClient\JsonSerializer\IJsonSerializer.cs" Link="JsonSerializer\IJsonSerializer.cs" />
     <Compile Include="..\SocketIOClient\JsonSerializer\JsonSerializeResult.cs" Link="JsonSerializer\JsonSerializeResult.cs" />
     <Compile Include="..\SocketIOClient\JsonSerializer\SystemTextJsonSerializer.cs" Link="JsonSerializer\SystemTextJsonSerializer.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\IPackable.cs" Link="Packgers\IPackable.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\IPackger.cs" Link="Packgers\IPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\IReceivedEvent.cs" Link="Packgers\IReceivedEvent.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\IUnpackable.cs" Link="Packgers\IUnpackable.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageAckPackger.cs" Link="Packgers\MessageAckPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageBinaryAckPackger.cs" Link="Packgers\MessageBinaryAckPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageBinaryEventPackger.cs" Link="Packgers\MessageBinaryEventPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageConnectedPackger.cs" Link="Packgers\MessageConnectedPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageDisconnectedPackger.cs" Link="Packgers\MessageDisconnectedPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageErrorPackger.cs" Link="Packgers\MessageErrorPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessageEventPackger.cs" Link="Packgers\MessageEventPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\MessagePackger.cs" Link="Packgers\MessagePackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\OpenedPackger.cs" Link="Packgers\OpenedPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\PackgeManager.cs" Link="Packgers\PackgeManager.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\PingPackger.cs" Link="Packgers\PingPackger.cs" />
-    <Compile Include="..\SocketIOClient\Packgers\PongPackger.cs" Link="Packgers\PongPackger.cs" />
+    <Compile Include="..\SocketIOClient\Processors\AckProcessor.cs" Link="Processors\AckProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\BinaryAckProcessor.cs" Link="Processors\BinaryAckProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\BinaryEventProcessor.cs" Link="Processors\BinaryEventProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\ConnectedProcessor.cs" Link="Processors\ConnectedProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\DisconnectedProcessor.cs" Link="Processors\DisconnectedProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\EngineIOProtocolProcessor.cs" Link="Processors\EngineIOProtocolProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\ErrorEio3Processor.cs" Link="Processors\ErrorEio3Processor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\ErrorEio4Processor.cs" Link="Processors\ErrorEio4Processor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\ErrorProcessor.cs" Link="Processors\ErrorProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\EventProcessor.cs" Link="Processors\EventProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\MessageContext.cs" Link="Processors\MessageContext.cs" />
+    <Compile Include="..\SocketIOClient\Processors\OpenProcessor.cs" Link="Processors\OpenProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\PingProcessor.cs" Link="Processors\PingProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\PongProcessor.cs" Link="Processors\PongProcessor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\Processor.cs" Link="Processors\Processor.cs" />
+    <Compile Include="..\SocketIOClient\Processors\SocketIOProtocolProcessor.cs" Link="Processors\SocketIOProtocolProcessor.cs" />
     <Compile Include="..\SocketIOClient\Response\MessageType.cs" Link="Response\MessageType.cs" />
     <Compile Include="..\SocketIOClient\Response\OpenResponse.cs" Link="Response\OpenResponse.cs" />
     <Compile Include="..\SocketIOClient\SocketIO.cs" Link="SocketIO.cs" />
@@ -58,8 +60,8 @@
     <Folder Include="EventArguments\" />
     <Folder Include="Exceptions\" />
     <Folder Include="JsonSerializer\" />
-    <Folder Include="Packgers\" />
     <Folder Include="Response\" />
+    <Folder Include="Processors\" />
   </ItemGroup>
 
   <ItemGroup>

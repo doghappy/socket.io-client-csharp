@@ -1,6 +1,6 @@
 ﻿namespace SocketIOClient.Response
 {
-    class OpenResponse
+    public class OpenResponse
     {
         public string Sid { get; set; }
 

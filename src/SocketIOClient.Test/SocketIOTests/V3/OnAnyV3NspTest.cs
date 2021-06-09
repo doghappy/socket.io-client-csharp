@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests.V3
 {
     [TestClass]
-    public class OnErrorV3Test : OnErrorTest
+    public class OnAnyV3NspTest : OnAnyTest
     {
-        public OnErrorV3Test()
+        public OnAnyV3NspTest()
         {
-            SocketIOCreator = new ScoketIOV3Creator();
+            SocketIOCreator = new ScoketIOV3NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

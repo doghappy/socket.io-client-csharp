@@ -2,11 +2,11 @@
 using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
 using SocketIOClient.JsonSerializer;
-using SocketIOClient.Packgers;
 using SocketIOClient.Response;
 using SocketIOClient.WebSocketClient;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -101,6 +101,7 @@ namespace SocketIOClient
         internal int PacketId { get; private set; }
         internal List<byte[]> OutGoingBytes { get; private set; }
         internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
+        internal List<OnAnyHandler> OnAnyHandlers { get; private set; }
 
         public SocketIOOptions Options { get; }
 
@@ -122,18 +123,24 @@ namespace SocketIOClient
         public event EventHandler<Exception> OnReconnectFailed;
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
+
+        [Obsolete("OnReceivedEvent will be removed, please use OnAny() instead")]
         public event EventHandler<ReceivedEventArgs> OnReceivedEvent;
-        internal event EventHandler<byte[]> OnBytesReceived;
+
         #endregion
+
+        internal Queue<BelowNormalEvent> BelowNormalEvents { get; private set; }
 
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-            Socket = new ClientWebSocket(this, new PackgeManager(this));
+            Socket = new ClientWebSocket(this);
             PacketId = -1;
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();
             OutGoingBytes = new List<byte[]>();
+            OnAnyHandlers = new List<OnAnyHandler>();
+            BelowNormalEvents = new Queue<BelowNormalEvent>();
 
             Disconnected = true;
             OnDisconnected += SocketIO_OnDisconnected;
@@ -239,6 +246,30 @@ namespace SocketIOClient
             if (Handlers.ContainsKey(eventName))
             {
                 Handlers.Remove(eventName);
+            }
+        }
+
+        public void OnAny(OnAnyHandler handler)
+        {
+            if (handler != null)
+            {
+                OnAnyHandlers.Add(handler);
+            }
+        }
+
+        public void PrependAny(OnAnyHandler handler)
+        {
+            if (handler != null)
+            {
+                OnAnyHandlers.Insert(0, handler);
+            }
+        }
+
+        public void OffAny(OnAnyHandler handler)
+        {
+            if (handler != null)
+            {
+                OnAnyHandlers.Remove(handler);
             }
         }
 
@@ -374,7 +405,33 @@ namespace SocketIOClient
 
         internal void InvokeBytesReceived(byte[] bytes)
         {
-            OnBytesReceived?.Invoke(this, bytes);
+            if (BelowNormalEvents.Count > 0)
+            {
+                var e = BelowNormalEvents.Peek();
+                e.Response.InComingBytes.Add(bytes);
+                if (e.Response.InComingBytes.Count == e.Count)
+                {
+                    if (e.PacketId == -1)
+                    {
+                        foreach (var item in OnAnyHandlers)
+                        {
+                            item(e.Event, e.Response);
+                        }
+                        InvokeReceivedEvent(new ReceivedEventArgs
+                        {
+                            Event = e.Event,
+                            Response = e.Response
+                        });
+                        Handlers[e.Event](e.Response);
+                    }
+                    else
+                    {
+                        Acks[e.PacketId](e.Response);
+                        Acks.Remove(e.PacketId);
+                    }
+                    BelowNormalEvents.Dequeue();
+                }
+            }
         }
 
         internal void InvokeDisconnect(string reason)
@@ -411,18 +468,17 @@ namespace SocketIOClient
             OnPong?.Invoke(this, ms);
         }
 
+        internal void InvokePing()
+        {
+            OnPing?.Invoke(this, new EventArgs());
+        }
+
         internal void InvokePingV3()
         {
             OnPing?.Invoke(this, new EventArgs());
         }
 
-        internal void InvokePingV4(DateTime pingTime)
-        {
-            OnPing?.Invoke(this, new EventArgs());
-            Socket.SendMessageAsync("3").Wait();
-            InvokePong(DateTime.Now - pingTime);
-        }
-
+        [Obsolete]
         internal void InvokeReceivedEvent(ReceivedEventArgs args)
         {
             OnReceivedEvent?.Invoke(this, args);

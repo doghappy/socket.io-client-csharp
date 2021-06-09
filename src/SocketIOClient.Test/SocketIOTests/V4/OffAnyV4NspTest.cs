@@ -1,14 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Test.SocketIOTests.V3
+namespace SocketIOClient.Test.SocketIOTests.V4
 {
     [TestClass]
-    public class OnErrorV3Test : OnErrorTest
+    public class OffAnyV4NspTest : OffTest
     {
-        public OnErrorV3Test()
+        public OffAnyV4NspTest()
         {
-            SocketIOCreator = new ScoketIOV3Creator();
+            SocketIOCreator = new ScoketIOV4NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

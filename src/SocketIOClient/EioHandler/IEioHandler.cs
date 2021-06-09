@@ -1,10 +1,10 @@
-﻿using SocketIOClient.Packgers;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace SocketIOClient.EioHandler
 {
-    interface IEioHandler : IUnpackable
+    interface IEioHandler
     {
         Task IOConnectAsync(SocketIO io);
+        void Unpack(SocketIO io, string text);
     }
 }

@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests.V3
 {
     [TestClass]
-    public class OnErrorV3Test : OnErrorTest
+    public class OffAnyV3Test : OnAnyTest
     {
-        public OnErrorV3Test()
+        public OffAnyV3Test()
         {
             SocketIOCreator = new ScoketIOV3Creator();
         }

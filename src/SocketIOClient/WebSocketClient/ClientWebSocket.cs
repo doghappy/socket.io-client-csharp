@@ -1,10 +1,10 @@
-﻿using SocketIOClient.Packgers;
-using System;
+﻿using System;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Text;
 using SocketIOClient.Exceptions;
+using SocketIOClient.Processors;
 
 namespace SocketIOClient.WebSocketClient
 {
@@ -13,19 +13,18 @@ namespace SocketIOClient.WebSocketClient
     /// </summary>
     public sealed class ClientWebSocket : IWebSocketClient
     {
-        public ClientWebSocket(SocketIO io, PackgeManager parser)
+        public ClientWebSocket(SocketIO io)
         {
-            _parser = parser;
             _io = io;
         }
 
         const int ReceiveChunkSize = 1024 * 16;
 
-        readonly PackgeManager _parser;
         readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
         CancellationTokenSource _wsWorkTokenSource;
         readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
+        readonly EngineIOProtocolProcessor processor = new EngineIOProtocolProcessor();
 
         public Action<ClientWebSocketOptions> Config { get; set; }
 
@@ -202,7 +201,11 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                     System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
-                    _parser.Unpack(message);
+                    processor.Process(new MessageContext
+                    {
+                        Message = message,
+                        SocketIO = _io
+                    });
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
