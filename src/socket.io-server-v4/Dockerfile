@@ -3,6 +3,5 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm i
 COPY . .
-EXPOSE 11000
-# EXPOSE 3001
+EXPOSE 11004
 CMD ["npm", "start"]
