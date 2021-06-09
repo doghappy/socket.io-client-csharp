@@ -73,7 +73,7 @@ Before development or testing, you need to install the nodejs.
 
 ```bash
 # start socket.io v2 server
-cd src/socket.io-server
+cd src/socket.io-server-v2
 npm i # If the dependencies are already installed, you can ignore this step.
 npm start
 
@@ -90,4 +90,5 @@ npm start
 # Sponsors
 
 - [gcoverd](https://github.com/gcoverd), 250 AUD
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455)
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455), April 2021
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/41876), May 2021
