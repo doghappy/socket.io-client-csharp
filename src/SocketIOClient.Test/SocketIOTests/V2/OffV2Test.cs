@@ -1,16 +1,17 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.Test.Attributes;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests.V2
 {
     [TestClass]
-    [SocketIOVersion(SocketIOVersion.V2)]
     public class OffV2Test : OffTest
     {
-        protected override string Url => GetConstant("URL");
+        public OffV2Test()
+        {
+            SocketIOCreator = new ScoketIOV2Creator();
+        }
 
-        protected override string Prefix => "V2: ";
+        protected override ISocketIOCreateable SocketIOCreator { get; }
 
         [TestMethod]
         public override async Task Test()

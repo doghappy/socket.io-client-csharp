@@ -2,6 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Packgers;
 
+//[assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
+//[assembly: DoNotParallelize]
 namespace SocketIOClient.Test
 {
     [TestClass]

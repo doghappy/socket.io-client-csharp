@@ -1,23 +1,17 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    public abstract class OffTest : SocketIOTest
+    public abstract class OffTest
     {
+        protected abstract ISocketIOCreateable SocketIOCreator { get; }
+
         public async virtual Task Test()
         {
             string result = null;
             int hiCount = 0;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("hi", response =>
             {
                 hiCount++;
@@ -29,14 +23,14 @@ namespace SocketIOClient.Test.SocketIOTests
             };
             await client.ConnectAsync();
             await Task.Delay(200);
-            Assert.AreEqual($"{Prefix}.net core", result);
+            Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
 
             client.Off("hi");
             await client.EmitAsync("hi", ".net core 1");
             await Task.Delay(200);
             await client.DisconnectAsync();
-            Assert.AreEqual($"{Prefix}.net core", result);
+            Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
         }
     }

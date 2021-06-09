@@ -1,16 +1,17 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.Test.Attributes;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests.V3
 {
     [TestClass]
-    [SocketIOVersion(SocketIOVersion.V3)]
     public class OnReceivedEventV3NspTest : OnReceivedEventTest
     {
-        protected override string Url => GetConstant("NSP_URL");
+        public OnReceivedEventV3NspTest()
+        {
+            SocketIOCreator = new ScoketIOV3NspCreator();
+        }
 
-        protected override string Prefix => "/nsp,V3: ";
+        protected override ISocketIOCreateable SocketIOCreator { get; }
 
         [TestMethod]
         public override async Task Test()

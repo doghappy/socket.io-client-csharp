@@ -1,16 +1,17 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.Test.Attributes;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests.V4
 {
     [TestClass]
-    [SocketIOVersion(SocketIOVersion.V4)]
     public class DisconnectionV4NspTest : DisconnectionTest
     {
-        protected override string Url => GetConstant("NSP_URL");
+        public DisconnectionV4NspTest()
+        {
+            SocketIOCreator = new ScoketIOV4NspCreator();
+        }
 
-        protected override string Prefix => "/nsp,V4: ";
+        protected override ISocketIOCreateable SocketIOCreator { get; }
 
         [TestMethod]
         public override async Task Test()

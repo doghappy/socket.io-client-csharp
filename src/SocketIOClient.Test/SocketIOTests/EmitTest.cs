@@ -1,24 +1,19 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Test.Models;
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    public abstract class EmitTest : SocketIOTest
+    public abstract class EmitTest
     {
+        protected abstract ISocketIOCreateable SocketIOCreator { get;  }
+
         public virtual async Task Hi()
         {
             string result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("hi", response =>
             {
                 result = response.GetValue<string>();
@@ -31,19 +26,13 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual($"{Prefix}.net core", result);
+            Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
         }
 
         public virtual async Task EmitWithoutParams()
         {
             bool result = false;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("no params", response =>
             {
                 result = true;
@@ -63,13 +52,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsNull()
         {
             JsonValueKind result = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
@@ -89,13 +72,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsTrue()
         {
             JsonValueKind result = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
@@ -115,13 +92,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsFalse()
         {
             JsonValueKind result = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
@@ -141,13 +112,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsNumber0()
         {
             int result = -1;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<int>();
@@ -166,13 +131,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsNumberMin()
         {
             int result = -1;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<int>();
@@ -191,13 +150,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsNumberMax()
         {
             int result = -1;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<int>();
@@ -216,13 +169,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsEmptyString()
         {
             string result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<string>();
@@ -241,13 +188,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task EmitWith1ParamsShortString()
         {
             string result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<string>();
@@ -281,13 +222,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response.GetValue<string>();
@@ -306,13 +241,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task EmitWith1ParamsEmptyObject()
         {
             string result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
@@ -332,13 +261,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task EmitWith1ParamsObject()
         {
             ObjectResponse result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
             client.On("1 params", response =>
             {
@@ -386,13 +309,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
             byte[] bytes = Encoding.UTF8.GetBytes(longString);
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response;
@@ -429,13 +346,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
             byte[] bytes = Encoding.UTF8.GetBytes(longString);
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response;
@@ -466,13 +377,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             JsonValueKind result0 = JsonValueKind.Undefined;
             JsonValueKind result1 = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 var element0 = response.GetValue();
@@ -496,13 +401,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             JsonValueKind result0 = JsonValueKind.Undefined;
             JsonValueKind result1 = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result0 = response.GetValue().ValueKind;
@@ -524,13 +423,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             JsonValueKind result0 = JsonValueKind.Undefined;
             JsonValueKind result1 = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result0 = response.GetValue().ValueKind;
@@ -552,13 +445,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             JsonValueKind result0 = JsonValueKind.Undefined;
             JsonValueKind result1 = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result0 = response.GetValue().ValueKind;
@@ -580,13 +467,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             JsonValueKind result0 = JsonValueKind.Undefined;
             JsonValueKind result1 = JsonValueKind.Undefined;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result0 = response.GetValue().ValueKind;
@@ -623,13 +504,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result0 = response.GetValue<string>();
@@ -677,13 +552,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 result = response;
@@ -717,13 +586,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task NoParams_NoParams()
         {
             bool result = false;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("no params | cb: no params", response =>
@@ -741,13 +604,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task OneParams_OneParams_String()
         {
             string result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("1 params | cb: 1 params", response =>
@@ -765,13 +622,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task TwoParams_TwoParams_StringObject()
         {
             SocketIOResponse result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("2 params | cb: 2 params", response =>
@@ -821,13 +672,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
 ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
 ";
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.OnConnected += async (sender, e) =>
             {
                 await client.EmitAsync("2 params | cb: 2 params", response =>
@@ -864,13 +709,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             bool flag0 = false;
             bool flag1 = false;
             bool flag2 = false;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("no params", response => flag0 = true);
             client.On("client calls the server's callback 0", response => flag1 = true);
             client.OnConnected += async (sender, e) =>
@@ -892,13 +731,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             bool flag0 = false;
             bool flag1 = false;
             bool flag2 = false;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("no params", response => flag0 = true);
             client.On("client calls the server's callback 0", async response =>
             {
@@ -922,13 +755,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         public virtual async Task ClientCallsServerCallback_1Params_0()
         {
             SocketIOResponse result = null;
-            var client = new SocketIO(Url, new SocketIOOptions
-            {
-                Query = new Dictionary<string, string>
-                {
-                    { "token", Version }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 result = response;

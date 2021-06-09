@@ -4,16 +4,18 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    public abstract class DisconnectionTest : SocketIOTest
+    public abstract class DisconnectionTest
     {
+        protected abstract ISocketIOCreateable SocketIOCreator { get; }
+
         public virtual async Task Test()
         {
-            var client = new SocketIO(Url, new SocketIOOptions
+            var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
                 Reconnection = false,
                 Query = new Dictionary<string, string>
                 {
-                    { "token", Version }
+                    { "token", SocketIOCreator.Token }
                 }
             });
 
