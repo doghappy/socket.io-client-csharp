@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -272,6 +273,8 @@ namespace SocketIOClient
                 OnAnyHandlers.Remove(handler);
             }
         }
+
+        public OnAnyHandler[] ListenersAny() => OnAnyHandlers.ToArray();
 
         private async Task EmityCoreAsync(string eventName, int packetId, string data, CancellationToken cancellationToken)
         {
