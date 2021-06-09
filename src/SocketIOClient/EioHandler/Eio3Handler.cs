@@ -69,9 +69,6 @@ namespace SocketIOClient.EioHandler
             pingTokenSorce = new CancellationTokenSource();
             while (!pingTokenSorce.IsCancellationRequested)
             {
-#if DEBUG
-                Console.WriteLine(".");
-#endif
                 await Task.Delay(PingInterval);
                 if (io.Connected)
                 {

@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -304,24 +305,16 @@ namespace SocketIOClient
 
         private string GetDataString(params object[] data)
         {
-            var builder = new StringBuilder();
             if (data != null && data.Length > 0)
             {
-                for (int i = 0; i < data.Length; i++)
+                var result = JsonSerializer.Serialize(data);
+                if (result.Bytes.Count > 0)
                 {
-                    var result = JsonSerializer.Serialize(data[i]);
-                    if (result.Bytes.Count > 0)
-                    {
-                        OutGoingBytes.AddRange(result.Bytes);
-                    }
-                    builder.Append(result.Json);
-                    if (i != data.Length - 1)
-                    {
-                        builder.Append(",");
-                    }
+                    OutGoingBytes.AddRange(result.Bytes);
                 }
+                return result.Json.Substring(1, result.Json.Length - 2);
             }
-            return builder.ToString();
+            return string.Empty;
         }
 
         /// <summary>
