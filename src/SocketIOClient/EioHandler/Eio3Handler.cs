@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,6 +78,10 @@ namespace SocketIOClient.EioHandler
                         PingTime = DateTime.Now;
                         await io.Socket.SendMessageAsync("2");
                         io.InvokePingV3();
+                    }
+                    catch (WebSocketException e)
+                    {
+                        io.InvokeDisconnect(e.Message);
                     }
                     catch (Exception ex)
                     {
