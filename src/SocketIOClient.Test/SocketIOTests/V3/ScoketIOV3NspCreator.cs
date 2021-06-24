@@ -11,8 +11,7 @@ namespace SocketIOClient.Test.SocketIOTests.V3
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }
-                },
-                EIO = EIO
+                }
             });
         }
 

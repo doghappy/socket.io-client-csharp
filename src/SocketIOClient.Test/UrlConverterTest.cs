@@ -14,7 +14,7 @@ namespace SocketIOClient.Test
             Uri httpUri = new Uri("http://localhost:3000");
             Uri wsUri = urlConverter.HttpToWs(httpUri, new SocketIOOptions());
 
-            Assert.AreEqual("ws://localhost:3000/socket.io/?EIO=3&transport=websocket", wsUri.ToString());
+            Assert.AreEqual("ws://localhost:3000/socket.io/?EIO=4&transport=websocket", wsUri.ToString());
         }
 
         [TestMethod]
@@ -24,7 +24,7 @@ namespace SocketIOClient.Test
             Uri httpUri = new Uri("https://localhost:3000");
             Uri wsUri = urlConverter.HttpToWs(httpUri, new SocketIOOptions());
 
-            Assert.AreEqual("wss://localhost:3000/socket.io/?EIO=3&transport=websocket", wsUri.ToString());
+            Assert.AreEqual("wss://localhost:3000/socket.io/?EIO=4&transport=websocket", wsUri.ToString());
         }
 
         [TestMethod]
@@ -34,7 +34,7 @@ namespace SocketIOClient.Test
             Uri httpUri = new Uri("http://localhost");
             Uri wsUri = urlConverter.HttpToWs(httpUri, new SocketIOOptions());
 
-            Assert.AreEqual("ws://localhost/socket.io/?EIO=3&transport=websocket", wsUri.ToString());
+            Assert.AreEqual("ws://localhost/socket.io/?EIO=4&transport=websocket", wsUri.ToString());
         }
 
         [TestMethod]
@@ -44,7 +44,7 @@ namespace SocketIOClient.Test
             Uri httpUri = new Uri("https://localhost");
             Uri wsUri = urlConverter.HttpToWs(httpUri, new SocketIOOptions());
 
-            Assert.AreEqual("wss://localhost/socket.io/?EIO=3&transport=websocket", wsUri.ToString());
+            Assert.AreEqual("wss://localhost/socket.io/?EIO=4&transport=websocket", wsUri.ToString());
         }
 
         [TestMethod]
@@ -61,7 +61,7 @@ namespace SocketIOClient.Test
                 }
             });
 
-            Assert.AreEqual("wss://localhost/socket.io/?EIO=3&transport=websocket&uid=abc&pwd=123", wsUri.ToString());
+            Assert.AreEqual("wss://localhost/socket.io/?EIO=4&transport=websocket&uid=abc&pwd=123", wsUri.ToString());
         }
 
         [TestMethod]
@@ -79,7 +79,20 @@ namespace SocketIOClient.Test
                 }
             });
 
-            Assert.AreEqual("wss://localhost/test/?EIO=3&transport=websocket&uid=abc&pwd=123", wsUri.ToString());
+            Assert.AreEqual("wss://localhost/test/?EIO=4&transport=websocket&uid=abc&pwd=123", wsUri.ToString());
+        }
+
+        [TestMethod]
+        public void EIO3Test()
+        {
+            var urlConverter = new UrlConverter();
+            Uri httpUri = new Uri("http://localhost:3000");
+            Uri wsUri = urlConverter.HttpToWs(httpUri, new SocketIOOptions
+            {
+                EIO = 3
+            });
+
+            Assert.AreEqual("ws://localhost:3000/socket.io/?EIO=3&transport=websocket", wsUri.ToString());
         }
     }
 }
