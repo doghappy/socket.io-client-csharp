@@ -9,6 +9,10 @@ An elegant socket.io client for .NET, Supports `.NET Standard 2.0`.
 
 [Wiki](https://github.com/doghappy/socket.io-client-csharp/wiki)
 
+# Breaking changes in 2.2.4
+
+Before SocketIOClient v2.2.4, the default EIO is 3, which works with socket.io v2.x, in SocketIOClient v2.2.4, the default EIO is 4, which works with socket.io v3.x and v4.x
+
 # Breaking changes in 2.2.0
 
 SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If you'd like to continue to use `Newtonsoft.Json`, add the **SocketIOClient.Newtonsoft.Json** NuGet package and set your **JsonSerializer** to **NewtonsoftJsonSerializer** on your SocketIO instance. System.Text.Json is faster and uses less memory.
