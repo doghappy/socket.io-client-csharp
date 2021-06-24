@@ -9,7 +9,7 @@ namespace SocketIOClient
         public SocketIOOptions()
         {
             RandomizationFactor = new Random().NextDouble();
-            EIO = 3;
+            EIO = 4;
         }
 
         public string Path { get; set; } = "/socket.io";
