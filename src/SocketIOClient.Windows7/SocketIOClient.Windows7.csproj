@@ -10,6 +10,8 @@
     <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
     <RepositoryType>github</RepositoryType>
     <PackageTags>socket.io-client</PackageTags>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>SocketIOClient.Windows7.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
