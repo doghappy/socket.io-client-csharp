@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace SocketIOClient.Processors
 {
@@ -8,10 +9,22 @@ namespace SocketIOClient.Processors
         {
             if (ctx.SocketIO.Options.EIO == 4)
             {
-                ctx.SocketIO.InvokePing();
-                DateTime pingTime = DateTime.Now;
-                await ctx.SocketIO.Socket.SendMessageAsync("3");
-                ctx.SocketIO.InvokePong(DateTime.Now - pingTime);
+                try
+                {
+                    ctx.SocketIO.InvokePing();
+                    DateTime pingTime = DateTime.Now;
+                    await ctx.SocketIO.Socket.SendMessageAsync("3");
+                    ctx.SocketIO.InvokePong(DateTime.Now - pingTime);
+                }
+                catch (System.Net.WebSockets.WebSocketException e)
+                {
+                    ctx.SocketIO.InvokeDisconnect(e.Message);
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(ex.ToString());
+                }
+                
             }
         }
     }

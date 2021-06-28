@@ -1,6 +1,7 @@
 ﻿using SocketIOClient.ConnectInterval;
 using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
+using SocketIOClient.Exceptions;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Response;
 using SocketIOClient.WebSocketClient;
@@ -111,6 +112,8 @@ namespace SocketIOClient
         public Func<IConnectInterval> GetConnectInterval { get; set; }
 
         public IJsonSerializer JsonSerializer { get; set; }
+
+        static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -299,15 +302,27 @@ namespace SocketIOClient
             }
             builder.Append(']');
             string message = builder.ToString();
-            await Socket.SendMessageAsync(message, cancellationToken);
-            if (OutGoingBytes.Count > 0)
+            try
             {
-                foreach (var item in OutGoingBytes)
+                await Socket.SendMessageAsync(message, cancellationToken);
+                if (OutGoingBytes.Count > 0)
                 {
-                    await Socket.SendMessageAsync(item, cancellationToken);
+                    foreach (var item in OutGoingBytes)
+                    {
+                        await Socket.SendMessageAsync(item, cancellationToken);
+                    }
+                    OutGoingBytes.Clear();
                 }
-                OutGoingBytes.Clear();
             }
+            catch (System.Net.WebSockets.WebSocketException e)
+            {
+                this.InvokeDisconnect(e.Message);
+            }
+            catch (InvalidSocketStateException e)
+            {
+                this.InvokeDisconnect(e.Message);
+            }
+            
         }
 
         internal async Task EmitCallbackAsync(int packetId, params object[] data)
@@ -364,8 +379,16 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
+            await _semaphoreSlim.WaitAsync();
+            try
+            {
+                string dataString = GetDataString(data);
+                await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
         }
 
         /// <summary>
@@ -382,9 +405,17 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, Action<SocketIOResponse> ack, params object[] data)
         {
-            Acks.Add(++PacketId, ack);
-            string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
+            await _semaphoreSlim.WaitAsync();
+            try
+            {
+                Acks.Add(++PacketId, ack);
+                string dataString = GetDataString(data);
+                await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
         }
 
         internal void Open(OpenResponse openResponse)
