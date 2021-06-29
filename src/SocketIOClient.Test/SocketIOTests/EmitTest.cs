@@ -287,7 +287,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(97, result.A);
             Assert.AreEqual("b", result.B);
             Assert.AreEqual("d", result.C.D);
-            Assert.AreEqual("2.71828182846", result.C.E.ToString());
+            Assert.AreEqual(2.71828182846, result.C.E);
         }
 
         public virtual async Task EmitWith1ParamsBytes()
@@ -531,7 +531,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(97, result1.A);
             Assert.AreEqual("b", result1.B);
             Assert.AreEqual("d", result1.C.D);
-            Assert.AreEqual("2.71828182846", result1.C.E.ToString());
+            Assert.AreEqual(2.71828182846, result1.C.E);
         }
 
         public virtual async Task EmitWith2ParamsBytes()
@@ -651,7 +651,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(97, model.A);
             Assert.AreEqual("b", model.B);
             Assert.AreEqual("d", model.C.D);
-            Assert.AreEqual("2.71828182846", model.C.E.ToString());
+            Assert.AreEqual(2.71828182846, model.C.E);
         }
 
         public virtual async Task TwoParams_TwoParams_2Binary()
