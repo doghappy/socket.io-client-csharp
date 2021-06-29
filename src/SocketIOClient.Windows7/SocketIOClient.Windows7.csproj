@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.2.4.1</Version>
+    <Version>2.2.4.2-alpha.1</Version>
     <Description>socket.io-client implemention for .NET</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
@@ -13,6 +13,10 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>SocketIOClient.Windows7.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="lib\System.Net.WebSockets.Client.Managed.dll" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\SocketIOClient\BelowNormalEvent.cs" Link="BelowNormalEvent.cs" />
@@ -57,6 +61,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="lib\System.Net.WebSockets.Client.Managed.dll">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFramework)</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="ConnectInterval\" />
     <Folder Include="EioHandler\" />
     <Folder Include="EventArguments\" />
@@ -72,7 +84,7 @@
 
   <ItemGroup>
     <Reference Include="System.Net.WebSockets.Client.Managed">
-      <HintPath>lib\System.Net.WebSockets.Client.Managed.dll</HintPath>
+      <HintPath>System.Net.WebSockets.Client.Managed.dll</HintPath>
     </Reference>
   </ItemGroup>
 
