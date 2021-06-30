@@ -2,7 +2,7 @@
 {
     public interface IConnectInterval
     {
-        int GetDelay();
-        double NextDealy();
+        double GetDelay();
+        double NextDelay();
     }
 }

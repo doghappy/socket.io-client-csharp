@@ -1,7 +1,5 @@
 ﻿using SocketIOClient.ConnectInterval;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SocketIOClient.Sample
 {
@@ -14,15 +12,15 @@ namespace SocketIOClient.Sample
 
         double delay;
 
-        public int GetDelay()
+        public double GetDelay()
         {
             Console.WriteLine("GetDelay: " + delay);
-            return (int)delay;
+            return delay;
         }
 
-        public double NextDealy()
+        public double NextDelay()
         {
-            Console.WriteLine("NextDealy: " + (delay + 1000));
+            Console.WriteLine("NextDelay: " + (delay + 1000));
             return delay += 1000;
         }
     }

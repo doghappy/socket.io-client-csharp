@@ -130,6 +130,36 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(1, attempt);
         }
 
+        public virtual async Task ReconnectionAttemptsExceededTest() 
+        {
+            var client = SocketIOCreator.Create();
+            client.ServerUri = new System.Uri("http://localhost:11011");
+            client.Options.AllowedRetryFirstConnection = true;
+            client.Options.ReconnectionAttempts = 5;
+
+            int reconnectingCount = 0;
+            int attempt = 0;
+            int reconnectionErrorCount = 0;
+
+            client.OnReconnecting += (sender, e) =>
+            {
+                reconnectingCount++;
+                attempt = e;
+            };
+
+            client.OnReconnectFailed += (sender, e) =>
+            {
+                reconnectionErrorCount++;
+            };
+
+            await client.ConnectAsync();
+
+            Assert.AreEqual(reconnectingCount, 5);
+            Assert.AreEqual(reconnectionErrorCount, 1);
+            Assert.AreEqual(attempt, 5);
+        }
+
+
         [Timeout(30000)]
         public virtual async Task ManuallyReconnectionTest()
         {

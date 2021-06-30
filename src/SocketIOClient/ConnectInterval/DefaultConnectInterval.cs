@@ -1,25 +1,36 @@
-﻿namespace SocketIOClient.ConnectInterval
+﻿using System;
+
+namespace SocketIOClient.ConnectInterval
 {
     class DefaultConnectInterval: IConnectInterval
     {
         public DefaultConnectInterval(SocketIOOptions options)
         {
             this.options = options;
-            delayDouble = options.ReconnectionDelay;
+            this.delay = options.ReconnectionDelay;
         }
 
         readonly SocketIOOptions options;
-        double delayDouble;
+        private double delay;
+        private int attempts = 0;
 
-        public int GetDelay()
+        public double GetDelay()
         {
-            return (int)delayDouble;
+            return this.delay;
         }
 
-        public double NextDealy()
+        public double NextDelay()
         {
-            delayDouble += 2 * options.RandomizationFactor;
-            return delayDouble;
+            this.delay = options.ReconnectionDelay * (long)Math.Pow(2, attempts++);
+            
+            if (this.options.RandomizationFactor > 0) 
+            {
+                Random random = new Random();
+                var deviation = (long)Math.Floor(random.NextDouble() * this.options.RandomizationFactor * options.ReconnectionDelay);
+                this.delay = ((long)Math.Floor(random.NextDouble() * 10) & 1) == 0 ? this.delay - deviation : this.delay + deviation;
+            }
+
+            return this.delay;
         }
     }
 }

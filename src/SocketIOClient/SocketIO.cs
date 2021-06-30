@@ -97,6 +97,11 @@ namespace SocketIOClient
         public bool Connected { get; private set; }
 
         /// <summary>
+        /// Gets current attempt of reconnection.
+        /// </summary>
+        public int Attempts { get; private set; }
+
+        /// <summary>
         /// Whether or not the socket is disconnected from the server.
         /// </summary>
         public bool Disconnected { get; private set; }
@@ -104,7 +109,6 @@ namespace SocketIOClient
         internal List<byte[]> OutGoingBytes { get; private set; }
         internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
         internal List<OnAnyHandler> OnAnyHandlers { get; private set; }
-
         public SocketIOOptions Options { get; }
 
         internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
@@ -158,10 +162,10 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task ConnectAsync()
         {
-            await ConnectCoreAsync(Options.AllowedRetryFirstConnection, null);
+            await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
         }
 
-        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection, Action connectBefore)
+        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection)
         {
             if (ServerUri == null)
             {
@@ -175,7 +179,7 @@ namespace SocketIOClient
                 {
                     try
                     {
-                        connectBefore?.Invoke();
+                        this.OnReconnecting?.Invoke(this, ++Attempts);
                         await Socket.ConnectAsync(wsUri);
                         break;
                     }
@@ -183,15 +187,23 @@ namespace SocketIOClient
                     {
                         if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
                         {
-                            await Task.Delay(connectInterval.GetDelay());
-                            if (connectInterval.NextDealy() > Options.ReconnectionDelayMax)
+                            if (Attempts >= Options.ReconnectionAttempts)
                             {
                                 OnReconnectFailed?.Invoke(this, ex);
                                 break;
                             }
+                            else
+                            {
+                                // If current delay is already bigger than ReconnectionDelayMax, we just take ReconnectionDelayMax.
+                                double delay = connectInterval.GetDelay() < Options.ReconnectionDelayMax ? connectInterval.NextDelay() : Options.ReconnectionDelayMax;
+
+                                // Take the minimun value between delay and ReconnectionDelayMax.
+                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(delay, Options.ReconnectionDelayMax)));
+                            }
                         }
                         else
                         {
+                            Attempts = 0;
                             throw;
                         }
                     }
@@ -200,6 +212,11 @@ namespace SocketIOClient
             else
             {
                 await Socket.ConnectAsync(wsUri);
+            }
+
+            if (Connected) 
+            {
+                Attempts = 0;
             }
         }
 
@@ -492,8 +509,8 @@ namespace SocketIOClient
         {
             if (Options.Reconnection)
             {
-                int attempt = 0;
-                await ConnectCoreAsync(true, () => OnReconnecting?.Invoke(this, ++attempt));
+                this.Attempts = 0;
+                await ConnectCoreAsync(true);
             }
         }
 
