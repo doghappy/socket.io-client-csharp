@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <None Remove="lib\System.Net.WebSockets.Client.Managed.dll" />
-    <None Remove="SocketIOClient.Windows7.snk" />
   </ItemGroup>
 
   <ItemGroup>
