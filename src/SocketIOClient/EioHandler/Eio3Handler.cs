@@ -58,7 +58,7 @@ namespace SocketIOClient.EioHandler
             }
             else
             {
-                if (text == io.Namespace)
+                if (text == io.Namespace || text == io.Namespace.TrimEnd(','))
                 {
                     io.InvokeConnect();
                 }
