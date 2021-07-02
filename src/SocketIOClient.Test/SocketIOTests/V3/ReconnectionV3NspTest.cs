@@ -32,6 +32,12 @@ namespace SocketIOClient.Test.SocketIOTests.V3
         }
 
         [TestMethod]
+        public override async Task ReconnectionAttemptsExceededTest()
+        {
+            await base.ReconnectionAttemptsExceededTest();
+        }
+
+        [TestMethod]
         public override async Task ManuallyReconnectionTest()
         {
             await base.ManuallyReconnectionTest();

@@ -25,6 +25,7 @@ namespace SocketIOClient
 
         public int ReconnectionDelay { get; set; } = 1000;
         public int ReconnectionDelayMax { get; set; } = 5000;
+        public int ReconnectionAttempts { get; set; } = int.MaxValue;
 
         double _randomizationFactor;
         public double RandomizationFactor
