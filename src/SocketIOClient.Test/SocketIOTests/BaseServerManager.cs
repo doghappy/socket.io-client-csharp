@@ -1,16 +1,13 @@
 ﻿using SocketIOClient.Test.Helpers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
     public class BaseServerManager
     {
         private readonly string directory;
-        private List<Process> processesToKill;
+        private Process nodeProcess;
 
         public BaseServerManager(string directory) 
         {
@@ -19,32 +16,22 @@ namespace SocketIOClient.Test.SocketIOTests
 
         public void Create()
         {
-            var installProcess = CommandHelper.RunCommand("npm", "install", Path.GetFullPath(directory));
+            var workingDirectory = Path.GetFullPath(directory);
+            var npmInstallProcess = CommandHelper.RunCommand("npm", "install", workingDirectory);
             
-            if (!installProcess.WaitForExit(60000)) 
+            // We wait until the installation process is finished (or we get a timeout).
+            if (!npmInstallProcess.WaitForExit(60000)) 
             {
                 throw new System.SystemException("Failed restoring packages of server");
             }
 
-            var before = Process.GetProcesses().ToList().Select(x => x.Id);
-            var startProcess = CommandHelper.RunCommand("npm", "start", Path.GetFullPath(directory));
-            var after = Process.GetProcesses().ToList();
-            this.processesToKill = this.GetProcessesToKill(before, after);
+            // Time to run the node server.
+            this.nodeProcess = CommandHelper.RunCommand("node", "app.js", workingDirectory);
         }
 
         public void Destroy()
         {
-            foreach (var process in processesToKill)
-            {
-                process.Kill();
-            }
-        }
-
-        private List<Process> GetProcessesToKill(IEnumerable<int> before, List<Process> after)
-        {
-            var processesToKill = after;
-            processesToKill.RemoveAll(x => before.Contains(x.Id) && !x.ProcessName.Contains("npm"));
-            return processesToKill;
+            nodeProcess?.Kill();
         }
     }
 }
