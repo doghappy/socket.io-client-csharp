@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Test.SocketIOTests.V4;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -19,22 +20,33 @@ namespace SocketIOClient.Test.SocketIOTests
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
         {
-            foreach (var server in Servers) 
+            if (!IsRunningOnAzureDevOps())
             {
-                server.Create();
-            }
+                foreach (var server in Servers)
+                {
+                    server.Create();
+                }
 
-            // Give some time to be sure that servers are running.
-            Thread.Sleep(5000);
+                // Give some time to be sure that servers are running.
+                Thread.Sleep(5000);
+            }
         }
 
         [AssemblyCleanup]
         public static void Cleanup()
         {
-            foreach (var server in Servers)
+            if (!IsRunningOnAzureDevOps())
             {
-                server.Destroy();
+                foreach (var server in Servers)
+                {
+                    server.Destroy();
+                }
             }
+        }
+
+        private static bool IsRunningOnAzureDevOps()
+        {
+            return Environment.GetEnvironmentVariable("SYSTEM_DEFINITIONID") != null;
         }
     }
 }
