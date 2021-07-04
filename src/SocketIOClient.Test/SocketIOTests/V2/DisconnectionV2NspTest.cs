@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V2
     {
         public DisconnectionV2NspTest()
         {
-            SocketIOCreator = new ScoketIOV2NspCreator();
+            SocketIOCreator = new SocketIOV2NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

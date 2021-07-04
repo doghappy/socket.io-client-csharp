@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V3
     {
         public OffAnyV3NspTest()
         {
-            SocketIOCreator = new ScoketIOV3NspCreator();
+            SocketIOCreator = new SocketIOV3NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }
