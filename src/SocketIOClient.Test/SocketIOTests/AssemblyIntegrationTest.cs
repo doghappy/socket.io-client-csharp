@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIOClient.Test.Configuration;
 using SocketIOClient.Test.SocketIOTests.V4;
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,14 @@ namespace SocketIOClient.Test.SocketIOTests
             new ServerV4Manager()
         };
 
+        private static UserConfig UserConfig => new UserConfigManager().Get() ?? new UserConfig();
+
+        private static bool IsRunningOnAzureDevOps => Environment.GetEnvironmentVariable("SYSTEM_DEFINITIONID") != null;
+
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
         {
-            if (!IsRunningOnAzureDevOps())
+            if (!IsRunningOnAzureDevOps && UserConfig.RunServers)
             {
                 foreach (var server in Servers)
                 {
@@ -35,18 +40,13 @@ namespace SocketIOClient.Test.SocketIOTests
         [AssemblyCleanup]
         public static void Cleanup()
         {
-            if (!IsRunningOnAzureDevOps())
+            if (!IsRunningOnAzureDevOps && UserConfig.RunServers && UserConfig.StopServersAfterRun)
             {
                 foreach (var server in Servers)
                 {
                     server.Destroy();
                 }
             }
-        }
-
-        private static bool IsRunningOnAzureDevOps()
-        {
-            return Environment.GetEnvironmentVariable("SYSTEM_DEFINITIONID") != null;
         }
     }
 }
