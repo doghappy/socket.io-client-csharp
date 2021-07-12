@@ -1,0 +1,5 @@
+﻿// Rename "user_sample.json" to "user.json" and copy to output directory (comment must be removed)
+{
+  "RunServers": true,
+  "StopServersAfterRun": true
+}
