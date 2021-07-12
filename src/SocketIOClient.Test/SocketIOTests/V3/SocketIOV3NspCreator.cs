@@ -2,7 +2,7 @@
 
 namespace SocketIOClient.Test.SocketIOTests.V3
 {
-    public class ScoketIOV3NspCreator : ISocketIOCreateable
+    public class SocketIOV3NspCreator : ISocketIOCreateable
     {
         public SocketIO Create()
         {

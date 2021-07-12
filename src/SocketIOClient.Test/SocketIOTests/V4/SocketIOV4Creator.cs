@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace SocketIOClient.Test.SocketIOTests.V3
+namespace SocketIOClient.Test.SocketIOTests.V4
 {
-    public class ScoketIOV3Creator : ISocketIOCreateable
+    public class SocketIOV4Creator : ISocketIOCreateable
     {
         public SocketIO Create()
         {
@@ -15,9 +15,9 @@ namespace SocketIOClient.Test.SocketIOTests.V3
             });
         }
 
-        public string Prefix => "V3: ";
-        public string Token => "V3";
-        public string Url => "http://localhost:11003";
+        public string Prefix => "V4: ";
+        public string Url => "http://localhost:11004";
+        public string Token => "V4";
         public int EIO => 4;
     }
 }

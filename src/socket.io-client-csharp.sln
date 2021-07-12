@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Sample", "So
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Web", "SocketIOClient.Web\SocketIOClient.Web.csproj", "{89A823C2-2C7A-45A4-A939-A137CDA75997}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.NetFx.Sample", "SocketIOClient.NetFx.Sample\SocketIOClient.NetFx.Sample.csproj", "{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}"
-EndProject
 Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v3", "socket.io-server-v3\socket.io-server-v3.njsproj", "{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
@@ -49,10 +47,6 @@ Global
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89A823C2-2C7A-45A4-A939-A137CDA75997}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F60B4E2B-09AF-4F97-AFED-5666053AFEEA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Release|Any CPU.ActiveCfg = Release|Any CPU

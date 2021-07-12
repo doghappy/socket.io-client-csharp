@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V3
     {
         public EmitV3Test()
         {
-            SocketIOCreator = new ScoketIOV3Creator();
+            SocketIOCreator = new SocketIOV3Creator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

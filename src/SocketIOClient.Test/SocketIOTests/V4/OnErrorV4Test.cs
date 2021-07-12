@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V4
     {
         public OnErrorV4Test()
         {
-            SocketIOCreator = new ScoketIOV4Creator();
+            SocketIOCreator = new SocketIOV4Creator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

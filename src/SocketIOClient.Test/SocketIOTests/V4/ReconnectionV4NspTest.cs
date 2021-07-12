@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V4
     {
         public ReconnectionV4NspTest()
         {
-            SocketIOCreator = new ScoketIOV4NspCreator();
+            SocketIOCreator = new SocketIOV4NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests.V2
     {
         public OnAnyV2Test()
         {
-            SocketIOCreator = new ScoketIOV2Creator();
+            SocketIOCreator = new SocketIOV2Creator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }

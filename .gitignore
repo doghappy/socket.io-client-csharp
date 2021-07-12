@@ -339,3 +339,6 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 *.snk
+
+# Ignore user config file
+/src/SocketIOClient.Test/user.json
