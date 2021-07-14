@@ -4,27 +4,26 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Text;
 using SocketIOClient.Exceptions;
-using SocketIOClient.Processors;
 
 namespace SocketIOClient.WebSocketClient
 {
     /// <summary>
     /// Internally uses 'System.Net.WebSockets.ClientWebSocket' as websocket client
     /// </summary>
-    public sealed class ClientWebSocket : IWebSocketClient
+    public sealed class DefaultClient : IWebSocketClient
     {
-        public ClientWebSocket(SocketIO io)
+        public DefaultClient()
         {
-            _io = io;
+            ReceiveChunkSize = 1024 * 16;
+            ConnectionTimeout = TimeSpan.FromSeconds(10);
         }
 
-        const int ReceiveChunkSize = 1024 * 16;
+        public int ReceiveChunkSize { get; set; }
+        public TimeSpan ConnectionTimeout { get; set; }
 
-        readonly SocketIO _io;
         System.Net.WebSockets.ClientWebSocket _ws;
-        CancellationTokenSource _wsWorkTokenSource;
         readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
-        readonly EngineIOProtocolProcessor processor = new EngineIOProtocolProcessor();
+        CancellationTokenSource _listenToken;
 
         public Action<ClientWebSocketOptions> Config { get; set; }
 
@@ -38,17 +37,17 @@ namespace SocketIOClient.WebSocketClient
         /// <returns></returns>
         public async Task ConnectAsync(Uri uri)
         {
-            if (_ws != null)
-                _ws.Dispose();
+            DisposeWebSocketIfNotNull();
             _ws = new System.Net.WebSockets.ClientWebSocket();
-            Config?.Invoke(_ws.Options);
 
-            _wsWorkTokenSource = new CancellationTokenSource();
-            var wsConnectionTokenSource = new CancellationTokenSource(_io.Options.ConnectionTimeout);
+            Config?.Invoke(_ws.Options);
+            var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
             try
             {
                 await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
-                _ = Task.Run(ListenAsync);
+                DisposeListenTokenIfNotNull();
+                _listenToken = new CancellationTokenSource();
+                _ = ListenAsync(_listenToken.Token);
             }
             catch (TaskCanceledException)
             {
@@ -64,7 +63,7 @@ namespace SocketIOClient.WebSocketClient
         /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(string text)
         {
-            await SendMessageAsync(text, _wsWorkTokenSource.Token);
+            await SendMessageAsync(text, CancellationToken.None);
         }
 
         public async Task SendMessageAsync(string text, CancellationToken cancellationToken)
@@ -107,7 +106,7 @@ namespace SocketIOClient.WebSocketClient
         /// <exception cref="InvalidSocketStateException"></exception>
         public async Task SendMessageAsync(byte[] bytes)
         {
-            await SendMessageAsync(bytes, _wsWorkTokenSource.Token);
+            await SendMessageAsync(bytes, CancellationToken.None);
         }
 
         /// <summary>
@@ -149,13 +148,15 @@ namespace SocketIOClient.WebSocketClient
         public async Task DisconnectAsync()
         {
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-            Close(null);
+            OnClosed(null);
         }
 
-        private async Task ListenAsync()
+        private async Task ListenAsync(CancellationToken cancellationToken)
         {
             while (true)
             {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
                 var buffer = new byte[ReceiveChunkSize];
                 int count = 0;
                 WebSocketReceiveResult result = null;
@@ -163,12 +164,13 @@ namespace SocketIOClient.WebSocketClient
                 {
                     try
                     {
-                        //result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), _wsWorkTokenSource.Token);
+                        if (cancellationToken.IsCancellationRequested)
+                            break;
                         var subBuffer = new byte[ReceiveChunkSize];
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), CancellationToken.None);
+                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken);
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            Close("io server disconnect");
+                            OnClosed("io server disconnect");
                             break;
                         }
                         else if (result.MessageType == WebSocketMessageType.Text || result.MessageType == WebSocketMessageType.Binary)
@@ -187,7 +189,7 @@ namespace SocketIOClient.WebSocketClient
                     }
                     catch (WebSocketException e)
                     {
-                        Close(e.Message);
+                        OnClosed(e.Message);
                         break;
                     }
                 }
@@ -201,40 +203,65 @@ namespace SocketIOClient.WebSocketClient
 #if DEBUG
                     System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
-                    processor.Process(new MessageContext
+                    if (OnTextReceived is null)
                     {
-                        Message = message,
-                        SocketIO = _io
-                    });
+                        throw new ArgumentNullException(nameof(OnTextReceived));
+                    }
+                    OnTextReceived(message);
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
                 {
 #if DEBUG
                     System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
-                    byte[] bytes;
-                    if (_io.Options.EIO == 3)
+                    if (OnTextReceived is null)
                     {
-                        count -= 1;
-                        bytes = new byte[count];
-                        Buffer.BlockCopy(buffer, 1, bytes, 0, count);
+                        throw new ArgumentNullException(nameof(OnTextReceived));
                     }
-                    else
-                    {
-                        bytes = new byte[count];
-                        Buffer.BlockCopy(buffer, 0, bytes, 0, count);
-                    }
-                    _io.InvokeBytesReceived(bytes);
+                    byte[] bytes = new byte[count];
+                    Buffer.BlockCopy(buffer, 0, bytes, 0, count);
+                    OnBinaryReceived(bytes);
+                    //byte[] bytes;
+                    //if (_io.Options.EIO == 3)
+                    //{
+                    //    count -= 1;
+                    //    bytes = new byte[count];
+                    //    Buffer.BlockCopy(buffer, 1, bytes, 0, count);
+                    //}
+                    //else
+                    //{
+                    //    bytes = new byte[count];
+                    //    Buffer.BlockCopy(buffer, 0, bytes, 0, count);
+                    //}
+                    //_io.InvokeBytesReceived(bytes);
                 }
             }
         }
 
-        private void Close(string reason)
+        public Action<string> OnTextReceived { get; set; }
+        public Action<byte[]> OnBinaryReceived { get; set; }
+        public Action<string> OnClosed { get; set; }
+
+        private void DisposeWebSocketIfNotNull()
         {
-            if (reason != null)
+            if (_ws != null)
+                _ws.Dispose();
+        }
+
+        private void DisposeListenTokenIfNotNull()
+        {
+            if (_listenToken != null)
             {
-                _io.InvokeDisconnect(reason);
+                _listenToken.Cancel();
+                _listenToken.Dispose();
             }
+        }
+
+        public void Dispose()
+        {
+            DisposeWebSocketIfNotNull();
+            DisposeListenTokenIfNotNull();
+            sendLock.Dispose();
         }
     }
 }

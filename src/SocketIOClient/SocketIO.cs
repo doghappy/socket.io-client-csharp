@@ -3,6 +3,7 @@ using SocketIOClient.EioHandler;
 using SocketIOClient.EventArguments;
 using SocketIOClient.Exceptions;
 using SocketIOClient.JsonSerializer;
+using SocketIOClient.Processors;
 using SocketIOClient.Response;
 using SocketIOClient.WebSocketClient;
 using System;
@@ -21,7 +22,7 @@ namespace SocketIOClient
     /// <summary>
     /// socket.io client class
     /// </summary>
-    public class SocketIO
+    public class SocketIO : IDisposable
     {
         /// <summary>
         /// Create SocketIO object with default options
@@ -82,7 +83,27 @@ namespace SocketIOClient
 
         public UrlConverter UrlConverter { get; set; }
 
-        public IWebSocketClient Socket { get; set; }
+        IWebSocketClient _socket;
+        public IWebSocketClient Socket
+        {
+            get => _socket;
+            set
+            {
+                if (value is null)
+                {
+                    throw new ArgumentNullException();
+                }
+                if (_socket != value)
+                {
+                    _socket = value;
+                    value.OnTextReceived = OnTextReceived;
+                    value.OnBinaryReceived = OnBinaryReceived;
+                    value.OnClosed = OnClosed;
+                }
+            }
+        }
+
+        public Processor MessageProcessor { get; set; }
 
         /// <summary>
         /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
@@ -142,7 +163,8 @@ namespace SocketIOClient
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-            Socket = new ClientWebSocket(this);
+            Socket = new DefaultClient();
+            MessageProcessor = new EngineIOProtocolProcessor();
             PacketId = -1;
             Acks = new Dictionary<int, Action<SocketIOResponse>>();
             Handlers = new Dictionary<string, Action<SocketIOResponse>>();
@@ -214,7 +236,7 @@ namespace SocketIOClient
                 await Socket.ConnectAsync(wsUri);
             }
 
-            if (Connected) 
+            if (Connected)
             {
                 Attempts = 0;
             }
@@ -339,7 +361,7 @@ namespace SocketIOClient
             {
                 this.InvokeDisconnect(e.Message);
             }
-            
+
         }
 
         internal async Task EmitCallbackAsync(int packetId, params object[] data)
@@ -432,6 +454,38 @@ namespace SocketIOClient
             finally
             {
                 _semaphoreSlim.Release();
+            }
+        }
+
+        private void OnTextReceived(string message)
+        {
+            MessageProcessor.Process(new MessageContext
+            {
+                Message = message,
+                SocketIO = this
+            });
+        }
+
+        private void OnBinaryReceived(byte[] bytes)
+        {
+            byte[] buffer;
+            if (Options.EIO == 3)
+            {
+                buffer = new byte[bytes.Length - 1];
+                Buffer.BlockCopy(bytes, 1, buffer, 0, buffer.Length);
+            }
+            else
+            {
+                buffer = bytes;
+            }
+            InvokeBytesReceived(buffer);
+        }
+
+        private void OnClosed(string reason)
+        {
+            if (reason != null)
+            {
+                InvokeDisconnect(reason);
             }
         }
 
@@ -533,6 +587,11 @@ namespace SocketIOClient
         internal void InvokeReceivedEvent(ReceivedEventArgs args)
         {
             OnReceivedEvent?.Invoke(this, args);
+        }
+
+        public void Dispose()
+        {
+            Socket.Dispose();
         }
     }
 }
