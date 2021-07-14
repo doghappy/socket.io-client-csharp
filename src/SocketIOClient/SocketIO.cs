@@ -563,7 +563,7 @@ namespace SocketIOClient
 
         private async void SocketIO_OnDisconnected(object sender, string e)
         {
-            if (Options.Reconnection && (e != "io server disconnect") && (e != "io client disconnect"))
+            if (Options.Reconnection && (e != "io server disconnect"))
             {
                 this.Attempts = 0;
                 await ConnectCoreAsync(true);
