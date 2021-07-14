@@ -18,14 +18,14 @@ namespace SocketIOClient.Test.SocketIOTests
             new ServerV4Manager()
         };
 
-        private static UserConfig UserConfig => new UserConfigManager().Get() ?? new UserConfig();
+        readonly static Preference Preference = PreferenceManager.Get();
 
         private static bool IsRunningOnAzureDevOps => Environment.GetEnvironmentVariable("SYSTEM_DEFINITIONID") != null;
 
         [AssemblyInitialize]
         public static void Initialize(TestContext context)
         {
-            if (!IsRunningOnAzureDevOps && UserConfig.RunServers)
+            if (!IsRunningOnAzureDevOps && Preference.RunServers)
             {
                 foreach (var server in Servers)
                 {
@@ -40,7 +40,7 @@ namespace SocketIOClient.Test.SocketIOTests
         [AssemblyCleanup]
         public static void Cleanup()
         {
-            if (!IsRunningOnAzureDevOps && UserConfig.RunServers && UserConfig.StopServersAfterRun)
+            if (!IsRunningOnAzureDevOps && Preference.RunServers && Preference.StopServersAfterRun)
             {
                 foreach (var server in Servers)
                 {
