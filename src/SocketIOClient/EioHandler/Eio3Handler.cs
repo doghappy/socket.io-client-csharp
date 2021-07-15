@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Collections.Generic;
+using System;
 
 namespace SocketIOClient.EioHandler
 {
@@ -55,6 +56,13 @@ namespace SocketIOClient.EioHandler
         public string GetErrorMessage(string text)
         {
             return text.Trim('"');
+        }
+
+        public byte[] GetBytes(byte[] bytes)
+        {
+            byte[] buffer = new byte[bytes.Length - 1];
+            Buffer.BlockCopy(bytes, 1, buffer, 0, buffer.Length);
+            return buffer;
         }
     }
 }

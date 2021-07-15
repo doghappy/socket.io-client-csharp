@@ -36,5 +36,10 @@ namespace SocketIOClient.EioHandler
             var doc = JsonDocument.Parse(text);
             return doc.RootElement.GetProperty("message").GetString();
         }
+
+        public byte[] GetBytes(byte[] bytes)
+        {
+            return bytes;
+        }
     }
 }

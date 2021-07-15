@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -122,18 +123,17 @@ namespace SocketIOClient
         /// Whether or not the socket is disconnected from the server.
         /// </summary>
         public bool Disconnected { get; private set; }
-        internal int PacketId { get; private set; }
-        internal List<byte[]> OutGoingBytes { get; private set; }
-        internal Dictionary<int, Action<SocketIOResponse>> Acks { get; private set; }
-        internal List<OnAnyHandler> OnAnyHandlers { get; private set; }
+
         public SocketIOOptions Options { get; }
-
-        internal Dictionary<string, Action<SocketIOResponse>> Handlers { get; set; }
-
-        public Func<IConnectInterval> GetConnectInterval { get; set; }
 
         public IJsonSerializer JsonSerializer { get; set; }
 
+        int _packetId;
+        List<byte[]> _outGoingBytes;
+        Queue<LowLevelEvent> _lowLevelEvents;
+        Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
+        List<OnAnyHandler> _onAnyHandlers;
+        Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
         static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
         CancellationTokenSource _pingTokenSorce;
         DateTime _pingTime;
@@ -154,23 +154,20 @@ namespace SocketIOClient
 
         #endregion
 
-        internal Queue<BelowNormalEvent> BelowNormalEvents { get; private set; }
-
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
             Socket = new DefaultClient();
             MessageProcessor = new EngineIOProtocolProcessor();
-            PacketId = -1;
-            Acks = new Dictionary<int, Action<SocketIOResponse>>();
-            Handlers = new Dictionary<string, Action<SocketIOResponse>>();
-            OutGoingBytes = new List<byte[]>();
-            OnAnyHandlers = new List<OnAnyHandler>();
-            BelowNormalEvents = new Queue<BelowNormalEvent>();
+            _packetId = -1;
+            _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
+            _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
+            _outGoingBytes = new List<byte[]>();
+            _onAnyHandlers = new List<OnAnyHandler>();
+            _lowLevelEvents = new Queue<LowLevelEvent>();
 
             Disconnected = true;
             OnDisconnected += SocketIO_OnDisconnected;
-            GetConnectInterval = () => new DefaultConnectInterval(Options);
             JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
         }
 
@@ -192,7 +189,7 @@ namespace SocketIOClient
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
             if (allowedRetryFirstConnection)
             {
-                var connectInterval = GetConnectInterval();
+                var connectInterval = new DefaultConnectInterval(Options);
                 while (true)
                 {
                     try
@@ -268,11 +265,11 @@ namespace SocketIOClient
         /// <param name="callback"></param>
         public void On(string eventName, Action<SocketIOResponse> callback)
         {
-            if (Handlers.ContainsKey(eventName))
+            if (_eventHandlers.ContainsKey(eventName))
             {
-                Handlers.Remove(eventName);
+                _eventHandlers.Remove(eventName);
             }
-            Handlers.Add(eventName, callback);
+            _eventHandlers.Add(eventName, callback);
         }
 
         /// <summary>
@@ -281,9 +278,9 @@ namespace SocketIOClient
         /// <param name="eventName"></param>
         public void Off(string eventName)
         {
-            if (Handlers.ContainsKey(eventName))
+            if (_eventHandlers.ContainsKey(eventName))
             {
-                Handlers.Remove(eventName);
+                _eventHandlers.Remove(eventName);
             }
         }
 
@@ -291,7 +288,7 @@ namespace SocketIOClient
         {
             if (handler != null)
             {
-                OnAnyHandlers.Add(handler);
+                _onAnyHandlers.Add(handler);
             }
         }
 
@@ -299,7 +296,7 @@ namespace SocketIOClient
         {
             if (handler != null)
             {
-                OnAnyHandlers.Insert(0, handler);
+                _onAnyHandlers.Insert(0, handler);
             }
         }
 
@@ -307,11 +304,11 @@ namespace SocketIOClient
         {
             if (handler != null)
             {
-                OnAnyHandlers.Remove(handler);
+                _onAnyHandlers.Remove(handler);
             }
         }
 
-        public OnAnyHandler[] ListenersAny() => OnAnyHandlers.ToArray();
+        public OnAnyHandler[] ListenersAny() => _onAnyHandlers.ToArray();
 
         private async Task EmityCoreAsync(string eventName, int packetId, string data, CancellationToken cancellationToken)
         {
@@ -320,8 +317,8 @@ namespace SocketIOClient
                 throw new ArgumentException("Event name is invalid");
             }
             var builder = new StringBuilder();
-            if (OutGoingBytes.Count > 0)
-                builder.Append("45").Append(OutGoingBytes.Count).Append("-");
+            if (_outGoingBytes.Count > 0)
+                builder.Append("45").Append(_outGoingBytes.Count).Append("-");
             else
                 builder.Append("42");
             if (Namespace != null)
@@ -342,13 +339,13 @@ namespace SocketIOClient
             try
             {
                 await Socket.SendMessageAsync(message, cancellationToken);
-                if (OutGoingBytes.Count > 0)
+                if (_outGoingBytes.Count > 0)
                 {
-                    foreach (var item in OutGoingBytes)
+                    foreach (var item in _outGoingBytes)
                     {
                         await Socket.SendMessageAsync(item, cancellationToken);
                     }
-                    OutGoingBytes.Clear();
+                    _outGoingBytes.Clear();
                 }
             }
             catch (WebSocketException e)
@@ -367,8 +364,8 @@ namespace SocketIOClient
             string dataString = GetDataString(data);
 
             var builder = new StringBuilder();
-            if (OutGoingBytes.Count > 0)
-                builder.Append("46").Append(OutGoingBytes.Count).Append("-");
+            if (_outGoingBytes.Count > 0)
+                builder.Append("46").Append(_outGoingBytes.Count).Append("-");
             else
                 builder.Append("43");
             if (Namespace != null)
@@ -380,13 +377,13 @@ namespace SocketIOClient
                 .Append("]");
             string message = builder.ToString();
             await Socket.SendMessageAsync(message);
-            if (OutGoingBytes.Count > 0)
+            if (_outGoingBytes.Count > 0)
             {
-                foreach (var item in OutGoingBytes)
+                foreach (var item in _outGoingBytes)
                 {
                     await Socket.SendMessageAsync(item);
                 }
-                OutGoingBytes.Clear();
+                _outGoingBytes.Clear();
             }
         }
 
@@ -397,7 +394,7 @@ namespace SocketIOClient
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    OutGoingBytes.AddRange(result.Bytes);
+                    _outGoingBytes.AddRange(result.Bytes);
                 }
                 return result.Json.Substring(1, result.Json.Length - 2);
             }
@@ -446,9 +443,9 @@ namespace SocketIOClient
             await _semaphoreSlim.WaitAsync();
             try
             {
-                Acks.Add(++PacketId, ack);
+                _ackHandlers.Add(++_packetId, ack);
                 string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, PacketId, dataString, cancellationToken);
+                await EmityCoreAsync(eventName, _packetId, dataString, cancellationToken);
             }
             finally
             {
@@ -478,17 +475,30 @@ namespace SocketIOClient
 
         private void OnBinaryReceived(byte[] bytes)
         {
-            byte[] buffer;
-            if (Options.EIO == 3)
+            var buffer = Options.EioHandler.GetBytes(bytes);
+
+            if (_lowLevelEvents.Count > 0)
             {
-                buffer = new byte[bytes.Length - 1];
-                Buffer.BlockCopy(bytes, 1, buffer, 0, buffer.Length);
+                var e = _lowLevelEvents.Peek();
+                e.Response.InComingBytes.Add(buffer);
+                if (e.Response.InComingBytes.Count == e.Count)
+                {
+                    if (e.PacketId == -1)
+                    {
+                        foreach (var item in _onAnyHandlers)
+                        {
+                            item(e.Event, e.Response);
+                        }
+                        _eventHandlers[e.Event](e.Response);
+                    }
+                    else
+                    {
+                        _ackHandlers[e.PacketId](e.Response);
+                        _ackHandlers.Remove(e.PacketId);
+                    }
+                    _lowLevelEvents.Dequeue();
+                }
             }
-            else
-            {
-                buffer = bytes;
-            }
-            InvokeBytesReceived(buffer);
         }
 
         private void OnClosed(string reason)
@@ -528,20 +538,20 @@ namespace SocketIOClient
 
         private void AckHandler(int packetId, List<JsonElement> array)
         {
-            if (Acks.ContainsKey(packetId))
+            if (_ackHandlers.ContainsKey(packetId))
             {
                 var response = new SocketIOResponse(array, this);
-                Acks[packetId](response);
-                Acks.Remove(packetId);
+                _ackHandlers[packetId](response);
+                _ackHandlers.Remove(packetId);
             }
         }
 
         private void BinaryAckHandler(int packetId, int totalCount, List<JsonElement> array)
         {
-            if (Acks.ContainsKey(packetId))
+            if (_ackHandlers.ContainsKey(packetId))
             {
                 var response = new SocketIOResponse(array, this);
-                BelowNormalEvents.Enqueue(new BelowNormalEvent
+                _lowLevelEvents.Enqueue(new LowLevelEvent
                 {
                     PacketId = packetId,
                     Count = totalCount,
@@ -556,7 +566,7 @@ namespace SocketIOClient
             {
                 PacketId = packetId
             };
-            BelowNormalEvents.Enqueue(new BelowNormalEvent
+            _lowLevelEvents.Enqueue(new LowLevelEvent
             {
                 Event = eventName,
                 Count = totalCount,
@@ -580,13 +590,13 @@ namespace SocketIOClient
             {
                 PacketId = packetId
             };
-            foreach (var item in OnAnyHandlers)
+            foreach (var item in _onAnyHandlers)
             {
                 item(eventName, response);
             }
-            if (Handlers.ContainsKey(eventName))
+            if (_eventHandlers.ContainsKey(eventName))
             {
-                Handlers[eventName](response);
+                _eventHandlers[eventName](response);
             }
         }
 
@@ -612,32 +622,6 @@ namespace SocketIOClient
         public void PongHandler()
         {
             OnPong?.Invoke(this, DateTime.Now - _pingTime);
-        }
-
-        private void InvokeBytesReceived(byte[] bytes)
-        {
-            if (BelowNormalEvents.Count > 0)
-            {
-                var e = BelowNormalEvents.Peek();
-                e.Response.InComingBytes.Add(bytes);
-                if (e.Response.InComingBytes.Count == e.Count)
-                {
-                    if (e.PacketId == -1)
-                    {
-                        foreach (var item in OnAnyHandlers)
-                        {
-                            item(e.Event, e.Response);
-                        }
-                        Handlers[e.Event](e.Response);
-                    }
-                    else
-                    {
-                        Acks[e.PacketId](e.Response);
-                        Acks.Remove(e.PacketId);
-                    }
-                    BelowNormalEvents.Dequeue();
-                }
-            }
         }
 
         private void InvokeDisconnect(string reason)
@@ -700,6 +684,11 @@ namespace SocketIOClient
         public void Dispose()
         {
             Socket.Dispose();
+            _outGoingBytes.Clear();
+            _ackHandlers.Clear();
+            _onAnyHandlers.Clear();
+            _eventHandlers.Clear();
+            _lowLevelEvents.Clear();
         }
     }
 }

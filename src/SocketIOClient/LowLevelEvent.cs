@@ -1,8 +1,8 @@
 ﻿namespace SocketIOClient
 {
-    public class BelowNormalEvent
+    public class LowLevelEvent
     {
-        public BelowNormalEvent()
+        public LowLevelEvent()
         {
             PacketId = -1;
         }

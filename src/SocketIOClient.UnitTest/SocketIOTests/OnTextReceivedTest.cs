@@ -2,11 +2,6 @@
 using Moq;
 using SocketIOClient.Processors;
 using SocketIOClient.WebSocketClient;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SocketIOClient.UnitTest.SocketIOTests
 {
