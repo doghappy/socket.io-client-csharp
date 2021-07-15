@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -134,7 +133,6 @@ namespace SocketIOClient
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
-        static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
         CancellationTokenSource _pingTokenSorce;
         DateTime _pingTime;
         int _pingInterval;
@@ -414,16 +412,8 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            await _semaphoreSlim.WaitAsync();
-            try
-            {
-                string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
-            }
-            finally
-            {
-                _semaphoreSlim.Release();
-            }
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
         }
 
         /// <summary>
@@ -440,17 +430,9 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, Action<SocketIOResponse> ack, params object[] data)
         {
-            await _semaphoreSlim.WaitAsync();
-            try
-            {
-                _ackHandlers.Add(++_packetId, ack);
-                string dataString = GetDataString(data);
-                await EmityCoreAsync(eventName, _packetId, dataString, cancellationToken);
-            }
-            finally
-            {
-                _semaphoreSlim.Release();
-            }
+            _ackHandlers.Add(++_packetId, ack);
+            string dataString = GetDataString(data);
+            await EmityCoreAsync(eventName, _packetId, dataString, cancellationToken);
         }
 
         private void OnTextReceived(string message)
