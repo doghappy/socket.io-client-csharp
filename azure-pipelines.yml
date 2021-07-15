@@ -12,20 +12,29 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
+#steps:
+#- task: UseDotNet@2
+#  displayName: 'Install .NET Core SDK'
+#  inputs:
+#    version: 5.0.x
+#- task: NodeTool@0
+#  inputs:
+#    versionSpec: '10.x'
+#  displayName: 'Install Node.js'
+#- script: |
+#    cd src/socket.io-server-v2
+#    npm install
+#    npm start & cd ../socket.io-server-v3
+#    npm install
+#    npm start & cd ../socket.io-server-v4
+#    npm install
+#    npm start & dotnet test ../SocketIOClient.Test
+
 steps:
 - task: UseDotNet@2
   displayName: 'Install .NET Core SDK'
   inputs:
     version: 5.0.x
-- task: NodeTool@0
-  inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
 - script: |
-    cd src/socket.io-server-v2
-    npm install
-    npm start & cd ../socket.io-server-v3
-    npm install
-    npm start & cd ../socket.io-server-v4
-    npm install
-    npm start & dotnet test ../SocketIOClient.Test
+    cd src
+    dotnet test SocketIOClient.UnitTest
