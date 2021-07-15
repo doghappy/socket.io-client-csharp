@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace SocketIOClient.EioHandler
 {
-    interface IEioHandler
+    public interface IEioHandler
     {
-        Task IOConnectAsync(SocketIO io);
-        void Unpack(SocketIO io, string text);
+        string CreateConnectionMessage(string @namespace, Dictionary<string, string> query);
+        ConnectionResult CheckConnection(string @namespace, string text);
+        string GetErrorMessage(string text);
     }
 }

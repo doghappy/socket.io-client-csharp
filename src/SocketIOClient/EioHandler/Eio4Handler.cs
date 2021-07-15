@@ -1,31 +1,40 @@
-﻿using System.Threading.Tasks;
-
+﻿using System.Text;
+using System.Text.Json;
+using System.Collections.Generic;
 namespace SocketIOClient.EioHandler
 {
-    class Eio4Handler : IEioHandler
+    public class Eio4Handler : IEioHandler
     {
-        public async Task IOConnectAsync(SocketIO io)
+        public string CreateConnectionMessage(string @namespace, Dictionary<string, string> query)
         {
-            await io.Socket.SendMessageAsync("40" + io.Namespace);
+            var builder = new StringBuilder();
+            builder.Append("40");
+
+            if (@namespace != null)
+            {
+                builder.Append(@namespace).Append(',');
+            }
+
+            return builder.ToString();
         }
 
-        public void Unpack(SocketIO io, string text)
+        public ConnectionResult CheckConnection(string @namespace, string text)
         {
-            if (string.IsNullOrEmpty(io.Namespace))
+            if (!string.IsNullOrEmpty(@namespace))
             {
-                if (io.Options.EIO == 4)
-                {
-                    io.Id = text;
-                }
+                text = text.Substring(@namespace.Length + 1);
             }
-            else
+            return new ConnectionResult
             {
-                if (io.Options.EIO == 4)
-                {
-                    io.Id = text.Substring(io.Namespace.Length);
-                }
-            }
-            io.InvokeConnect();
+                Result = true,
+                Id = JsonDocument.Parse(text).RootElement.GetProperty("sid").GetString()
+            };
+        }
+
+        public string GetErrorMessage(string text)
+        {
+            var doc = JsonDocument.Parse(text);
+            return doc.RootElement.GetProperty("message").GetString();
         }
     }
 }

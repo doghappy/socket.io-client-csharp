@@ -7,9 +7,9 @@ namespace SocketIOClient.Processors
     {
         public override void Process(MessageContext ctx)
         {
-            if (!string.IsNullOrEmpty(ctx.SocketIO.Namespace) && ctx.Message.StartsWith(ctx.SocketIO.Namespace))
+            if (!string.IsNullOrEmpty(ctx.Namespace) && ctx.Message.StartsWith(ctx.Namespace + ','))
             {
-                ctx.Message = ctx.Message.Substring(ctx.SocketIO.Namespace.Length);
+                ctx.Message = ctx.Message.Substring(ctx.Namespace.Length + 1);
             }
             int index = ctx.Message.IndexOf('[');
             string id = null;
@@ -21,24 +21,8 @@ namespace SocketIOClient.Processors
             var array = JsonDocument.Parse(ctx.Message).RootElement.EnumerateArray().ToList();
             string eventName = array[0].GetString();
             array.RemoveAt(0);
-            var response = new SocketIOResponse(array, ctx.SocketIO);
-            if (int.TryParse(id, out int packetId))
-            {
-                response.PacketId = packetId;
-            }
-            foreach (var item in ctx.SocketIO.OnAnyHandlers)
-            {
-                item(eventName, response);
-            }
-            ctx.SocketIO.InvokeReceivedEvent(new EventArguments.ReceivedEventArgs
-            {
-                Event = eventName,
-                Response = response
-            });
-            if (ctx.SocketIO.Handlers.ContainsKey(eventName))
-            {
-                ctx.SocketIO.Handlers[eventName](response);
-            }
+            int.TryParse(id, out int packetId);
+            ctx.EventReceivedHandler(packetId, eventName, array);
         }
     }
 }

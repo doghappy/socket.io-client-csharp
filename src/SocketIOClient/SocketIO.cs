@@ -1,21 +1,17 @@
-﻿using SocketIOClient.ConnectInterval;
-using SocketIOClient.EioHandler;
-using SocketIOClient.EventArguments;
-using SocketIOClient.Exceptions;
-using SocketIOClient.JsonSerializer;
-using SocketIOClient.Processors;
-using SocketIOClient.Response;
-using SocketIOClient.WebSocketClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient.ConnectInterval;
+using SocketIOClient.EioHandler;
+using SocketIOClient.Exceptions;
+using SocketIOClient.JsonSerializer;
+using SocketIOClient.Processors;
+using SocketIOClient.WebSocketClient;
 
 namespace SocketIOClient
 {
@@ -75,7 +71,7 @@ namespace SocketIOClient
                     _serverUri = value;
                     if (value != null && value.AbsolutePath != "/")
                     {
-                        Namespace = value.AbsolutePath + ',';
+                        Namespace = value.AbsolutePath;
                     }
                 }
             }
@@ -139,6 +135,9 @@ namespace SocketIOClient
         public IJsonSerializer JsonSerializer { get; set; }
 
         static readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+        CancellationTokenSource _pingTokenSorce;
+        DateTime _pingTime;
+        int _pingInterval;
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -152,9 +151,6 @@ namespace SocketIOClient
         public event EventHandler<Exception> OnReconnectFailed;
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
-
-        [Obsolete("OnReceivedEvent will be removed, please use OnAny() instead")]
-        public event EventHandler<ReceivedEventArgs> OnReceivedEvent;
 
         #endregion
 
@@ -246,14 +242,13 @@ namespace SocketIOClient
         {
             if (Connected && !Disconnected)
             {
-                if (Options.EioHandler is Eio3Handler)
+                if (Options.EIO == 3)
                 {
-                    var v3 = Options.EioHandler as Eio3Handler;
-                    v3.StopPingInterval();
+                    _pingTokenSorce.Cancel();
                 }
                 try
                 {
-                    await Socket.SendMessageAsync("41" + Namespace);
+                    await Socket.SendMessageAsync("41" + Namespace + ',');
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
                 Connected = false;
@@ -329,7 +324,10 @@ namespace SocketIOClient
                 builder.Append("45").Append(OutGoingBytes.Count).Append("-");
             else
                 builder.Append("42");
-            builder.Append(Namespace);
+            if (Namespace != null)
+            {
+                builder.Append(Namespace).Append(',');
+            }
             if (packetId > -1)
             {
                 builder.Append(packetId);
@@ -353,13 +351,13 @@ namespace SocketIOClient
                     OutGoingBytes.Clear();
                 }
             }
-            catch (System.Net.WebSockets.WebSocketException e)
+            catch (WebSocketException e)
             {
-                this.InvokeDisconnect(e.Message);
+                InvokeDisconnect(e.Message);
             }
             catch (InvalidSocketStateException e)
             {
-                this.InvokeDisconnect(e.Message);
+                InvokeDisconnect(e.Message);
             }
 
         }
@@ -373,8 +371,9 @@ namespace SocketIOClient
                 builder.Append("46").Append(OutGoingBytes.Count).Append("-");
             else
                 builder.Append("43");
+            if (Namespace != null)
+                builder.Append(Namespace).Append(',');
             builder
-                .Append(Namespace)
                 .Append(packetId)
                 .Append("[")
                 .Append(dataString)
@@ -459,10 +458,25 @@ namespace SocketIOClient
 
         private void OnTextReceived(string message)
         {
+            if (message.StartsWith("42"))
+            {
+
+            }
             MessageProcessor.Process(new MessageContext
             {
                 Message = message,
-                SocketIO = this
+                Namespace = Namespace,
+                EioHandler = Options.EioHandler,
+                OpenedHandler = OpenedHandler,
+                ConnectedHandler = ConnectedHandler,
+                AckHandler = AckHandler,
+                BinaryAckHandler = BinaryAckHandler,
+                BinaryReceivedHandler = BinaryReceivedHandler,
+                DisconnectedHandler = DisconnectedHandler,
+                ErrorHandler = ErrorHandler,
+                EventReceivedHandler = EventReceivedHandler,
+                PingHandler = PingHandler,
+                PongHandler = PongHandler,
             });
         }
 
@@ -489,26 +503,122 @@ namespace SocketIOClient
             }
         }
 
-        internal void Open(OpenResponse openResponse)
+        private async void OpenedHandler(string sid, int pingInterval, int pingTimeout)
         {
-            Id = openResponse.Sid;
-            Options.EioHandler.IOConnectAsync(this).Wait();
-            if (Options.EioHandler is Eio3Handler)
+            Id = sid;
+            _pingInterval = pingInterval;
+            string msg = Options.EioHandler.CreateConnectionMessage(Namespace, Options.Query);
+            await Socket.SendMessageAsync(msg);
+        }
+
+        private void ConnectedHandler(ConnectionResult result)
+        {
+            if (result.Result)
             {
-                var v3 = Options.EioHandler as Eio3Handler;
-                v3.PingInterval = openResponse.PingInterval;
-                _ = v3.StartPingAsync(this);
+                Connected = true;
+                Disconnected = false;
+                if (result.Id != null)
+                {
+                    Id = result.Id;
+                }
+                OnConnected?.Invoke(this, new EventArgs());
+                if (Options.EIO == 3)
+                {
+                    _pingTokenSorce = new CancellationTokenSource();
+                    _ = StartPingAsync();
+                }
             }
         }
 
-        internal void InvokeConnect()
+        private void AckHandler(int packetId, List<JsonElement> array)
         {
-            Connected = true;
-            Disconnected = false;
-            OnConnected?.Invoke(this, new EventArgs());
+            if (Acks.ContainsKey(packetId))
+            {
+                var response = new SocketIOResponse(array, this);
+                Acks[packetId](response);
+                Acks.Remove(packetId);
+            }
         }
 
-        internal void InvokeBytesReceived(byte[] bytes)
+        private void BinaryAckHandler(int packetId, int totalCount, List<JsonElement> array)
+        {
+            if (Acks.ContainsKey(packetId))
+            {
+                var response = new SocketIOResponse(array, this);
+                BelowNormalEvents.Enqueue(new BelowNormalEvent
+                {
+                    PacketId = packetId,
+                    Count = totalCount,
+                    Response = response
+                });
+            }
+        }
+
+        private void BinaryReceivedHandler(int packetId, int totalCount, string eventName, List<JsonElement> array)
+        {
+            var response = new SocketIOResponse(array, this)
+            {
+                PacketId = packetId
+            };
+            BelowNormalEvents.Enqueue(new BelowNormalEvent
+            {
+                Event = eventName,
+                Count = totalCount,
+                Response = response
+            });
+        }
+
+        private void DisconnectedHandler()
+        {
+            InvokeDisconnect("io server disconnect");
+        }
+
+        private void ErrorHandler(string error)
+        {
+            OnError?.Invoke(this, error);
+        }
+
+        private void EventReceivedHandler(int packetId, string eventName, List<JsonElement> array)
+        {
+            var response = new SocketIOResponse(array, this)
+            {
+                PacketId = packetId
+            };
+            foreach (var item in OnAnyHandlers)
+            {
+                item(eventName, response);
+            }
+            if (Handlers.ContainsKey(eventName))
+            {
+                Handlers[eventName](response);
+            }
+        }
+
+        public async void PingHandler()
+        {
+            try
+            {
+                OnPing?.Invoke(this, new EventArgs());
+                DateTime pingTime = DateTime.Now;
+                await Socket.SendMessageAsync("3");
+                OnPong?.Invoke(this, DateTime.Now - pingTime);
+            }
+            catch (WebSocketException e)
+            {
+                InvokeDisconnect(e.Message);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError(ex.ToString());
+            }
+        }
+
+        public void PongHandler()
+        {
+            OnPong?.Invoke(this, DateTime.Now - _pingTime);
+        }
+
+        private void InvokeBytesReceived(byte[] bytes)
         {
             if (BelowNormalEvents.Count > 0)
             {
@@ -522,11 +632,6 @@ namespace SocketIOClient
                         {
                             item(e.Event, e.Response);
                         }
-                        InvokeReceivedEvent(new ReceivedEventArgs
-                        {
-                            Event = e.Event,
-                            Response = e.Response
-                        });
                         Handlers[e.Event](e.Response);
                     }
                     else
@@ -539,24 +644,18 @@ namespace SocketIOClient
             }
         }
 
-        internal void InvokeDisconnect(string reason)
+        private void InvokeDisconnect(string reason)
         {
             if (Connected)
             {
                 Connected = false;
                 Disconnected = true;
-                if (Options.EioHandler is Eio3Handler)
+                if (Options.EIO == 3)
                 {
-                    var v3 = Options.EioHandler as Eio3Handler;
-                    v3.StopPingInterval();
+                    _pingTokenSorce.Cancel();
                 }
                 OnDisconnected?.Invoke(this, reason);
             }
-        }
-
-        internal void InvokeError(string error)
-        {
-            OnError?.Invoke(this, error);
         }
 
         private async void SocketIO_OnDisconnected(object sender, string e)
@@ -568,25 +667,38 @@ namespace SocketIOClient
             }
         }
 
-        internal void InvokePong(TimeSpan ms)
+        public async Task StartPingAsync()
         {
-            OnPong?.Invoke(this, ms);
+            while (!_pingTokenSorce.IsCancellationRequested)
+            {
+                await Task.Delay(_pingInterval);
+                if (Connected)
+                {
+                    try
+                    {
+                        _pingTime = DateTime.Now;
+                        await Socket.SendMessageAsync("2");
+                        OnPing?.Invoke(this, new EventArgs());
+                    }
+                    catch (WebSocketException e)
+                    {
+                        InvokeDisconnect(e.Message);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError(ex.ToString());
+                    }
+                }
+                else
+                {
+                    StopPingInterval();
+                }
+            }
         }
 
-        internal void InvokePing()
+        public void StopPingInterval()
         {
-            OnPing?.Invoke(this, new EventArgs());
-        }
-
-        internal void InvokePingV3()
-        {
-            OnPing?.Invoke(this, new EventArgs());
-        }
-
-        [Obsolete]
-        internal void InvokeReceivedEvent(ReceivedEventArgs args)
-        {
-            OnReceivedEvent?.Invoke(this, args);
+            _pingTokenSorce?.Cancel();
         }
 
         public void Dispose()

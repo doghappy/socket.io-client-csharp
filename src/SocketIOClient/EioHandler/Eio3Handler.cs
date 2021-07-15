@@ -1,103 +1,60 @@
-﻿using System;
-using System.Diagnostics;
-using System.Net.WebSockets;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text;
+using System.Collections.Generic;
 
 namespace SocketIOClient.EioHandler
 {
-    class Eio3Handler : IEioHandler
+    public class Eio3Handler : IEioHandler
     {
-        internal DateTime PingTime;
-        internal int PingInterval;
-        CancellationTokenSource pingTokenSorce;
-
-
-        public async Task IOConnectAsync(SocketIO io)
+        public string CreateConnectionMessage(string @namespace, Dictionary<string, string> query)
         {
             var builder = new StringBuilder();
             builder.Append("40");
 
-            if (!string.IsNullOrEmpty(io.Namespace))
+            if (@namespace != null)
             {
-                builder.Append(io.Namespace.TrimEnd(','));
+                builder.Append(@namespace);
             }
-            if (io.Options.Query != null && io.Options.Query.Count > 0)
+            if (query != null && query.Count > 0)
             {
                 builder.Append('?');
                 int index = -1;
-                foreach (var item in io.Options.Query)
+                foreach (var item in query)
                 {
                     index++;
                     builder
                         .Append(item.Key)
                         .Append('=')
                         .Append(item.Value);
-                    if (index < io.Options.Query.Count - 1)
+                    if (index < query.Count - 1)
                     {
                         builder.Append('&');
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(io.Namespace))
+            if (@namespace != null)
             {
                 builder.Append(',');
             }
-            await io.Socket.SendMessageAsync(builder.ToString());
+            return builder.ToString();
         }
 
-        public void Unpack(SocketIO io, string text)
+        public ConnectionResult CheckConnection(string @namespace, string text)
         {
-            if (string.IsNullOrEmpty(io.Namespace))
+            var result = new ConnectionResult();
+            if (string.IsNullOrEmpty(@namespace))
             {
-                if (text == string.Empty)
-                {
-                    io.InvokeConnect();
-                }
+                result.Result = text == string.Empty;
             }
             else
             {
-                if (text == io.Namespace || text == io.Namespace.TrimEnd(','))
-                {
-                    io.InvokeConnect();
-                }
+                result.Result = text.StartsWith(@namespace);
             }
+            return result;
         }
 
-        public async Task StartPingAsync(SocketIO io)
+        public string GetErrorMessage(string text)
         {
-            pingTokenSorce = new CancellationTokenSource();
-            while (!pingTokenSorce.IsCancellationRequested)
-            {
-                await Task.Delay(PingInterval);
-                if (io.Connected)
-                {
-                    try
-                    {
-                        PingTime = DateTime.Now;
-                        await io.Socket.SendMessageAsync("2");
-                        io.InvokePingV3();
-                    }
-                    catch (WebSocketException e)
-                    {
-                        io.InvokeDisconnect(e.Message);
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError(ex.ToString());
-                    }
-                }
-                else
-                {
-                    StopPingInterval();
-                }
-            }
-        }
-
-        public void StopPingInterval()
-        {
-            pingTokenSorce?.Cancel();
+            return text.Trim('"');
         }
     }
 }

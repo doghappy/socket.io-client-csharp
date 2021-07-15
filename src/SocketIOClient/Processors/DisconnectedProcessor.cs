@@ -4,18 +4,18 @@
     {
         public override void Process(MessageContext ctx)
         {
-            if (string.IsNullOrEmpty(ctx.SocketIO.Namespace))
+            if (string.IsNullOrEmpty(ctx.Namespace))
             {
                 if (ctx.Message == string.Empty)
                 {
-                    ctx.SocketIO.InvokeDisconnect("io server disconnect");
+                    ctx.DisconnectedHandler();
                 }
             }
             else
             {
-                if (ctx.Message == ctx.SocketIO.Namespace)
+                if (ctx.Message.StartsWith(ctx.Namespace))
                 {
-                    ctx.SocketIO.InvokeDisconnect("io server disconnect");
+                    ctx.DisconnectedHandler();
                 }
             }
         }

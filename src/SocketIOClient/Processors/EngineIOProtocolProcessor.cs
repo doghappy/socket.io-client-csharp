@@ -15,7 +15,7 @@ namespace SocketIOClient.Processors
                 switch (protocol)
                 {
                     case EngineIOProtocol.Open:
-                        NextProcessor = new OpenProcessor();
+                        NextProcessor = new OpenedProcessor();
                         break;
                     case EngineIOProtocol.Ping:
                         NextProcessor = new PingProcessor();

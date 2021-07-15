@@ -4,7 +4,8 @@
     {
         public override void Process(MessageContext ctx)
         {
-            ctx.SocketIO.Options.EioHandler.Unpack(ctx.SocketIO, ctx.Message);
+            var result = ctx.EioHandler.CheckConnection(ctx.Namespace, ctx.Message);
+            ctx.ConnectedHandler(result);
         }
     }
 }

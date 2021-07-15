@@ -13,9 +13,9 @@ namespace SocketIOClient.Processors
                 if (int.TryParse(ctx.Message.Substring(0, index), out int totalCount))
                 {
                     ctx.Message = ctx.Message.Substring(index + 1);
-                    if (!string.IsNullOrEmpty(ctx.SocketIO.Namespace))
+                    if (!string.IsNullOrEmpty(ctx.Namespace))
                     {
-                        ctx.Message = ctx.Message.Substring(ctx.SocketIO.Namespace.Length);
+                        ctx.Message = ctx.Message.Substring(ctx.Namespace.Length + 1);
                     }
                     int packetIndex = ctx.Message.IndexOf('[');
                     if (int.TryParse(ctx.Message.Substring(0, packetIndex), out int packetId))
@@ -23,16 +23,7 @@ namespace SocketIOClient.Processors
                         string data = ctx.Message.Substring(packetIndex);
                         var doc = JsonDocument.Parse(data);
                         var array = doc.RootElement.EnumerateArray().ToList();
-                        if (ctx.SocketIO.Acks.ContainsKey(packetId))
-                        {
-                            var response = new SocketIOResponse(array, ctx.SocketIO);
-                            ctx.SocketIO.BelowNormalEvents.Enqueue(new BelowNormalEvent
-                            {
-                                PacketId = packetId,
-                                Count = totalCount,
-                                Response = response
-                            });
-                        }
+                        ctx.BinaryAckHandler(packetId, totalCount, array);
                     }
                 }
             }

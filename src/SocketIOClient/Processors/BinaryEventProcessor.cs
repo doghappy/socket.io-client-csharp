@@ -13,9 +13,9 @@ namespace SocketIOClient.Processors
                 if (int.TryParse(ctx.Message.Substring(0, index), out int totalCount))
                 {
                     ctx.Message = ctx.Message.Substring(index + 1);
-                    if (!string.IsNullOrEmpty(ctx.SocketIO.Namespace) && ctx.Message.StartsWith(ctx.SocketIO.Namespace))
+                    if (!string.IsNullOrEmpty(ctx.Namespace) && ctx.Message.StartsWith(ctx.Namespace + ','))
                     {
-                        ctx.Message = ctx.Message.Substring(ctx.SocketIO.Namespace.Length);
+                        ctx.Message = ctx.Message.Substring(ctx.Namespace.Length+1);
                     }
                     int packetIndex = ctx.Message.IndexOf('[');
                     string id = null;
@@ -28,17 +28,8 @@ namespace SocketIOClient.Processors
                     var array = doc.RootElement.EnumerateArray().ToList();
                     string eventName = array[0].GetString();
                     array.RemoveAt(0);
-                    var response = new SocketIOResponse(array, ctx.SocketIO);
-                    if (int.TryParse(id, out int packetId))
-                    {
-                        response.PacketId = packetId;
-                    }
-                    ctx.SocketIO.BelowNormalEvents.Enqueue(new BelowNormalEvent
-                    {
-                        Event = eventName,
-                        Count = totalCount,
-                        Response = response
-                    });
+                    int.TryParse(id, out int packetId);
+                    ctx.BinaryReceivedHandler(packetId, totalCount, eventName, array);
                 }
             }
         }

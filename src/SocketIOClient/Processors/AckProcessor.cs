@@ -7,9 +7,9 @@ namespace SocketIOClient.Processors
     {
         public override void Process(MessageContext ctx)
         {
-            if (!string.IsNullOrEmpty(ctx.SocketIO.Namespace) && ctx.Message.StartsWith(ctx.SocketIO.Namespace))
+            if (!string.IsNullOrEmpty(ctx.Namespace) && ctx.Message.StartsWith(ctx.Namespace + ','))
             {
-                ctx.Message = ctx.Message.Substring(ctx.SocketIO.Namespace.Length);
+                ctx.Message = ctx.Message.Substring(ctx.Namespace.Length + 1);
             }
             int index = ctx.Message.IndexOf('[');
             if (index > 0)
@@ -18,14 +18,9 @@ namespace SocketIOClient.Processors
                 string data = ctx.Message.Substring(index);
                 if (int.TryParse(no, out int packetId))
                 {
-                    if (ctx.SocketIO.Acks.ContainsKey(packetId))
-                    {
-                        var doc = JsonDocument.Parse(data);
-                        var array = doc.RootElement.EnumerateArray().ToList();
-                        var response = new SocketIOResponse(array, ctx.SocketIO);
-                        ctx.SocketIO.Acks[packetId](response);
-                        ctx.SocketIO.Acks.Remove(packetId);
-                    }
+                    var doc = JsonDocument.Parse(data);
+                    var array = doc.RootElement.EnumerateArray().ToList();
+                    ctx.AckHandler(packetId, array);
                 }
             }
         }

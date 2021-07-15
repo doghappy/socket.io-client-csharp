@@ -1,6 +1,6 @@
 ﻿namespace SocketIOClient
 {
-    class BelowNormalEvent
+    public class BelowNormalEvent
     {
         public BelowNormalEvent()
         {

@@ -59,11 +59,6 @@ namespace SocketIOClient
                 if (eio != value)
                 {
                     eio = value;
-                    if (EioHandler is Eio3Handler)
-                    {
-                        var v3 = EioHandler as Eio3Handler;
-                        v3.StopPingInterval();
-                    }
                     EioHandler = EioHandlerFactory.GetHandler(value);
                 }
             }
