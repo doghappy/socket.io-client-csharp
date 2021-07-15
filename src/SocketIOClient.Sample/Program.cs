@@ -44,13 +44,42 @@ namespace SocketIOClient.Sample
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
             socket.OnReconnecting += Socket_OnReconnecting;
-
+            socket.OnConnectTimeout += Socket_OnConnectTimeout;
+            socket.OnConnectError += Socket_OnConnectError;
+            socket.OnReconnectError += Socket_OnReconnectError;
+            socket.OnReconnectFailed += Socket_OnReconnectFailed;
+            socket.OnReconnectAttempt += Socket_OnReconnectAttempt;
             //Console.WriteLine("Press any key to continue");
             //Console.ReadLine();
 
             await socket.ConnectAsync();
 
             Console.ReadLine();
+        }
+
+        private static void Socket_OnReconnectAttempt(object sender, int e)
+        {
+            Console.WriteLine("reconnect attempt: " + e);
+        }
+
+        private static void Socket_OnReconnectFailed(object sender, Exception e)
+        {
+            Console.WriteLine("reconnection failed: " + e);
+        }
+
+        private static void Socket_OnReconnectError(object sender, string e)
+        {
+            Console.WriteLine("reconnect error: " + e);
+        }
+
+        private static void Socket_OnConnectError(object sender, string e)
+        {
+            Console.WriteLine("connect error: " + e);
+        }
+
+        private static void Socket_OnConnectTimeout(object sender, string e)
+        {
+            Console.WriteLine("connect timeout: " + e);
         }
 
         private static void Socket_OnReconnecting(object sender, int e)

@@ -139,13 +139,14 @@ namespace SocketIOClient
 
         #region Socket.IO event
         public event EventHandler OnConnected;
-        //public event EventHandler<string> OnConnectError;
-        //public event EventHandler<string> OnConnectTimeout;
+        public event EventHandler<string> OnConnectError;
+        public event EventHandler<string> OnConnectTimeout;
         public event EventHandler<string> OnError;
         public event EventHandler<string> OnDisconnected;
-        //public event EventHandler<string> OnReconnectAttempt;
+        public event EventHandler<int> OnReconnectAttempt;
+        [Obsolete]
         public event EventHandler<int> OnReconnecting;
-        //public event EventHandler<string> OnReconnectError;
+        public event EventHandler<string> OnReconnectError;
         public event EventHandler<Exception> OnReconnectFailed;
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
@@ -175,61 +176,80 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task ConnectAsync()
         {
-            await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
-        }
-
-        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection)
-        {
             if (ServerUri == null)
             {
-                throw new ArgumentException("Invalid ServerUri");
+                throw new ArgumentException(nameof(ServerUri));
             }
-            Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
-            if (allowedRetryFirstConnection)
-            {
-                var connectInterval = new DefaultConnectInterval(Options);
-                while (true)
-                {
-                    try
-                    {
-                        this.OnReconnecting?.Invoke(this, ++Attempts);
-                        await Socket.ConnectAsync(wsUri);
-                        break;
-                    }
-                    catch (SystemException ex)
-                    {
-                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
-                        {
-                            if (Attempts >= Options.ReconnectionAttempts)
-                            {
-                                OnReconnectFailed?.Invoke(this, ex);
-                                break;
-                            }
-                            else
-                            {
-                                // If current delay is already bigger than ReconnectionDelayMax, we just take ReconnectionDelayMax.
-                                double delay = connectInterval.GetDelay() < Options.ReconnectionDelayMax ? connectInterval.NextDelay() : Options.ReconnectionDelayMax;
 
-                                // Take the minimun value between delay and ReconnectionDelayMax.
-                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(delay, Options.ReconnectionDelayMax)));
-                            }
-                        }
-                        else
-                        {
-                            Attempts = 0;
-                            throw;
-                        }
-                    }
-                }
-            }
-            else
+            Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
+
+            try
             {
                 await Socket.ConnectAsync(wsUri);
             }
-
-            if (Connected)
+            catch (SystemException ex)
             {
-                Attempts = 0;
+                if (ex is TimeoutException || ex is WebSocketException)
+                {
+                    if (Options.AllowedRetryFirstConnection || Options.Reconnection)
+                    {
+                        await this.ReconnectAsync();
+                    }
+                    else 
+                    {
+                        OnConnectTimeout?.Invoke(this, ex.Message);
+                    }
+                }
+                else 
+                {
+                    OnConnectError?.Invoke(this, ex.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                OnConnectError?.Invoke(this, ex.Message);
+            }
+        }
+
+        private async Task ReconnectAsync()
+        {
+            this.Attempts = 0;
+            Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
+            var connectInterval = new DefaultConnectInterval(Options);
+
+            while (true)
+            {
+                try
+                {
+                    this.Attempts++;
+
+                    // If current delay is already bigger than ReconnectionDelayMax, we just take ReconnectionDelayMax.
+                    double delay = connectInterval.GetDelay() < Options.ReconnectionDelayMax ? connectInterval.NextDelay() : Options.ReconnectionDelayMax;
+
+                    // Take the minimum value between delay and ReconnectionDelayMax.
+                    await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(delay, Options.ReconnectionDelayMax)));
+
+                    this.OnReconnectAttempt?.Invoke(this, Attempts);
+                    this.OnReconnecting?.Invoke(this, Attempts);
+                    await Socket.ConnectAsync(wsUri);
+                    break;
+                }
+                catch (SystemException ex)
+                {
+                    if (ex is TimeoutException || ex is WebSocketException)
+                    {
+                        if (Attempts >= Options.ReconnectionAttempts)
+                        {
+                            OnReconnectFailed?.Invoke(this, ex);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        this.OnReconnectError?.Invoke(this, ex.Message);
+                        break;
+                    }
+                }
             }
         }
 
@@ -620,13 +640,20 @@ namespace SocketIOClient
             }
         }
 
-        private async void SocketIO_OnDisconnected(object sender, string e)
+        private async void SocketIO_OnDisconnected(object sender, string reason)
         {
-            if (Options.Reconnection)
+            // The reconnection should be performed if option was set and if the reason of the disconnection is unexpected.
+            if (Options.Reconnection && this.IsUnexpectedDisconnection(reason))
             {
-                this.Attempts = 0;
-                await ConnectCoreAsync(true);
+                await ReconnectAsync();
             }
+        }
+
+        private bool IsUnexpectedDisconnection(string reason)
+        {
+            // We check if the server has forcefully disconnected the socket with socket.disconnect()
+            // or if the the socket was manually disconnected by the client using socket.disconnect()
+            return !(reason.Equals("io server disconnect") || reason.Equals("io client disconnect"));
         }
 
         public async Task StartPingAsync()
