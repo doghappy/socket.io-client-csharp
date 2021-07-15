@@ -28,7 +28,7 @@ variables:
 #    npm install
 #    npm start & cd ../socket.io-server-v4
 #    npm install
-#    npm start & dotnet test ../SocketIOClient.Test
+#    npm start & dotnet test ../SocketIOClient.IntegrationTest
 
 steps:
 - task: UseDotNet@2
