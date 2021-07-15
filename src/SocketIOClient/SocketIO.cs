@@ -458,10 +458,6 @@ namespace SocketIOClient
 
         private void OnTextReceived(string message)
         {
-            if (message.StartsWith("42"))
-            {
-
-            }
             MessageProcessor.Process(new MessageContext
             {
                 Message = message,
