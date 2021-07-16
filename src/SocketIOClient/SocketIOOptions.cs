@@ -23,7 +23,7 @@ namespace SocketIOClient
         /// </summary>
         public bool Reconnection { get; set; } = true;
 
-        public int ReconnectionDelay { get; set; } = 1000;
+        public double ReconnectionDelay { get; set; } = 1000;
         public int ReconnectionDelayMax { get; set; } = 5000;
         public int ReconnectionAttempts { get; set; } = int.MaxValue;
 
@@ -43,12 +43,6 @@ namespace SocketIOClient
                 }
             }
         }
-
-        /// <summary>
-        /// Allow reconnection when the first connection fails.
-        /// Generally speaking, the usage scenario is if the server starts later than the client.
-        /// </summary>
-        public bool AllowedRetryFirstConnection { get; set; }
 
         int eio;
         public int EIO

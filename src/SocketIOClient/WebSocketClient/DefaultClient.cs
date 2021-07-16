@@ -21,7 +21,7 @@ namespace SocketIOClient.WebSocketClient
         public int ReceiveChunkSize { get; set; }
         public TimeSpan ConnectionTimeout { get; set; }
 
-        System.Net.WebSockets.ClientWebSocket _ws;
+        ClientWebSocket _ws;
         readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
         CancellationTokenSource _listenToken;
 
@@ -38,7 +38,7 @@ namespace SocketIOClient.WebSocketClient
         public async Task ConnectAsync(Uri uri)
         {
             DisposeWebSocketIfNotNull();
-            _ws = new System.Net.WebSockets.ClientWebSocket();
+            _ws = new ClientWebSocket();
 
             Config?.Invoke(_ws.Options);
             var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
@@ -148,7 +148,7 @@ namespace SocketIOClient.WebSocketClient
         public async Task DisconnectAsync()
         {
             await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-            OnClosed(null);
+            OnClosed("io client disconnect");
         }
 
         private async Task ListenAsync(CancellationToken cancellationToken)
@@ -221,19 +221,6 @@ namespace SocketIOClient.WebSocketClient
                     byte[] bytes = new byte[count];
                     Buffer.BlockCopy(buffer, 0, bytes, 0, count);
                     OnBinaryReceived(bytes);
-                    //byte[] bytes;
-                    //if (_io.Options.EIO == 3)
-                    //{
-                    //    count -= 1;
-                    //    bytes = new byte[count];
-                    //    Buffer.BlockCopy(buffer, 1, bytes, 0, count);
-                    //}
-                    //else
-                    //{
-                    //    bytes = new byte[count];
-                    //    Buffer.BlockCopy(buffer, 0, bytes, 0, count);
-                    //}
-                    //_io.InvokeBytesReceived(bytes);
                 }
             }
         }

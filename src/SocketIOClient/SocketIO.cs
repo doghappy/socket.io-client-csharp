@@ -6,9 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.ConnectInterval;
 using SocketIOClient.EioHandler;
-using SocketIOClient.Exceptions;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Processors;
 using SocketIOClient.WebSocketClient;
@@ -134,8 +132,10 @@ namespace SocketIOClient
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
         CancellationTokenSource _pingTokenSorce;
+        CancellationTokenSource _connectionTokenSorce;
         DateTime _pingTime;
         int _pingInterval;
+        double _reconnectionDelay;
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -143,10 +143,26 @@ namespace SocketIOClient
         //public event EventHandler<string> OnConnectTimeout;
         public event EventHandler<string> OnError;
         public event EventHandler<string> OnDisconnected;
-        //public event EventHandler<string> OnReconnectAttempt;
-        public event EventHandler<int> OnReconnecting;
-        //public event EventHandler<string> OnReconnectError;
-        public event EventHandler<Exception> OnReconnectFailed;
+
+        /// <summary>
+        /// Fired upon a successful reconnection.
+        /// </summary>
+        public event EventHandler<int> OnReconnected;
+
+        /// <summary>
+        /// Fired upon an attempt to reconnect.
+        /// </summary>
+        public event EventHandler<int> OnReconnectAttempt;
+
+        /// <summary>
+        /// Fired upon a reconnection attempt error.
+        /// </summary>
+        public event EventHandler<Exception> OnReconnectError;
+
+        /// <summary>
+        /// Fired when couldn’t reconnect within reconnectionAttempts
+        /// </summary>
+        public event EventHandler OnReconnectFailed;
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
 
@@ -165,71 +181,64 @@ namespace SocketIOClient
             _lowLevelEvents = new Queue<LowLevelEvent>();
 
             Disconnected = true;
-            OnDisconnected += SocketIO_OnDisconnected;
             JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
+            _connectionTokenSorce = new CancellationTokenSource();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
         public async Task ConnectAsync()
         {
-            await ConnectCoreAsync(Options.AllowedRetryFirstConnection);
-        }
-
-        private async Task ConnectCoreAsync(bool allowedRetryFirstConnection)
-        {
-            if (ServerUri == null)
-            {
-                throw new ArgumentException("Invalid ServerUri");
-            }
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
-            if (allowedRetryFirstConnection)
+            while (true)
             {
-                var connectInterval = new DefaultConnectInterval(Options);
-                while (true)
+                try
                 {
-                    try
+                    if (_connectionTokenSorce.IsCancellationRequested)
                     {
-                        this.OnReconnecting?.Invoke(this, ++Attempts);
-                        await Socket.ConnectAsync(wsUri);
                         break;
                     }
-                    catch (SystemException ex)
+                    if (Attempts == 0)
                     {
-                        if (ex is TimeoutException || ex is System.Net.WebSockets.WebSocketException)
+                        _reconnectionDelay = Options.ReconnectionDelay;
+                    }
+                    else if (Attempts > 0)
+                    {
+                        OnReconnectAttempt?.Invoke(this, Attempts);
+                    }
+                    await Socket.ConnectAsync(wsUri);
+                    break;
+                }
+                catch (SystemException e)
+                {
+                    if (e is TimeoutException || e is WebSocketException)
+                    {
+                        if (Attempts > 0)
                         {
-                            if (Attempts >= Options.ReconnectionAttempts)
+                            OnReconnectError?.Invoke(this, e);
+                        }
+                        Attempts++;
+                        if (Attempts <= Options.ReconnectionAttempts)
+                        {
+                            if (_reconnectionDelay < Options.ReconnectionDelayMax)
                             {
-                                OnReconnectFailed?.Invoke(this, ex);
-                                break;
+                                _reconnectionDelay += 2 * Options.RandomizationFactor;
                             }
-                            else
+                            if (_reconnectionDelay > Options.ReconnectionDelayMax)
                             {
-                                // If current delay is already bigger than ReconnectionDelayMax, we just take ReconnectionDelayMax.
-                                double delay = connectInterval.GetDelay() < Options.ReconnectionDelayMax ? connectInterval.NextDelay() : Options.ReconnectionDelayMax;
-
-                                // Take the minimun value between delay and ReconnectionDelayMax.
-                                await Task.Delay(TimeSpan.FromMilliseconds(Math.Min(delay, Options.ReconnectionDelayMax)));
+                                _reconnectionDelay = Options.ReconnectionDelayMax;
                             }
+                            await Task.Delay((int)_reconnectionDelay);
                         }
                         else
                         {
-                            Attempts = 0;
-                            throw;
+                            OnReconnectFailed?.Invoke(this, EventArgs.Empty);
+                            break;
                         }
                     }
+                    else
+                    {
+                        throw;
+                    }
                 }
-            }
-            else
-            {
-                await Socket.ConnectAsync(wsUri);
-            }
-
-            if (Connected)
-            {
-                Attempts = 0;
             }
         }
 
@@ -253,6 +262,10 @@ namespace SocketIOClient
                     await Socket.DisconnectAsync();
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
+                finally
+                {
+                    await InvokeDisconnectAsync("io client disconnect");
+                }
             }
         }
 
@@ -346,15 +359,10 @@ namespace SocketIOClient
                     _outGoingBytes.Clear();
                 }
             }
-            catch (WebSocketException e)
+            catch (Exception e)
             {
-                InvokeDisconnect(e.Message);
+                OnError?.Invoke(this, e.Message);
             }
-            catch (InvalidSocketStateException e)
-            {
-                InvokeDisconnect(e.Message);
-            }
-
         }
 
         internal async Task EmitCallbackAsync(int packetId, params object[] data)
@@ -483,12 +491,9 @@ namespace SocketIOClient
             }
         }
 
-        private void OnClosed(string reason)
+        private async void OnClosed(string reason)
         {
-            if (reason != null)
-            {
-                InvokeDisconnect(reason);
-            }
+            await InvokeDisconnectAsync(reason);
         }
 
         private async void OpenedHandler(string sid, int pingInterval, int pingTimeout)
@@ -505,11 +510,14 @@ namespace SocketIOClient
             {
                 Connected = true;
                 Disconnected = false;
+                OnReconnected?.Invoke(this, Attempts);
+                Attempts = 0;
+
                 if (result.Id != null)
                 {
                     Id = result.Id;
                 }
-                OnConnected?.Invoke(this, new EventArgs());
+                OnConnected?.Invoke(this, EventArgs.Empty);
                 if (Options.EIO == 3)
                 {
                     _pingTokenSorce = new CancellationTokenSource();
@@ -556,9 +564,9 @@ namespace SocketIOClient
             });
         }
 
-        private void DisconnectedHandler()
+        private async void DisconnectedHandler()
         {
-            InvokeDisconnect("io server disconnect");
+            await InvokeDisconnectAsync("io server disconnect");
         }
 
         private void ErrorHandler(string error)
@@ -586,18 +594,19 @@ namespace SocketIOClient
         {
             try
             {
-                OnPing?.Invoke(this, new EventArgs());
+                OnPing?.Invoke(this, EventArgs.Empty);
                 DateTime pingTime = DateTime.Now;
                 await Socket.SendMessageAsync("3");
                 OnPong?.Invoke(this, DateTime.Now - pingTime);
             }
             catch (WebSocketException e)
             {
-                InvokeDisconnect(e.Message);
+                await InvokeDisconnectAsync(e.Message);
             }
             catch (Exception ex)
             {
                 Trace.TraceError(ex.ToString());
+                OnError?.Invoke(this, ex.Message);
             }
         }
 
@@ -606,7 +615,7 @@ namespace SocketIOClient
             OnPong?.Invoke(this, DateTime.Now - _pingTime);
         }
 
-        private void InvokeDisconnect(string reason)
+        private async Task InvokeDisconnectAsync(string reason)
         {
             if (Connected)
             {
@@ -617,15 +626,14 @@ namespace SocketIOClient
                     _pingTokenSorce.Cancel();
                 }
                 OnDisconnected?.Invoke(this, reason);
-            }
-        }
-
-        private async void SocketIO_OnDisconnected(object sender, string e)
-        {
-            if (Options.Reconnection)
-            {
-                this.Attempts = 0;
-                await ConnectCoreAsync(true);
+                if (reason != "io server disconnect" && reason != "io client disconnect")
+                {
+                    //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
+                    if (Options.Reconnection)
+                    {
+                        await ConnectAsync();
+                    }
+                }
             }
         }
 
@@ -640,15 +648,16 @@ namespace SocketIOClient
                     {
                         _pingTime = DateTime.Now;
                         await Socket.SendMessageAsync("2");
-                        OnPing?.Invoke(this, new EventArgs());
+                        OnPing?.Invoke(this, EventArgs.Empty);
                     }
                     catch (WebSocketException e)
                     {
-                        InvokeDisconnect(e.Message);
+                        await InvokeDisconnectAsync(e.Message);
                     }
                     catch (Exception ex)
                     {
                         Trace.TraceError(ex.ToString());
+                        OnError?.Invoke(this, ex.Message);
                     }
                 }
                 else
@@ -671,6 +680,13 @@ namespace SocketIOClient
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();
             _lowLevelEvents.Clear();
+            _connectionTokenSorce.Cancel();
+            _connectionTokenSorce.Dispose();
+            if (_pingTokenSorce != null)
+            {
+                _pingTokenSorce.Cancel();
+                _pingTokenSorce.Dispose();
+            }
         }
     }
 }
