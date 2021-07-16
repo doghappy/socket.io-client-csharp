@@ -22,5 +22,37 @@ namespace SocketIOClient.UnitTest.ProcessorTests
             Assert.AreEqual(typeof(OpenedProcessor), processor.NextProcessor.GetType());
             mockOpenedHandler.Verify(x => x(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Once());
         }
+
+        [TestMethod]
+        public void Ping()
+        {
+            var mockPingHandler = new Mock<OnPing>();
+
+            var processor = new EngineIOProtocolProcessor();
+            processor.Process(new MessageContext
+            {
+                Message = "2",
+                PingHandler = mockPingHandler.Object
+            });
+
+            Assert.AreEqual(typeof(PingProcessor), processor.NextProcessor.GetType());
+            mockPingHandler.Verify(x => x(), Times.Once());
+        }
+
+        [TestMethod]
+        public void Pong()
+        {
+            var mockPongHandler = new Mock<OnPong>();
+
+            var processor = new EngineIOProtocolProcessor();
+            processor.Process(new MessageContext
+            {
+                Message = "3",
+                PongHandler = mockPongHandler.Object
+            });
+
+            Assert.AreEqual(typeof(PongProcessor), processor.NextProcessor.GetType());
+            mockPongHandler.Verify(x => x(), Times.Once());
+        }
     }
 }
