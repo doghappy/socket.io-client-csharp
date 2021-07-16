@@ -651,6 +651,11 @@ namespace SocketIOClient
 
         private bool IsUnexpectedDisconnection(string reason)
         {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                return true;
+            }
+            
             // We check if the server has forcefully disconnected the socket with socket.disconnect()
             // or if the the socket was manually disconnected by the client using socket.disconnect()
             return !(reason.Equals("io server disconnect") || reason.Equals("io client disconnect"));
