@@ -24,7 +24,7 @@ steps:
     inputs:
       versionSpec: '10.x'
   -
-    script: 
+    script: |
       cd src
       dotnet test SocketIOClient.UnitTest
       cd socket.io-server-v2
