@@ -23,16 +23,17 @@ steps:
     displayName: 'Install Node.js'
     inputs:
       versionSpec: '10.x'
-- script: |
-    cd src
-    dotnet test SocketIOClient.UnitTest
-    cd socket.io-server-v2
-    npm install
-    npm start & cd ../socket.io-server-v3
-    npm install
-    npm start & cd ../socket.io-server-v4
-    npm install
-    npm start & dotnet test ../SocketIOClient.Test
+  -
+    script: 
+      cd src
+      dotnet test SocketIOClient.UnitTest
+      cd socket.io-server-v2
+      npm install
+      npm start & cd ../socket.io-server-v3
+      npm install
+      npm start & cd ../socket.io-server-v4
+      npm install
+      npm start & dotnet test ../SocketIOClient.Test
 
 # steps:
 # - task: UseDotNet@2
