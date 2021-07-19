@@ -8,7 +8,7 @@ namespace SocketIOClient.Test.SocketIOTests
 {
     public abstract class EmitTest
     {
-        protected abstract ISocketIOCreateable SocketIOCreator { get;  }
+        protected abstract ISocketIOCreateable SocketIOCreator { get; }
 
         public virtual async Task Hi()
         {
@@ -369,6 +369,27 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var model = result.GetValue<BytesInObjectResponse>();
             Assert.AreEqual(6, model.Code);
             Assert.AreEqual(longString, Encoding.UTF8.GetString(model.Message));
+        }
+
+        public virtual async Task EmitWith1ParamsArray()
+        {
+            SocketIOResponse result = null;
+            var client = SocketIOCreator.Create();
+            client.On("1 params", response =>
+            {
+                result = response;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("1 params", (object)new object[] { 1, true, "test" });
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, result.GetValue()[0].GetInt32());
+            Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
+            Assert.AreEqual("test", result.GetValue()[2].GetString());
         }
         #endregion
 

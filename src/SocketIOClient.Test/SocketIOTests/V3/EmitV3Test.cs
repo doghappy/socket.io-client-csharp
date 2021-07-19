@@ -109,6 +109,12 @@ namespace SocketIOClient.Test.SocketIOTests.V3
         {
             await base.EmitWith2ParamsBytes();
         }
+
+        [TestMethod]
+        public override async Task EmitWith1ParamsArray()
+        {
+            await base.EmitWith1ParamsArray();
+        }
         #endregion
 
         #region Emit with 2 params
