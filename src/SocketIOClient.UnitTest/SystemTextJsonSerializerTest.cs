@@ -7,7 +7,7 @@ namespace SocketIOClient.UnitTest
     [TestClass]
     public class SystemTextJsonSerializerTest
     {
-        const string LONG_STRING= @"
+        const string LONG_STRING = @"
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
@@ -28,13 +28,15 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             var seriazlier = new SystemTextJsonSerializer(3);
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
-            var result = seriazlier.Serialize(new
-            {
-                Code = 404,
-                Message = messageBytes
+            var result = seriazlier.Serialize(new object[] {
+                new
+                {
+                    Code = 404,
+                    Message = messageBytes
+                }
             });
 
-            Assert.AreEqual($"{{\"Code\":404,\"Message\":{{\"_placeholder\":true,\"num\":0}}}}", result.Json);
+            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0}}]", result.Json);
             Assert.AreEqual(1, result.Bytes.Count);
             Assert.AreEqual(messageBytes.Length + 1, result.Bytes[0].Length);
             Assert.AreEqual(4, result.Bytes[0][0]);
@@ -47,14 +49,17 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var seriazlier = new SystemTextJsonSerializer(3);
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
             byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
-            var result = seriazlier.Serialize(new
+            var result = seriazlier.Serialize(new object[]
             {
-                Code = 404,
-                Message = messageBytes,
-                Data = dataBytes
+                new
+                {
+                    Code = 404,
+                    Message = messageBytes,
+                    Data = dataBytes
+                }
             });
 
-            Assert.AreEqual($"{{\"Code\":404,\"Message\":{{\"_placeholder\":true,\"num\":0}},\"Data\":{{\"_placeholder\":true,\"num\":1}}}}", result.Json);
+            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]", result.Json);
             Assert.AreEqual(2, result.Bytes.Count);
             Assert.AreEqual(messageBytes.Length + 1, result.Bytes[0].Length);
             Assert.AreEqual(4, result.Bytes[0][0]);
@@ -69,13 +74,16 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             var seriazlier = new SystemTextJsonSerializer(4);
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
-            var result = seriazlier.Serialize(new
+            var result = seriazlier.Serialize(new object[]
             {
-                Code = 404,
-                Message = messageBytes
+                new
+                {
+                    Code = 404,
+                    Message = messageBytes
+                }
             });
 
-            Assert.AreEqual($"{{\"Code\":404,\"Message\":{{\"_placeholder\":true,\"num\":0}}}}", result.Json);
+            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0}}]", result.Json);
             Assert.AreEqual(messageBytes.Length, result.Bytes[0].Length);
             Assert.AreEqual(LONG_STRING + "xyz", Encoding.UTF8.GetString(result.Bytes[0]));
         }
@@ -86,14 +94,41 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var seriazlier = new SystemTextJsonSerializer(4);
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
             byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
-            var result = seriazlier.Serialize(new
+            var result = seriazlier.Serialize(new object[]
             {
-                Code = 404,
-                Message = messageBytes,
-                Data = dataBytes
+                new
+                {
+                    Code = 404,
+                    Message = messageBytes,
+                    Data = dataBytes
+                }
             });
 
-            Assert.AreEqual($"{{\"Code\":404,\"Message\":{{\"_placeholder\":true,\"num\":0}},\"Data\":{{\"_placeholder\":true,\"num\":1}}}}", result.Json);
+            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]", result.Json);
+            Assert.AreEqual(2, result.Bytes.Count);
+            Assert.AreEqual(messageBytes.Length, result.Bytes[0].Length);
+            Assert.AreEqual(LONG_STRING + "xyz", Encoding.UTF8.GetString(result.Bytes[0]));
+            Assert.AreEqual(dataBytes.Length, result.Bytes[1].Length);
+            Assert.AreEqual(LONG_STRING + "-data", Encoding.UTF8.GetString(result.Bytes[1]));
+        }
+
+        [TestMethod]
+        public void TestEio4With2Bytes2Params()
+        {
+            var seriazlier = new SystemTextJsonSerializer(4);
+            byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
+            byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
+            var result = seriazlier.Serialize(new object[]
+            {
+                new
+                {
+                    Code = 404,
+                    Message = messageBytes
+                },
+                dataBytes
+            });
+
+            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0}},{\"_placeholder\":true,\"num\":1}]", result.Json);
             Assert.AreEqual(2, result.Bytes.Count);
             Assert.AreEqual(messageBytes.Length, result.Bytes[0].Length);
             Assert.AreEqual(LONG_STRING + "xyz", Encoding.UTF8.GetString(result.Bytes[0]));

@@ -16,7 +16,7 @@ namespace SocketIOClient.Newtonsoft.Json
 
         public Func<JsonSerializerSettings> JsonSerializerOptions { get; }
 
-        public JsonSerializeResult Serialize<T>(T data)
+        public JsonSerializeResult Serialize(object[] data)
         {
             var converter = new ByteArrayConverter(eio);
             var settings = CreateOptions();

@@ -12,7 +12,7 @@ namespace SocketIOClient.JsonSerializer
 
         readonly int eio;
 
-        public JsonSerializeResult Serialize<T>(T data)
+        public JsonSerializeResult Serialize(object[] data)
         {
             var converter = new ByteArrayConverter(eio);
             var options = CreateOptions();
