@@ -153,6 +153,12 @@ namespace SocketIOClient.Test.SocketIOTests.V3
         {
             await base.EmitWith2ParamsStringObject();
         }
+
+        [TestMethod]
+        public override async Task EmitWith2ParamsArrayAndString()
+        {
+            await base.EmitWith2ParamsArrayAndString();
+        }
         #endregion
 
         #region Server calls the client's callback

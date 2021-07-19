@@ -390,6 +390,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(1, result.GetValue()[0].GetInt32());
             Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
             Assert.AreEqual("test", result.GetValue()[2].GetString());
+            Assert.AreEqual("[[1,true,\"test\"]]", result.ToString());
         }
         #endregion
 
@@ -600,6 +601,29 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var model = result.GetValue<BytesInObjectResponse>(1);
             Assert.AreEqual(64, model.Code);
             Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(model.Message));
+        }
+
+        public virtual async Task EmitWith2ParamsArrayAndString()
+        {
+            SocketIOResponse result = null;
+            var client = SocketIOCreator.Create();
+            client.On("2 params", response =>
+            {
+                result = response;
+            });
+            client.OnConnected += async (sender, e) =>
+            {
+                await client.EmitAsync("2 params", (object)new object[] { 1, true, "test" }, "coooooool");
+            };
+            await client.ConnectAsync();
+            await Task.Delay(200);
+            await client.DisconnectAsync();
+
+            Assert.AreEqual(1, result.GetValue()[0].GetInt32());
+            Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
+            Assert.AreEqual("test", result.GetValue()[2].GetString());
+            Assert.AreEqual("coooooool", result.GetValue(1).GetString());
+            Assert.AreEqual("[[1,true,\"test\"],\"coooooool\"]", result.ToString());
         }
         #endregion
 
