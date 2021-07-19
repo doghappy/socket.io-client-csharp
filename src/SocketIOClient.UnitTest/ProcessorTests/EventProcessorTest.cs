@@ -34,6 +34,35 @@ namespace SocketIOClient.UnitTest.ProcessorTests
         }
 
         [TestMethod]
+        public void TestArrayWithoutNamespace()
+        {
+            int packetId = 0;
+            string eventName = null;
+            List<JsonElement> array = null;
+
+            var processor = new EventProcessor();
+            processor.Process(new MessageContext
+            {
+                Message = "[\"hi\",\"arr\",[1,true,\"vvv\"]]",
+                EventReceivedHandler = (id, name, arr) =>
+                {
+                    packetId = id;
+                    eventName = name;
+                    array = arr;
+                }
+            });
+
+            Assert.AreEqual(0, packetId);
+            Assert.AreEqual("hi", eventName);
+            Assert.AreEqual(2, array.Count);
+            Assert.AreEqual("arr", array[0].GetString());
+            Assert.AreEqual(JsonValueKind.Array, array[1].ValueKind);
+            Assert.AreEqual(1, array[1][0].GetInt32());
+            Assert.AreEqual(true, array[1][1].GetBoolean());
+            Assert.AreEqual("vvv", array[1][2].GetString());
+        }
+
+        [TestMethod]
         public void TestWithNamespace()
         {
             int packetId = 0;
