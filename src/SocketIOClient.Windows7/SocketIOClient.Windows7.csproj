@@ -14,52 +14,6 @@
     <AssemblyOriginatorKeyFile>SocketIOClient.Windows7.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="lib\System.Net.WebSockets.Client.Managed.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\SocketIOClient\BelowNormalEvent.cs" Link="BelowNormalEvent.cs" />
-    <Compile Include="..\SocketIOClient\ConnectInterval\DefaultConnectInterval.cs" Link="ConnectInterval\DefaultConnectInterval.cs" />
-    <Compile Include="..\SocketIOClient\ConnectInterval\IConnectInterval.cs" Link="ConnectInterval\IConnectInterval.cs" />
-    <Compile Include="..\SocketIOClient\EioHandler\Eio3Handler.cs" Link="EioHandler\Eio3Handler.cs" />
-    <Compile Include="..\SocketIOClient\EioHandler\Eio4Handler.cs" Link="EioHandler\Eio4Handler.cs" />
-    <Compile Include="..\SocketIOClient\EioHandler\EioHandlerFactory.cs" Link="EioHandler\EioHandlerFactory.cs" />
-    <Compile Include="..\SocketIOClient\EioHandler\IEioHandler.cs" Link="EioHandler\IEioHandler.cs" />
-    <Compile Include="..\SocketIOClient\EngineIOProtocol.cs" Link="EngineIOProtocol.cs" />
-    <Compile Include="..\SocketIOClient\EventArguments\ReceivedEventArgs.cs" Link="EventArguments\ReceivedEventArgs.cs" />
-    <Compile Include="..\SocketIOClient\EventHandlers.cs" Link="EventHandlers.cs" />
-    <Compile Include="..\SocketIOClient\Exceptions\InvalidSocketStateException.cs" Link="Exceptions\InvalidSocketStateException.cs" />
-    <Compile Include="..\SocketIOClient\JsonSerializer\ByteArrayConverter.cs" Link="JsonSerializer\ByteArrayConverter.cs" />
-    <Compile Include="..\SocketIOClient\JsonSerializer\IJsonSerializer.cs" Link="JsonSerializer\IJsonSerializer.cs" />
-    <Compile Include="..\SocketIOClient\JsonSerializer\JsonSerializeResult.cs" Link="JsonSerializer\JsonSerializeResult.cs" />
-    <Compile Include="..\SocketIOClient\JsonSerializer\SystemTextJsonSerializer.cs" Link="JsonSerializer\SystemTextJsonSerializer.cs" />
-    <Compile Include="..\SocketIOClient\Processors\AckProcessor.cs" Link="Processors\AckProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\BinaryAckProcessor.cs" Link="Processors\BinaryAckProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\BinaryEventProcessor.cs" Link="Processors\BinaryEventProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\ConnectedProcessor.cs" Link="Processors\ConnectedProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\DisconnectedProcessor.cs" Link="Processors\DisconnectedProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\EngineIOProtocolProcessor.cs" Link="Processors\EngineIOProtocolProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\ErrorEio3Processor.cs" Link="Processors\ErrorEio3Processor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\ErrorEio4Processor.cs" Link="Processors\ErrorEio4Processor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\ErrorProcessor.cs" Link="Processors\ErrorProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\EventProcessor.cs" Link="Processors\EventProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\MessageContext.cs" Link="Processors\MessageContext.cs" />
-    <Compile Include="..\SocketIOClient\Processors\OpenProcessor.cs" Link="Processors\OpenProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\PingProcessor.cs" Link="Processors\PingProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\PongProcessor.cs" Link="Processors\PongProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\Processor.cs" Link="Processors\Processor.cs" />
-    <Compile Include="..\SocketIOClient\Processors\SocketIOProtocolProcessor.cs" Link="Processors\SocketIOProtocolProcessor.cs" />
-    <Compile Include="..\SocketIOClient\Response\MessageType.cs" Link="Response\MessageType.cs" />
-    <Compile Include="..\SocketIOClient\Response\OpenResponse.cs" Link="Response\OpenResponse.cs" />
-    <Compile Include="..\SocketIOClient\SocketIO.cs" Link="SocketIO.cs" />
-    <Compile Include="..\SocketIOClient\SocketIOOptions.cs" Link="SocketIOOptions.cs" />
-    <Compile Include="..\SocketIOClient\SocketIOProtocol.cs" Link="SocketIOProtocol.cs" />
-    <Compile Include="..\SocketIOClient\SocketIOResponse.cs" Link="SocketIOResponse.cs" />
-    <Compile Include="..\SocketIOClient\UrlConverter.cs" Link="UrlConverter.cs" />
-    <Compile Include="..\SocketIOClient\WebSocketClient\IWebSocketClient.cs" Link="WebSocketClient\IWebSocketClient.cs" />
-  </ItemGroup>
-
   <!--
   <ItemGroup>
     <Content Include="lib\System.Net.WebSockets.Client.Managed.dll">
@@ -71,18 +25,11 @@
 -->
 
   <ItemGroup>
-    <Folder Include="ConnectInterval\" />
-    <Folder Include="EioHandler\" />
-    <Folder Include="EventArguments\" />
-    <Folder Include="Exceptions\" />
-    <Folder Include="JsonSerializer\" />
-    <Folder Include="Response\" />
-    <Folder Include="Processors\" />
+    <PackageReference Include="matthid-System.Net.WebSockets.Client.Managed" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="matthid-System.Net.WebSockets.Client.Managed" Version="1.0.1" />
-    <PackageReference Include="System.Text.Json" Version="5.0.2" />
+    <ProjectReference Include="..\SocketIOClient\SocketIOClient.csproj" />
   </ItemGroup>
 
 </Project>
