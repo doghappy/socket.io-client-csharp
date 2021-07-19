@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -32,7 +33,18 @@ namespace SocketIOClient
 
         public override string ToString()
         {
-            return _array.ToString();
+            var builder = new StringBuilder();
+            builder.Append('[');
+            foreach (var item in _array)
+            {
+                builder.Append(item.GetRawText());
+                if (_array.IndexOf(item) < _array.Count - 1)
+                {
+                    builder.Append(',');
+                }
+            }
+            builder.Append(']');
+            return builder.ToString();
         }
 
         public async Task CallbackAsync(params object[] data)
