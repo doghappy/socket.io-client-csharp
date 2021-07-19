@@ -6,6 +6,7 @@ namespace SocketIOClient.WebSocketClient
 {
     public interface IWebSocketClient : IDisposable
     {
+        TimeSpan ConnectionTimeout { get; set; }
         Task ConnectAsync(Uri uri);
         Task SendMessageAsync(string text);
         Task SendMessageAsync(string text, CancellationToken cancellationToken);
