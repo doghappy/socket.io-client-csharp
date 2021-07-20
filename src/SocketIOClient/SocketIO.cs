@@ -172,7 +172,7 @@ namespace SocketIOClient
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-            Socket = new DefaultClient();
+            Socket = new WebSocketClient.ClientWebSocket();
             MessageProcessor = new EngineIOProtocolProcessor();
             _packetId = -1;
             _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();

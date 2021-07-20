@@ -10,9 +10,9 @@ namespace SocketIOClient.WebSocketClient
     /// <summary>
     /// Internally uses 'System.Net.WebSockets.ClientWebSocket' as websocket client
     /// </summary>
-    public sealed class DefaultClient : IWebSocketClient
+    public sealed class ClientWebSocket : IWebSocketClient
     {
-        public DefaultClient()
+        public ClientWebSocket()
         {
             ReceiveChunkSize = 1024 * 16;
             ConnectionTimeout = TimeSpan.FromSeconds(10);
@@ -21,7 +21,7 @@ namespace SocketIOClient.WebSocketClient
         public int ReceiveChunkSize { get; set; }
         public TimeSpan ConnectionTimeout { get; set; }
 
-        ClientWebSocket _ws;
+        System.Net.WebSockets.ClientWebSocket _ws;
         readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
         CancellationTokenSource _listenToken;
 
@@ -38,7 +38,7 @@ namespace SocketIOClient.WebSocketClient
         public async Task ConnectAsync(Uri uri)
         {
             DisposeWebSocketIfNotNull();
-            _ws = new ClientWebSocket();
+            _ws = new System.Net.WebSockets.ClientWebSocket();
 
             Config?.Invoke(_ws.Options);
             var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
