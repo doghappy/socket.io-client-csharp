@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2021-7-21
+
+### Added
+
+- OnReconnected event
+- OnReconnectAttempt event
+- OnReconnectError event
+- OnReconnectFailed event
+
+### Changed
+
+SocketIOCLient.Windows7 becomes a plug-in, the following code shows how to support Windows7 / Windows 2008 R2
+
+```cs
+var client = new SocketIOClient(...);
+client.Socket = new ClientWebSocketManaged();
+```
+
+### Removed
+
+- OnReconnecting event
+- Options.AllowedRetryFirstConnection
+- OnReceivedEvent event
+
 ## [2.2.4] - 2021-6-24
 
 SocketIOClient  
