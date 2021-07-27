@@ -96,3 +96,4 @@ npm start
 - [gcoverd](https://github.com/gcoverd), 250 AUD
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455), April 2021
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/41876), May 2021
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/44350), June 2021
