@@ -262,9 +262,10 @@ namespace SocketIOClient
                 {
                     await Socket.DisconnectAsync();
                 }
-                catch (Exception ex) { Trace.WriteLine(ex.Message); }
-                finally
+                catch (Exception ex)
                 {
+                    Trace.WriteLine(ex.Message);
+                    //For normal flow we invoke disconnect event after the connection has been closed
                     await InvokeDisconnectAsync("io client disconnect");
                 }
             }
