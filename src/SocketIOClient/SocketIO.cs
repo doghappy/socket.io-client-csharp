@@ -186,6 +186,17 @@ namespace SocketIOClient
             _connectionTokenSorce = new CancellationTokenSource();
         }
 
+        private async Task StartReconnectAsync()
+        {
+            if (_connectionTokenSorce.IsCancellationRequested)
+            {
+                return;
+            }
+
+            OnReconnectAttempt?.Invoke(this, Attempts);
+            await ConnectAsync();
+        }
+
         public async Task ConnectAsync()
         {
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
@@ -633,7 +644,7 @@ namespace SocketIOClient
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        await ConnectAsync();
+                        await StartReconnectAsync();
                     }
                 }
             }
