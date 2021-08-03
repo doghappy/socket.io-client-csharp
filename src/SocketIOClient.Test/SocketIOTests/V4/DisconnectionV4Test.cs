@@ -14,9 +14,15 @@ namespace SocketIOClient.Test.SocketIOTests.V4
         protected override ISocketIOCreateable SocketIOCreator { get; }
 
         [TestMethod]
-        public override async Task Test()
+        public override async Task ClientDisconnect()
         {
-            await base.Test();
+            await base.ClientDisconnect();
+        }
+
+        [TestMethod]
+        public override async Task ServerDisconnect()
+        {
+            await base.ServerDisconnect();
         }
     }
 }
