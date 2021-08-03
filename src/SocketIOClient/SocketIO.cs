@@ -189,6 +189,8 @@ namespace SocketIOClient
         public async Task ConnectAsync()
         {
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
+            _reconnectionDelay = Options.ReconnectionDelay;
+
             while (true)
             {
                 try
@@ -197,11 +199,7 @@ namespace SocketIOClient
                     {
                         break;
                     }
-                    if (Attempts == 0)
-                    {
-                        _reconnectionDelay = Options.ReconnectionDelay;
-                    }
-                    else if (Attempts > 0)
+                    if (Attempts > 0)
                     {
                         OnReconnectAttempt?.Invoke(this, Attempts);
                     }
@@ -512,7 +510,7 @@ namespace SocketIOClient
                 Connected = true;
                 Disconnected = false;
                 OnReconnected?.Invoke(this, Attempts);
-                Attempts = 0;
+                Attempts = 1;
 
                 if (result.Id != null)
                 {

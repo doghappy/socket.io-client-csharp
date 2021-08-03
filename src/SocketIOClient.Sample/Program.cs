@@ -43,7 +43,7 @@ namespace SocketIOClient.Sample
             socket.OnPing += Socket_OnPing;
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
-            socket.OnReconnecting += Socket_OnReconnecting;
+            socket.OnReconnectAttempt += Socket_OnReconnecting;
 
             //Console.WriteLine("Press any key to continue");
             //Console.ReadLine();
