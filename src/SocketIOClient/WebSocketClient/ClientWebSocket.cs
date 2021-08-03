@@ -147,8 +147,8 @@ namespace SocketIOClient.WebSocketClient
 
         public async Task DisconnectAsync()
         {
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
             OnClosed("io client disconnect");
+            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
         }
 
         private async Task ListenAsync(CancellationToken cancellationToken)
