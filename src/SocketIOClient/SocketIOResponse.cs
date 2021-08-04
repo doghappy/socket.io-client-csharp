@@ -49,7 +49,7 @@ namespace SocketIOClient
 
         public async Task CallbackAsync(params object[] data)
         {
-            await SocketIO.EmitCallbackAsync(PacketId, data);
+            await SocketIO.EmitCallbackAsync(PacketId, data).ConfigureAwait(false);
         }
     }
 }

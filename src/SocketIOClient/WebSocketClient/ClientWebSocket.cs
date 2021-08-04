@@ -44,7 +44,7 @@ namespace SocketIOClient.WebSocketClient
             var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
             try
             {
-                await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
+                await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token).ConfigureAwait(false);
                 DisposeListenTokenIfNotNull();
                 _listenToken = new CancellationTokenSource();
                 _ = ListenAsync(_listenToken.Token);
@@ -80,8 +80,8 @@ namespace SocketIOClient.WebSocketClient
             byte[] bytes = Encoding.UTF8.GetBytes(text);
             try
             {
-                await sendLock.WaitAsync();
-                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
+                await sendLock.WaitAsync().ConfigureAwait(false);
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken).ConfigureAwait(false);
 #if DEBUG
                 System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} {text}");
 #endif
@@ -127,8 +127,8 @@ namespace SocketIOClient.WebSocketClient
             }
             try
             {
-                await sendLock.WaitAsync();
-                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
+                await sendLock.WaitAsync().ConfigureAwait(false);
+                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken).ConfigureAwait(false);
 #if DEBUG
                 System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
 #endif
@@ -167,7 +167,7 @@ namespace SocketIOClient.WebSocketClient
                         if (cancellationToken.IsCancellationRequested)
                             break;
                         var subBuffer = new byte[ReceiveChunkSize];
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken);
+                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken).ConfigureAwait(false);
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             OnClosed("io server disconnect");
