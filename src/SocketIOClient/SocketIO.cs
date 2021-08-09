@@ -203,7 +203,7 @@ namespace SocketIOClient
                     {
                         OnReconnectAttempt?.Invoke(this, Attempts);
                     }
-                    await Socket.ConnectAsync(wsUri);
+                    await Socket.ConnectAsync(wsUri).ConfigureAwait(false);
                     break;
                 }
                 catch (SystemException e)
@@ -225,7 +225,7 @@ namespace SocketIOClient
                             {
                                 _reconnectionDelay = Options.ReconnectionDelayMax;
                             }
-                            await Task.Delay((int)_reconnectionDelay);
+                            await Task.Delay((int)_reconnectionDelay).ConfigureAwait(false);
                         }
                         else
                         {
@@ -247,17 +247,17 @@ namespace SocketIOClient
             {
                 try
                 {
-                    await Socket.SendMessageAsync("41" + Namespace + ',');
+                    await Socket.SendMessageAsync("41" + Namespace + ',').ConfigureAwait(false);
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
                 try
                 {
-                    await Socket.DisconnectAsync();
+                    await Socket.DisconnectAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
                     Trace.WriteLine(ex.Message);
-                    await InvokeDisconnectAsync("io client disconnect");
+                    await InvokeDisconnectAsync("io client disconnect").ConfigureAwait(false);
                 }
             }
         }
@@ -342,12 +342,12 @@ namespace SocketIOClient
             string message = builder.ToString();
             try
             {
-                await Socket.SendMessageAsync(message, cancellationToken);
+                await Socket.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
                 if (_outGoingBytes.Count > 0)
                 {
                     foreach (var item in _outGoingBytes)
                     {
-                        await Socket.SendMessageAsync(item, cancellationToken);
+                        await Socket.SendMessageAsync(item, cancellationToken).ConfigureAwait(false);
                     }
                     _outGoingBytes.Clear();
                 }
@@ -375,12 +375,12 @@ namespace SocketIOClient
                 .Append(dataString)
                 .Append("]");
             string message = builder.ToString();
-            await Socket.SendMessageAsync(message);
+            await Socket.SendMessageAsync(message).ConfigureAwait(false);
             if (_outGoingBytes.Count > 0)
             {
                 foreach (var item in _outGoingBytes)
                 {
-                    await Socket.SendMessageAsync(item);
+                    await Socket.SendMessageAsync(item).ConfigureAwait(false);
                 }
                 _outGoingBytes.Clear();
             }
@@ -414,7 +414,7 @@ namespace SocketIOClient
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
             string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, -1, dataString, cancellationToken);
+            await EmityCoreAsync(eventName, -1, dataString, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -433,7 +433,7 @@ namespace SocketIOClient
         {
             _ackHandlers.Add(++_packetId, ack);
             string dataString = GetDataString(data);
-            await EmityCoreAsync(eventName, _packetId, dataString, cancellationToken);
+            await EmityCoreAsync(eventName, _packetId, dataString, cancellationToken).ConfigureAwait(false);
         }
 
         private void OnTextReceived(string message)
@@ -486,7 +486,7 @@ namespace SocketIOClient
 
         private async void OnClosed(string reason)
         {
-            await InvokeDisconnectAsync(reason);
+            await InvokeDisconnectAsync(reason).ConfigureAwait(false);
         }
 
         private async void OpenedHandler(string sid, int pingInterval, int pingTimeout)
@@ -494,7 +494,7 @@ namespace SocketIOClient
             Id = sid;
             _pingInterval = pingInterval;
             string msg = Options.EioHandler.CreateConnectionMessage(Namespace, Options.Query);
-            await Socket.SendMessageAsync(msg);
+            await Socket.SendMessageAsync(msg).ConfigureAwait(false);
         }
 
         private void ConnectedHandler(ConnectionResult result)
@@ -559,7 +559,7 @@ namespace SocketIOClient
 
         private async void DisconnectedHandler()
         {
-            await InvokeDisconnectAsync("io server disconnect");
+            await InvokeDisconnectAsync("io server disconnect").ConfigureAwait(false);
         }
 
         private void ErrorHandler(string error)
@@ -589,12 +589,12 @@ namespace SocketIOClient
             {
                 OnPing?.Invoke(this, EventArgs.Empty);
                 DateTime pingTime = DateTime.Now;
-                await Socket.SendMessageAsync("3");
+                await Socket.SendMessageAsync("3").ConfigureAwait(false);
                 OnPong?.Invoke(this, DateTime.Now - pingTime);
             }
             catch (WebSocketException e)
             {
-                await InvokeDisconnectAsync(e.Message);
+                await InvokeDisconnectAsync(e.Message).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -624,7 +624,7 @@ namespace SocketIOClient
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        await ConnectAsync();
+                        await ConnectAsync().ConfigureAwait(false);
                     }
                 }
             }
@@ -634,18 +634,18 @@ namespace SocketIOClient
         {
             while (!_pingTokenSorce.IsCancellationRequested)
             {
-                await Task.Delay(_pingInterval);
+                await Task.Delay(_pingInterval).ConfigureAwait(false);
                 if (Connected)
                 {
                     try
                     {
                         _pingTime = DateTime.Now;
-                        await Socket.SendMessageAsync("2");
+                        await Socket.SendMessageAsync("2").ConfigureAwait(false);
                         OnPing?.Invoke(this, EventArgs.Empty);
                     }
                     catch (WebSocketException e)
                     {
-                        await InvokeDisconnectAsync(e.Message);
+                        await InvokeDisconnectAsync(e.Message).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
