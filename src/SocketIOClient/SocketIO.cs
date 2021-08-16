@@ -210,6 +210,10 @@ namespace SocketIOClient
                 {
                     if (e is TimeoutException || e is WebSocketException)
                     {
+                        if (!Options.Reconnection)
+                        {
+                            throw;
+                        }
                         if (Attempts > 0)
                         {
                             OnReconnectError?.Invoke(this, e);
