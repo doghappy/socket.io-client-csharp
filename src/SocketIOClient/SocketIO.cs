@@ -206,29 +206,36 @@ namespace SocketIOClient
                     await Socket.ConnectAsync(wsUri).ConfigureAwait(false);
                     break;
                 }
-                catch (SystemException e) when ((e is TimeoutException || e is WebSocketException) && Options.Reconnection)
+                catch (SystemException e)
                 {
-                    if (Attempts > 0)
+                    if (e is TimeoutException || e is WebSocketException)
                     {
-                        OnReconnectError?.Invoke(this, e);
-                    }
-                    Attempts++;
-                    if (Attempts <= Options.ReconnectionAttempts)
-                    {
-                        if (_reconnectionDelay < Options.ReconnectionDelayMax)
+                        if (Attempts > 0)
                         {
-                            _reconnectionDelay += 2 * Options.RandomizationFactor;
+                            OnReconnectError?.Invoke(this, e);
                         }
-                        if (_reconnectionDelay > Options.ReconnectionDelayMax)
+                        Attempts++;
+                        if (Attempts <= Options.ReconnectionAttempts)
                         {
-                            _reconnectionDelay = Options.ReconnectionDelayMax;
+                            if (_reconnectionDelay < Options.ReconnectionDelayMax)
+                            {
+                                _reconnectionDelay += 2 * Options.RandomizationFactor;
+                            }
+                            if (_reconnectionDelay > Options.ReconnectionDelayMax)
+                            {
+                                _reconnectionDelay = Options.ReconnectionDelayMax;
+                            }
+                            await Task.Delay((int)_reconnectionDelay).ConfigureAwait(false);
                         }
-                        await Task.Delay((int)_reconnectionDelay).ConfigureAwait(false);
+                        else
+                        {
+                            OnReconnectFailed?.Invoke(this, EventArgs.Empty);
+                            break;
+                        }
                     }
                     else
                     {
-                        OnReconnectFailed?.Invoke(this, EventArgs.Empty);
-                        break;
+                        throw;
                     }
                 }
             }
