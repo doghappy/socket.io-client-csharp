@@ -176,5 +176,52 @@ namespace SocketIOClient.UnitTest.SocketIOTests
             Assert.AreEqual(1, list.Count);
             Assert.AreEqual("OnReconnectAttempt", list[0]);
         }
+
+        [TestMethod]
+        public async Task ReconnectionFalse()
+        {
+            using var io = new SocketIO("http://example.com");
+            var list = new List<string>();
+            bool isThrow = false;
+
+            var mockSocket = new Mock<IWebSocketClient>();
+            mockSocket.SetupSequence(x => x.ConnectAsync(It.IsAny<Uri>()))
+                .Throws(new WebSocketException())
+                .Returns(Task.CompletedTask);
+
+            var mockReconnectAttemp = new Mock<EventHandler<int>>();
+            mockReconnectAttemp.Setup(x => x(io, It.IsAny<int>())).Callback(() => list.Add("OnReconnectAttempt"));
+
+            var mockReconnectError = new Mock<EventHandler<Exception>>();
+            mockReconnectError.Setup(x => x(io, It.IsAny<Exception>())).Callback(() => list.Add("OnReconnectError"));
+
+            var mockReconnectFaild = new Mock<EventHandler>();
+            mockReconnectFaild.Setup(x => x(io, It.IsAny<EventArgs>())).Callback(() => list.Add("OnReconnectFailed"));
+
+            io.Options.Reconnection = false;
+            io.Options.ReconnectionAttempts = 2;
+            io.Socket = mockSocket.Object;
+            io.OnReconnectAttempt += mockReconnectAttemp.Object;
+            io.OnReconnectError += mockReconnectError.Object;
+            io.OnReconnectFailed += mockReconnectFaild.Object;
+
+            try
+            {
+                await io.ConnectAsync();
+            }
+            catch (WebSocketException)
+            {
+                isThrow = true;
+            }
+
+            Assert.IsTrue(isThrow);
+            mockSocket.Verify(x => x.ConnectAsync(It.IsAny<Uri>()), Times.Once());
+            mockReconnectAttemp.Verify(x => x(io, It.IsAny<int>()), Times.Never());
+            mockReconnectError.Verify(x => x(io, It.IsAny<WebSocketException>()), Times.Never());
+            mockReconnectFaild.Verify(x => x(io, It.IsAny<EventArgs>()), Times.Never());
+
+            Assert.AreEqual(0, list.Count);
+            //Assert.AreEqual("OnReconnectAttempt", list[0]);
+        }
     }
 }
