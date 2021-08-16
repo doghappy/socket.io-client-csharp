@@ -151,81 +151,91 @@ namespace SocketIOClient.Windows7
 
         private async Task ListenAsync(CancellationToken cancellationToken)
         {
-            while (true)
+            try
             {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-                var buffer = new byte[ReceiveChunkSize];
-                int count = 0;
-                WebSocketReceiveResult result = null;
-                while (_ws.State == WebSocketState.Open)
+                while (true)
                 {
-                    try
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+                    var buffer = new byte[ReceiveChunkSize];
+                    int count = 0;
+                    WebSocketReceiveResult result = null;
+                    while (_ws.State == WebSocketState.Open)
                     {
-                        if (cancellationToken.IsCancellationRequested)
-                            break;
-                        var subBuffer = new byte[ReceiveChunkSize];
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken);
-                        if (result.MessageType == WebSocketMessageType.Close)
+                        try
                         {
-                            OnClosed("io server disconnect");
-                            break;
-                        }
-                        else if (result.MessageType == WebSocketMessageType.Text || result.MessageType == WebSocketMessageType.Binary)
-                        {
-                            if (buffer.Length - count < result.Count)
+                            if (cancellationToken.IsCancellationRequested)
+                                break;
+                            var subBuffer = new byte[ReceiveChunkSize];
+                            result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken);
+                            if (result.MessageType == WebSocketMessageType.Close)
                             {
-                                Array.Resize(ref buffer, buffer.Length + result.Count);
+                                OnClosed("io server disconnect");
+                                break;
                             }
-                            Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
-                            count += result.Count;
+                            else if (result.MessageType == WebSocketMessageType.Text || result.MessageType == WebSocketMessageType.Binary)
+                            {
+                                if (buffer.Length - count < result.Count)
+                                {
+                                    Array.Resize(ref buffer, buffer.Length + result.Count);
+                                }
+                                Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
+                                count += result.Count;
+                            }
+                            if (result.EndOfMessage)
+                            {
+                                break;
+                            }
                         }
-                        if (result.EndOfMessage)
+                        catch (WebSocketException e)
                         {
+                            OnClosed(e.Message);
                             break;
                         }
                     }
-                    catch (WebSocketException e)
+                    if (result == null)
                     {
-                        OnClosed(e.Message);
                         break;
                     }
-                }
-                if (result == null)
-                {
-                    break;
-                }
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, count);
-#if DEBUG
-                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
-#endif
-                    if (OnTextReceived is null)
+                    if (result.MessageType == WebSocketMessageType.Text)
                     {
-                        throw new ArgumentNullException(nameof(OnTextReceived));
-                    }
-                    OnTextReceived(message);
-                }
-                else if (result.MessageType == WebSocketMessageType.Binary)
-                {
+                        string message = Encoding.UTF8.GetString(buffer, 0, count);
 #if DEBUG
-                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
+                        System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
-                    if (OnTextReceived is null)
-                    {
-                        throw new ArgumentNullException(nameof(OnTextReceived));
+                        if (OnTextReceived is null)
+                        {
+                            throw new ArgumentNullException(nameof(OnTextReceived));
+                        }
+                        OnTextReceived(message);
                     }
-                    byte[] bytes = new byte[count];
-                    Buffer.BlockCopy(buffer, 0, bytes, 0, count);
-                    OnBinaryReceived(bytes);
+                    else if (result.MessageType == WebSocketMessageType.Binary)
+                    {
+#if DEBUG
+                        System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
+#endif
+                        if (OnTextReceived is null)
+                        {
+                            throw new ArgumentNullException(nameof(OnTextReceived));
+                        }
+                        byte[] bytes = new byte[count];
+                        Buffer.BlockCopy(buffer, 0, bytes, 0, count);
+                        OnBinaryReceived(bytes);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.WriteLine(ex.Message);
+                OnError?.Invoke(ex.Message);
+                throw;
             }
         }
 
         public Action<string> OnTextReceived { get; set; }
         public Action<byte[]> OnBinaryReceived { get; set; }
         public Action<string> OnClosed { get; set; }
+        public Action<string> OnError { get; set; }
 
         private void DisposeWebSocketIfNotNull()
         {

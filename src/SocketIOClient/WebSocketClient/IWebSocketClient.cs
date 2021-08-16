@@ -16,5 +16,6 @@ namespace SocketIOClient.WebSocketClient
         Action<string> OnTextReceived { get; set; }
         Action<byte[]> OnBinaryReceived { get; set; }
         Action<string> OnClosed { get; set; }
+        Action<string> OnError { get; set; }
     }
 }
