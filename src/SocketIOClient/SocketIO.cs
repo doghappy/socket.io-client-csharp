@@ -93,7 +93,6 @@ namespace SocketIOClient
                     value.OnTextReceived = OnTextReceived;
                     value.OnBinaryReceived = OnBinaryReceived;
                     value.OnClosed = OnClosed;
-                    value.OnError = ErrorHandler;
                     value.ConnectionTimeout = Options.ConnectionTimeout;
                 }
             }
