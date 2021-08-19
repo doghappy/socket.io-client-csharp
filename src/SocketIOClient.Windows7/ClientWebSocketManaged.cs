@@ -201,10 +201,6 @@ namespace SocketIOClient.Windows7
 #if DEBUG
                     System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
 #endif
-                    if (OnTextReceived is null)
-                    {
-                        throw new ArgumentNullException(nameof(OnTextReceived));
-                    }
                     OnTextReceived(message);
                 }
                 else if (result.MessageType == WebSocketMessageType.Binary)
@@ -212,10 +208,6 @@ namespace SocketIOClient.Windows7
 #if DEBUG
                     System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
 #endif
-                    if (OnTextReceived is null)
-                    {
-                        throw new ArgumentNullException(nameof(OnTextReceived));
-                    }
                     byte[] bytes = new byte[count];
                     Buffer.BlockCopy(buffer, 0, bytes, 0, count);
                     OnBinaryReceived(bytes);
