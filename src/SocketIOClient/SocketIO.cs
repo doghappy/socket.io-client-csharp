@@ -442,49 +442,63 @@ namespace SocketIOClient
 
         private void OnTextReceived(string message)
         {
-            MessageProcessor.Process(new MessageContext
+            try
             {
-                Message = message,
-                Namespace = Namespace,
-                EioHandler = Options.EioHandler,
-                OpenedHandler = OpenedHandler,
-                ConnectedHandler = ConnectedHandler,
-                AckHandler = AckHandler,
-                BinaryAckHandler = BinaryAckHandler,
-                BinaryReceivedHandler = BinaryReceivedHandler,
-                DisconnectedHandler = DisconnectedHandler,
-                ErrorHandler = ErrorHandler,
-                EventReceivedHandler = EventReceivedHandler,
-                PingHandler = PingHandler,
-                PongHandler = PongHandler,
-            });
+                MessageProcessor.Process(new MessageContext
+                {
+                    Message = message,
+                    Namespace = Namespace,
+                    EioHandler = Options.EioHandler,
+                    OpenedHandler = OpenedHandler,
+                    ConnectedHandler = ConnectedHandler,
+                    AckHandler = AckHandler,
+                    BinaryAckHandler = BinaryAckHandler,
+                    BinaryReceivedHandler = BinaryReceivedHandler,
+                    DisconnectedHandler = DisconnectedHandler,
+                    ErrorHandler = ErrorHandler,
+                    EventReceivedHandler = EventReceivedHandler,
+                    PingHandler = PingHandler,
+                    PongHandler = PongHandler,
+                });
+            }
+            catch (Exception e)
+            {
+                ErrorHandler(e.Message);
+            }
         }
 
         private void OnBinaryReceived(byte[] bytes)
         {
-            var buffer = Options.EioHandler.GetBytes(bytes);
-
-            if (_lowLevelEvents.Count > 0)
+            try
             {
-                var e = _lowLevelEvents.Peek();
-                e.Response.InComingBytes.Add(buffer);
-                if (e.Response.InComingBytes.Count == e.Count)
+                var buffer = Options.EioHandler.GetBytes(bytes);
+
+                if (_lowLevelEvents.Count > 0)
                 {
-                    if (e.PacketId == -1)
+                    var e = _lowLevelEvents.Peek();
+                    e.Response.InComingBytes.Add(buffer);
+                    if (e.Response.InComingBytes.Count == e.Count)
                     {
-                        foreach (var item in _onAnyHandlers)
+                        if (e.PacketId == -1)
                         {
-                            item(e.Event, e.Response);
+                            foreach (var item in _onAnyHandlers)
+                            {
+                                item(e.Event, e.Response);
+                            }
+                            _eventHandlers[e.Event](e.Response);
                         }
-                        _eventHandlers[e.Event](e.Response);
+                        else
+                        {
+                            _ackHandlers[e.PacketId](e.Response);
+                            _ackHandlers.Remove(e.PacketId);
+                        }
+                        _lowLevelEvents.Dequeue();
                     }
-                    else
-                    {
-                        _ackHandlers[e.PacketId](e.Response);
-                        _ackHandlers.Remove(e.PacketId);
-                    }
-                    _lowLevelEvents.Dequeue();
                 }
+            }
+            catch (Exception e)
+            {
+                ErrorHandler(e.ToString());
             }
         }
 
