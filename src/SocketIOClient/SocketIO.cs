@@ -184,6 +184,7 @@ namespace SocketIOClient
             Disconnected = true;
             JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
             _connectionTokenSorce = new CancellationTokenSource();
+            _pingInterval = 5000;
         }
 
         public async Task ConnectAsync()
