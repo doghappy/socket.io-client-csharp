@@ -11,7 +11,7 @@ namespace SocketIOClient.EioHandler
             var builder = new StringBuilder();
             builder.Append("40");
 
-            if (@namespace != null)
+            if (!SocketIO.IsNamespaceDefault(@namespace))
             {
                 builder.Append(@namespace);
             }
@@ -32,7 +32,7 @@ namespace SocketIOClient.EioHandler
                     }
                 }
             }
-            if (@namespace != null)
+            if (!SocketIO.IsNamespaceDefault(@namespace))
             {
                 builder.Append(',');
             }
@@ -42,7 +42,7 @@ namespace SocketIOClient.EioHandler
         public ConnectionResult CheckConnection(string @namespace, string text)
         {
             var result = new ConnectionResult();
-            if (string.IsNullOrEmpty(@namespace))
+            if (SocketIO.IsNamespaceDefault(@namespace))
             {
                 result.Result = text == string.Empty;
             }
