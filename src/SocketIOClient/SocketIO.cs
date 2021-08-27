@@ -186,6 +186,11 @@ namespace SocketIOClient
             _connectionTokenSorce = new CancellationTokenSource();
         }
 
+        internal static bool IsNamespaceDefault(string @namespace)
+        {
+            return string.IsNullOrEmpty(@namespace) || @namespace.Equals("/");
+        }
+
         public async Task ConnectAsync()
         {
             Uri wsUri = UrlConverter.HttpToWs(ServerUri, Options);
@@ -251,7 +256,8 @@ namespace SocketIOClient
             {
                 try
                 {
-                    await Socket.SendMessageAsync("41" + Namespace + ',').ConfigureAwait(false);
+                    var message = IsNamespaceDefault(Namespace) ? "41" : $"41{Namespace},";
+                    await Socket.SendMessageAsync(message).ConfigureAwait(false);
                 }
                 catch (Exception ex) { Trace.WriteLine(ex.Message); }
                 try
@@ -329,7 +335,7 @@ namespace SocketIOClient
                 builder.Append("45").Append(_outGoingBytes.Count).Append("-");
             else
                 builder.Append("42");
-            if (Namespace != null)
+            if (!IsNamespaceDefault(Namespace))
             {
                 builder.Append(Namespace).Append(',');
             }
@@ -371,7 +377,7 @@ namespace SocketIOClient
                 builder.Append("46").Append(_outGoingBytes.Count).Append("-");
             else
                 builder.Append("43");
-            if (Namespace != null)
+            if (!IsNamespaceDefault(Namespace))
                 builder.Append(Namespace).Append(',');
             builder
                 .Append(packetId)
