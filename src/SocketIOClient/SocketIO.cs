@@ -324,7 +324,7 @@ namespace SocketIOClient
                 .Where(x => x.Key == '0')
                 .SelectMany(x => x)
                 .Select(x => x.Text)
-                .Select(x => string.IsNullOrEmpty(Namespace) ? x : x.Substring(Namespace.Length))
+                .RemoveNamespace(Namespace)
                 .Select(x => JsonDocument.Parse(x).RootElement.GetProperty("sid").GetString())
                 .Subscribe(x =>
                 {
@@ -334,27 +334,42 @@ namespace SocketIOClient
                 });
 
             // socket.io event
-            sioObservable
+            var eventObservable = sioObservable
                 .Where(x => x.Key == '2')
                 .SelectMany(x => x)
                 .Select(x => x.Text)
-                .Log("0")
-                .Select(x => string.IsNullOrEmpty(Namespace) ? x : x.Substring(Namespace.Length))
+                .RemoveNamespace(Namespace)
                 .Select(x => JsonDocument.Parse(x).RootElement.EnumerateArray().ToList())
-                .Select(x => new
+                .Select(x => new SocketIOMessage
                 {
                     Event = x[0].GetString(),
                     JsonElements = x
                 })
-                .Do(x => x.JsonElements.RemoveAt(0))
+                .Do(x => x.JsonElements.RemoveAt(0));
+
+            eventObservable
                 .Subscribe(x =>
                 {
-                    Console.WriteLine(x.Event);
-                    foreach (var item in x.JsonElements)
+                    var response = new SocketIOResponse(x.JsonElements, this);
+                    foreach (var item in _onAnyHandlers)
                     {
-                        Console.WriteLine(item);
+                        item(x.Event, response);
+                    }
+                    if (_eventHandlers.ContainsKey(x.Event))
+                    {
+                        _eventHandlers[x.Event](response);
                     }
                 });
+
+            //.Subscribe(x =>
+            //{
+            //    Console.WriteLine(x.Event);
+            //    foreach (var item in x.JsonElements)
+            //    {
+            //        Console.WriteLine(item);
+            //    }
+            //    _eventHandlers
+            //});
             //observable
             //    .Where(msg => msg.Type == WebSocketMessageType.Text)
             //    .Subscribe(msg => OnTextReceived(msg.Text));
@@ -491,29 +506,32 @@ namespace SocketIOClient
 
         internal async Task EmitCallbackAsync(int packetId, params object[] data)
         {
-            string dataString = GetDataString(data);
-
-            var builder = new StringBuilder();
-            if (_outGoingBytes.Count > 0)
-                builder.Append("46").Append(_outGoingBytes.Count).Append("-");
-            else
-                builder.Append("43");
-            if (!IsNamespaceDefault(Namespace))
-                builder.Append(Namespace).Append(',');
-            builder
-                .Append(packetId)
-                .Append("[")
-                .Append(dataString)
-                .Append("]");
-            string message = builder.ToString();
-            await Socket.SendAsync(message, CancellationToken.None).ConfigureAwait(false);
-            if (_outGoingBytes.Count > 0)
+            if (packetId > -1)
             {
-                foreach (var item in _outGoingBytes)
+                string dataString = GetDataString(data);
+
+                var builder = new StringBuilder();
+                if (_outGoingBytes.Count > 0)
+                    builder.Append("46").Append(_outGoingBytes.Count).Append("-");
+                else
+                    builder.Append("43");
+                if (!IsNamespaceDefault(Namespace))
+                    builder.Append(Namespace).Append(',');
+                builder
+                    .Append(packetId)
+                    .Append("[")
+                    .Append(dataString)
+                    .Append("]");
+                string message = builder.ToString();
+                await Socket.SendAsync(message, CancellationToken.None).ConfigureAwait(false);
+                if (_outGoingBytes.Count > 0)
                 {
-                    await Socket.SendAsync(item, CancellationToken.None).ConfigureAwait(false);
+                    foreach (var item in _outGoingBytes)
+                    {
+                        await Socket.SendAsync(item, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    _outGoingBytes.Clear();
                 }
-                _outGoingBytes.Clear();
             }
         }
 

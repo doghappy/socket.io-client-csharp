@@ -11,6 +11,7 @@ namespace SocketIOClient.Sample
     {
         static async Task Main(string[] args)
         {
+            var sio = new SocketIO();
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
@@ -44,6 +45,15 @@ namespace SocketIOClient.Sample
             socket.OnPong += Socket_OnPong;
             socket.OnDisconnected += Socket_OnDisconnected;
             socket.OnReconnectAttempt += Socket_OnReconnecting;
+            socket.OnAny((name, response) =>
+            {
+                Console.WriteLine(name);
+                Console.WriteLine(response);
+            });
+            socket.On("hi", response =>
+            {
+                Console.WriteLine(response.GetValue<string>());
+            });
 
             //Console.WriteLine("Press any key to continue");
             //Console.ReadLine();

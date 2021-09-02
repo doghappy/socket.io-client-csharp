@@ -122,9 +122,9 @@ namespace SocketIOClient.WebSocketClient
             return await TrySendAsync(bytes, cancellationToken);
         }
 
-        public IConnectableObservable<Message> Listen()
+        public IConnectableObservable<WebSocketMessage> Listen()
         {
-            return Observable.Create<Message>(async observer =>
+            return Observable.Create<WebSocketMessage>(async observer =>
             {
                 Console.WriteLine("Create Observable");
                 while (true)
@@ -170,7 +170,7 @@ namespace SocketIOClient.WebSocketClient
                         }
                         else
                         {
-                            var message = new Message
+                            var message = new WebSocketMessage
                             {
                                 Type = result.MessageType
                             };

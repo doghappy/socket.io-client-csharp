@@ -28,7 +28,7 @@ namespace SocketIOClient.WebSocketClient
 
         Task<bool> TryDisconnectAsync(CancellationToken cancellationToken);
 
-        IConnectableObservable<Message> Listen();
+        IConnectableObservable<WebSocketMessage> Listen();
 
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="ObjectDisposedException"></exception>

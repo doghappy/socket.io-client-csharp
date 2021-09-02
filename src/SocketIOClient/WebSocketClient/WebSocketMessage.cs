@@ -2,7 +2,7 @@
 
 namespace SocketIOClient.WebSocketClient
 {
-    public class Message
+    public class WebSocketMessage
     {
         public WebSocketMessageType Type { get; set; }
         public string Text { get; set; }

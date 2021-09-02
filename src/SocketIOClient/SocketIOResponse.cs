@@ -12,6 +12,7 @@ namespace SocketIOClient
             _array = array;
             InComingBytes = new List<byte[]>();
             SocketIO = socket;
+            PacketId = -1;
         }
 
         readonly IList<JsonElement> _array;

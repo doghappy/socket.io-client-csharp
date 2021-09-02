@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 
 namespace SocketIOClient
 {
@@ -16,6 +18,11 @@ namespace SocketIOClient
                 },
                 () => Console.WriteLine($"{name} - OnCompleted()")
             );
+        }
+
+        internal static IObservable<string> RemoveNamespace(this IObservable<string> observable, string ns)
+        {
+            return observable.Select(x => string.IsNullOrEmpty(ns) ? x : x.Substring(ns.Length));
         }
     }
 }
