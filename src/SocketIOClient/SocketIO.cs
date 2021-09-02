@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.WebSockets;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -90,9 +94,6 @@ namespace SocketIOClient
                 if (_socket != value)
                 {
                     _socket = value;
-                    value.OnTextReceived = OnTextReceived;
-                    value.OnBinaryReceived = OnBinaryReceived;
-                    value.OnClosed = OnClosed;
                     value.ConnectionTimeout = Options.ConnectionTimeout;
                 }
             }
@@ -120,11 +121,13 @@ namespace SocketIOClient
         /// <summary>
         /// Whether or not the socket is disconnected from the server.
         /// </summary>
-        public bool Disconnected { get; private set; }
+        public bool Disconnected => !Connected;
 
         public SocketIOOptions Options { get; }
 
         public IJsonSerializer JsonSerializer { get; set; }
+
+        public IObservable<SocketIOResponse> OnReceived { get; private set; }
 
         int _packetId;
         List<byte[]> _outGoingBytes;
@@ -137,6 +140,9 @@ namespace SocketIOClient
         DateTime _pingTime;
         int _pingInterval;
         double _reconnectionDelay;
+        Subject<Unit> _disconnectSubject;
+        Subject<SocketIOResponse> _onReceivedSubject;
+        HandshakeInfo _handshakeInfo;
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -169,10 +175,15 @@ namespace SocketIOClient
 
         #endregion
 
+        #region Observable Event
+        Subject<Unit> _onConnected;
+        public IObservable<Unit> ConnectedObservable { get; private set; }
+        #endregion
+
         private void Initialize()
         {
             UrlConverter = new UrlConverter();
-            Socket = new WebSocketClient.ClientWebSocket();
+            Socket = new RxWebSocketClient();
             MessageProcessor = new EngineIOProtocolProcessor();
             _packetId = -1;
             _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
@@ -181,14 +192,23 @@ namespace SocketIOClient
             _onAnyHandlers = new List<OnAnyHandler>();
             _lowLevelEvents = new Queue<LowLevelEvent>();
 
-            Disconnected = true;
             JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
             _connectionTokenSorce = new CancellationTokenSource();
+            _disconnectSubject = new Subject<Unit>();
+            _onReceivedSubject = new Subject<SocketIOResponse>();
+            OnReceived = _onReceivedSubject.AsObservable();
+            _onConnected = new Subject<Unit>();
+            ConnectedObservable = _onConnected.AsObservable();
         }
 
         internal static bool IsNamespaceDefault(string @namespace)
         {
             return string.IsNullOrEmpty(@namespace) || @namespace.Equals("/");
+        }
+
+        public bool IsDefaultNamespace()
+        {
+            return string.IsNullOrEmpty(Namespace) || Namespace.Equals("/");
         }
 
         public async Task ConnectAsync()
@@ -209,6 +229,7 @@ namespace SocketIOClient
                         OnReconnectAttempt?.Invoke(this, Attempts);
                     }
                     await Socket.ConnectAsync(wsUri).ConfigureAwait(false);
+                    Listen();
                     break;
                 }
                 catch (SystemException e)
@@ -252,24 +273,122 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            if (Connected && !Disconnected)
+            if (Connected)
             {
-                try
-                {
-                    var message = IsNamespaceDefault(Namespace) ? "41" : $"41{Namespace},";
-                    await Socket.SendMessageAsync(message).ConfigureAwait(false);
-                }
-                catch (Exception ex) { Trace.WriteLine(ex.Message); }
-                try
-                {
-                    await Socket.DisconnectAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine(ex.Message);
-                    await InvokeDisconnectAsync("io client disconnect").ConfigureAwait(false);
-                }
+                var message = IsNamespaceDefault(Namespace) ? "41" : $"41{Namespace},";
+                await Socket.TrySendAsync(message, CancellationToken.None).ConfigureAwait(false);
+                await Socket.TryDisconnectAsync(CancellationToken.None).ConfigureAwait(false);
+                _disconnectSubject.OnNext(Unit.Default);
             }
+        }
+
+        private void Listen()
+        {
+            var observable = Socket.Listen();
+
+            var textObservable = observable.Where(msg => msg.Type == WebSocketMessageType.Text);
+
+            var eioObservable = textObservable
+                .Select(x => x.Text)
+                .Where(x => !string.IsNullOrEmpty(x))
+                .Select(x => new
+                {
+                    Text = x.Substring(1, x.Length - 1),
+                    Eio = x[0]
+                })
+                .GroupBy(x => x.Eio);
+
+            // Handshake Info
+            eioObservable
+                .Where(x => x.Key == '0')
+                .SelectMany(x => x)
+                .Select(x => System.Text.Json.JsonSerializer.Deserialize<HandshakeInfo>(x.Text))
+                .Subscribe(async x =>
+                {
+                    _handshakeInfo = x;
+                    await Socket.SendAsync("40" + Namespace, CancellationToken.None);
+                });
+
+            var sioObservable = eioObservable
+               .Where(x => x.Key == '4')
+               .SelectMany(x => x)
+               .Select(x => new
+               {
+                   Sio = x.Text[0],
+                   Text = x.Text.Substring(1, x.Text.Length - 1)
+               })
+              .GroupBy(x => x.Sio);
+
+            // EIO v3 resolve sid
+            sioObservable
+                .Where(x => x.Key == '0')
+                .SelectMany(x => x)
+                .Select(x => x.Text)
+                .Select(x => string.IsNullOrEmpty(Namespace) ? x : x.Substring(Namespace.Length))
+                .Select(x => JsonDocument.Parse(x).RootElement.GetProperty("sid").GetString())
+                .Subscribe(x =>
+                {
+                    Id = x;
+                    OnConnected?.Invoke(this, EventArgs.Empty);
+                    _onConnected.OnNext(Unit.Default);
+                });
+
+            // socket.io event
+            sioObservable
+                .Where(x => x.Key == '2')
+                .SelectMany(x => x)
+                .Select(x => x.Text)
+                .Log("0")
+                .Select(x => string.IsNullOrEmpty(Namespace) ? x : x.Substring(Namespace.Length))
+                .Select(x => JsonDocument.Parse(x).RootElement.EnumerateArray().ToList())
+                .Select(x => new
+                {
+                    Event = x[0].GetString(),
+                    JsonElements = x
+                })
+                .Do(x => x.JsonElements.RemoveAt(0))
+                .Subscribe(x =>
+                {
+                    Console.WriteLine(x.Event);
+                    foreach (var item in x.JsonElements)
+                    {
+                        Console.WriteLine(item);
+                    }
+                });
+            //observable
+            //    .Where(msg => msg.Type == WebSocketMessageType.Text)
+            //    .Subscribe(msg => OnTextReceived(msg.Text));
+            //observable
+            //    .Where(msg => msg.Type == WebSocketMessageType.Binary)
+            //    .Subscribe(msg => OnBinaryReceived(msg.Binary));
+            observable
+                .Where(msg => msg.Type == WebSocketMessageType.Close)
+                .Select(msg => "io server disconnect")
+                .Merge(Socket.OnAborted.Select(msg => "transport close"))
+                .Merge(_disconnectSubject.Select(msg => "io client disconnect"))
+                .Synchronize()
+                .Subscribe(reason =>
+                {
+                    if (Connected)
+                    {
+                        Connected = false;
+                        if (Options.EIO == 3)
+                        {
+                            _pingTokenSorce.Cancel();
+                        }
+                        OnDisconnected?.Invoke(this, reason);
+                        if (reason != "io server disconnect" && reason != "io client disconnect")
+                        {
+                            //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
+                            if (Options.Reconnection)
+                            {
+                                _ = ConnectAsync().ConfigureAwait(false);
+                            }
+                        }
+                    }
+                });
+
+            observable.Connect();
         }
 
         /// <summary>
@@ -285,6 +404,8 @@ namespace SocketIOClient
             }
             _eventHandlers.Add(eventName, callback);
         }
+
+
 
         /// <summary>
         /// Unregister a new handler for the given event.
@@ -352,12 +473,12 @@ namespace SocketIOClient
             string message = builder.ToString();
             try
             {
-                await Socket.SendMessageAsync(message, cancellationToken).ConfigureAwait(false);
+                await Socket.SendAsync(message, cancellationToken).ConfigureAwait(false);
                 if (_outGoingBytes.Count > 0)
                 {
                     foreach (var item in _outGoingBytes)
                     {
-                        await Socket.SendMessageAsync(item, cancellationToken).ConfigureAwait(false);
+                        await Socket.SendAsync(item, cancellationToken).ConfigureAwait(false);
                     }
                     _outGoingBytes.Clear();
                 }
@@ -385,12 +506,12 @@ namespace SocketIOClient
                 .Append(dataString)
                 .Append("]");
             string message = builder.ToString();
-            await Socket.SendMessageAsync(message).ConfigureAwait(false);
+            await Socket.SendAsync(message, CancellationToken.None).ConfigureAwait(false);
             if (_outGoingBytes.Count > 0)
             {
                 foreach (var item in _outGoingBytes)
                 {
-                    await Socket.SendMessageAsync(item).ConfigureAwait(false);
+                    await Socket.SendAsync(item, CancellationToken.None).ConfigureAwait(false);
                 }
                 _outGoingBytes.Clear();
             }
@@ -448,29 +569,22 @@ namespace SocketIOClient
 
         private void OnTextReceived(string message)
         {
-            try
+            MessageProcessor.Process(new MessageContext
             {
-                MessageProcessor.Process(new MessageContext
-                {
-                    Message = message,
-                    Namespace = Namespace,
-                    EioHandler = Options.EioHandler,
-                    OpenedHandler = OpenedHandler,
-                    ConnectedHandler = ConnectedHandler,
-                    AckHandler = AckHandler,
-                    BinaryAckHandler = BinaryAckHandler,
-                    BinaryReceivedHandler = BinaryReceivedHandler,
-                    DisconnectedHandler = DisconnectedHandler,
-                    ErrorHandler = ErrorHandler,
-                    EventReceivedHandler = EventReceivedHandler,
-                    PingHandler = PingHandler,
-                    PongHandler = PongHandler,
-                });
-            }
-            catch (Exception e)
-            {
-                ErrorHandler(e.Message);
-            }
+                Message = message,
+                Namespace = Namespace,
+                EioHandler = Options.EioHandler,
+                OpenedHandler = OpenedHandler,
+                ConnectedHandler = ConnectedHandler,
+                AckHandler = AckHandler,
+                BinaryAckHandler = BinaryAckHandler,
+                BinaryReceivedHandler = BinaryReceivedHandler,
+                DisconnectedHandler = DisconnectedHandler,
+                ErrorHandler = ErrorHandler,
+                EventReceivedHandler = EventReceivedHandler,
+                PingHandler = PingHandler,
+                PongHandler = PongHandler,
+            });
         }
 
         private void OnBinaryReceived(byte[] bytes)
@@ -508,17 +622,12 @@ namespace SocketIOClient
             }
         }
 
-        private async void OnClosed(string reason)
-        {
-            await InvokeDisconnectAsync(reason).ConfigureAwait(false);
-        }
-
         private async void OpenedHandler(string sid, int pingInterval, int pingTimeout)
         {
             Id = sid;
             _pingInterval = pingInterval;
             string msg = Options.EioHandler.CreateConnectionMessage(Namespace, Options.Query);
-            await Socket.SendMessageAsync(msg).ConfigureAwait(false);
+            await Socket.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
         }
 
         private void ConnectedHandler(ConnectionResult result)
@@ -526,7 +635,6 @@ namespace SocketIOClient
             if (result.Result)
             {
                 Connected = true;
-                Disconnected = false;
                 OnReconnected?.Invoke(this, Attempts);
                 Attempts = 1;
 
@@ -613,7 +721,7 @@ namespace SocketIOClient
             {
                 OnPing?.Invoke(this, EventArgs.Empty);
                 DateTime pingTime = DateTime.Now;
-                await Socket.SendMessageAsync("3").ConfigureAwait(false);
+                await Socket.SendAsync("3", CancellationToken.None).ConfigureAwait(false);
                 OnPong?.Invoke(this, DateTime.Now - pingTime);
             }
             catch (WebSocketException e)
@@ -637,7 +745,6 @@ namespace SocketIOClient
             if (Connected)
             {
                 Connected = false;
-                Disconnected = true;
                 if (Options.EIO == 3)
                 {
                     _pingTokenSorce.Cancel();
@@ -664,7 +771,7 @@ namespace SocketIOClient
                     try
                     {
                         _pingTime = DateTime.Now;
-                        await Socket.SendMessageAsync("2").ConfigureAwait(false);
+                        await Socket.SendAsync("2", CancellationToken.None).ConfigureAwait(false);
                         OnPing?.Invoke(this, EventArgs.Empty);
                     }
                     catch (WebSocketException e)

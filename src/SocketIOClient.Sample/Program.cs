@@ -14,7 +14,7 @@ namespace SocketIOClient.Sample
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            var uri = new Uri("http://localhost:11003");
+            var uri = new Uri("http://localhost:11003/");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
@@ -49,6 +49,8 @@ namespace SocketIOClient.Sample
             //Console.ReadLine();
 
             await socket.ConnectAsync();
+
+            socket.ConnectedObservable.Subscribe(_ => Console.WriteLine("ConnectedObservable"));
 
             Console.ReadLine();
         }

@@ -1,20 +1,49 @@
 ﻿using System;
+using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net.WebSockets;
+using System.Reactive.Subjects;
 
 namespace SocketIOClient.WebSocketClient
 {
     public interface IWebSocketClient : IDisposable
     {
+        int ReceiveChunkSize { get; set; }
+
+        int SendChunkSize { get; set; }
+
         TimeSpan ConnectionTimeout { get; set; }
+
+        TimeSpan ReceiveWait { get; set; }
+
+        IObservable<Exception> OnListenError { get; }
+
+        IObservable<Unit> OnAborted { get; }
+
+        /// <exception cref="WebSocketException"></exception>
         Task ConnectAsync(Uri uri);
-        Task SendMessageAsync(string text);
-        Task SendMessageAsync(string text, CancellationToken cancellationToken);
-        Task SendMessageAsync(byte[] bytes);
-        Task SendMessageAsync(byte[] bytes, CancellationToken cancellationToken);
-        Task DisconnectAsync();
-        Action<string> OnTextReceived { get; set; }
-        Action<byte[]> OnBinaryReceived { get; set; }
-        Action<string> OnClosed { get; set; }
+
+        Task DisconnectAsync(CancellationToken cancellationToken);
+
+        Task<bool> TryDisconnectAsync(CancellationToken cancellationToken);
+
+        IConnectableObservable<Message> Listen();
+
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ObjectDisposedException"></exception>
+        /// <exception cref="WebSocketException"></exception>
+        /// <exception cref="TaskCanceledException"></exception>
+        Task SendAsync(byte[] bytes, CancellationToken cancellationToken);
+
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="ObjectDisposedException"></exception>
+        /// <exception cref="WebSocketException"></exception>
+        /// <exception cref="TaskCanceledException"></exception>
+        Task SendAsync(string text, CancellationToken cancellationToken);
+
+        Task<bool> TrySendAsync(byte[] bytes, CancellationToken cancellationToken);
+
+        Task<bool> TrySendAsync(string text, CancellationToken cancellationToken);
     }
 }
