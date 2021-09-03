@@ -34,6 +34,7 @@ io.on('connection', socket => {
     });
 
     socket.on("1 params", p1 => {
+        console.log(p1.toString())
         socket.emit("1 params", p1);
     });
 

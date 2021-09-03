@@ -19,7 +19,7 @@ namespace SocketIOClient.Newtonsoft.Json
         public JsonSerializeResult Serialize(object[] data)
         {
             var converter = new ByteArrayConverter(eio);
-            var settings = CreateOptions();
+            var settings = GetOptions();
             settings.Converters.Add(converter);
             string json = JsonConvert.SerializeObject(data, settings);
             return new JsonSerializeResult
@@ -31,7 +31,7 @@ namespace SocketIOClient.Newtonsoft.Json
 
         public T Deserialize<T>(string json)
         {
-            var settings = CreateOptions();
+            var settings = GetOptions();
             return JsonConvert.DeserializeObject<T>(json, settings);
         }
 
@@ -39,14 +39,35 @@ namespace SocketIOClient.Newtonsoft.Json
         {
             var converter = new ByteArrayConverter(eio);
             converter.Bytes.AddRange(bytes);
-            var settings = CreateOptions();
+            var settings = GetOptions();
             settings.Converters.Add(converter);
             return JsonConvert.DeserializeObject<T>(json, settings);
         }
 
+        private JsonSerializerSettings GetOptions()
+        {
+            JsonSerializerSettings options;
+            if (Options != null)
+            {
+                options = Options();
+            }
+            else
+            {
+                options = CreateOptions();
+            }
+            if (options == null)
+            {
+                options = new JsonSerializerSettings();
+            }
+            return options;
+        }
+
+        [Obsolete("Use Options instead.")]
         public virtual JsonSerializerSettings CreateOptions()
         {
             return new JsonSerializerSettings();
         }
+
+        public Func<JsonSerializerSettings> Options { get; set; }
     }
 }
