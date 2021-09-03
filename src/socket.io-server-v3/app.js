@@ -8,8 +8,8 @@ const prefix = "V3: ";
 const nspPrefix = "/nsp," + prefix;
 
 var io = socket(server, {
-    pingInterval: 10000,
-    pingTimeout: 5000,
+    //pingInterval: 10000,
+    //pingTimeout: 5000,
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
