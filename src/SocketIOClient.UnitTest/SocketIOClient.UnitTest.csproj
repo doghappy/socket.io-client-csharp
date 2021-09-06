@@ -21,8 +21,4 @@
     <ProjectReference Include="..\SocketIOClient\SocketIOClient.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ConverterTests\" />
-  </ItemGroup>
-
 </Project>

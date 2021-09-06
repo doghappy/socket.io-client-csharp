@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.UnitTest
+namespace SocketIOClient.UnitTest.ConverterTests
 {
     [TestClass]
     public class ConverterWriteTest
