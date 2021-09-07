@@ -112,101 +112,95 @@ namespace SocketIOClient.UnitTest.ConverterTests
         public void Event0Param()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "42[\"hi\"]");
-            Assert.AreEqual(CvtMessageType.MessageEvent, msg.Type);
+            Assert.AreEqual(CvtMessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual("hi", elements[0].GetString());
+            Assert.AreEqual("hi", realMsg.Event);
+            Assert.AreEqual(0, realMsg.JsonElements.Count);
         }
 
         [TestMethod]
         public void Event1Param()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "42[\"hi\",\"V3: onAny\"]");
-            Assert.AreEqual(CvtMessageType.MessageEvent, msg.Type);
+            Assert.AreEqual(CvtMessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(2, elements.Count);
-            Assert.AreEqual("hi", elements[0].GetString());
-            Assert.AreEqual("V3: onAny", elements[1].GetString());
+            Assert.AreEqual("hi", realMsg.Event);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual("V3: onAny", realMsg.JsonElements[0].GetString());
         }
 
         [TestMethod]
         public void NamespaceEvent0Param()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "42/nsp,[\"234\"]");
-            Assert.AreEqual(CvtMessageType.MessageEvent, msg.Type);
+            Assert.AreEqual(CvtMessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
 
             Assert.AreEqual("/nsp", realMsg.Namespace);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual("234", elements[0].GetString());
+            Assert.AreEqual("234", realMsg.Event);
+            Assert.AreEqual(0, realMsg.JsonElements.Count);
         }
 
         [TestMethod]
         public void NamespaceEvent1Param()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "42/nsp,[\"qww\",true]");
-            Assert.AreEqual(CvtMessageType.MessageEvent, msg.Type);
+            Assert.AreEqual(CvtMessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
 
             Assert.AreEqual("/nsp", realMsg.Namespace);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(2, elements.Count);
-            Assert.AreEqual("qww", elements[0].GetString());
-            Assert.IsTrue(elements[1].GetBoolean());
+            Assert.AreEqual("qww", realMsg.Event);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.IsTrue(realMsg.JsonElements[0].GetBoolean());
         }
 
         [TestMethod]
         public void Ack()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "431[\"doghappy\"]");
-            Assert.AreEqual(CvtMessageType.MessageAck, msg.Type);
+            Assert.AreEqual(CvtMessageType.AckMessage, msg.Type);
 
-            var realMsg = msg as AckMessage;
+            var realMsg = msg as ServerAckMessage;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
             Assert.AreEqual(1, realMsg.Id);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual("doghappy", elements[0].GetString());
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual("doghappy", realMsg.JsonElements[0].GetString());
         }
 
         [TestMethod]
         public void NamespaceAck()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "43/google,15[\"doghappy\"]");
-            Assert.AreEqual(CvtMessageType.MessageAck, msg.Type);
+            Assert.AreEqual(CvtMessageType.AckMessage, msg.Type);
 
-            var realMsg = msg as AckMessage;
+            var realMsg = msg as ServerAckMessage;
 
             Assert.AreEqual("/google", realMsg.Namespace);
             Assert.AreEqual(15, realMsg.Id);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual("doghappy", elements[0].GetString());
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual("doghappy", realMsg.JsonElements[0].GetString());
         }
 
         [TestMethod]
         public void Eio3Error()
         {
             var msg = CvtFactory.GetMessage(3, "44\"Authentication error\"");
-            Assert.AreEqual(CvtMessageType.MessageError, msg.Type);
+            Assert.AreEqual(CvtMessageType.ErrorMessage, msg.Type);
 
             var result = msg as Eio3ErrorMessage;
 
@@ -217,7 +211,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         public void Eio4Error()
         {
             var msg = CvtFactory.GetMessage(4, "44{\"message\":\"Authentication error2\"}");
-            Assert.AreEqual(CvtMessageType.MessageError, msg.Type);
+            Assert.AreEqual(CvtMessageType.ErrorMessage, msg.Type);
 
             var result = msg as Eio4ErrorMessage;
 
@@ -228,68 +222,81 @@ namespace SocketIOClient.UnitTest.ConverterTests
         public void Binary()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
-            Assert.AreEqual(CvtMessageType.MessageBinary, msg.Type);
+            Assert.AreEqual(CvtMessageType.BinaryMessage, msg.Type);
 
             var realMsg = msg as BinaryMessage;
 
-            Assert.AreEqual(string.Empty, realMsg.Namespace);
+            Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
             Assert.AreEqual(1, realMsg.BinaryCount);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(2, elements.Count);
-            Assert.AreEqual("1 params", elements[0].GetString());
-            Assert.AreEqual(JsonValueKind.Object, elements[1].ValueKind);
+            Assert.AreEqual("1 params", realMsg.Event);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
         }
 
         [TestMethod]
         public void NamespaceBinary()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "451-/why-ve,[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
-            Assert.AreEqual(CvtMessageType.MessageBinary, msg.Type);
+            Assert.AreEqual(CvtMessageType.BinaryMessage, msg.Type);
 
             var realMsg = msg as BinaryMessage;
 
             Assert.AreEqual("/why-ve", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(2, elements.Count);
-            Assert.AreEqual("1 params", elements[0].GetString());
-            Assert.AreEqual(JsonValueKind.Object, elements[1].ValueKind);
+            Assert.AreEqual("1 params", realMsg.Event);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+        }
+
+        [TestMethod]
+        public void NamespaceBinaryWithId()
+        {
+            var msg = CvtFactory.GetMessage(It.IsAny<int>(), "451-/why-ve,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            Assert.AreEqual(CvtMessageType.BinaryMessage, msg.Type);
+
+            var realMsg = msg as BinaryMessage;
+
+            Assert.AreEqual("/why-ve", realMsg.Namespace);
+            Assert.AreEqual(1, realMsg.BinaryCount);
+            Assert.AreEqual(30, realMsg.Id);
+
+            Assert.AreEqual("1 params", realMsg.Event);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
         }
 
         [TestMethod]
         public void BinaryAck()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "461-6[{\"_placeholder\":true,\"num\":0}]");
-            Assert.AreEqual(CvtMessageType.MessageBinaryAck, msg.Type);
+            Assert.AreEqual(CvtMessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as BinaryAckMessage;
+            var realMsg = msg as ServerBinaryAckMessage;
 
             Assert.IsNull(realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
             Assert.AreEqual(6, realMsg.Id);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual(JsonValueKind.Object, elements[0].ValueKind);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
         }
 
         [TestMethod]
         public void NamespaceBinaryAck()
         {
             var msg = CvtFactory.GetMessage(It.IsAny<int>(), "461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
-            Assert.AreEqual(CvtMessageType.MessageBinaryAck, msg.Type);
+            Assert.AreEqual(CvtMessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as BinaryAckMessage;
+            var realMsg = msg as ServerBinaryAckMessage;
 
             Assert.AreEqual("/name-space", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
             Assert.AreEqual(6, realMsg.Id);
 
-            var elements = realMsg.Json.EnumerateArray().ToList();
-            Assert.AreEqual(1, elements.Count);
-            Assert.AreEqual(JsonValueKind.Object, elements[0].ValueKind);
+            Assert.AreEqual(1, realMsg.JsonElements.Count);
+            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -53,10 +52,17 @@ namespace SocketIOClient.JsonSerializer
 
         public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
         {
-            var source = value.ToList();
-            if (eio != 4)
-                source.Insert(0, 4);
-            Bytes.Add(source.ToArray());
+            if (eio == 3)
+            {
+                var bytes = new byte[value.Length + 1];
+                bytes[0] = 4;
+                value.CopyTo(bytes, 1);
+                Bytes.Add(bytes);
+            }
+            else
+            {
+                Bytes.Add(value);
+            }
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
             writer.WriteBooleanValue(true);

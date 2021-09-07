@@ -13,6 +13,7 @@
     <button class="btn btn-primary" onclick="hi()">Hi</button>
     <button class="btn btn-primary" onclick="sendHelloWorldBinary()">Send 'Hello World' Binary</button>
     <button class="btn btn-primary" onclick="ack()">Ack</button>
+    <button class="btn btn-primary" onclick="welcome()">Welcome</button>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@3.1.3/dist/socket.io.min.js"></script>
     <script>
         var socket = io(`http://localhost:11003/`, {
@@ -32,6 +33,12 @@
             socket.on("hi", message => {
                 console.log(`server: ${message}`);
             });
+
+            socket.on("welcome", message => {
+                console.log(message);
+                var decoder = new TextDecoder("utf-8");
+                console.log(decoder.decode(message));
+            });
         });
 
         var encoder = new TextEncoder('utf-8');
@@ -49,6 +56,10 @@
             socket.emit("1 params | cb: 1 params", "doghappy", function (data) {
                 console.log(data);
             });
+        }
+
+        function welcome() {
+            socket.emit("welcome");
         }
     </script>
 </body>

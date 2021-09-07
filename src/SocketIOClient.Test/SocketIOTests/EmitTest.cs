@@ -817,7 +817,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 await client.EmitAsync("client calls the server's callback 1", bytes);
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(2000);
             await client.DisconnectAsync();
 
             Assert.AreEqual(1, result.InComingBytes.Count);

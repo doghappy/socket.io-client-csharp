@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient
@@ -50,7 +51,12 @@ namespace SocketIOClient
 
         public async Task CallbackAsync(params object[] data)
         {
-            await SocketIO.EmitCallbackAsync(PacketId, data).ConfigureAwait(false);
+            await SocketIO.ClientAckAsync(PacketId, CancellationToken.None, data).ConfigureAwait(false);
+        }
+
+        public async Task CallbackAsync(CancellationToken cancellationToken, params object[] data)
+        {
+            await SocketIO.ClientAckAsync(PacketId, cancellationToken, data).ConfigureAwait(false);
         }
     }
 }

@@ -1,15 +1,21 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 
 namespace SocketIOClient.Converters
 {
-    public class BinaryAckMessage : ICvtMessage
+    public class ServerBinaryAckMessage : ICvtMessage
     {
-        public CvtMessageType Type => CvtMessageType.MessageBinaryAck;
+        public CvtMessageType Type => CvtMessageType.BinaryAckMessage;
 
         public string Namespace { get; set; }
 
-        public JsonElement Json { get; set; }
+        public string Event { get; set; }
+
+        public List<JsonElement> JsonElements { get; set; }
+
+        public string Json { get; set; }
 
         public int Id { get; set; }
 
@@ -17,9 +23,6 @@ namespace SocketIOClient.Converters
 
         public void Read(string msg)
         {
-            //461-0[{"_placeholder":true,"num":0}]
-            //461-/nsp,0[{"_placeholder":true,"num":0}]
-
             int index1 = msg.IndexOf('-');
             BinaryCount = int.Parse(msg.Substring(0, index1));
 
@@ -36,7 +39,8 @@ namespace SocketIOClient.Converters
                 Id = int.Parse(msg.Substring(index1 + 1, index2 - index1 - 1));
             }
 
-            Json = JsonDocument.Parse(msg.Substring(index2)).RootElement;
+            string json = msg.Substring(index2);
+            JsonElements = JsonDocument.Parse(json).RootElement.EnumerateArray().ToList();
         }
 
         public string Write()
@@ -50,9 +54,16 @@ namespace SocketIOClient.Converters
             {
                 builder.Append(Namespace).Append(',');
             }
-            builder
-                .Append(Id)
-                .Append(Json.GetRawText());
+            builder.Append(Id);
+            if (string.IsNullOrEmpty(Json))
+            {
+                builder.Append("[\"").Append(Event).Append("\"]");
+            }
+            else
+            {
+                string data = Json.Insert(1, $"\"{Event}\",");
+                builder.Append(data);
+            }
             return builder.ToString();
         }
     }

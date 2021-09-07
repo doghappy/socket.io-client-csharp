@@ -22,18 +22,18 @@ namespace SocketIOClient.Converters
                     return new Eio4ConnectedMessage();
                 case CvtMessageType.Disconnected:
                     return new DisconnectedMessage();
-                case CvtMessageType.MessageEvent:
+                case CvtMessageType.EventMessage:
                     return new EventMessage();
-                case CvtMessageType.MessageAck:
-                    return new AckMessage();
-                case CvtMessageType.MessageError:
+                case CvtMessageType.AckMessage:
+                    return new ServerAckMessage();
+                case CvtMessageType.ErrorMessage:
                     if (eio == 3)
                         return new Eio3ErrorMessage();
                     return new Eio4ErrorMessage();
-                case CvtMessageType.MessageBinary:
+                case CvtMessageType.BinaryMessage:
                     return new BinaryMessage();
-                case CvtMessageType.MessageBinaryAck:
-                    return new BinaryAckMessage();
+                case CvtMessageType.BinaryAckMessage:
+                    return new ServerBinaryAckMessage();
             }
             return null;
         }

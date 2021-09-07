@@ -11,7 +11,6 @@ namespace SocketIOClient.Sample
     {
         static async Task Main(string[] args)
         {
-            var sio = new SocketIO();
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
@@ -60,7 +59,7 @@ namespace SocketIOClient.Sample
 
             await socket.ConnectAsync();
 
-            socket.ConnectedObservable.Subscribe(_ => Console.WriteLine("ConnectedObservable"));
+            //socket.ConnectedObservable.Subscribe(_ => Console.WriteLine("ConnectedObservable"));
 
             Console.ReadLine();
         }

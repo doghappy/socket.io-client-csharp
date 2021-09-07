@@ -1,10 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace SocketIOClient
+namespace SocketIOClient.Transport
 {
     class HandshakeInfo
     {
+        [JsonPropertyName("code")]
+        public int Code { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+
         [JsonPropertyName("sid")]
         public string Sid { get; set; }
 
@@ -16,7 +22,5 @@ namespace SocketIOClient
 
         [JsonPropertyName("pingTimeout")]
         public int PingTimeout { get; set; }
-
-        public override string ToString() => System.Text.Json.JsonSerializer.Serialize(this);
     }
 }

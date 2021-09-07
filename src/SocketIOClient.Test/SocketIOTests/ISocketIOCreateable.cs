@@ -2,7 +2,7 @@
 {
     public interface ISocketIOCreateable
     {
-        SocketIO Create();
+        SocketIO Create(bool reconnection = false);
         string Prefix { get; }
         string Url { get; }
         string Token { get; }

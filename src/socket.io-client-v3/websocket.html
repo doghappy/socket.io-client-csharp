@@ -11,16 +11,31 @@
 
 <body>
     <button class="btn btn-primary" onclick="hi()">Hi</button>
-    <button class="btn btn-primary" onclick="binary()">Binary</button>
+    <button class="btn btn-primary" onclick="sendHelloWorldBinary()">Send 'Hello World' Binary</button>
     <button class="btn btn-primary" onclick="ack()">Ack</button>
-    <button class="btn btn-primary" onclick="binaryAck()">Binary Ack</button>
+    <button class="btn btn-primary" onclick="welcome()">Welcome</button>
+    <button class="btn btn-primary" onclick="serverCallback()">Server Callback</button>
+    <button class="btn btn-primary" onclick="serverDisconnect()">Server Disconnect</button>
+    <button class="btn btn-primary" onclick="serverAck()">Server Ack</button>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@3.1.3/dist/socket.io.min.js"></script>
     <script>
         var socket = io(`http://localhost:11003/`, {
-            transports: ["websocket"],
+            //transports: ["websocket"],
             query: {
                 token: "V3"
             }
+        });
+
+        socket.io.on("reconnect_attempt", function (attempt) {
+            console.log("reconnect_attempt: " + attempt);
+        })
+
+        socket.io.on("reconnect", function (attempt) {
+            console.log("reconnect: " + attempt);
+        });
+
+        socket.io.on("reconnect_error", function (error) {
+            console.log("reconnect: " + error);
         });
 
         socket.on("connect", () => {
@@ -33,15 +48,26 @@
             socket.on("hi", message => {
                 console.log(`server: ${message}`);
             });
+
+            socket.on("welcome", message => {
+                console.log(message);
+                console.log(decoder.decode(message));
+            });
+
+            socket.on("client calls the server's callback 1", (message, cb) => {
+                var text = decoder.decode(message) + '...';
+                cb(encoder.encode("hello world!"));
+            });
         });
 
         var encoder = new TextEncoder('utf-8');
+        var decoder = new TextDecoder("utf-8");
 
         function hi() {
             socket.emit("hi", "doghappy");
         }
 
-        function binary() {
+        function sendHelloWorldBinary() {
             var encoded = encoder.encode("hello world!");
             socket.emit("1 params", encoded);
         }
@@ -52,11 +78,24 @@
             });
         }
 
-        function binaryAck() {
-            var encoded = encoder.encode("binaryAck");
-            socket.emit("1 params | cb: 1 params", encoded, function (data) {
-                console.log(data);
+        function welcome() {
+            socket.emit("welcome");
+        }
+
+        function serverCallback() {
+            var encoded = encoder.encode("hello world!");
+            socket.emit("1 params | cb: 1 params", encoded, function (res) {
+                alert(res);
             });
+        }
+
+        function serverDisconnect() {
+            socket.emit("sever disconnect");
+        }
+
+        function serverAck() {
+            var encoded = encoder.encode("hello world!");
+            socket.emit("client calls the server's callback 1", encoded);
         }
     </script>
 </body>

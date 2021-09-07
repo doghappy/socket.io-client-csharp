@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Text;
 
 namespace SocketIOClient.Converters
 {
@@ -9,6 +10,8 @@ namespace SocketIOClient.Converters
         public CvtMessageType Type => CvtMessageType.Opened;
 
         public string Sid { get; set; }
+
+        public string Namespace { get; set; }
 
         public List<string> Upgrades { get; private set; }
 
@@ -27,6 +30,13 @@ namespace SocketIOClient.Converters
 
         public string Write()
         {
+            //var builder = new StringBuilder();
+            //builder.Append("40");
+            //if (!string.IsNullOrEmpty(Namespace))
+            //{
+            //    builder.Append(Namespace).Append(',');
+            //}
+            //return builder.ToString();
             throw new NotImplementedException();
         }
     }

@@ -1,15 +1,21 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 
 namespace SocketIOClient.Converters
 {
-    public class AckMessage : ICvtMessage
+    public class ServerAckMessage : ICvtMessage
     {
-        public CvtMessageType Type => CvtMessageType.MessageAck;
+        public CvtMessageType Type => CvtMessageType.AckMessage;
 
         public string Namespace { get; set; }
 
-        public JsonElement Json { get; set; }
+        public string Event { get; set; }
+
+        public List<JsonElement> JsonElements { get; set; }
+
+        public string Json { get; set; }
 
         public int Id { get; set; }
 
@@ -28,7 +34,7 @@ namespace SocketIOClient.Converters
                 Id = int.Parse(msg.Substring(0, index));
             }
             msg = msg.Substring(index);
-            Json = JsonDocument.Parse(msg).RootElement;
+            JsonElements = JsonDocument.Parse(msg).RootElement.EnumerateArray().ToList();
         }
 
         public string Write()
@@ -39,7 +45,15 @@ namespace SocketIOClient.Converters
             {
                 builder.Append(Namespace).Append(',');
             }
-            builder.Append(Json.GetRawText());
+            if (string.IsNullOrEmpty(Json))
+            {
+                builder.Append("[\"").Append(Event).Append("\"]");
+            }
+            else
+            {
+                string data = Json.Insert(1, $"\"{Event}\",");
+                builder.Append(data);
+            }
             return builder.ToString();
         }
     }

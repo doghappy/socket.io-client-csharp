@@ -5,7 +5,7 @@ namespace SocketIOClient.Converters
 {
     public class Eio4ErrorMessage : ICvtMessage
     {
-        public CvtMessageType Type => CvtMessageType.MessageError;
+        public CvtMessageType Type => CvtMessageType.ErrorMessage;
 
         public string Message { get; set; }
 

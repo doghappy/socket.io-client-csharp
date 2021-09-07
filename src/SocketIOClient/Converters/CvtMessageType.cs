@@ -7,10 +7,10 @@
         Pong,
         Connected = 40,
         Disconnected,
-        MessageEvent,
-        MessageAck,
-        MessageError,
-        MessageBinary,
-        MessageBinaryAck
+        EventMessage,
+        AckMessage,
+        ErrorMessage,
+        BinaryMessage,
+        BinaryAckMessage
     }
 }

@@ -95,7 +95,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new EventMessage
             {
-                Json = JsonDocument.Parse("[\"event name\"]").RootElement
+                Event = "event name",
             };
             string text = msg.Write();
             Assert.AreEqual("42[\"event name\"]", text);
@@ -106,7 +106,8 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new EventMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",\"socket.io\"]").RootElement
+                Event = "event name",
+                Json = "[\"socket.io\"]"
             };
             string text = msg.Write();
             Assert.AreEqual("42[\"event name\",\"socket.io\"]", text);
@@ -117,7 +118,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new EventMessage
             {
-                Json = JsonDocument.Parse("[\"event name\"]").RootElement,
+                Event = "event name",
                 Namespace = "/test"
             };
             string text = msg.Write();
@@ -129,7 +130,8 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new EventMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1234]").RootElement,
+                Event = "event name",
+                Json = "[1234]",
                 Namespace = "/test"
             };
             string text = msg.Write();
@@ -139,9 +141,10 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void Ack()
         {
-            var msg = new AckMessage
+            var msg = new ServerAckMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 Id = 8964
             };
             string text = msg.Write();
@@ -151,9 +154,10 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void NamespaceAck()
         {
-            var msg = new AckMessage
+            var msg = new ServerAckMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 Id = 8964,
                 Namespace = "/google"
             };
@@ -166,7 +170,8 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new BinaryMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 BinaryCount = 2
             };
             string text = msg.Write();
@@ -178,7 +183,8 @@ namespace SocketIOClient.UnitTest.ConverterTests
         {
             var msg = new BinaryMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 BinaryCount = 2,
                 Namespace = "/happy"
             };
@@ -189,9 +195,10 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void BinaryAck()
         {
-            var msg = new BinaryAckMessage
+            var msg = new ServerBinaryAckMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 BinaryCount = 6,
                 Id = 185
             };
@@ -202,9 +209,10 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void NamespaceBinaryAck()
         {
-            var msg = new BinaryAckMessage
+            var msg = new ServerBinaryAckMessage
             {
-                Json = JsonDocument.Parse("[\"event name\",1989]").RootElement,
+                Event = "event name",
+                Json = "[1989]",
                 BinaryCount = 6,
                 Id = 185,
                 Namespace = "/namespace"

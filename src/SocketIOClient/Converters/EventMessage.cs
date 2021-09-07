@@ -1,15 +1,20 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 
 namespace SocketIOClient.Converters
 {
     public class EventMessage : ICvtMessage
     {
-        public CvtMessageType Type => CvtMessageType.MessageEvent;
+        public CvtMessageType Type => CvtMessageType.EventMessage;
 
         public string Namespace { get; set; }
 
-        public JsonElement Json { get; set; }
+        public string Event { get; set; }
+
+        public List<JsonElement> JsonElements { get; set; }
+
+        public string Json { get; set; }
 
         public void Read(string msg)
         {
@@ -19,7 +24,21 @@ namespace SocketIOClient.Converters
                 Namespace = msg.Substring(0, index - 1);
                 msg = msg.Substring(index);
             }
-            Json = JsonDocument.Parse(msg).RootElement;
+            var array = JsonDocument.Parse(msg).RootElement.EnumerateArray();
+            int i = -1;
+            foreach (var item in array)
+            {
+                i++;
+                if (i == 0)
+                {
+                    Event = item.GetString();
+                    JsonElements = new List<JsonElement>();
+                }
+                else
+                {
+                    JsonElements.Add(item);
+                }
+            }
         }
 
         public string Write()
@@ -30,7 +49,15 @@ namespace SocketIOClient.Converters
             {
                 builder.Append(Namespace).Append(',');
             }
-            builder.Append(Json.GetRawText());
+            if (string.IsNullOrEmpty(Json))
+            {
+                builder.Append("[\"").Append(Event).Append("\"]");
+            }
+            else
+            {
+                string data = Json.Insert(1, $"\"{Event}\",");
+                builder.Append(data);
+            }
             return builder.ToString();
         }
     }

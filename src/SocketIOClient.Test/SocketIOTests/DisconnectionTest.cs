@@ -61,7 +61,7 @@ namespace SocketIOClient.Test.SocketIOTests
             client.OnDisconnected += (snder, e) => reason = e;
 
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(1000);
             await client.DisconnectAsync();
 
             Assert.IsFalse(client.Connected);

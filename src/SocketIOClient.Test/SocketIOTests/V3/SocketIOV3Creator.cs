@@ -4,10 +4,11 @@ namespace SocketIOClient.Test.SocketIOTests.V3
 {
     public class SocketIOV3Creator : ISocketIOCreateable
     {
-        public SocketIO Create()
+        public SocketIO Create(bool reconnection = false)
         {
             return new SocketIO(Url, new SocketIOOptions
             {
+                Reconnection = reconnection,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }

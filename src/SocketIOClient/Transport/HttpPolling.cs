@@ -1,35 +1,69 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text;
+using System.Reactive.Subjects;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Transport
 {
-    public class HttpPolling : IDisposable
+    public class HttpPolling : IObservable<TransportMessage>
     {
-        public HttpPolling()
+        public HttpPolling(HttpClient httpClient)
         {
-            _httpClient = new HttpClient();
+            _client = httpClient;
+            _onReceived = new Subject<TransportMessage>();
         }
 
-        readonly HttpClient _httpClient;
+        readonly HttpClient _client;
 
+        readonly Subject<TransportMessage> _onReceived;
 
-        public async Task ConnectAsync(Uri uri)
+        public string HandshakeUri { get; set; }
+        public string WorkUri { get; set; }
+
+        public async Task GetAsync(string uri, CancellationToken cancellationToken)
         {
-            //http://localhost:11003/socket.io/?token=V3&EIO=4&transport=polling&t=Nkfn3sk
-            string text = await _httpClient.GetStringAsync(uri.ToString());
+            var req = new HttpRequestMessage(HttpMethod.Get, uri);
+            var resMsg = await _client.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Produce(text);
         }
 
-        public async Task SendAsync(string text)
+        public async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
-
+            var httpContent = new StringContent(content);
+            var resMsg = await _client.PostAsync(uri, httpContent, cancellationToken).ConfigureAwait(false);
+            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Produce(text);
         }
 
-        public void Dispose()
+        public async Task PostAsync(string uri, byte[] bytes, CancellationToken cancellationToken)
         {
-            _httpClient.Dispose();
+            var content = new ByteArrayContent(bytes);
+            var resMsg = await _client.PostAsync(uri, content, cancellationToken).ConfigureAwait(false);
+            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+            Produce(text);
+        }
+
+        private void Produce(string text)
+        {
+            var msg = new TransportMessage();
+            if (text[0] == 'b')
+            {
+                msg.Type = TransportMessageType.Binary;
+                msg.Binary = Convert.FromBase64String(text.Substring(1));
+            }
+            else
+            {
+                msg.Type = TransportMessageType.Text;
+                msg.Text = text;
+            }
+            _onReceived.OnNext(msg);
+        }
+
+        public IDisposable Subscribe(IObserver<TransportMessage> observer)
+        {
+            return _onReceived.Subscribe(observer);
         }
     }
 }

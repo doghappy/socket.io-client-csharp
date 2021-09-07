@@ -1,8 +1,8 @@
 ﻿namespace SocketIOClient
 {
-    public class LowLevelEvent
+    public class BinaryEvent
     {
-        public LowLevelEvent()
+        public BinaryEvent()
         {
             PacketId = -1;
         }

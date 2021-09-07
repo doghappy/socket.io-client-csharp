@@ -13,7 +13,10 @@ var io = socket(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    //transports: [
+    //    "polling"
+    //]
 });
 
 io.use((socket, next) => {
@@ -27,6 +30,11 @@ io.use((socket, next) => {
 io.on('connection', socket => {
     socket.on('hi', (msg) => {
         socket.emit('hi', prefix + msg);
+    });
+
+    socket.on('welcome', () => {
+        //socket.emit('welcome', Buffer.from("welcome " + socket.id, 'utf8'));
+        socket.emit('welcome', Buffer.from("a", 'utf8'));
     });
 
     socket.on("no params", () => {

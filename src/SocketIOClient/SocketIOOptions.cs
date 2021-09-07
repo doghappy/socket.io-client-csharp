@@ -1,4 +1,5 @@
 ﻿using SocketIOClient.EioHandler;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 
@@ -10,22 +11,28 @@ namespace SocketIOClient
         {
             RandomizationFactor = new Random().NextDouble();
             EIO = 4;
+            ReconnectionDelay = 1000;
+            ReconnectionDelayMax = 5000;
+            ReconnectionAttempts = int.MaxValue;
+            Path = "/socket.io";
+            ConnectionTimeout = TimeSpan.FromSeconds(20);
+            Reconnection = true;
         }
 
-        public string Path { get; set; } = "/socket.io";
+        public string Path { get; set; }
 
-        public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(20);
+        public TimeSpan ConnectionTimeout { get; set; }
 
         public Dictionary<string, string> Query { get; set; }
 
         /// <summary>
         /// Whether to allow reconnection if accidentally disconnected
         /// </summary>
-        public bool Reconnection { get; set; } = true;
+        public bool Reconnection { get; set; }
 
-        public double ReconnectionDelay { get; set; } = 1000;
-        public int ReconnectionDelayMax { get; set; } = 5000;
-        public int ReconnectionAttempts { get; set; } = int.MaxValue;
+        public double ReconnectionDelay { get; set; }
+        public int ReconnectionDelayMax { get; set; }
+        public int ReconnectionAttempts { get; set; }
 
         double _randomizationFactor;
         public double RandomizationFactor
