@@ -1,8 +1,16 @@
-﻿namespace SocketIOClient.Messages
+﻿using System.Collections.Generic;
+
+namespace SocketIOClient.Messages
 {
     public interface IMessage
     {
         MessageType Type { get; }
+
+        IEnumerable<byte[]> OutgoingBytes { get; }
+
+        IList<byte[]> IncomingBytes { get; }
+
+        int BinaryCount { get; }
 
         void Read(string msg);
 
@@ -13,7 +21,5 @@
         string Write();
 
         //string Eio3WsWrite();
-
-        //string Eio3HttpWrite();
     }
 }

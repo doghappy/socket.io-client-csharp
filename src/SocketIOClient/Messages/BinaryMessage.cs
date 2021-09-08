@@ -20,30 +20,15 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; set; }
 
+        public IEnumerable<byte[]> OutgoingBytes { get; set; }
+
+        public string Eio3HttpWrite()
+        {
+            throw new System.NotImplementedException();
+        }
+
         public void Read(string msg)
         {
-            //int index1 = msg.IndexOf('-');
-            //BinaryCount = int.Parse(msg.Substring(0, index1));
-
-            //int index2 = msg.IndexOf('[');
-            //Namespace = msg.Substring(index1 + 1, index2 - 2).TrimEnd(',');
-
-            //var array = JsonDocument.Parse(msg.Substring(index2)).RootElement.EnumerateArray();
-            //int i = -1;
-            //foreach (var item in array)
-            //{
-            //    i++;
-            //    if (i == 0)
-            //    {
-            //        Event = item.GetString();
-            //        JsonElements = new List<JsonElement>();
-            //    }
-            //    else
-            //    {
-            //        JsonElements.Add(item);
-            //    }
-            //}
-
             int index1 = msg.IndexOf('-');
             BinaryCount = int.Parse(msg.Substring(0, index1));
 

@@ -6,16 +6,9 @@ namespace SocketIOClient.JsonSerializer
 {
     public class SystemTextJsonSerializer : IJsonSerializer
     {
-        public SystemTextJsonSerializer(int eio)
-        {
-            this.eio = eio;
-        }
-
-        readonly int eio;
-
         public JsonSerializeResult Serialize(object[] data)
         {
-            var converter = new ByteArrayConverter(eio);
+            var converter = new ByteArrayConverter();
             var options = GetOptions();
             options.Converters.Add(converter);
             string json = System.Text.Json.JsonSerializer.Serialize(data, options);
@@ -35,7 +28,7 @@ namespace SocketIOClient.JsonSerializer
         public T Deserialize<T>(string json, IList<byte[]> bytes)
         {
             var options = GetOptions();
-            var converter = new ByteArrayConverter(eio);
+            var converter = new ByteArrayConverter();
             options.Converters.Add(converter);
             converter.Bytes.AddRange(bytes);
             return System.Text.Json.JsonSerializer.Deserialize<T>(json, options);
@@ -44,9 +37,9 @@ namespace SocketIOClient.JsonSerializer
         private JsonSerializerOptions GetOptions()
         {
             JsonSerializerOptions options;
-            if (Options != null)
+            if (OptionsProvider != null)
             {
-                options = Options();
+                options = OptionsProvider();
             }
             else
             {
@@ -59,12 +52,12 @@ namespace SocketIOClient.JsonSerializer
             return options;
         }
 
-        [Obsolete("Use Options instead.")]
+        [Obsolete("Use OptionsProvider instead.")]
         public virtual JsonSerializerOptions CreateOptions()
         {
             return new JsonSerializerOptions();
         }
 
-        public Func<JsonSerializerOptions> Options { get; set; }
+        public Func<JsonSerializerOptions> OptionsProvider { get; set; }
     }
 }

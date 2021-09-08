@@ -14,13 +14,14 @@ namespace SocketIOClient.Sample
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            var uri = new Uri("http://localhost:11003/");
+            var uri = new Uri("http://localhost:11002/");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
+                EIO = 3,
                 Query = new Dictionary<string, string>
                 {
-                    {"token", "V3" }
+                    {"token", "V2" }
                 }
             });
 
@@ -80,7 +81,7 @@ namespace SocketIOClient.Sample
             var socket = sender as SocketIO;
             Console.WriteLine("Socket.Id:" + socket.Id);
 
-            await socket.EmitAsync("hi", "SocketIOClient.Sample");
+            //await socket.EmitAsync("hi", "SocketIOClient.Sample");
         }
 
         private static void Socket_OnPing(object sender, EventArgs e)

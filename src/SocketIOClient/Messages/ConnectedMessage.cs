@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using System.Text.Json;
 
 namespace SocketIOClient.Messages
@@ -10,6 +11,8 @@ namespace SocketIOClient.Messages
         public string Namespace { get; set; }
 
         public string Sid { get; set; }
+
+        public IEnumerable<byte[]> OutgoingBytes { get; set; }
 
         public void Read(string msg)
         {
@@ -33,7 +36,10 @@ namespace SocketIOClient.Messages
 
         public void Eio3HttpRead(string msg)
         {
-
+            if (msg.Length > 2)
+            {
+                Namespace = msg.Substring(2);
+            }
         }
 
         public string Write()
@@ -44,16 +50,6 @@ namespace SocketIOClient.Messages
                 builder.Append(Namespace).Append(',');
             }
             return builder.ToString();
-        }
-
-        public string Eio3WsWrite()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public string Eio3HttpWrite()
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

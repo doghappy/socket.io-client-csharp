@@ -6,7 +6,7 @@ namespace SocketIOClient.Messages
 {
     public static class MessageFactory
     {
-        public static IMessage GetByType(int eio, MessageType type)
+        private static IMessage CreateMessage(MessageType type)
         {
             switch (type)
             {
@@ -17,8 +17,6 @@ namespace SocketIOClient.Messages
                 case MessageType.Pong:
                     return new PongMessage();
                 case MessageType.Connected:
-                    if (eio == 3)
-                        return new Eio3ConnectedMessage();
                     return new ConnectedMessage();
                 case MessageType.Disconnected:
                     return new DisconnectedMessage();
@@ -27,9 +25,7 @@ namespace SocketIOClient.Messages
                 case MessageType.AckMessage:
                     return new ServerAckMessage();
                 case MessageType.ErrorMessage:
-                    if (eio == 3)
-                        return new Eio3ErrorMessage();
-                    return new Eio4ErrorMessage();
+                    return new ErrorMessage();
                 case MessageType.BinaryMessage:
                     return new BinaryMessage();
                 case MessageType.BinaryAckMessage:
@@ -38,53 +34,23 @@ namespace SocketIOClient.Messages
             return null;
         }
 
-        public static IMessage GetEio4Message(string msg)
+        public static IMessage CreateMessage(string msg)
         {
-            //var enums = Enum.GetValues(typeof(MessageType));
-            //foreach (MessageType item in enums)
-            //{
-            //    string prefix = ((int)item).ToString();
-            //    if (msg.StartsWith(prefix))
-            //    {
-            //        IMessage result = GetByType(eio, item);
-            //        if (result != null)
-            //        {
-            //            result.Read(msg.Substring(prefix.Length));
-            //            return result;
-            //        }
-            //    }
-            //}
-            //return null;
-            return null;
-        }
-
-        public static IMessage GetEio3WebSocketMessage(string msg)
-        {
-            return null;
-        }
-
-        public static IMessage GetEio3HttpMessage(string msg)
-        {
-            //2:4027:44/nsp9,"Invalid namespace"
-            //2:407:40/nsp,
-            if (msg.StartsWith("2:40"))
+            var enums = Enum.GetValues(typeof(MessageType));
+            foreach (MessageType item in enums)
             {
-                if (msg == "2:40")
+                string prefix = ((int)item).ToString();
+                if (msg.StartsWith(prefix))
                 {
-
-                }
-                else
-                {
-
+                    IMessage result = CreateMessage(item);
+                    if (result != null)
+                    {
+                        result.Read(msg.Substring(prefix.Length));
+                        return result;
+                    }
                 }
             }
             return null;
-            //int index = msg.IndexOf(':');
-            //if (index > -1)
-            //{
-            //    int length = int.Parse(msg.Substring(0, index));
-            //int start = msg.Substring(index + 1)
-            //}
         }
     }
 }

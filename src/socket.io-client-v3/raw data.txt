@@ -1,0 +1,42 @@
+v2
+    ⬇ 2021/6/9 14:39:51 0{"sid":"6lV4Ef7YOyGF-5dCBvKy","upgrades":[],"pingInterval":10000,"pingTimeout":5000}
+    ⬆ 2021/6/9 14:39:51 40?token=V2
+    ⬇ 2021/6/9 14:39:51 40
+    ⬆ 2021/6/9 14:39:51 42["hi","onAny"]
+    ⬇ 2021/6/9 14:39:51 42["hi","V2: onAny"]
+    ⬆ 2021/6/9 14:39:51 41
+
+v2 nsp
+    ⬇ 2021/6/9 14:47:59 0{"sid":"BpXgajlbwVH1qR4QBvKz","upgrades":[],"pingInterval":10000,"pingTimeout":5000}
+    ⬆ 2021/6/9 14:47:59 40/nsp?token=V2,
+    ⬇ 2021/6/9 14:47:59 40
+    ⬇ 2021/6/9 14:47:59 40/nsp,
+    ⬆ 2021/6/9 14:47:59 42/nsp,["hi","onAny"]
+    ⬇ 2021/6/9 14:47:59 42/nsp,["hi","/nsp,V2: onAny"]
+    ⬆ 2021/6/9 14:47:59 41/nsp,
+
+v3
+    ⬇ 2021/6/9 14:51:59 0{"sid":"DghUWbCRX0cIKQWnAc4v","upgrades":[],"pingInterval":10000,"pingTimeout":5000}
+    ⬆ 2021/6/9 14:51:59 40
+    ⬇ 2021/6/9 14:51:59 40{"sid":"aMA_EmVTuzpgR16PAc4w"}
+    ⬆ 2021/6/9 14:51:59 42["hi","onAny"]
+    ⬇ 2021/6/9 14:51:59 42["hi","V3: onAny"]
+    ⬆ 2021/6/9 14:51:59 41
+
+v3 nsp
+    ⬇ 2021/6/9 14:52:31 0{"sid":"IEIX-Q2k7CXj5kZWAc4x","upgrades":[],"pingInterval":10000,"pingTimeout":5000}
+    ⬆ 2021/6/9 14:52:31 40/nsp,
+    ⬇ 2021/6/9 14:52:31 40/nsp,{"sid":"xO_jp2_xrGtXUveLAc4y"}
+    ⬆ 2021/6/9 14:52:31 42/nsp,["hi","onAny"]
+    ⬇ 2021/6/9 14:52:31 42/nsp,["hi","/nsp,V3: onAny"]
+    ⬆ 2021/6/9 14:52:31 41/nsp,
+
+
+v2
+44"Authentication error"
+v3
+44{"message":"Authentication error"}
+
+
+2:4027:44/nsp9,"Invalid namespace"
+2:407:40/nsp,

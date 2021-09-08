@@ -7,15 +7,13 @@ namespace SocketIOClient.JsonSerializer
 {
     class ByteArrayConverter : JsonConverter<byte[]>
     {
-        public ByteArrayConverter(int eio)
+        public ByteArrayConverter()
         {
-            this.eio = eio;
             Bytes = new List<byte[]>();
         }
 
 
-        readonly int eio;
-        internal List<byte[]> Bytes { get; }
+        public List<byte[]> Bytes { get; }
 
         public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
@@ -35,14 +33,6 @@ namespace SocketIOClient.JsonSerializer
                             int num = reader.GetInt32();
                             bytes = Bytes[num];
                             reader.Read();
-                            //if (reader. != null)
-                            //{
-                            //    if (int.TryParse(reader.Value.ToString(), out int num))
-                            //    {
-                            //        bytes = Bytes[num];
-                            //        reader.Read();
-                            //    }
-                            //}
                         }
                     }
                 }
@@ -52,17 +42,7 @@ namespace SocketIOClient.JsonSerializer
 
         public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
         {
-            if (eio == 3)
-            {
-                var bytes = new byte[value.Length + 1];
-                bytes[0] = 4;
-                value.CopyTo(bytes, 1);
-                Bytes.Add(bytes);
-            }
-            else
-            {
-                Bytes.Add(value);
-            }
+            Bytes.Add(value);
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
             writer.WriteBooleanValue(true);

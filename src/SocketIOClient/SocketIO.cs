@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -118,6 +119,10 @@ namespace SocketIOClient
 
         public IJsonSerializer JsonSerializer { get; set; }
 
+        public HttpClient HttpClient { get; set; }
+
+        public IClientWebSocket ClientWebSocket { get; set; }
+
         int _packetId;
         Queue<BinaryEvent> _binaryEvents;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
@@ -128,6 +133,7 @@ namespace SocketIOClient
         DateTime _pingTime;
         int _pingInterval;
         double _reconnectionDelay;
+
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -174,16 +180,10 @@ namespace SocketIOClient
             _onAnyHandlers = new List<OnAnyHandler>();
             _binaryEvents = new Queue<BinaryEvent>();
 
-            JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
+            JsonSerializer = new SystemTextJsonSerializer();
             _connectionTokenSorce = new CancellationTokenSource();
-
-            //Router = new TransportRouter
-            //{
-            //    Options = Options,
-            //    ServerUri = ServerUri
-            //};
-            //Router.Subscribe(SubscribeBinary);
-            //Router.Subscribe(SubscribeText);
+            HttpClient = new HttpClient();
+            ClientWebSocket = new DefaultClientWebSocket();
         }
 
         internal static bool IsNamespaceDefault(string @namespace)
@@ -191,8 +191,34 @@ namespace SocketIOClient
             return string.IsNullOrEmpty(@namespace) || @namespace.Equals("/");
         }
 
+        private void CreateRouterIfNull()
+        {
+            if (Router == null)
+            {
+                Router = new TransportRouter(HttpClient, ClientWebSocket)
+                {
+                    AutoUpgrade = Options.AutoUpgrade,
+                    Namespace = Namespace,
+                    Path = Options.Path,
+                    ServerUri = ServerUri,
+                    JsonSerializer = JsonSerializer
+                };
+                if (Options.Query != null)
+                {
+                    var kvs = new List<KeyValuePair<string, string>>();
+                    foreach (var item in Options.Query)
+                    {
+                        kvs.Add(new KeyValuePair<string, string>(item.Key, item.Value));
+                    }
+                    Router.QueryParams = kvs;
+                }
+                Router.OnMessageReceived = OnMessageReceived;
+            }
+        }
+
         public async Task ConnectAsync()
         {
+            CreateRouterIfNull();
             _reconnectionDelay = Options.ReconnectionDelay;
             while (true)
             {
@@ -254,18 +280,8 @@ namespace SocketIOClient
             {
                 if (_binaryEvents.Count > 0)
                 {
-                    byte[] bytes;
-                    if (Options.EIO == 3)
-                    {
-                        bytes = new byte[m.Binary.Length - 1];
-                        Array.Copy(m.Binary, 1, bytes, 0, bytes.Length);
-                    }
-                    else
-                    {
-                        bytes = m.Binary;
-                    }
                     var element = _binaryEvents.Peek();
-                    element.Response.InComingBytes.Add(bytes);
+                    element.Response.InComingBytes.Add(m.Binary);
                     if (element.Response.InComingBytes.Count == element.Count)
                     {
                         if (element.PacketId == -1)
@@ -312,32 +328,32 @@ namespace SocketIOClient
         {
             Id = m.Sid;
             _pingInterval = m.PingInterval;
-            if (Options.EIO == 3)
-            {
-                var builder = new StringBuilder();
-                if (Options.Query != null)
-                {
-                    foreach (var item in Options.Query)
-                    {
-                        builder.Append(item.Key).Append('=').Append(item.Value);
-                    }
-                }
-                var msg = new Eio3ConnectedMessage
-                {
-                    Namespace = Namespace,
-                    QueryString = builder.ToString()
-                };
-                await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
-                StartPing();
-            }
-            else
-            {
-                //var msg = new Eio4ConnectedMessage
-                //{
-                //    Namespace = Namespace
-                //};
-                //await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
-            }
+            //if (Options.EIO == 3)
+            //{
+            //    var builder = new StringBuilder();
+            //    if (Options.Query != null)
+            //    {
+            //        foreach (var item in Options.Query)
+            //        {
+            //            builder.Append(item.Key).Append('=').Append(item.Value);
+            //        }
+            //    }
+            //    var msg = new Eio3ConnectedMessage
+            //    {
+            //        Namespace = Namespace,
+            //        QueryString = builder.ToString()
+            //    };
+            //    await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
+            //    StartPing();
+            //}
+            //else
+            //{
+            //    //var msg = new Eio4ConnectedMessage
+            //    //{
+            //    //    Namespace = Namespace
+            //    //};
+            //    //await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
+            //}
         }
 
         private async void PingHandler(PingMessage msg)
@@ -362,23 +378,23 @@ namespace SocketIOClient
 
         private void ConnectedHandler(IMessage m)
         {
-            if (Options.EIO == 3)
-            {
-                if (!string.IsNullOrEmpty(Namespace))
-                {
-                    var eio3 = m as Eio3ConnectedMessage;
-                    if (eio3.Namespace != Namespace)
-                    {
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                //var eio4 = m as Eio4ConnectedMessage;
-                //Id = eio4.Sid;
-                //Router.Sid = Id;
-            }
+            //if (Options.EIO == 3)
+            //{
+            //    if (!string.IsNullOrEmpty(Namespace))
+            //    {
+            //        var eio3 = m as Eio3ConnectedMessage;
+            //        if (eio3.Namespace != Namespace)
+            //        {
+            //            return;
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    //var eio4 = m as Eio4ConnectedMessage;
+            //    //Id = eio4.Sid;
+            //    //Router.Sid = Id;
+            //}
             Connected = true;
             OnConnected?.Invoke(this, EventArgs.Empty);
             if (Attempts > 0)
@@ -437,16 +453,16 @@ namespace SocketIOClient
 
         private void ErrorMessageHandler(IMessage m)
         {
-            if (Options.EIO == 3)
-            {
-                var eio3 = m as Eio3ErrorMessage;
-                OnError?.Invoke(this, eio3.Message);
-            }
-            else
-            {
-                var eio4 = m as Eio4ErrorMessage;
-                OnError?.Invoke(this, eio4.Message);
-            }
+            //if (Options.EIO == 3)
+            //{
+            //    var eio3 = m as Eio3ErrorMessage;
+            //    OnError?.Invoke(this, eio3.Message);
+            //}
+            //else
+            //{
+            //    var eio4 = m as Eio4ErrorMessage;
+            //    OnError?.Invoke(this, eio4.Message);
+            //}
         }
 
         private void BinaryMessageHandler(BinaryMessage m)
@@ -471,6 +487,50 @@ namespace SocketIOClient
                 PacketId = m.Id,
                 Response = new SocketIOResponse(m.JsonElements, this)
             });
+        }
+
+        private void OnMessageReceived(IMessage msg)
+        {
+            try
+            {
+                switch (msg.Type)
+                {
+                    case MessageType.Opened:
+                        OpenedHandler(msg as OpenedMessage);
+                        break;
+                    case MessageType.Ping:
+                        PingHandler(msg as PingMessage);
+                        break;
+                    case MessageType.Pong:
+                        PongHandler();
+                        break;
+                    case MessageType.Connected:
+                        ConnectedHandler(msg);
+                        break;
+                    case MessageType.Disconnected:
+                        DisconnectedHandler();
+                        break;
+                    case MessageType.EventMessage:
+                        EventMessageHandler(msg as EventMessage);
+                        break;
+                    case MessageType.AckMessage:
+                        AckMessageHandler(msg as ServerAckMessage);
+                        break;
+                    case MessageType.ErrorMessage:
+                        ErrorMessageHandler(msg);
+                        break;
+                    case MessageType.BinaryMessage:
+                        BinaryMessageHandler(msg as BinaryMessage);
+                        break;
+                    case MessageType.BinaryAckMessage:
+                        BinaryAckMessageHandler(msg as ServerBinaryAckMessage);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+            }
         }
 
         private void SubscribeText(TransportMessage m)
@@ -765,10 +825,10 @@ namespace SocketIOClient
             if (Connected)
             {
                 Connected = false;
-                if (Options.EIO == 3)
-                {
-                    _pingTokenSorce.Cancel();
-                }
+                //if (Options.EIO == 3)
+                //{
+                //    _pingTokenSorce.Cancel();
+                //}
                 OnDisconnected?.Invoke(this, reason);
                 if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOServerDisconnect)
                 {
@@ -806,6 +866,8 @@ namespace SocketIOClient
 
         public void Dispose()
         {
+            HttpClient.Dispose();
+            ClientWebSocket.Dispose();
             Socket.Dispose();
             Router.Dispose();
             _ackHandlers.Clear();

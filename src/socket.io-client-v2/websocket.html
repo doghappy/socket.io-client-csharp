@@ -69,7 +69,10 @@
 
         function sendHelloWorldBinary() {
             var encoded = encoder.encode("hello world!");
-            socket.emit("1 params", encoded);
+            socket.emit("1 params", {
+                text: "hello world!",
+                bytes: encoded
+            });
         }
 
         function ack() {

@@ -10,7 +10,6 @@ namespace SocketIOClient
         public SocketIOOptions()
         {
             RandomizationFactor = new Random().NextDouble();
-            EIO = 4;
             ReconnectionDelay = 1000;
             ReconnectionDelayMax = 5000;
             ReconnectionAttempts = int.MaxValue;
@@ -51,20 +50,6 @@ namespace SocketIOClient
             }
         }
 
-        int eio;
-        public int EIO
-        {
-            get => eio;
-            set
-            {
-                if (eio != value)
-                {
-                    eio = value;
-                    EioHandler = EioHandlerFactory.GetHandler(value);
-                }
-            }
-        }
-
-        internal IEioHandler EioHandler { get; set; }
+        public bool AutoUpgrade { get; set; }
     }
 }

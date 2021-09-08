@@ -25,11 +25,16 @@ io.on('connection', socket => {
         socket.emit('hi', prefix + msg);
     });
 
+    socket.on('welcome', () => {
+        socket.emit('welcome', Buffer.from("welcome " + socket.id, 'utf8'));
+    });
+
     socket.on("no params", () => {
         socket.emit("no params");
     });
 
     socket.on("1 params", p1 => {
+        console.log(p1);
         socket.emit("1 params", p1);
     });
 

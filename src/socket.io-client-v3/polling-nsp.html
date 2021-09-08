@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>socket.io-client-v2 polling</title>
+    <title>v3 polling nsp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -14,12 +14,12 @@
     <button class="btn btn-primary" onclick="sendHelloWorldBinary()">Send 'Hello World' Binary</button>
     <button class="btn btn-primary" onclick="ack()">Ack</button>
     <button class="btn btn-primary" onclick="welcome()">Welcome</button>
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2.4.0/dist/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@3.1.3/dist/socket.io.min.js"></script>
     <script>
-        var socket = io(`http://localhost:11002/`, {
+        var socket = io(`http://localhost:11003/nsp`, {
             transports: ["polling"],
             query: {
-                token: "V2"
+                token: "V3"
             }
         });
 
@@ -49,10 +49,7 @@
 
         function sendHelloWorldBinary() {
             var encoded = encoder.encode("hello world!");
-            socket.emit("1 params", {
-                text: "hello world!",
-                bytes: encoded
-            });
+            socket.emit("1 params", encoded);
         }
 
         function ack() {

@@ -1,7 +1,9 @@
-﻿using SocketIOClient.Messages;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Reactive.Linq;
 using System.Text;
@@ -17,12 +19,13 @@ namespace SocketIOClient.Transport
             _httpClient = httpClient;
             _clientWebSocket = clientWebSocket;
             UriConverter = new UriConverter();
-            Eio = 4;
             Path = "/socket.io";
+            _messageQueue = new Queue<IMessage>();
         }
 
         readonly HttpClient _httpClient;
         readonly IClientWebSocket _clientWebSocket;
+        readonly Queue<IMessage> _messageQueue;
 
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
@@ -30,11 +33,11 @@ namespace SocketIOClient.Transport
 
         public Uri ServerUri { get; set; }
 
-        public int Eio { get; set; }
-
         public string Path { get; set; }
 
         public string Namespace { get; set; }
+
+        public bool AutoUpgrade { get; set; }
 
         public IEnumerable<KeyValuePair<string, string>> QueryParams { get; set; }
 
@@ -43,6 +46,8 @@ namespace SocketIOClient.Transport
         public string Sid { get; private set; }
 
         public IUriConverter UriConverter { get; set; }
+
+        public IJsonSerializer JsonSerializer { get; set; }
 
         public Action<IMessage> OnMessageReceived { get; set; }
 
@@ -53,14 +58,13 @@ namespace SocketIOClient.Transport
                 _webSocketTransport.Dispose();
             }
 
-            Uri uri = UriConverter.GetHandshakeUri(ServerUri, Eio, Path, QueryParams);
+            Uri uri = UriConverter.GetHandshakeUri(ServerUri, Path, QueryParams);
             string text = await _httpClient.GetStringAsync(uri).ConfigureAwait(false);
-
             int index = text.IndexOf('{');
             string json = text.Substring(index);
             var info = System.Text.Json.JsonSerializer.Deserialize<HandshakeInfo>(json);
             Sid = info.Sid;
-            if (info.Upgrades.Contains("websocket"))
+            if (info.Upgrades.Contains("websocket") && AutoUpgrade)
             {
                 _webSocketTransport = new WebSocketTransport(_clientWebSocket);
                 await WebSocketConnectAsync().ConfigureAwait(false);
@@ -77,7 +81,7 @@ namespace SocketIOClient.Transport
 
         private async Task WebSocketConnectAsync()
         {
-            Uri uri = UriConverter.GetWebSocketUri(ServerUri, Eio, Path, QueryParams, Sid);
+            Uri uri = UriConverter.GetWebSocketUri(ServerUri, Path, QueryParams, Sid);
             await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
             _webSocketTransport.OnTextReceived = OnWebSocketTextReceived;
             _webSocketTransport.OnBinaryReceived = OnBinaryReceived;
@@ -88,32 +92,11 @@ namespace SocketIOClient.Transport
         {
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
-            if (!string.IsNullOrEmpty(Namespace))
+            var msg = new ConnectedMessage
             {
-                var builder = new StringBuilder();
-                builder.Append("40").Append(Namespace);
-                if (QueryParams != null)
-                {
-                    int i = -1;
-                    foreach (var item in QueryParams)
-                    {
-                        i++;
-                        if (i == 0)
-                        {
-                            builder.Append('?');
-                        }
-                        else
-                        {
-                            builder.Append('&');
-                        }
-                        builder.Append(item.Key).Append('=').Append(item.Value);
-                    }
-                }
-                builder.Append(',');
-                builder.Insert(0, builder.Length + ":");
-                await _httpTransport.PostAsync(_httpUri, builder.ToString(), CancellationToken.None);
-            }
-            _ = Task.Factory.StartNew(HttpPolling, TaskCreationOptions.LongRunning);
+                Namespace = Namespace
+            };
+            await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None);
         }
 
         private async Task HttpPolling()
@@ -138,32 +121,71 @@ namespace SocketIOClient.Transport
 
         private void OnTextReceived(string text)
         {
-            IMessage msg = null;
-            if (Eio == 3)
-            {
-                if (Protocol == TransportProtocol.Polling)
-                {
-                    msg = MessageFactory.GetEio3HttpMessage(text);
-                }
-                else if (Protocol == TransportProtocol.WebSocket)
-                {
-                    msg = MessageFactory.GetEio3WebSocketMessage(text);
-                }
-            }
-            else if (Eio == 4)
-            {
-                msg = MessageFactory.GetEio4Message(text);
-            }
-
+            var msg = MessageFactory.CreateMessage(text);
             if (msg != null)
             {
-                OnMessageReceived(msg);
+                if (msg.BinaryCount > 0)
+                {
+                    _messageQueue.Enqueue(msg);
+                }
+                else
+                {
+                    OnMessageReceived(msg);
+                }
             }
         }
 
         private void OnBinaryReceived(byte[] bytes)
         {
+            if (_messageQueue.Count > 0)
+            {
+                var msg = _messageQueue.Peek();
+                msg.IncomingBytes.Add(bytes);
+                if (msg.IncomingBytes.Count == msg.BinaryCount)
+                {
+                    OnMessageReceived(msg);
+                    _messageQueue.Dequeue();
+                }
+            }
+        }
 
+        public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
+        {
+            //if (Protocol == TransportProtocol.Polling)
+            //{
+            //    string text = null;
+            //    if (Eio == 3)
+            //    {
+            //        text = msg.Eio3HttpWrite();
+            //    }
+            //    else
+            //    {
+            //        text = msg.Write();
+            //    }
+            //    await _httpTransport.PostAsync(_httpUri, text, cancellationToken).ConfigureAwait(false);
+            //    if (msg.OutgoingBytes != null)
+            //    {
+            //        foreach (var item in msg.OutgoingBytes)
+            //        {
+            //            byte[] bytes = new byte[item.Length + 1];
+            //            bytes[0] = 4;
+            //            Buffer.BlockCopy(item, 0, bytes, 1, item.Length);
+            //            await _httpTransport.PostAsync(_httpUri, bytes, cancellationToken);
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    string text = msg.Write();
+            //    await _httpTransport.PostAsync(_httpUri, text, cancellationToken).ConfigureAwait(false);
+            //    if (msg.OutgoingBytes != null)
+            //    {
+            //        foreach (var item in msg.OutgoingBytes)
+            //        {
+            //            await _httpTransport.PostAsync(_httpUri, item, cancellationToken);
+            //        }
+            //    }
+            //}
         }
 
         public async Task SendAsync(string text, CancellationToken cancellationToken)
@@ -192,6 +214,7 @@ namespace SocketIOClient.Transport
 
         public void Dispose()
         {
+            _messageQueue.Clear();
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();

@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
-    public class Eio3ErrorMessage : IMessage
+    public class ErrorMessage : IMessage
     {
         public MessageType Type => MessageType.ErrorMessage;
 
@@ -10,7 +11,8 @@ namespace SocketIOClient.Messages
 
         public void Read(string msg)
         {
-            Message = msg.Trim('"');
+            var doc = JsonDocument.Parse(msg);
+            Message = doc.RootElement.GetProperty("message").GetString();
         }
 
         public string Write()
