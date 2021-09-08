@@ -1,10 +1,10 @@
 ﻿using System.Text;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class Eio3ConnectedMessage : ICvtMessage
+    public class Eio3ConnectedMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.Connected;
+        public MessageType Type => MessageType.Connected;
 
         public string QueryString { get; set; }
 

@@ -1,6 +1,6 @@
-﻿namespace SocketIOClient.Converters
+﻿namespace SocketIOClient.Messages
 {
-    public enum CvtMessageType
+    public enum MessageType
     {
         Opened,
         Ping = 2,

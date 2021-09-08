@@ -1,10 +1,10 @@
 ﻿using System;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class Eio3ErrorMessage : ICvtMessage
+    public class Eio3ErrorMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.ErrorMessage;
+        public MessageType Type => MessageType.ErrorMessage;
 
         public string Message { get; set; }
 

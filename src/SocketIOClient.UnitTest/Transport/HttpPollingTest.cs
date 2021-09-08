@@ -19,7 +19,7 @@ namespace SocketIOClient.UnitTest.Transport
             mockHttp.When(uri)
                 .Respond("text/plain", "0{\"sid\":\"BOjvjrVmDiVtT6oWAAAG\",\"upgrades\":[\"websocket\"],\"pingInterval\":25000,\"pingTimeout\":5000}");
             var client = mockHttp.ToHttpClient();
-            var transport = new HttpPolling(client);
+            var transport = new HttpTransport(client);
 
             TransportMessage message = null;
             transport.Subscribe(msg => message = msg);

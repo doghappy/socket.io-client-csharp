@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v2 polling</title>
+    <title>v2 polling-nsp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -14,28 +14,13 @@
     <button class="btn btn-primary" onclick="sendHelloWorldBinary()">Send 'Hello World' Binary</button>
     <button class="btn btn-primary" onclick="ack()">Ack</button>
     <button class="btn btn-primary" onclick="welcome()">Welcome</button>
-    <button class="btn btn-primary" onclick="serverCallback()">Server Callback</button>
-    <button class="btn btn-primary" onclick="serverDisconnect()">Server Disconnect</button>
-    <button class="btn btn-primary" onclick="serverAck()">Server Ack</button>
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2.4.0/dist/socket.io.min.js"></script>
     <script>
-        var socket = io(`http://localhost:11002/`, {
-            //transports: ["websocket"],
+        var socket = io(`http://localhost:11002/nsp`, {
+            transports: ["websocket"],
             query: {
                 token: "V2"
             }
-        });
-
-        socket.io.on("reconnect_attempt", function (attempt) {
-            console.log("reconnect_attempt: " + attempt);
-        })
-
-        socket.io.on("reconnect", function (attempt) {
-            console.log("reconnect: " + attempt);
-        });
-
-        socket.io.on("reconnect_error", function (error) {
-            console.log("reconnect: " + error);
         });
 
         socket.on("connect", () => {
@@ -51,17 +36,12 @@
 
             socket.on("welcome", message => {
                 console.log(message);
+                var decoder = new TextDecoder("utf-8");
                 console.log(decoder.decode(message));
-            });
-
-            socket.on("client calls the server's callback 1", (message, cb) => {
-                var text = decoder.decode(message) + '...';
-                cb(encoder.encode("hello world!"));
             });
         });
 
         var encoder = new TextEncoder('utf-8');
-        var decoder = new TextDecoder("utf-8");
 
         function hi() {
             socket.emit("hi", "doghappy");
@@ -80,22 +60,6 @@
 
         function welcome() {
             socket.emit("welcome");
-        }
-
-        function serverCallback() {
-            var encoded = encoder.encode("hello world!");
-            socket.emit("1 params | cb: 1 params", encoded, function (res) {
-                alert(res);
-            });
-        }
-
-        function serverDisconnect() {
-            socket.emit("sever disconnect");
-        }
-
-        function serverAck() {
-            var encoded = encoder.encode("hello world!");
-            socket.emit("client calls the server's callback 1", encoded);
         }
     </script>
 </body>

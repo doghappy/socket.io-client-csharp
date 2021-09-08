@@ -3,11 +3,11 @@ using System.Text.Json;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class OpenedMessage : ICvtMessage
+    public class OpenedMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.Opened;
+        public MessageType Type => MessageType.Opened;
 
         public string Sid { get; set; }
 

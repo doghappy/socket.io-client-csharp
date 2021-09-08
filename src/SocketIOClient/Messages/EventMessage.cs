@@ -2,11 +2,11 @@
 using System.Text;
 using System.Text.Json;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class EventMessage : ICvtMessage
+    public class EventMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.EventMessage;
+        public MessageType Type => MessageType.EventMessage;
 
         public string Namespace { get; set; }
 

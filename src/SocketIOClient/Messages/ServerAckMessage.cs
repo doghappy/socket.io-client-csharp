@@ -3,11 +3,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class ServerBinaryAckMessage : ICvtMessage
+    public class ServerAckMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.BinaryAckMessage;
+        public MessageType Type => MessageType.AckMessage;
 
         public string Namespace { get; set; }
 
@@ -19,42 +19,32 @@ namespace SocketIOClient.Converters
 
         public int Id { get; set; }
 
-        public int BinaryCount { get; set; }
-
         public void Read(string msg)
         {
-            int index1 = msg.IndexOf('-');
-            BinaryCount = int.Parse(msg.Substring(0, index1));
-
-            int index2 = msg.IndexOf('[');
-
-            int index3 = msg.LastIndexOf(',', index2);
-            if (index3 > -1)
+            int index = msg.IndexOf('[');
+            int lastIndex = msg.LastIndexOf(',', index);
+            if (lastIndex > -1)
             {
-                Namespace = msg.Substring(index1 + 1, index3 - index1 - 1);
-                Id = int.Parse(msg.Substring(index3 + 1, index2 - index3 - 1));
+                string text = msg.Substring(0, index);
+                Namespace = text.Substring(0, lastIndex);
+                Id = int.Parse(text.Substring(lastIndex + 1));
             }
             else
             {
-                Id = int.Parse(msg.Substring(index1 + 1, index2 - index1 - 1));
+                Id = int.Parse(msg.Substring(0, index));
             }
-
-            string json = msg.Substring(index2);
-            JsonElements = JsonDocument.Parse(json).RootElement.EnumerateArray().ToList();
+            msg = msg.Substring(index);
+            JsonElements = JsonDocument.Parse(msg).RootElement.EnumerateArray().ToList();
         }
 
         public string Write()
         {
             var builder = new StringBuilder();
-            builder
-                .Append("45")
-                .Append(BinaryCount)
-                .Append('-');
+            builder.Append("42").Append(Id);
             if (!string.IsNullOrEmpty(Namespace))
             {
                 builder.Append(Namespace).Append(',');
             }
-            builder.Append(Id);
             if (string.IsNullOrEmpty(Json))
             {
                 builder.Append("[\"").Append(Event).Append("\"]");

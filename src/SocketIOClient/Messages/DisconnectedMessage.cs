@@ -1,8 +1,8 @@
-﻿namespace SocketIOClient.Converters
+﻿namespace SocketIOClient.Messages
 {
-    public class DisconnectedMessage : ICvtMessage
+    public class DisconnectedMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.Disconnected;
+        public MessageType Type => MessageType.Disconnected;
 
         public string Namespace { get; set; }
 

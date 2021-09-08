@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
     class ByteArrayConverter : JsonConverter<byte[]>
     {

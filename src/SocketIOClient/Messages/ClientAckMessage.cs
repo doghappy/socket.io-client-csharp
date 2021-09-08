@@ -1,22 +1,16 @@
-﻿using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class ClientBinaryAckMessage : ICvtMessage
+    public class ClientAckMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.BinaryAckMessage;
+        public MessageType Type => MessageType.AckMessage;
 
         public string Namespace { get; set; }
-
-        public List<JsonElement> JsonElements { get; set; }
 
         public string Json { get; set; }
 
         public int Id { get; set; }
-
-        public int BinaryCount { get; set; }
 
         public void Read(string msg)
         {
@@ -25,15 +19,11 @@ namespace SocketIOClient.Converters
         public string Write()
         {
             var builder = new StringBuilder();
-            builder
-                .Append("46")
-                .Append(BinaryCount)
-                .Append('-');
+            builder.Append("43").Append(Id);
             if (!string.IsNullOrEmpty(Namespace))
             {
                 builder.Append(Namespace).Append(',');
             }
-            builder.Append(Id);
             if (string.IsNullOrEmpty(Json))
             {
                 builder.Append("[]");

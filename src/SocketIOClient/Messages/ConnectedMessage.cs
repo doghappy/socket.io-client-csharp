@@ -1,11 +1,11 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class Eio4ConnectedMessage : ICvtMessage
+    public class ConnectedMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.Connected;
+        public MessageType Type => MessageType.Connected;
 
         public string Namespace { get; set; }
 
@@ -26,6 +26,16 @@ namespace SocketIOClient.Converters
             Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
         }
 
+        public void Eio3WsRead(string msg)
+        {
+            Namespace = msg.TrimEnd(',');
+        }
+
+        public void Eio3HttpRead(string msg)
+        {
+
+        }
+
         public string Write()
         {
             var builder = new StringBuilder("40");
@@ -34,6 +44,16 @@ namespace SocketIOClient.Converters
                 builder.Append(Namespace).Append(',');
             }
             return builder.ToString();
+        }
+
+        public string Eio3WsWrite()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public string Eio3HttpWrite()
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

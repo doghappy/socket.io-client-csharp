@@ -9,8 +9,8 @@ using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.Converters;
 using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.Processors;
 using SocketIOClient.Transport;
 using SocketIOClient.WebSocketClient;
@@ -177,13 +177,13 @@ namespace SocketIOClient
             JsonSerializer = new SystemTextJsonSerializer(Options.EIO);
             _connectionTokenSorce = new CancellationTokenSource();
 
-            Router = new TransportRouter
-            {
-                Options = Options,
-                ServerUri = ServerUri
-            };
-            Router.Subscribe(SubscribeBinary);
-            Router.Subscribe(SubscribeText);
+            //Router = new TransportRouter
+            //{
+            //    Options = Options,
+            //    ServerUri = ServerUri
+            //};
+            //Router.Subscribe(SubscribeBinary);
+            //Router.Subscribe(SubscribeText);
         }
 
         internal static bool IsNamespaceDefault(string @namespace)
@@ -206,7 +206,7 @@ namespace SocketIOClient
                     {
                         OnReconnectAttempt?.Invoke(this, Attempts);
                     }
-                    await Router.HandshakeAsync().ConfigureAwait(false);
+                    await Router.ConnectAsync().ConfigureAwait(false);
                     break;
                 }
                 catch (SystemException e)
@@ -332,11 +332,11 @@ namespace SocketIOClient
             }
             else
             {
-                var msg = new Eio4ConnectedMessage
-                {
-                    Namespace = Namespace
-                };
-                await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
+                //var msg = new Eio4ConnectedMessage
+                //{
+                //    Namespace = Namespace
+                //};
+                //await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
             }
         }
 
@@ -360,7 +360,7 @@ namespace SocketIOClient
             OnPong?.Invoke(this, DateTime.Now - _pingTime);
         }
 
-        private void ConnectedHandler(ICvtMessage m)
+        private void ConnectedHandler(IMessage m)
         {
             if (Options.EIO == 3)
             {
@@ -375,9 +375,9 @@ namespace SocketIOClient
             }
             else
             {
-                var eio4 = m as Eio4ConnectedMessage;
-                Id = eio4.Sid;
-                Router.Sid = Id;
+                //var eio4 = m as Eio4ConnectedMessage;
+                //Id = eio4.Sid;
+                //Router.Sid = Id;
             }
             Connected = true;
             OnConnected?.Invoke(this, EventArgs.Empty);
@@ -435,7 +435,7 @@ namespace SocketIOClient
             }
         }
 
-        private void ErrorMessageHandler(ICvtMessage m)
+        private void ErrorMessageHandler(IMessage m)
         {
             if (Options.EIO == 3)
             {
@@ -482,41 +482,41 @@ namespace SocketIOClient
                 {
                     return;
                 }
-                var msg = CvtFactory.GetMessage(Options.EIO, m.Text);
+                var msg = MessageFactory.GetEio3HttpMessage(m.Text);
                 if (msg == null)
                 {
                     return;
                 }
                 switch (msg.Type)
                 {
-                    case CvtMessageType.Opened:
+                    case MessageType.Opened:
                         OpenedHandler(msg as OpenedMessage);
                         break;
-                    case CvtMessageType.Ping:
+                    case MessageType.Ping:
                         PingHandler(msg as PingMessage);
                         break;
-                    case CvtMessageType.Pong:
+                    case MessageType.Pong:
                         PongHandler();
                         break;
-                    case CvtMessageType.Connected:
+                    case MessageType.Connected:
                         ConnectedHandler(msg);
                         break;
-                    case CvtMessageType.Disconnected:
+                    case MessageType.Disconnected:
                         DisconnectedHandler();
                         break;
-                    case CvtMessageType.EventMessage:
+                    case MessageType.EventMessage:
                         EventMessageHandler(msg as EventMessage);
                         break;
-                    case CvtMessageType.AckMessage:
+                    case MessageType.AckMessage:
                         AckMessageHandler(msg as ServerAckMessage);
                         break;
-                    case CvtMessageType.ErrorMessage:
+                    case MessageType.ErrorMessage:
                         ErrorMessageHandler(msg);
                         break;
-                    case CvtMessageType.BinaryMessage:
+                    case MessageType.BinaryMessage:
                         BinaryMessageHandler(msg as BinaryMessage);
                         break;
-                    case CvtMessageType.BinaryAckMessage:
+                    case MessageType.BinaryAckMessage:
                         BinaryAckMessageHandler(msg as ServerBinaryAckMessage);
                         break;
                 }

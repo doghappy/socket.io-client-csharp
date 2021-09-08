@@ -1,34 +1,32 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net.WebSockets;
-using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Transport
 {
-    public class WebSocket : IWebSocket
+    public class WebSocketTransport : IReceivable, IDisposable
     {
-        public WebSocket()
+        public WebSocketTransport(IClientWebSocket ws)
         {
-            _ws = new ClientWebSocket();
+            _ws = ws;
             ReceiveChunkSize = 1024 * 8;
             SendChunkSize = 1024 * 8;
             ConnectionTimeout = TimeSpan.FromSeconds(10);
             ReceiveWait = TimeSpan.FromSeconds(1);
             _listenCancellation = new CancellationTokenSource();
-            _onError = new Subject<Exception>();
-            _onReceived = new Subject<TransportMessage>();
         }
 
         public int ReceiveChunkSize { get; set; }
         public int SendChunkSize { get; set; }
         public TimeSpan ConnectionTimeout { get; set; }
         public TimeSpan ReceiveWait { get; set; }
+        public Action<string> OnTextReceived { get; set; }
+        public Action<byte[]> OnBinaryReceived { get; set; }
 
-        readonly ClientWebSocket _ws;
-        readonly Subject<Exception> _onError;
-        readonly Subject<TransportMessage> _onReceived;
+        readonly IClientWebSocket _ws;
         readonly CancellationTokenSource _listenCancellation;
 
 
@@ -117,32 +115,27 @@ namespace SocketIOClient.Transport
                         }
                         catch (Exception e)
                         {
-                            _onError.OnNext(e);
+                            Debug.WriteLine(e);
                             break;
                         }
                     }
 
                     if (result != null)
                     {
-                        var message = new TransportMessage();
                         switch (result.MessageType)
                         {
                             case WebSocketMessageType.Text:
-                                message.Type = TransportMessageType.Text;
-                                message.Text = Encoding.UTF8.GetString(buffer, 0, count);
+                                string text = Encoding.UTF8.GetString(buffer, 0, count);
+                                OnTextReceived(text);
                                 break;
                             case WebSocketMessageType.Binary:
-                                message.Type = TransportMessageType.Binary;
-                                message.Binary = new byte[count];
-                                Buffer.BlockCopy(buffer, 0, message.Binary, 0, count);
+                                OnBinaryReceived(buffer);
                                 break;
                             case WebSocketMessageType.Close:
-                                message.Type = TransportMessageType.Close;
                                 break;
                             default:
                                 break;
                         }
-                        _onReceived.OnNext(message);
                     }
                 }
                 else
@@ -150,20 +143,6 @@ namespace SocketIOClient.Transport
                     await Task.Delay(ReceiveWait);
                 }
             }
-        }
-
-        public IDisposable Subscribe(IObserver<TransportMessage> observer)
-        {
-            //return _onReceived.Subscribe(x =>
-            //{
-            //    observer.OnNext(x);
-            //});
-            return _onReceived.Subscribe(observer);
-        }
-
-        public IDisposable Subscribe(IObserver<Exception> observer)
-        {
-            return _onError.Subscribe(observer);
         }
 
         public void Dispose()

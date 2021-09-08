@@ -2,11 +2,11 @@
 using System.Text;
 using System.Text.Json;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class BinaryMessage : ICvtMessage
+    public class BinaryMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.BinaryMessage;
+        public MessageType Type => MessageType.BinaryMessage;
 
         public string Namespace { get; set; }
 

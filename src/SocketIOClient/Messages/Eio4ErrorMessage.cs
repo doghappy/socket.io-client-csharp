@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Text.Json;
 
-namespace SocketIOClient.Converters
+namespace SocketIOClient.Messages
 {
-    public class Eio4ErrorMessage : ICvtMessage
+    public class Eio4ErrorMessage : IMessage
     {
-        public CvtMessageType Type => CvtMessageType.ErrorMessage;
+        public MessageType Type => MessageType.ErrorMessage;
 
         public string Message { get; set; }
 
