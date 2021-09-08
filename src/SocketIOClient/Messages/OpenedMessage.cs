@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text.Json;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SocketIOClient.Messages
 {
@@ -18,6 +17,12 @@ namespace SocketIOClient.Messages
         public int PingInterval { get; private set; }
 
         public int PingTimeout { get; private set; }
+
+        public ICollection<byte[]> OutgoingBytes { get; set; }
+
+        public ICollection<byte[]> IncomingBytes { get; }
+
+        public int BinaryCount { get; }
 
         public void Read(string msg)
         {

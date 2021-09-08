@@ -23,13 +23,13 @@ namespace SocketIOClient.Messages
                 case MessageType.EventMessage:
                     return new EventMessage();
                 case MessageType.AckMessage:
-                    return new ServerAckMessage();
+                    return new ClientAckMessage();
                 case MessageType.ErrorMessage:
                     return new ErrorMessage();
                 case MessageType.BinaryMessage:
                     return new BinaryMessage();
                 case MessageType.BinaryAckMessage:
-                    return new ServerBinaryAckMessage();
+                    return new ClientBinaryAckMessage();
             }
             return null;
         }

@@ -12,7 +12,11 @@ namespace SocketIOClient.Messages
 
         public string Sid { get; set; }
 
-        public IEnumerable<byte[]> OutgoingBytes { get; set; }
+        public ICollection<byte[]> OutgoingBytes { get; set; }
+
+        public ICollection<byte[]> IncomingBytes { get; }
+
+        public int BinaryCount { get; }
 
         public void Read(string msg)
         {
@@ -27,19 +31,6 @@ namespace SocketIOClient.Messages
                 Namespace = string.Empty;
             }
             Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
-        }
-
-        public void Eio3WsRead(string msg)
-        {
-            Namespace = msg.TrimEnd(',');
-        }
-
-        public void Eio3HttpRead(string msg)
-        {
-            if (msg.Length > 2)
-            {
-                Namespace = msg.Substring(2);
-            }
         }
 
         public string Write()

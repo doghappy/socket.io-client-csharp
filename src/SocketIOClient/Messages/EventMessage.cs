@@ -16,6 +16,12 @@ namespace SocketIOClient.Messages
 
         public string Json { get; set; }
 
+        public ICollection<byte[]> OutgoingBytes { get; set; }
+
+        public ICollection<byte[]> IncomingBytes { get; }
+
+        public int BinaryCount { get; }
+
         public void Read(string msg)
         {
             int index = msg.IndexOf('[');

@@ -60,8 +60,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
-                },
-                EIO = SocketIOCreator.EIO
+                }
             });
             client.On("hi", response =>
             {
@@ -173,8 +172,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
-                },
-                EIO = SocketIOCreator.EIO
+                }
             });
 
             Assert.IsFalse(client.Connected);

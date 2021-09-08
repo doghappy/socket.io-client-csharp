@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Test.Models;
 using System.Text;
 using System.Text.Json;
@@ -262,7 +263,11 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             ObjectResponse result = null;
             var client = SocketIOCreator.Create();
-            client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
+            var jsonSerializer = client.JsonSerializer as SystemTextJsonSerializer;
+            jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
             client.On("1 params", response =>
             {
                 result = response.GetValue<ObjectResponse>();

@@ -356,12 +356,12 @@ namespace SocketIOClient
             //}
         }
 
-        private async void PingHandler(PingMessage msg)
+        private async void PingHandler()
         {
             try
             {
                 _pingTime = DateTime.Now;
-                await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
+                await Router.SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
                 OnPong.Invoke(this, DateTime.Now - _pingTime);
             }
             catch (Exception e)
@@ -435,7 +435,7 @@ namespace SocketIOClient
             }
         }
 
-        private void AckMessageHandler(ServerAckMessage m)
+        private void AckMessageHandler(ClientAckMessage m)
         {
             if (_ackHandlers.ContainsKey(m.Id))
             {
@@ -478,7 +478,7 @@ namespace SocketIOClient
             });
         }
 
-        private void BinaryAckMessageHandler(ServerBinaryAckMessage m)
+        private void BinaryAckMessageHandler(ClientBinaryAckMessage m)
         {
             _binaryEvents.Enqueue(new BinaryEvent
             {
@@ -495,11 +495,8 @@ namespace SocketIOClient
             {
                 switch (msg.Type)
                 {
-                    case MessageType.Opened:
-                        OpenedHandler(msg as OpenedMessage);
-                        break;
                     case MessageType.Ping:
-                        PingHandler(msg as PingMessage);
+                        PingHandler();
                         break;
                     case MessageType.Pong:
                         PongHandler();
@@ -514,7 +511,7 @@ namespace SocketIOClient
                         EventMessageHandler(msg as EventMessage);
                         break;
                     case MessageType.AckMessage:
-                        AckMessageHandler(msg as ServerAckMessage);
+                        AckMessageHandler(msg as ClientAckMessage);
                         break;
                     case MessageType.ErrorMessage:
                         ErrorMessageHandler(msg);
@@ -523,7 +520,7 @@ namespace SocketIOClient
                         BinaryMessageHandler(msg as BinaryMessage);
                         break;
                     case MessageType.BinaryAckMessage:
-                        BinaryAckMessageHandler(msg as ServerBinaryAckMessage);
+                        BinaryAckMessageHandler(msg as ClientBinaryAckMessage);
                         break;
                 }
             }
@@ -532,62 +529,6 @@ namespace SocketIOClient
                 Debug.WriteLine(e);
             }
         }
-
-        private void SubscribeText(TransportMessage m)
-        {
-            Debug.WriteLine(m.Text);
-            try
-            {
-                if (m.Type != TransportMessageType.Text)
-                {
-                    return;
-                }
-                var msg = MessageFactory.GetEio3HttpMessage(m.Text);
-                if (msg == null)
-                {
-                    return;
-                }
-                switch (msg.Type)
-                {
-                    case MessageType.Opened:
-                        OpenedHandler(msg as OpenedMessage);
-                        break;
-                    case MessageType.Ping:
-                        PingHandler(msg as PingMessage);
-                        break;
-                    case MessageType.Pong:
-                        PongHandler();
-                        break;
-                    case MessageType.Connected:
-                        ConnectedHandler(msg);
-                        break;
-                    case MessageType.Disconnected:
-                        DisconnectedHandler();
-                        break;
-                    case MessageType.EventMessage:
-                        EventMessageHandler(msg as EventMessage);
-                        break;
-                    case MessageType.AckMessage:
-                        AckMessageHandler(msg as ServerAckMessage);
-                        break;
-                    case MessageType.ErrorMessage:
-                        ErrorMessageHandler(msg);
-                        break;
-                    case MessageType.BinaryMessage:
-                        BinaryMessageHandler(msg as BinaryMessage);
-                        break;
-                    case MessageType.BinaryAckMessage:
-                        BinaryAckMessageHandler(msg as ServerBinaryAckMessage);
-                        break;
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-            }
-        }
-
-
 
         public async Task DisconnectAsync()
         {
@@ -668,45 +609,39 @@ namespace SocketIOClient
 
         internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
         {
+            IMessage msg;
             if (data != null && data.Length > 0)
             {
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    var msg = new ClientBinaryAckMessage
+                    msg = new ServerBinaryAckMessage
                     {
                         Id = packetId,
                         Namespace = Namespace,
-                        BinaryCount = result.Bytes.Count,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
-                    foreach (var item in result.Bytes)
-                    {
-                        Debug.WriteLine(item[0] + "," + item[1]);
-                        await Router.SendAsync(item, cancellationToken);
-                    }
+                    msg.OutgoingBytes = result.Bytes;
                 }
                 else
                 {
-                    var msg = new ClientAckMessage
+                    msg = new ServerAckMessage
                     {
                         Namespace = Namespace,
                         Id = packetId,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
                 }
             }
             else
             {
-                var msg = new ClientAckMessage
+                msg = new ServerAckMessage
                 {
                     Namespace = Namespace,
                     Id = packetId
                 };
-                await Router.SendAsync(msg.Write(), cancellationToken);
             }
+            await Router.SendAsync(msg, cancellationToken);
         }
 
         /// <summary>
@@ -782,7 +717,7 @@ namespace SocketIOClient
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    var msg = new ServerBinaryAckMessage
+                    var msg = new ClientBinaryAckMessage
                     {
                         Event = eventName,
                         Namespace = Namespace,
@@ -798,7 +733,7 @@ namespace SocketIOClient
                 }
                 else
                 {
-                    var msg = new ServerAckMessage
+                    var msg = new ClientAckMessage
                     {
                         Event = eventName,
                         Namespace = Namespace,
@@ -810,7 +745,7 @@ namespace SocketIOClient
             }
             else
             {
-                var msg = new ServerAckMessage
+                var msg = new ClientAckMessage
                 {
                     Event = eventName,
                     Namespace = Namespace,

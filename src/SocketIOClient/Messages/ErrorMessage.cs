@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace SocketIOClient.Messages
@@ -8,6 +9,12 @@ namespace SocketIOClient.Messages
         public MessageType Type => MessageType.ErrorMessage;
 
         public string Message { get; set; }
+
+        public ICollection<byte[]> OutgoingBytes { get; set; }
+
+        public ICollection<byte[]> IncomingBytes { get; }
+
+        public int BinaryCount { get; }
 
         public void Read(string msg)
         {

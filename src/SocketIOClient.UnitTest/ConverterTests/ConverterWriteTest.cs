@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using SocketIOClient.Converters;
+using SocketIOClient.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,40 +30,17 @@ namespace SocketIOClient.UnitTest.ConverterTests
         }
 
         [TestMethod]
-        public void Eio3Connected()
+        public void Connected()
         {
-            var msg = new Eio3ConnectedMessage
-            {
-                QueryString = "a=1&b=2"
-            };
-            string text = msg.Write();
-            Assert.AreEqual("40?a=1&b=2", text);
-        }
-
-        [TestMethod]
-        public void Eio3NamespaceConnected()
-        {
-            var msg = new Eio3ConnectedMessage
-            {
-                QueryString = "?token=123",
-                Namespace = "/nginx"
-            };
-            string text = msg.Write();
-            Assert.AreEqual("40/nginx?token=123", text);
-        }
-
-        [TestMethod]
-        public void Eio4Connected()
-        {
-            var msg = new Eio4ConnectedMessage();
+            var msg = new ConnectedMessage();
             string text = msg.Write();
             Assert.AreEqual("40", text);
         }
 
         [TestMethod]
-        public void Eio4NamespaceConnected()
+        public void NamespaceConnected()
         {
-            var msg = new Eio4ConnectedMessage
+            var msg = new ConnectedMessage
             {
                 Namespace = "/microsoft"
             };
@@ -141,7 +118,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void Ack()
         {
-            var msg = new ServerAckMessage
+            var msg = new ClientAckMessage
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -154,7 +131,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void NamespaceAck()
         {
-            var msg = new ServerAckMessage
+            var msg = new ClientAckMessage
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -195,7 +172,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void BinaryAck()
         {
-            var msg = new ServerBinaryAckMessage
+            var msg = new ClientBinaryAckMessage
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -209,7 +186,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
         [TestMethod]
         public void NamespaceBinaryAck()
         {
-            var msg = new ServerBinaryAckMessage
+            var msg = new ClientBinaryAckMessage
             {
                 Event = "event name",
                 Json = "[1989]",

@@ -26,6 +26,10 @@ namespace SocketIOClient.Transport
         {
             var req = new HttpRequestMessage(HttpMethod.Get, AppendRandom(uri));
             var resMsg = await _client.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            if (!resMsg.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
+            }
             string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
             Produce(text);
         }
@@ -38,13 +42,13 @@ namespace SocketIOClient.Transport
             Produce(text);
         }
 
-        public async Task PostAsync(string uri, byte[] bytes, CancellationToken cancellationToken)
-        {
-            var content = new ByteArrayContent(bytes);
-            var resMsg = await _client.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
-            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Produce(text);
-        }
+        //public async Task PostAsync(string uri, byte[] bytes, CancellationToken cancellationToken)
+        //{
+        //    var content = new ByteArrayContent(bytes);
+        //    var resMsg = await _client.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
+        //    string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+        //    Produce(text);
+        //}
 
         private void Produce(string text)
         {

@@ -17,8 +17,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
-                },
-                EIO = SocketIOCreator.EIO
+                }
             });
 
             Assert.IsFalse(client.Connected);
@@ -51,8 +50,7 @@ namespace SocketIOClient.Test.SocketIOTests
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
-                },
-                EIO = SocketIOCreator.EIO
+                }
             });
 
             Assert.IsFalse(client.Connected);

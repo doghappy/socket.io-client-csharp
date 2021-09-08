@@ -6,14 +6,16 @@ namespace SocketIOClient.Messages
     {
         public MessageType Type => MessageType.Ping;
 
-        public IEnumerable<byte[]> OutgoingBytes { get; set; }
+        public ICollection<byte[]> OutgoingBytes { get; set; }
+
+        public ICollection<byte[]> IncomingBytes { get; }
+
+        public int BinaryCount { get; }
 
         public void Read(string msg)
         {
         }
 
         public string Write() => "2";
-
-        public string Eio3HttpWrite() => "1:2";
     }
 }

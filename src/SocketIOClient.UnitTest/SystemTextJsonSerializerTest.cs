@@ -24,55 +24,9 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 ";
 
         [TestMethod]
-        public void TestEio3With1Byte()
+        public void Test1Byte()
         {
-            var seriazlier = new SystemTextJsonSerializer(3);
-            byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
-            var result = seriazlier.Serialize(new object[] {
-                new
-                {
-                    Code = 404,
-                    Message = messageBytes
-                }
-            });
-
-            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0}}]", result.Json);
-            Assert.AreEqual(1, result.Bytes.Count);
-            Assert.AreEqual(messageBytes.Length + 1, result.Bytes[0].Length);
-            Assert.AreEqual(4, result.Bytes[0][0]);
-            Assert.AreEqual(LONG_STRING + "xyz", Encoding.UTF8.GetString(result.Bytes[0], 1, result.Bytes[0].Length - 1));
-        }
-
-        [TestMethod]
-        public void TestEio3With2Bytes()
-        {
-            var seriazlier = new SystemTextJsonSerializer(3);
-            byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
-            byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
-            var result = seriazlier.Serialize(new object[]
-            {
-                new
-                {
-                    Code = 404,
-                    Message = messageBytes,
-                    Data = dataBytes
-                }
-            });
-
-            Assert.AreEqual("[{\"Code\":404,\"Message\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]", result.Json);
-            Assert.AreEqual(2, result.Bytes.Count);
-            Assert.AreEqual(messageBytes.Length + 1, result.Bytes[0].Length);
-            Assert.AreEqual(4, result.Bytes[0][0]);
-            Assert.AreEqual(LONG_STRING + "xyz", Encoding.UTF8.GetString(result.Bytes[0], 1, result.Bytes[0].Length - 1));
-            Assert.AreEqual(dataBytes.Length + 1, result.Bytes[1].Length);
-            Assert.AreEqual(4, result.Bytes[1][0]);
-            Assert.AreEqual(LONG_STRING + "-data", Encoding.UTF8.GetString(result.Bytes[1], 1, result.Bytes[1].Length - 1));
-        }
-
-        [TestMethod]
-        public void TestEio4With1Byte()
-        {
-            var seriazlier = new SystemTextJsonSerializer(4);
+            var seriazlier = new SystemTextJsonSerializer();
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
             var result = seriazlier.Serialize(new object[]
             {
@@ -89,9 +43,9 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         }
 
         [TestMethod]
-        public void TestEio4With2Bytes()
+        public void Test2Bytes()
         {
-            var seriazlier = new SystemTextJsonSerializer(4);
+            var seriazlier = new SystemTextJsonSerializer();
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
             byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
             var result = seriazlier.Serialize(new object[]
@@ -113,9 +67,9 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         }
 
         [TestMethod]
-        public void TestEio4With2Bytes2Params()
+        public void Test2Bytes2Params()
         {
-            var seriazlier = new SystemTextJsonSerializer(4);
+            var seriazlier = new SystemTextJsonSerializer();
             byte[] messageBytes = Encoding.UTF8.GetBytes(LONG_STRING + "xyz");
             byte[] dataBytes = Encoding.UTF8.GetBytes(LONG_STRING + "-data");
             var result = seriazlier.Serialize(new object[]

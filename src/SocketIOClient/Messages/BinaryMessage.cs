@@ -20,12 +20,9 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; set; }
 
-        public IEnumerable<byte[]> OutgoingBytes { get; set; }
+        public ICollection<byte[]> OutgoingBytes { get; set; }
 
-        public string Eio3HttpWrite()
-        {
-            throw new System.NotImplementedException();
-        }
+        public ICollection<byte[]> IncomingBytes { get; private set; }
 
         public void Read(string msg)
         {
@@ -77,7 +74,7 @@ namespace SocketIOClient.Messages
             var builder = new StringBuilder();
             builder
                 .Append("45")
-                .Append(BinaryCount)
+                .Append(OutgoingBytes.Count)
                 .Append('-');
             if (!string.IsNullOrEmpty(Namespace))
             {

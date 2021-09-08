@@ -6,9 +6,9 @@ namespace SocketIOClient.Messages
     {
         MessageType Type { get; }
 
-        IEnumerable<byte[]> OutgoingBytes { get; }
+        ICollection<byte[]> OutgoingBytes { get; set; }
 
-        IList<byte[]> IncomingBytes { get; }
+        ICollection<byte[]> IncomingBytes { get; }
 
         int BinaryCount { get; }
 

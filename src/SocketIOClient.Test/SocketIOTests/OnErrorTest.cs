@@ -13,8 +13,7 @@ namespace SocketIOClient.Test.SocketIOTests
             string error = null;
             var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
-                Reconnection = false,
-                EIO = SocketIOCreator.EIO
+                Reconnection = false
             });
             client.OnConnected += (sender, e) => connected = true;
             client.OnError += (sender, e) => error = e;
