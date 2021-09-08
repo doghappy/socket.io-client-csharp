@@ -376,7 +376,7 @@ namespace SocketIOClient
             OnPong?.Invoke(this, DateTime.Now - _pingTime);
         }
 
-        private void ConnectedHandler(IMessage m)
+        private void ConnectedHandler(ConnectedMessage msg)
         {
             //if (Options.EIO == 3)
             //{
@@ -392,9 +392,10 @@ namespace SocketIOClient
             //else
             //{
             //    //var eio4 = m as Eio4ConnectedMessage;
-            //    //Id = eio4.Sid;
+            //    //
             //    //Router.Sid = Id;
             //}
+            Id = msg.Sid;
             Connected = true;
             OnConnected?.Invoke(this, EventArgs.Empty);
             if (Attempts > 0)
@@ -502,7 +503,7 @@ namespace SocketIOClient
                         PongHandler();
                         break;
                     case MessageType.Connected:
-                        ConnectedHandler(msg);
+                        ConnectedHandler(msg as ConnectedMessage);
                         break;
                     case MessageType.Disconnected:
                         DisconnectedHandler();

@@ -14,14 +14,13 @@ namespace SocketIOClient.Sample
             Console.OutputEncoding = Encoding.UTF8;
             Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-            var uri = new Uri("http://localhost:11002/");
+            var uri = new Uri("http://localhost:11003/");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
-                EIO = 3,
                 Query = new Dictionary<string, string>
                 {
-                    {"token", "V2" }
+                    {"token", "V3" }
                 }
             });
 

@@ -102,15 +102,16 @@ namespace SocketIOClient.Transport
 
         private void StartPolling()
         {
-            var task = Task.Factory.StartNew(async () =>
+            Task.Factory.StartNew(async () =>
             {
+                Debug.WriteLine("[Polling] Start");
                 while (true)
                 {
-                    Debug.WriteLine("Polling...");
+                    Debug.WriteLine("[Polling] Sending...");
                     await _httpTransport.GetAsync(_httpUri, CancellationToken.None);
+                    Debug.WriteLine("[Polling] Sendt");
                 }
             }, TaskCreationOptions.LongRunning);
-            task.ContinueWith(t => Debug.WriteLine("Stop polling"));
         }
 
         private void OnWebSocketTextReceived(string text)
