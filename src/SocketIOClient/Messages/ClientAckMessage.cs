@@ -22,9 +22,9 @@ namespace SocketIOClient.Messages
 
         public int Id { get; set; }
 
-        public ICollection<byte[]> OutgoingBytes { get; set; }
+        public List<byte[]> OutgoingBytes { get; set; }
 
-        public ICollection<byte[]> IncomingBytes { get; }
+        public List<byte[]> IncomingBytes { get; set; }
 
         public int BinaryCount { get; }
 
@@ -49,11 +49,12 @@ namespace SocketIOClient.Messages
         public string Write()
         {
             var builder = new StringBuilder();
-            builder.Append("42").Append(Id);
+            builder.Append("42");
             if (!string.IsNullOrEmpty(Namespace))
             {
                 builder.Append(Namespace).Append(',');
             }
+            builder.Append(Id);
             if (string.IsNullOrEmpty(Json))
             {
                 builder.Append("[\"").Append(Event).Append("\"]");

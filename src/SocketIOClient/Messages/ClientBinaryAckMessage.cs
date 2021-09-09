@@ -24,9 +24,9 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; set; }
 
-        public ICollection<byte[]> OutgoingBytes { get; set; }
+        public List<byte[]> OutgoingBytes { get; set; }
 
-        public ICollection<byte[]> IncomingBytes { get; }
+        public List<byte[]> IncomingBytes { get; set; }
 
         public void Read(string msg)
         {

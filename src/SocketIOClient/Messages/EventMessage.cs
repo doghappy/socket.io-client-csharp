@@ -12,24 +12,46 @@ namespace SocketIOClient.Messages
 
         public string Event { get; set; }
 
+        public int Id { get; set; }
+
         public List<JsonElement> JsonElements { get; set; }
 
         public string Json { get; set; }
 
-        public ICollection<byte[]> OutgoingBytes { get; set; }
+        public List<byte[]> OutgoingBytes { get; set; }
 
-        public ICollection<byte[]> IncomingBytes { get; }
+        public List<byte[]> IncomingBytes { get; set; }
 
         public int BinaryCount { get; }
 
         public void Read(string msg)
         {
             int index = msg.IndexOf('[');
-            if (index > 0)
+            int lastIndex = msg.LastIndexOf(',', index);
+            if (lastIndex > -1)
             {
-                Namespace = msg.Substring(0, index - 1);
-                msg = msg.Substring(index);
+                string text = msg.Substring(0, index);
+                Namespace = text.Substring(0, lastIndex);
+                if (index - lastIndex > 1)
+                {
+                    Id = int.Parse(text.Substring(lastIndex + 1));
+                }
             }
+            else
+            {
+                if (index > 0)
+                {
+                    Id = int.Parse(msg.Substring(0, index));
+                }
+            }
+            msg = msg.Substring(index);
+
+            //int index = msg.IndexOf('[');
+            //if (index > 0)
+            //{
+            //    Namespace = msg.Substring(0, index - 1);
+            //    msg = msg.Substring(index);
+            //}
             var array = JsonDocument.Parse(msg).RootElement.EnumerateArray();
             int i = -1;
             foreach (var item in array)

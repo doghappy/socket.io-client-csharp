@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +21,7 @@ namespace SocketIOClient.Transport
 
         string AppendRandom(string uri)
         {
+            //return uri + "&t=" + Guid.NewGuid().ToString();
             return uri + "&t=" + DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 
@@ -32,6 +35,7 @@ namespace SocketIOClient.Transport
             }
             string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
             Produce(text);
+            //return await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
 
         public async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
@@ -42,21 +46,34 @@ namespace SocketIOClient.Transport
             Produce(text);
         }
 
-        //public async Task PostAsync(string uri, byte[] bytes, CancellationToken cancellationToken)
-        //{
-        //    var content = new ByteArrayContent(bytes);
-        //    var resMsg = await _client.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
-        //    string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-        //    Produce(text);
-        //}
+        public async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
+        {
+            var builder = new StringBuilder();
+            foreach (var item in bytes)
+            {
+                //1E 
+                builder.Append('b').Append(Convert.ToBase64String(item)).Append('');
+            }
+            if (builder.Length == 0)
+            {
+                return;
+            }
+            string text = builder.ToString().TrimEnd('');
+            await PostAsync(uri, text, cancellationToken);
+        }
 
         private void Produce(string text)
         {
             var msg = new TransportMessage();
             if (text[0] == 'b')
             {
-                byte[] bytes = Convert.FromBase64String(text.Substring(1));
-                OnBinaryReceived(bytes);
+                //1E 
+                string[] items = text.Split('');
+                foreach (var item in items)
+                {
+                    byte[] bytes = Convert.FromBase64String(item.Substring(1));
+                    OnBinaryReceived(bytes);
+                }
             }
             else
             {

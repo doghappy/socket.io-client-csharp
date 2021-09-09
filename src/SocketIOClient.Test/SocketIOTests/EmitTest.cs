@@ -737,7 +737,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(600);
             await client.DisconnectAsync();
 
             Assert.AreEqual(2, result.InComingBytes.Count);
@@ -794,7 +794,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 await client.EmitAsync("client calls the server's callback 0");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.IsTrue(flag2);

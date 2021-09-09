@@ -53,6 +53,18 @@ namespace SocketIOClient.Sample
             {
                 Console.WriteLine(response.GetValue<string>());
             });
+            socket.On("1 params", response =>
+            {
+                var bytes = response.GetValue<byte[]>();
+                Console.WriteLine(Encoding.UTF8.GetString(bytes));
+            });
+            socket.On("client calls the server's callback 1", async response =>
+            {
+                byte[] bytes = response.GetValue<byte[]>();
+                string text = Encoding.UTF8.GetString(bytes) + "...";
+                await response.CallbackAsync(Encoding.UTF8.GetBytes(text));
+                Console.WriteLine("vv");
+            });
 
             //Console.WriteLine("Press any key to continue");
             //Console.ReadLine();
@@ -81,6 +93,9 @@ namespace SocketIOClient.Sample
             Console.WriteLine("Socket.Id:" + socket.Id);
 
             //await socket.EmitAsync("hi", "SocketIOClient.Sample");
+            byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
+            await socket.EmitAsync("client calls the server's callback 1", bytes);
+            //await socket.EmitAsync("1 params", Encoding.UTF8.GetBytes("hello world"));
         }
 
         private static void Socket_OnPing(object sender, EventArgs e)

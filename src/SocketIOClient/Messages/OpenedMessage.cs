@@ -18,9 +18,9 @@ namespace SocketIOClient.Messages
 
         public int PingTimeout { get; private set; }
 
-        public ICollection<byte[]> OutgoingBytes { get; set; }
+        public List<byte[]> OutgoingBytes { get; set; }
 
-        public ICollection<byte[]> IncomingBytes { get; }
+        public List<byte[]> IncomingBytes { get; set; }
 
         public int BinaryCount { get; }
 

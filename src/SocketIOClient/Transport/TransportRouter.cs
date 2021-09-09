@@ -21,11 +21,15 @@ namespace SocketIOClient.Transport
             UriConverter = new UriConverter();
             Path = "/socket.io";
             _messageQueue = new Queue<IMessage>();
+            _incomingBytes = new List<byte[]>();
+            _pollingLocker = new SemaphoreSlim(1, 1);
         }
 
         readonly HttpClient _httpClient;
         readonly IClientWebSocket _clientWebSocket;
         readonly Queue<IMessage> _messageQueue;
+        readonly List<byte[]> _incomingBytes;
+        readonly SemaphoreSlim _pollingLocker;
 
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
@@ -92,24 +96,23 @@ namespace SocketIOClient.Transport
         {
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
+            StartPolling();
             var msg = new ConnectedMessage
             {
                 Namespace = Namespace
             };
-            await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None);
-            StartPolling();
+            await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None).ConfigureAwait(false);
         }
 
         private void StartPolling()
         {
             Task.Factory.StartNew(async () =>
             {
-                Debug.WriteLine("[Polling] Start");
                 while (true)
                 {
-                    Debug.WriteLine("[Polling] Sending...");
-                    await _httpTransport.GetAsync(_httpUri, CancellationToken.None);
-                    Debug.WriteLine("[Polling] Sendt");
+                    await _httpTransport.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
+                    //Debug.WriteLine("Polling Result:" + text);
+                    //_httpTransport.Produce(text);
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -128,11 +131,16 @@ namespace SocketIOClient.Transport
 
         private void OnTextReceived(string text)
         {
+            Debug.WriteLine($"[Receive] {text}");
             var msg = MessageFactory.CreateMessage(text);
             if (msg != null)
             {
                 if (msg.BinaryCount > 0)
                 {
+                    //msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);
+                    //msg.IncomingBytes.AddRange(_incomingBytes);
+                    //_incomingBytes.Clear();
+                    msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);
                     _messageQueue.Enqueue(msg);
                 }
                 else
@@ -144,6 +152,8 @@ namespace SocketIOClient.Transport
 
         private void OnBinaryReceived(byte[] bytes)
         {
+            Debug.WriteLine($"[Receive] binary message");
+            //_incomingBytes.Add(bytes);
             if (_messageQueue.Count > 0)
             {
                 var msg = _messageQueue.Peek();
@@ -159,13 +169,10 @@ namespace SocketIOClient.Transport
         public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
         {
             string text = msg.Write();
-            await _httpTransport.PostAsync(_httpUri, text, cancellationToken).ConfigureAwait(false);
+            await SendAsync(text, cancellationToken).ConfigureAwait(false);
             if (msg.OutgoingBytes != null)
             {
-                foreach (var item in msg.OutgoingBytes)
-                {
-                    await SendAsync(item, cancellationToken);
-                }
+                await SendAsync(msg.OutgoingBytes, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -179,24 +186,28 @@ namespace SocketIOClient.Transport
             {
                 await _webSocketTransport.SendAsync(text, cancellationToken).ConfigureAwait(false);
             }
+            Debug.WriteLine($"[Send] {text}");
         }
 
-        public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
+        public async Task SendAsync(IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
             if (Protocol == TransportProtocol.Polling)
             {
-                string text = 'b' + Convert.ToBase64String(bytes);
-                await _httpTransport.PostAsync(_httpUri, text, cancellationToken).ConfigureAwait(false);
+                await _httpTransport.PostAsync(_httpUri, bytes, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await _webSocketTransport.SendAsync(bytes, cancellationToken).ConfigureAwait(false);
+                foreach (var item in bytes)
+                {
+                    await _webSocketTransport.SendAsync(item, cancellationToken).ConfigureAwait(false);
+                }
             }
         }
 
         public void Dispose()
         {
             _messageQueue.Clear();
+            _pollingLocker.Dispose();
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();

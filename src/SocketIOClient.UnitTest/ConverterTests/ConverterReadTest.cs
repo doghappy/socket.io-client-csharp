@@ -145,6 +145,21 @@ namespace SocketIOClient.UnitTest.ConverterTests
         }
 
         [TestMethod]
+        public void EventMessageWithId()
+        {
+            var msg = MessageFactory.CreateMessage("42/nsp,17[\"client calls the server's callback 0\"]");
+            Assert.AreEqual(MessageType.EventMessage, msg.Type);
+
+            var realMsg = msg as EventMessage;
+
+            Assert.AreEqual("/nsp", realMsg.Namespace);
+
+            Assert.AreEqual("client calls the server's callback 0", realMsg.Event);
+            Assert.AreEqual(0, realMsg.JsonElements.Count);
+            Assert.AreEqual(17, realMsg.Id);
+        }
+
+        [TestMethod]
         public void Ack()
         {
             var msg = MessageFactory.CreateMessage("431[\"doghappy\"]");
@@ -240,7 +255,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
             var msg = MessageFactory.CreateMessage("461-6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as ServerBinaryAckMessage;
+            var realMsg = msg as ClientBinaryAckMessage;
 
             Assert.IsNull(realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
@@ -256,7 +271,7 @@ namespace SocketIOClient.UnitTest.ConverterTests
             var msg = MessageFactory.CreateMessage("461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as ServerBinaryAckMessage;
+            var realMsg = msg as ClientBinaryAckMessage;
 
             Assert.AreEqual("/name-space", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);

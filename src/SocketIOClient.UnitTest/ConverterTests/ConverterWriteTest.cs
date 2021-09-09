@@ -139,7 +139,31 @@ namespace SocketIOClient.UnitTest.ConverterTests
                 Namespace = "/google"
             };
             string text = msg.Write();
-            Assert.AreEqual("428964/google,[\"event name\",1989]", text);
+            Assert.AreEqual("42/google,8964[\"event name\",1989]", text);
+        }
+
+        [TestMethod]
+        public void ServerAckWihtoutJson()
+        {
+            var msg = new ServerAckMessage
+            {
+                Id = 8964
+            };
+            string text = msg.Write();
+            Assert.AreEqual("438964[]", text);
+        }
+
+        [TestMethod]
+        public void NamespaceServerAck()
+        {
+            var msg = new ServerAckMessage
+            {
+                Json = "[1989,\"test\",false]",
+                Id = 8964,
+                Namespace = "/google"
+            };
+            string text = msg.Write();
+            Assert.AreEqual("43/google,8964[1989,\"test\",false]", text);
         }
 
         [TestMethod]
@@ -149,7 +173,11 @@ namespace SocketIOClient.UnitTest.ConverterTests
             {
                 Event = "event name",
                 Json = "[1989]",
-                BinaryCount = 2
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>()
+                }
             };
             string text = msg.Write();
             Assert.AreEqual("452-[\"event name\",1989]", text);
@@ -162,8 +190,12 @@ namespace SocketIOClient.UnitTest.ConverterTests
             {
                 Event = "event name",
                 Json = "[1989]",
-                BinaryCount = 2,
-                Namespace = "/happy"
+                Namespace = "/happy",
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>()
+                }
             };
             string text = msg.Write();
             Assert.AreEqual("452-/happy,[\"event name\",1989]", text);
@@ -176,8 +208,16 @@ namespace SocketIOClient.UnitTest.ConverterTests
             {
                 Event = "event name",
                 Json = "[1989]",
-                BinaryCount = 6,
-                Id = 185
+                Id = 185,
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>()
+                }
             };
             string text = msg.Write();
             Assert.AreEqual("456-185[\"event name\",1989]", text);
@@ -190,12 +230,53 @@ namespace SocketIOClient.UnitTest.ConverterTests
             {
                 Event = "event name",
                 Json = "[1989]",
-                BinaryCount = 6,
                 Id = 185,
-                Namespace = "/namespace"
+                Namespace = "/namespace",
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>()
+                }
             };
             string text = msg.Write();
             Assert.AreEqual("456-/namespace,185[\"event name\",1989]", text);
+        }
+
+        [TestMethod]
+        public void ServerBinaryAck()
+        {
+            var msg = new ServerBinaryAckMessage
+            {
+                Json = "[1989,\"test\",false]",
+                Id = 185,
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>()
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("461-185[1989,\"test\",false]", text);
+        }
+
+        [TestMethod]
+        public void NamespaceServerBinaryAck()
+        {
+            var msg = new ServerBinaryAckMessage
+            {
+                Id = 185,
+                Namespace = "/q",
+                OutgoingBytes = new List<byte[]>
+                {
+                    Array.Empty<byte>(),
+                    Array.Empty<byte>()
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("462-/q,185[]", text);
         }
     }
 }

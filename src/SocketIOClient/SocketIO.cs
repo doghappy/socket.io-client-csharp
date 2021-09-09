@@ -131,7 +131,6 @@ namespace SocketIOClient
         CancellationTokenSource _pingTokenSorce;
         CancellationTokenSource _connectionTokenSorce;
         DateTime _pingTime;
-        int _pingInterval;
         double _reconnectionDelay;
 
 
@@ -327,7 +326,6 @@ namespace SocketIOClient
         private async void OpenedHandler(OpenedMessage m)
         {
             Id = m.Sid;
-            _pingInterval = m.PingInterval;
             //if (Options.EIO == 3)
             //{
             //    var builder = new StringBuilder();
@@ -362,7 +360,7 @@ namespace SocketIOClient
             {
                 _pingTime = DateTime.Now;
                 await Router.SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                OnPong.Invoke(this, DateTime.Now - _pingTime);
+                OnPong?.Invoke(this, DateTime.Now - _pingTime);
             }
             catch (Exception e)
             {
@@ -411,7 +409,10 @@ namespace SocketIOClient
 
         private void EventMessageHandler(EventMessage m)
         {
-            var res = new SocketIOResponse(m.JsonElements, this);
+            var res = new SocketIOResponse(m.JsonElements, this)
+            {
+                PacketId = m.Id
+            };
             foreach (var item in _onAnyHandlers)
             {
                 try
@@ -452,7 +453,7 @@ namespace SocketIOClient
             }
         }
 
-        private void ErrorMessageHandler(IMessage m)
+        private void ErrorMessageHandler(ErrorMessage msg)
         {
             //if (Options.EIO == 3)
             //{
@@ -464,30 +465,47 @@ namespace SocketIOClient
             //    var eio4 = m as Eio4ErrorMessage;
             //    OnError?.Invoke(this, eio4.Message);
             //}
+            OnError?.Invoke(this, msg.Message);
         }
 
-        private void BinaryMessageHandler(BinaryMessage m)
+        private void BinaryMessageHandler(BinaryMessage msg)
         {
-            _binaryEvents.Enqueue(new BinaryEvent
+            if (_eventHandlers.ContainsKey(msg.Event))
             {
-                Event = m.Event,
-                Count = m.BinaryCount,
-                Response = new SocketIOResponse(m.JsonElements, this)
+                try
                 {
-                    PacketId = m.Id
+                    var response = new SocketIOResponse(msg.JsonElements, this)
+                    {
+                        PacketId = msg.Id
+                    };
+                    response.InComingBytes.AddRange(msg.IncomingBytes);
+                    _eventHandlers[msg.Event](response);
                 }
-            });
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            }
         }
 
-        private void BinaryAckMessageHandler(ClientBinaryAckMessage m)
+        private void BinaryAckMessageHandler(ClientBinaryAckMessage msg)
         {
-            _binaryEvents.Enqueue(new BinaryEvent
+            if (_ackHandlers.ContainsKey(msg.Id))
             {
-                Event = m.Event,
-                Count = m.BinaryCount,
-                PacketId = m.Id,
-                Response = new SocketIOResponse(m.JsonElements, this)
-            });
+                try
+                {
+                    var response = new SocketIOResponse(msg.JsonElements, this)
+                    {
+                        PacketId = msg.Id,
+                    };
+                    response.InComingBytes.AddRange(msg.IncomingBytes);
+                    _ackHandlers[msg.Id](response);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            }
         }
 
         private void OnMessageReceived(IMessage msg)
@@ -515,7 +533,7 @@ namespace SocketIOClient
                         AckMessageHandler(msg as ClientAckMessage);
                         break;
                     case MessageType.ErrorMessage:
-                        ErrorMessageHandler(msg);
+                        ErrorMessageHandler(msg as ErrorMessage);
                         break;
                     case MessageType.BinaryMessage:
                         BinaryMessageHandler(msg as BinaryMessage);
@@ -622,7 +640,7 @@ namespace SocketIOClient
                         Namespace = Namespace,
                         Json = result.Json
                     };
-                    msg.OutgoingBytes = result.Bytes;
+                    msg.OutgoingBytes = new List<byte[]>(result.Bytes);
                 }
                 else
                 {
@@ -666,15 +684,11 @@ namespace SocketIOClient
                     var msg = new BinaryMessage
                     {
                         Namespace = Namespace,
-                        BinaryCount = result.Bytes.Count,
+                        OutgoingBytes = new List<byte[]>(result.Bytes),
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
-                    foreach (var item in result.Bytes)
-                    {
-                        await Router.SendAsync(item, cancellationToken);
-                    }
+                    await Router.SendAsync(msg, cancellationToken);
                 }
                 else
                 {
@@ -684,7 +698,7 @@ namespace SocketIOClient
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken);
                 }
             }
             else
@@ -694,7 +708,7 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Event = eventName
                 };
-                await Router.SendAsync(msg.Write(), cancellationToken);
+                await Router.SendAsync(msg, cancellationToken);
             }
         }
 
@@ -722,15 +736,11 @@ namespace SocketIOClient
                     {
                         Event = eventName,
                         Namespace = Namespace,
-                        BinaryCount = result.Bytes.Count,
                         Json = result.Json,
-                        Id = _packetId
+                        Id = _packetId,
+                        OutgoingBytes = new List<byte[]>(result.Bytes)
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
-                    foreach (var item in result.Bytes)
-                    {
-                        await Router.SendAsync(item, cancellationToken);
-                    }
+                    await Router.SendAsync(msg, cancellationToken);
                 }
                 else
                 {
@@ -775,29 +785,6 @@ namespace SocketIOClient
                     }
                 }
             }
-        }
-
-        private void StartPing()
-        {
-            _pingTokenSorce = new CancellationTokenSource();
-            Task.Factory.StartNew(async () =>
-            {
-                Debug.WriteLine("The ping process starts to work");
-                while (!_pingTokenSorce.IsCancellationRequested)
-                {
-                    await Task.Delay(_pingInterval).ConfigureAwait(false);
-                    try
-                    {
-                        _pingTime = DateTime.Now;
-                        await Router.SendAsync("2", CancellationToken.None).ConfigureAwait(false);
-                        OnPing?.Invoke(this, EventArgs.Empty);
-                    }
-                    catch
-                    {
-                        InvokeDisconnect(DisconnectReason.PingTimeout);
-                    }
-                }
-            }, TaskCreationOptions.LongRunning).ContinueWith(t => Debug.WriteLine("The ping process exited"));
         }
 
         public void Dispose()
