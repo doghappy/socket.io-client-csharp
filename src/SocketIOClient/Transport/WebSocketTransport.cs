@@ -33,9 +33,12 @@ namespace SocketIOClient.Transport
         /// <exception cref="WebSocketException"></exception>
         public async Task ConnectAsync(Uri uri)
         {
-            var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
-            await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token).ConfigureAwait(false);
-            _ = Task.Factory.StartNew(ListenAsync, TaskCreationOptions.LongRunning);
+            if (_ws.State != WebSocketState.Open && _ws.State != WebSocketState.Connecting)
+            {
+                var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
+                await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token).ConfigureAwait(false);
+                _ = Task.Factory.StartNew(ListenAsync, TaskCreationOptions.LongRunning);
+            }
         }
 
         public async Task DisconnectAsync(CancellationToken cancellationToken)
@@ -129,7 +132,9 @@ namespace SocketIOClient.Transport
                                 OnTextReceived(text);
                                 break;
                             case WebSocketMessageType.Binary:
-                                OnBinaryReceived(buffer);
+                                byte[] bytes = new byte[count];
+                                Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
+                                OnBinaryReceived(bytes);
                                 break;
                             case WebSocketMessageType.Close:
                                 break;

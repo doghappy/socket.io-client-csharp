@@ -74,7 +74,7 @@ namespace SocketIOClient.UriConverters
             {
                 builder.Append(path);
             }
-            builder.Append("/?EIO=4&transport=polling");
+            builder.Append("/?EIO=4&transport=websocket");
             if (queryParams != null)
             {
                 foreach (var item in queryParams)

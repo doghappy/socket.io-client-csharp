@@ -16,6 +16,7 @@ namespace SocketIOClient
             Path = "/socket.io";
             ConnectionTimeout = TimeSpan.FromSeconds(20);
             Reconnection = true;
+            AutoUpgrade = true;
         }
 
         public string Path { get; set; }

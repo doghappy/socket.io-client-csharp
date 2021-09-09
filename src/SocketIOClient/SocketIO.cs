@@ -116,7 +116,7 @@ namespace SocketIOClient
 
         public HttpClient HttpClient { get; set; }
 
-        public IClientWebSocket ClientWebSocket { get; set; }
+        public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
 
         int _packetId;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
@@ -174,7 +174,7 @@ namespace SocketIOClient
             JsonSerializer = new SystemTextJsonSerializer();
             _connectionTokenSorce = new CancellationTokenSource();
             HttpClient = new HttpClient();
-            ClientWebSocket = new DefaultClientWebSocket();
+            ClientWebSocketProvider = () => new DefaultClientWebSocket();
         }
 
         internal static bool IsNamespaceDefault(string @namespace)
@@ -186,7 +186,7 @@ namespace SocketIOClient
         {
             if (Router == null)
             {
-                Router = new TransportRouter(HttpClient, ClientWebSocket)
+                Router = new TransportRouter(HttpClient, ClientWebSocketProvider)
                 {
                     AutoUpgrade = Options.AutoUpgrade,
                     Namespace = Namespace,
@@ -443,7 +443,7 @@ namespace SocketIOClient
                 };
                 try
                 {
-                    await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
+                    await Router.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -632,7 +632,7 @@ namespace SocketIOClient
                         Id = _packetId,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg.Write(), cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken);
                 }
             }
             else
@@ -643,20 +643,24 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Id = _packetId
                 };
-                await Router.SendAsync(msg.Write(), cancellationToken);
+                await Router.SendAsync(msg, cancellationToken);
             }
         }
 
-        private void InvokeDisconnect(string reason)
+        private async void InvokeDisconnect(string reason)
         {
             if (Connected)
             {
                 Connected = false;
-                //if (Options.EIO == 3)
-                //{
-                //    _pingTokenSorce.Cancel();
-                //}
                 OnDisconnected?.Invoke(this, reason);
+                try
+                {
+                    await Router.DisconnectAsync();
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
                 if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOServerDisconnect)
                 {
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
@@ -671,7 +675,6 @@ namespace SocketIOClient
         public void Dispose()
         {
             HttpClient.Dispose();
-            ClientWebSocket.Dispose();
             Socket.Dispose();
             Router.Dispose();
             _ackHandlers.Clear();

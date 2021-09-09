@@ -1,17 +1,12 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
 using SocketIOClient.Messages;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace SocketIOClient.UnitTest.ConverterTests
+namespace SocketIOClient.UnitTest.MessageTests
 {
     [TestClass]
-    public class ConverterWriteTest
+    public class MessageWriteTest
     {
         [TestMethod]
         public void Ping()

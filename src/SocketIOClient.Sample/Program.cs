@@ -92,9 +92,13 @@ namespace SocketIOClient.Sample
             var socket = sender as SocketIO;
             Console.WriteLine("Socket.Id:" + socket.Id);
 
-            //await socket.EmitAsync("hi", "SocketIOClient.Sample");
-            byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
-            await socket.EmitAsync("client calls the server's callback 1", bytes);
+            while (true)
+            {
+                await Task.Delay(1000);
+                await socket.EmitAsync("hi", "SocketIOClient.Sample");
+            }
+            //byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
+            //await socket.EmitAsync("client calls the server's callback 1", bytes);
             //await socket.EmitAsync("1 params", Encoding.UTF8.GetBytes("hello world"));
         }
 

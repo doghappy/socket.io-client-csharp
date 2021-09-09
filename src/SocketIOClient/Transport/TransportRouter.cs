@@ -5,8 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Reactive.Linq;
-using System.Text;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,25 +13,24 @@ namespace SocketIOClient.Transport
 {
     public class TransportRouter : IDisposable
     {
-        public TransportRouter(HttpClient httpClient, IClientWebSocket clientWebSocket)
+        public TransportRouter(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider)
         {
             _httpClient = httpClient;
-            _clientWebSocket = clientWebSocket;
+            _clientWebSocketProvider = clientWebSocketProvider;
             UriConverter = new UriConverter();
             Path = "/socket.io";
             _messageQueue = new Queue<IMessage>();
-            _incomingBytes = new List<byte[]>();
-            _pollingLocker = new SemaphoreSlim(1, 1);
         }
 
         readonly HttpClient _httpClient;
-        readonly IClientWebSocket _clientWebSocket;
+        IClientWebSocket _clientWebSocket;
         readonly Queue<IMessage> _messageQueue;
-        readonly List<byte[]> _incomingBytes;
-        readonly SemaphoreSlim _pollingLocker;
+        readonly Func<IClientWebSocket> _clientWebSocketProvider;
 
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
+        CancellationTokenSource _pingTokenSource;
+        CancellationToken _pingToken;
         string _httpUri;
 
         public Uri ServerUri { get; set; }
@@ -61,7 +59,6 @@ namespace SocketIOClient.Transport
             {
                 _webSocketTransport.Dispose();
             }
-
             Uri uri = UriConverter.GetHandshakeUri(ServerUri, Path, QueryParams);
             string text = await _httpClient.GetStringAsync(uri).ConfigureAwait(false);
             int index = text.IndexOf('{');
@@ -70,6 +67,7 @@ namespace SocketIOClient.Transport
             Sid = info.Sid;
             if (info.Upgrades.Contains("websocket") && AutoUpgrade)
             {
+                _clientWebSocket = _clientWebSocketProvider();
                 _webSocketTransport = new WebSocketTransport(_clientWebSocket);
                 await WebSocketConnectAsync().ConfigureAwait(false);
                 Protocol = TransportProtocol.WebSocket;
@@ -94,6 +92,8 @@ namespace SocketIOClient.Transport
 
         private async Task HttpConnectAsync()
         {
+            _pingTokenSource = new CancellationTokenSource();
+            _pingToken = _pingTokenSource.Token;
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
             StartPolling();
@@ -108,7 +108,7 @@ namespace SocketIOClient.Transport
         {
             Task.Factory.StartNew(async () =>
             {
-                while (true)
+                while (!_pingToken.IsCancellationRequested)
                 {
                     await _httpTransport.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
                     //Debug.WriteLine("Polling Result:" + text);
@@ -121,7 +121,9 @@ namespace SocketIOClient.Transport
         {
             if (text == "3probe")
             {
+                var msg = new ConnectedMessage { Namespace = Namespace, Sid = Sid };
                 _ = _webSocketTransport.SendAsync("5", CancellationToken.None);
+                _ = _webSocketTransport.SendAsync(msg.Write(), CancellationToken.None);
             }
             else
             {
@@ -176,7 +178,20 @@ namespace SocketIOClient.Transport
             }
         }
 
-        public async Task SendAsync(string text, CancellationToken cancellationToken)
+        public async Task DisconnectAsync()
+        {
+            if (Protocol == TransportProtocol.Polling)
+            {
+                _pingTokenSource.Cancel();
+            }
+            else
+            {
+                await _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+                _clientWebSocket.Dispose();
+            }
+        }
+
+        private async Task SendAsync(string text, CancellationToken cancellationToken)
         {
             if (Protocol == TransportProtocol.Polling)
             {
@@ -189,7 +204,7 @@ namespace SocketIOClient.Transport
             Debug.WriteLine($"[Send] {text}");
         }
 
-        public async Task SendAsync(IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
+        private async Task SendAsync(IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
             if (Protocol == TransportProtocol.Polling)
             {
@@ -207,7 +222,6 @@ namespace SocketIOClient.Transport
         public void Dispose()
         {
             _messageQueue.Clear();
-            _pollingLocker.Dispose();
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();
