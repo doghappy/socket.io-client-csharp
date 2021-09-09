@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Http;
 using System.Net.WebSockets;
-using System.Reactive;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.JsonSerializer;
@@ -124,11 +119,9 @@ namespace SocketIOClient
         public IClientWebSocket ClientWebSocket { get; set; }
 
         int _packetId;
-        Queue<BinaryEvent> _binaryEvents;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
-        CancellationTokenSource _pingTokenSorce;
         CancellationTokenSource _connectionTokenSorce;
         DateTime _pingTime;
         double _reconnectionDelay;
@@ -177,7 +170,6 @@ namespace SocketIOClient
             _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
             _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
             _onAnyHandlers = new List<OnAnyHandler>();
-            _binaryEvents = new Queue<BinaryEvent>();
 
             JsonSerializer = new SystemTextJsonSerializer();
             _connectionTokenSorce = new CancellationTokenSource();
@@ -273,87 +265,6 @@ namespace SocketIOClient
             }
         }
 
-        private void SubscribeBinary(TransportMessage m)
-        {
-            if (m.Type == TransportMessageType.Binary)
-            {
-                if (_binaryEvents.Count > 0)
-                {
-                    var element = _binaryEvents.Peek();
-                    element.Response.InComingBytes.Add(m.Binary);
-                    if (element.Response.InComingBytes.Count == element.Count)
-                    {
-                        if (element.PacketId == -1)
-                        {
-                            foreach (var item in _onAnyHandlers)
-                            {
-                                try
-                                {
-                                    item(element.Event, element.Response);
-                                }
-                                catch (Exception e)
-                                {
-                                    Debug.WriteLine(e);
-                                }
-                            }
-                            try
-                            {
-                                _eventHandlers[element.Event](element.Response);
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.WriteLine(e);
-                            }
-                        }
-                        else
-                        {
-                            try
-                            {
-                                _ackHandlers[element.PacketId](element.Response);
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.WriteLine(e);
-                            }
-                            _ackHandlers.Remove(element.PacketId);
-                        }
-                        _binaryEvents.Dequeue();
-                    }
-                }
-            }
-        }
-
-        private async void OpenedHandler(OpenedMessage m)
-        {
-            Id = m.Sid;
-            //if (Options.EIO == 3)
-            //{
-            //    var builder = new StringBuilder();
-            //    if (Options.Query != null)
-            //    {
-            //        foreach (var item in Options.Query)
-            //        {
-            //            builder.Append(item.Key).Append('=').Append(item.Value);
-            //        }
-            //    }
-            //    var msg = new Eio3ConnectedMessage
-            //    {
-            //        Namespace = Namespace,
-            //        QueryString = builder.ToString()
-            //    };
-            //    await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
-            //    StartPing();
-            //}
-            //else
-            //{
-            //    //var msg = new Eio4ConnectedMessage
-            //    //{
-            //    //    Namespace = Namespace
-            //    //};
-            //    //await Router.SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
-            //}
-        }
-
         private async void PingHandler()
         {
             try
@@ -376,23 +287,6 @@ namespace SocketIOClient
 
         private void ConnectedHandler(ConnectedMessage msg)
         {
-            //if (Options.EIO == 3)
-            //{
-            //    if (!string.IsNullOrEmpty(Namespace))
-            //    {
-            //        var eio3 = m as Eio3ConnectedMessage;
-            //        if (eio3.Namespace != Namespace)
-            //        {
-            //            return;
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    //var eio4 = m as Eio4ConnectedMessage;
-            //    //
-            //    //Router.Sid = Id;
-            //}
             Id = msg.Sid;
             Connected = true;
             OnConnected?.Invoke(this, EventArgs.Empty);
@@ -455,16 +349,6 @@ namespace SocketIOClient
 
         private void ErrorMessageHandler(ErrorMessage msg)
         {
-            //if (Options.EIO == 3)
-            //{
-            //    var eio3 = m as Eio3ErrorMessage;
-            //    OnError?.Invoke(this, eio3.Message);
-            //}
-            //else
-            //{
-            //    var eio4 = m as Eio4ErrorMessage;
-            //    OnError?.Invoke(this, eio4.Message);
-            //}
             OnError?.Invoke(this, msg.Message);
         }
 
@@ -553,9 +437,6 @@ namespace SocketIOClient
         {
             if (Connected)
             {
-                //var message = IsNamespaceDefault(Namespace) ? "41" : $"41{Namespace},";
-                //await Socket.TrySendAsync(message, CancellationToken.None).ConfigureAwait(false);
-                //await Socket.TryDisconnectAsync(CancellationToken.None).ConfigureAwait(false);
                 var msg = new DisconnectedMessage
                 {
                     Namespace = Namespace
@@ -796,14 +677,8 @@ namespace SocketIOClient
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();
-            _binaryEvents.Clear();
             _connectionTokenSorce.Cancel();
             _connectionTokenSorce.Dispose();
-            if (_pingTokenSorce != null)
-            {
-                _pingTokenSorce.Cancel();
-                _pingTokenSorce.Dispose();
-            }
         }
     }
 }
