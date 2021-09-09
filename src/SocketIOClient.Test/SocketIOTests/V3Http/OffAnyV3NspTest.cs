@@ -1,18 +1,17 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Test.SocketIOTests.V3
+namespace SocketIOClient.Test.SocketIOTests.V3Http
 {
     [TestClass]
-    public class OnErrorV3NspTest : OnErrorTest
+    public class OffAnyV3NspTest : OffTest
     {
-        public OnErrorV3NspTest()
+        public OffAnyV3NspTest()
         {
             SocketIOCreator = new SocketIOV3NspCreator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }
-
 
         [TestMethod]
         public override async Task Test()

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
 {
-    public abstract class OnErrorTest
+    public abstract class OnErrorHttpTest
     {
         protected abstract ISocketIOCreateable SocketIOCreator { get; }
 
@@ -13,6 +13,7 @@ namespace SocketIOClient.Test.SocketIOTests
             string error = null;
             var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
+                AutoUpgrade = false,
                 Reconnection = false
             });
             client.OnConnected += (sender, e) => connected = true;

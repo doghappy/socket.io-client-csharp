@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SocketIOClient.Test.SocketIOTests.V3
+namespace SocketIOClient.Test.SocketIOTests.V3Http
 {
     public class SocketIOV3NspCreator : ISocketIOCreateable
     {
@@ -9,6 +9,7 @@ namespace SocketIOClient.Test.SocketIOTests.V3
             return new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = reconnection,
+                AutoUpgrade = false,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }

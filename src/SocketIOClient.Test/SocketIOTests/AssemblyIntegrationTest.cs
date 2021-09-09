@@ -13,7 +13,7 @@ namespace SocketIOClient.Test.SocketIOTests
     {
         private static readonly IEnumerable<IServerManager> Servers = new List<IServerManager>()
         {
-            new ServerV2Manager(),
+            //new ServerV2Manager(),
             new ServerV3Manager(),
             new ServerV4Manager()
         };

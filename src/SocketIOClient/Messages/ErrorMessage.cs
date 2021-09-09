@@ -10,6 +10,8 @@ namespace SocketIOClient.Messages
 
         public string Message { get; set; }
 
+        public string Namespace { get; set; }
+
         public List<byte[]> OutgoingBytes { get; set; }
 
         public List<byte[]> IncomingBytes { get; set; }
@@ -18,6 +20,12 @@ namespace SocketIOClient.Messages
 
         public void Read(string msg)
         {
+            int index = msg.IndexOf('{');
+            if (index > 0)
+            {
+                Namespace = msg.Substring(0, index - 1);
+                msg = msg.Substring(index);
+            }
             var doc = JsonDocument.Parse(msg);
             Message = doc.RootElement.GetProperty("message").GetString();
         }

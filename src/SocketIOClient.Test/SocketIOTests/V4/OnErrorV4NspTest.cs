@@ -3,40 +3,20 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests.V4
 {
-    //[TestClass]
-    //public class OnErrorV4NspTest : OnErrorTest
-    //{
-    //    public OnErrorV4NspTest()
-    //    {
-    //        SocketIOCreator = new ScoketIOV4NspCreator();
-    //    }
+    [TestClass]
+    public class OnErrorV4NspTest : OnErrorTest
+    {
+        public OnErrorV4NspTest()
+        {
+            SocketIOCreator = new SocketIOV4Creator();
+        }
 
-    //    protected override ISocketIOCreateable SocketIOCreator { get; }
+        protected override ISocketIOCreateable SocketIOCreator { get; }
 
-    //    [TestMethod]
-    //    public override async Task Test()
-    //    {
-    //        bool connected = false;
-    //        string error = null;
-    //        var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
-    //        {
-    //            Reconnection = false,
-    //            EIO = SocketIOCreator.EIO
-    //        });
-    //        client.OnConnected += (sender, e) => connected = true;
-    //        client.OnError += (sender, e) => error = e;
-    //        await client.ConnectAsync();
-    //        await Task.Delay(200);
-
-    //        Assert.IsFalse(client.Connected);
-    //        Assert.IsTrue(client.Disconnected);
-
-    //        await client.DisconnectAsync();
-
-    //        Assert.IsFalse(client.Connected);
-    //        Assert.IsTrue(client.Disconnected);
-    //        Assert.IsFalse(connected);
-    //        Assert.AreEqual("{\"message\":\"Authentication error\"}", error);
-    //    }
-    //}
+        [TestMethod]
+        public override async Task Test()
+        {
+            await base.Test();
+        }
+    }
 }

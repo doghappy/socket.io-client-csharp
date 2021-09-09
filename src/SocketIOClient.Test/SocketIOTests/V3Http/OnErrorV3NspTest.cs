@@ -1,10 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Test.SocketIOTests.V3
+namespace SocketIOClient.Test.SocketIOTests.V3Http
 {
     [TestClass]
-    public class OnErrorV3NspTest : OnErrorTest
+    public class OnErrorV3NspTest : OnErrorHttpTest
     {
         public OnErrorV3NspTest()
         {

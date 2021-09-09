@@ -191,7 +191,20 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             var result = msg as ErrorMessage;
 
+            Assert.IsNull(result.Namespace);
             Assert.AreEqual("Authentication error2", result.Message);
+        }
+
+        [TestMethod]
+        public void NamespaceError()
+        {
+            var msg = MessageFactory.CreateMessage("44/message,{\"message\":\"Authentication error\"}");
+            Assert.AreEqual(MessageType.ErrorMessage, msg.Type);
+
+            var result = msg as ErrorMessage;
+
+            Assert.AreEqual("/message", result.Namespace);
+            Assert.AreEqual("Authentication error", result.Message);
         }
 
         [TestMethod]
