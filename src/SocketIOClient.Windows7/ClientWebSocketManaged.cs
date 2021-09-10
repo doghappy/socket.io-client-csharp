@@ -1,244 +1,45 @@
-﻿using SocketIOClient.Exceptions;
-using SocketIOClient.WebSocketClient;
+﻿using SocketIOClient.Transport;
 using System;
 using System.Net.WebSockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Windows7
 {
-    public sealed class ClientWebSocketManaged : IWebSocketClient
+    public sealed class ClientWebSocketManaged : IClientWebSocket
     {
         public ClientWebSocketManaged()
         {
-            ReceiveChunkSize = 1024 * 16;
-            ConnectionTimeout = TimeSpan.FromSeconds(10);
-        }
-
-        public int ReceiveChunkSize { get; set; }
-        public TimeSpan ConnectionTimeout { get; set; }
-
-        System.Net.WebSockets.Managed.ClientWebSocket _ws;
-        readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
-        CancellationTokenSource _listenToken;
-
-        public Action<System.Net.WebSockets.Managed.ClientWebSocketOptions> Config { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="options"></param>
-        /// <exception cref="TimeoutException"></exception>
-        /// <exception cref="WebSocketException"></exception>
-        /// <returns></returns>
-        public async Task ConnectAsync(Uri uri)
-        {
-            DisposeWebSocketIfNotNull();
             _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
-
-            Config?.Invoke(_ws.Options);
-            var wsConnectionTokenSource = new CancellationTokenSource(ConnectionTimeout);
-            try
-            {
-                await _ws.ConnectAsync(uri, wsConnectionTokenSource.Token);
-                DisposeListenTokenIfNotNull();
-                _listenToken = new CancellationTokenSource();
-                _ = ListenAsync(_listenToken.Token);
-            }
-            catch (TaskCanceledException)
-            {
-                throw new TimeoutException();
-            }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidSocketStateException"></exception>
-        public async Task SendMessageAsync(string text)
+        readonly System.Net.WebSockets.Managed.ClientWebSocket _ws;
+
+        public WebSocketState State => _ws.State;
+
+        public async Task CloseAsync(WebSocketCloseStatus closeStatus, string statusDescription, CancellationToken cancellationToken)
         {
-            await SendMessageAsync(text, CancellationToken.None);
+            await _ws.CloseAsync(closeStatus, statusDescription, cancellationToken);
         }
 
-        public async Task SendMessageAsync(string text, CancellationToken cancellationToken)
+        public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            if (_ws == null)
-            {
-                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
-            }
-            if (_ws.State != WebSocketState.Open)
-            {
-                throw new InvalidSocketStateException("Connection is not open.");
-            }
-
-            byte[] bytes = Encoding.UTF8.GetBytes(text);
-            try
-            {
-                await sendLock.WaitAsync();
-                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, cancellationToken);
-#if DEBUG
-                System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} {text}");
-#endif
-            }
-            catch (TaskCanceledException)
-            {
-#if DEBUG
-                System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel \"{text}\"");
-#endif
-            }
-            finally
-            {
-                sendLock.Release();
-            }
+            await _ws.ConnectAsync(uri, cancellationToken);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidSocketStateException"></exception>
-        public async Task SendMessageAsync(byte[] bytes)
+        public async Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
         {
-            await SendMessageAsync(bytes, CancellationToken.None);
+            return await _ws.ReceiveAsync(buffer, cancellationToken);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="bytes"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidSocketStateException"></exception>
-        public async Task SendMessageAsync(byte[] bytes, CancellationToken cancellationToken)
+        public async Task SendAsync(ArraySegment<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
-            if (_ws == null)
-            {
-                throw new InvalidSocketStateException("Faild to emit, websocket is not connected yet.");
-            }
-            if (_ws.State != WebSocketState.Open)
-            {
-                throw new InvalidSocketStateException("Connection is not open.");
-            }
-            try
-            {
-                await sendLock.WaitAsync();
-                await _ws.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, cancellationToken);
-#if DEBUG
-                System.Diagnostics.Trace.WriteLine($"⬆ {DateTime.Now} Binary message");
-#endif
-            }
-            catch (TaskCanceledException)
-            {
-#if DEBUG
-                System.Diagnostics.Trace.WriteLine($"❌ {DateTime.Now} Cancel Send Binary");
-#endif
-            }
-            finally
-            {
-                sendLock.Release();
-            }
-        }
-
-        public async Task DisconnectAsync()
-        {
-            OnClosed("io client disconnect");
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
-        }
-
-        private async Task ListenAsync(CancellationToken cancellationToken)
-        {
-            while (true)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-                var buffer = new byte[ReceiveChunkSize];
-                int count = 0;
-                WebSocketReceiveResult result = null;
-                while (_ws.State == WebSocketState.Open)
-                {
-                    try
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                            break;
-                        var subBuffer = new byte[ReceiveChunkSize];
-                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), cancellationToken);
-                        if (result.MessageType == WebSocketMessageType.Close)
-                        {
-                            OnClosed("io server disconnect");
-                            break;
-                        }
-                        else if (result.MessageType == WebSocketMessageType.Text || result.MessageType == WebSocketMessageType.Binary)
-                        {
-                            if (buffer.Length - count < result.Count)
-                            {
-                                Array.Resize(ref buffer, buffer.Length + result.Count);
-                            }
-                            Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
-                            count += result.Count;
-                        }
-                        if (result.EndOfMessage)
-                        {
-                            break;
-                        }
-                    }
-                    catch (WebSocketException e)
-                    {
-                        OnClosed(e.Message);
-                        break;
-                    }
-                }
-                if (result == null)
-                {
-                    break;
-                }
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    string message = Encoding.UTF8.GetString(buffer, 0, count);
-#if DEBUG
-                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} {message}");
-#endif
-                    OnTextReceived(message);
-                }
-                else if (result.MessageType == WebSocketMessageType.Binary)
-                {
-#if DEBUG
-                    System.Diagnostics.Trace.WriteLine($"⬇ {DateTime.Now} Binary message");
-#endif
-                    byte[] bytes = new byte[count];
-                    Buffer.BlockCopy(buffer, 0, bytes, 0, count);
-                    OnBinaryReceived(bytes);
-                }
-            }
-        }
-
-        public Action<string> OnTextReceived { get; set; }
-        public Action<byte[]> OnBinaryReceived { get; set; }
-        public Action<string> OnClosed { get; set; }
-
-        private void DisposeWebSocketIfNotNull()
-        {
-            if (_ws != null)
-                _ws.Dispose();
-        }
-
-        private void DisposeListenTokenIfNotNull()
-        {
-            if (_listenToken != null)
-            {
-                _listenToken.Cancel();
-                _listenToken.Dispose();
-            }
+            await _ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
         }
 
         public void Dispose()
         {
-            DisposeWebSocketIfNotNull();
-            DisposeListenTokenIfNotNull();
-            sendLock.Dispose();
+            _ws.Dispose();
         }
     }
 }

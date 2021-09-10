@@ -7,13 +7,11 @@ namespace SocketIOClient.Newtonsoft.Json
 {
     class ByteArrayConverter : JsonConverter
     {
-        public ByteArrayConverter(int eio)
+        public ByteArrayConverter()
         {
-            this.eio = eio;
             Bytes = new List<byte[]>();
         }
 
-        readonly int eio;
         internal List<byte[]> Bytes { get; }
 
         public override bool CanConvert(Type objectType)
@@ -53,9 +51,7 @@ namespace SocketIOClient.Newtonsoft.Json
 
         public override void WriteJson(JsonWriter writer, object value, global::Newtonsoft.Json.JsonSerializer serializer)
         {
-            var source = (value as byte[]).ToList();
-            if (eio != 4)
-                source.Insert(0, 4);
+            var source = value as byte[];
             Bytes.Add(source.ToArray());
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
