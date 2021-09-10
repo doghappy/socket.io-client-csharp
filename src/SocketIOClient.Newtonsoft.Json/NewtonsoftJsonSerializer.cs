@@ -7,13 +7,6 @@ namespace SocketIOClient.Newtonsoft.Json
 {
     public class NewtonsoftJsonSerializer : IJsonSerializer
     {
-        public NewtonsoftJsonSerializer(int eio)
-        {
-            this.eio = eio;
-        }
-
-        readonly int eio;
-
         public Func<JsonSerializerSettings> JsonSerializerOptions { get; }
 
         public JsonSerializeResult Serialize(object[] data)
@@ -49,7 +42,7 @@ namespace SocketIOClient.Newtonsoft.Json
             JsonSerializerSettings options;
             if (OptionsProvider != null)
             {
-                options = Options();
+                options = OptionsProvider();
             }
             else
             {
