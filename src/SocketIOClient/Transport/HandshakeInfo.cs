@@ -5,12 +5,6 @@ namespace SocketIOClient.Transport
 {
     class HandshakeInfo
     {
-        [JsonPropertyName("code")]
-        public int Code { get; set; }
-
-        [JsonPropertyName("message")]
-        public string Message { get; set; }
-
         [JsonPropertyName("sid")]
         public string Sid { get; set; }
 

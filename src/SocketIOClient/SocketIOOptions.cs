@@ -1,6 +1,4 @@
-﻿using SocketIOClient.EioHandler;
-using SocketIOClient.Transport;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace SocketIOClient

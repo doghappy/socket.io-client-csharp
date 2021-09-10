@@ -64,7 +64,6 @@ namespace SocketIOClient.Transport
 
         private void Produce(string text)
         {
-            var msg = new TransportMessage();
             if (text[0] == 'b')
             {
                 //1E 

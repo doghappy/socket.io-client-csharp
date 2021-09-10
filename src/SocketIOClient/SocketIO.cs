@@ -7,9 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
-using SocketIOClient.Processors;
 using SocketIOClient.Transport;
-using SocketIOClient.WebSocketClient;
 
 namespace SocketIOClient
 {
@@ -66,27 +64,7 @@ namespace SocketIOClient
             }
         }
 
-        IWebSocketClient _socket;
-        public IWebSocketClient Socket
-        {
-            get => _socket;
-            set
-            {
-                if (value is null)
-                {
-                    throw new ArgumentNullException();
-                }
-                if (_socket != value)
-                {
-                    _socket = value;
-                    value.ConnectionTimeout = Options.ConnectionTimeout;
-                }
-            }
-        }
-
         public TransportRouter Router { get; private set; }
-
-        public Processor MessageProcessor { get; set; }
 
         /// <summary>
         /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
@@ -165,7 +143,6 @@ namespace SocketIOClient
 
         private void Initialize()
         {
-            MessageProcessor = new EngineIOProtocolProcessor();
             _packetId = -1;
             _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
             _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
@@ -675,7 +652,6 @@ namespace SocketIOClient
         public void Dispose()
         {
             HttpClient.Dispose();
-            Socket.Dispose();
             Router.Dispose();
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
