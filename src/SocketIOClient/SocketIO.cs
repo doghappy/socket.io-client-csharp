@@ -181,6 +181,7 @@ namespace SocketIOClient
                     Router.QueryParams = kvs;
                 }
                 Router.OnMessageReceived = OnMessageReceived;
+                Router.OnTransportClosed = OnTransportClosed;
             }
         }
 
@@ -203,9 +204,9 @@ namespace SocketIOClient
                     await Router.ConnectAsync().ConfigureAwait(false);
                     break;
                 }
-                catch (SystemException e)
+                catch (Exception e)
                 {
-                    if (e is TimeoutException || e is WebSocketException)
+                    if (e is TimeoutException || e is WebSocketException || e is HttpRequestException)
                     {
                         if (!Options.Reconnection)
                         {
@@ -408,6 +409,11 @@ namespace SocketIOClient
             {
                 Debug.WriteLine(e);
             }
+        }
+
+        private void OnTransportClosed()
+        {
+            InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
         public async Task DisconnectAsync()

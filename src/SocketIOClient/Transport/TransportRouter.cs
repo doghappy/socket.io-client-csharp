@@ -53,6 +53,8 @@ namespace SocketIOClient.Transport
 
         public Action<IMessage> OnMessageReceived { get; set; }
 
+        public Action OnTransportClosed { get; set; }
+
         public async Task ConnectAsync()
         {
             if (_webSocketTransport != null)
@@ -87,6 +89,7 @@ namespace SocketIOClient.Transport
             await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
             _webSocketTransport.OnTextReceived = OnWebSocketTextReceived;
             _webSocketTransport.OnBinaryReceived = OnBinaryReceived;
+            _webSocketTransport.OnAborted = OnAborted;
             await _webSocketTransport.SendAsync("2probe", CancellationToken.None);
         }
 
@@ -96,6 +99,7 @@ namespace SocketIOClient.Transport
             _pingToken = _pingTokenSource.Token;
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
+
             StartPolling();
             var msg = new ConnectedMessage
             {
@@ -110,9 +114,15 @@ namespace SocketIOClient.Transport
             {
                 while (!_pingToken.IsCancellationRequested)
                 {
-                    await _httpTransport.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
-                    //Debug.WriteLine("Polling Result:" + text);
-                    //_httpTransport.Produce(text);
+                    try
+                    {
+                        await _httpTransport.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        OnTransportClosed();
+                        throw;
+                    }
                 }
             }, TaskCreationOptions.LongRunning);
         }
@@ -166,6 +176,11 @@ namespace SocketIOClient.Transport
                     _messageQueue.Dequeue();
                 }
             }
+        }
+
+        private void OnAborted(Exception e)
+        {
+            OnTransportClosed();
         }
 
         public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)

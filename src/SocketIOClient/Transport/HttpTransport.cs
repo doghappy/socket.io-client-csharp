@@ -21,7 +21,6 @@ namespace SocketIOClient.Transport
 
         string AppendRandom(string uri)
         {
-            //return uri + "&t=" + Guid.NewGuid().ToString();
             return uri + "&t=" + DateTimeOffset.Now.ToUnixTimeSeconds();
         }
 
@@ -35,7 +34,6 @@ namespace SocketIOClient.Transport
             }
             string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
             Produce(text);
-            //return await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
         }
 
         public async Task PostAsync(string uri, string content, CancellationToken cancellationToken)

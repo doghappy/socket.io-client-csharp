@@ -11,8 +11,8 @@ namespace SocketIOClient.Sample
     {
         static async Task Main(string[] args)
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            //Console.OutputEncoding = Encoding.UTF8;
+            //Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
             var uri = new Uri("http://localhost:11003/");
 
@@ -23,21 +23,6 @@ namespace SocketIOClient.Sample
                     {"token", "V3" }
                 }
             });
-
-
-            //var client = socket.Socket as ClientWebSocket;
-            //client.Config = options =>
-            //{
-            //    options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-            //    {
-            //        Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
-            //        if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-            //        {
-            //            return true;
-            //        }
-            //        return false;
-            //    };
-            //};
 
             socket.OnConnected += Socket_OnConnected;
             socket.OnPing += Socket_OnPing;
@@ -51,27 +36,14 @@ namespace SocketIOClient.Sample
             });
             socket.On("hi", response =>
             {
+               // Console.WriteLine(response.ToString());
                 Console.WriteLine(response.GetValue<string>());
-            });
-            socket.On("1 params", response =>
-            {
-                var bytes = response.GetValue<byte[]>();
-                Console.WriteLine(Encoding.UTF8.GetString(bytes));
-            });
-            socket.On("client calls the server's callback 1", async response =>
-            {
-                byte[] bytes = response.GetValue<byte[]>();
-                string text = Encoding.UTF8.GetString(bytes) + "...";
-                await response.CallbackAsync(Encoding.UTF8.GetBytes(text));
-                Console.WriteLine("vv");
             });
 
             //Console.WriteLine("Press any key to continue");
             //Console.ReadLine();
 
             await socket.ConnectAsync();
-
-            //socket.ConnectedObservable.Subscribe(_ => Console.WriteLine("ConnectedObservable"));
 
             Console.ReadLine();
         }
@@ -92,11 +64,11 @@ namespace SocketIOClient.Sample
             var socket = sender as SocketIO;
             Console.WriteLine("Socket.Id:" + socket.Id);
 
-            while (true)
-            {
-                await Task.Delay(1000);
-                await socket.EmitAsync("hi", "SocketIOClient.Sample");
-            }
+            //while (true)
+            //{
+            //    await Task.Delay(1000);
+                await socket.EmitAsync("hi", DateTime.Now.ToShortDateString());
+            //}
             //byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
             //await socket.EmitAsync("client calls the server's callback 1", bytes);
             //await socket.EmitAsync("1 params", Encoding.UTF8.GetBytes("hello world"));

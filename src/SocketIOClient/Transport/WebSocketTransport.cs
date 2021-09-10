@@ -25,6 +25,7 @@ namespace SocketIOClient.Transport
         public TimeSpan ReceiveWait { get; set; }
         public Action<string> OnTextReceived { get; set; }
         public Action<byte[]> OnBinaryReceived { get; set; }
+        public Action<Exception> OnAborted { get; set; }
 
         readonly IClientWebSocket _ws;
         readonly CancellationTokenSource _listenCancellation;
@@ -91,61 +92,57 @@ namespace SocketIOClient.Transport
                 {
                     break;
                 }
-                if (_ws.State == WebSocketState.Open)
+                var buffer = new byte[ReceiveChunkSize];
+                int count = 0;
+                WebSocketReceiveResult result = null;
+
+                while (_ws.State == WebSocketState.Open)
                 {
-                    var buffer = new byte[ReceiveChunkSize];
-                    int count = 0;
-                    WebSocketReceiveResult result = null;
-
-                    while (true)
+                    var subBuffer = new byte[ReceiveChunkSize];
+                    try
                     {
-                        var subBuffer = new byte[ReceiveChunkSize];
-                        try
-                        {
-                            result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), CancellationToken.None).ConfigureAwait(false);
+                        result = await _ws.ReceiveAsync(new ArraySegment<byte>(subBuffer), CancellationToken.None).ConfigureAwait(false);
 
-                            // resize
-                            if (buffer.Length - count < result.Count)
-                            {
-                                Array.Resize(ref buffer, buffer.Length + result.Count);
-                            }
-                            Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
-                            count += result.Count;
-                            if (result.EndOfMessage)
-                            {
-                                break;
-                            }
-                        }
-                        catch (Exception e)
+                        // resize
+                        if (buffer.Length - count < result.Count)
                         {
-                            Debug.WriteLine(e);
+                            Array.Resize(ref buffer, buffer.Length + result.Count);
+                        }
+                        Buffer.BlockCopy(subBuffer, 0, buffer, count, result.Count);
+                        count += result.Count;
+                        if (result.EndOfMessage)
+                        {
                             break;
                         }
                     }
-
-                    if (result != null)
+                    catch (Exception e)
                     {
-                        switch (result.MessageType)
-                        {
-                            case WebSocketMessageType.Text:
-                                string text = Encoding.UTF8.GetString(buffer, 0, count);
-                                OnTextReceived(text);
-                                break;
-                            case WebSocketMessageType.Binary:
-                                byte[] bytes = new byte[count];
-                                Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
-                                OnBinaryReceived(bytes);
-                                break;
-                            case WebSocketMessageType.Close:
-                                break;
-                            default:
-                                break;
-                        }
+                        Debug.WriteLine(e);
+                        OnAborted(e);
+                        break;
                     }
                 }
-                else
+
+                if (result == null)
                 {
-                    await Task.Delay(ReceiveWait);
+                    break;
+                }
+
+                switch (result.MessageType)
+                {
+                    case WebSocketMessageType.Text:
+                        string text = Encoding.UTF8.GetString(buffer, 0, count);
+                        OnTextReceived(text);
+                        break;
+                    case WebSocketMessageType.Binary:
+                        byte[] bytes = new byte[count];
+                        Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
+                        OnBinaryReceived(bytes);
+                        break;
+                    case WebSocketMessageType.Close:
+                        break;
+                    default:
+                        break;
                 }
             }
         }
