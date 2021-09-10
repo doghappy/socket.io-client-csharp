@@ -9,6 +9,25 @@ An elegant socket.io client for .NET, Supports `.NET Standard 2.0`, support sock
 
 [Wiki](https://github.com/doghappy/socket.io-client-csharp/wiki)
 
+# Breaking changes in 3.x (Not yet released)
+
+> While WebSocket is clearly the best way to establish a bidirectional communication, experience has shown that it is not always possible to establish a WebSocket connection, due to corporate proxies, personal firewall, antivirus software…
+
+https://socket.io/docs/v4/how-it-works/#Transports
+
+- SocketIOClient v3.x supports http polling, but if websocket is available, the library will choose to use websocket. If you want to use http polling and do not want the library to upgrade the transport, please set `Options.AutoUpgrade = false`.
+- Socket.io server v2.x is no longer supported. If a large number of users use this version, please feedback.
+
+### Specific break changes
+
+#### 1. EIO option removed
+
+Since socket.io server v2 is not supported, the EIO option is not required.
+
+#### 2. Removed the 'Socket' object
+
+Use ClientWebSocketProvider instead of Socket object.
+
 # Breaking changes in 2.2.4
 
 Before SocketIOClient v2.2.4, the default EIO is 3, which works with socket.io v2.x, in SocketIOClient v2.2.4, the default EIO is 4, which works with socket.io v3.x and v4.x
