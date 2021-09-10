@@ -1,6 +1,6 @@
 # Socket.IO-client for .NET
 
-An elegant socket.io client for .NET, Supports `.NET Standard 2.0`.
+An elegant socket.io client for .NET, Supports `.NET Standard 2.0`, support socket.io server v3/v4, and has implemented http polling and websocket communication protocols.
 
 [![Build Status](https://herowong.visualstudio.com/socket.io-client/_apis/build/status/doghappy.socket.io-client-csharp?branchName=master)](https://herowong.visualstudio.com/socket.io-client/_build/latest?definitionId=15&branchName=master)
 [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
@@ -97,3 +97,5 @@ npm start
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455), April 2021
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/41876), May 2021
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/44350), June 2021
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/46822), July 2021
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/49090), August 2021
