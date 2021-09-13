@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - 2021-9-13
 
-SocketIOClient v3.x supports http polling and websocket, socket.io server v2.x is no longer supported.
+SocketIOClient v3.0.0 supports http polling and websocket, socket.io server v2.x is no longer supported.
 
 ### Added
 

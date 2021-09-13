@@ -262,7 +262,7 @@ client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
 
 # Breaking changes
 
-## Breaking changes in 3.x
+## Breaking changes in 3.0.0
 
 > While WebSocket is clearly the best way to establish a bidirectional communication, experience has shown that it is not always possible to establish a WebSocket connection, due to corporate proxies, personal firewall, antivirus software…
 
