@@ -5,11 +5,264 @@ An elegant socket.io client for .NET, Supports `.NET Standard 2.0`, support sock
 [![Build Status](https://herowong.visualstudio.com/socket.io-client/_apis/build/status/doghappy.socket.io-client-csharp?branchName=master)](https://herowong.visualstudio.com/socket.io-client/_build/latest?definitionId=15&branchName=master)
 [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
 
-# How to use
+# Table of Contents
 
-[Wiki](https://github.com/doghappy/socket.io-client-csharp/wiki)
+- [Quick start](#quick-start)
+  - Options
+  - Ack
+  - Binary messages
+  - JsonSerializer
+  - ClientWebSocket Options
+  - Windows 7 Support
+- Breaking changes
+  - Breaking changes in 3.x
+  - Breaking changes in 2.2.4
+  - Breaking changes in 2.2.0
+- Change log
+- Sponsors
 
-# Breaking changes in 3.x (Not yet released)
+# Quick start
+
+Connect to the socket.io server, listen events and emit some data.
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+
+client.On("hi", response =>
+{
+    // You can print the returned data first to decide what to do next.
+    // output: ["hi client"]
+    Console.WriteLine(response);
+
+    string text = response.GetValue<string>();
+
+    // The socket.io server code looks like this:
+    // socket.emit('hi', 'hi client');
+});
+
+client.On("test", response =>
+{
+    // You can print the returned data first to decide what to do next.
+    // output: ["ok",{"id":1,"name":"tom"}]
+    Console.WriteLine(response);
+    
+    // Get the first data in the response
+    string text = response.GetValue<string>();
+    // Get the second data in the response
+    var dto = response.GetValue<TestDTO>(1);
+
+    // The socket.io server code looks like this:
+    // socket.emit('hi', 'ok', { id: 1, name: 'tom'});
+});
+
+client.OnConnected += async (sender, e) =>
+{
+    // Emit a string
+    await client.EmitAsync("hi", "socket.io");
+
+    // Emit a string and an object
+    var dto = new TestDTO { Id = 123, Name = "bob" };
+    await client.EmitAsync("register", "source", dto);
+};
+await client.ConnectAsync();
+```
+
+## Options
+
+The way to override the default options is as follows:
+
+```cs
+var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
+{
+    Query = new List<KeyValuePair<string, string>>
+    {
+        new KeyValuePair<string, string>("token", "abc123"),
+        new KeyValuePair<string, string>("key", "value")
+    }
+});
+```
+
+| Option | Default value | Description |
+| :- | :- | :- |
+| `Path` | `/socket.io` | name of the path that is captured on the server side |
+| `Reconnection` | `true` | whether to reconnect automatically |
+| `ReconnectionAttempts` | `int.MaxValue` | number of reconnection attempts before giving up |
+| `ReconnectionDelay` | `1000` | how long to initially wait before attempting a new reconnection. Affected by +/- `RandomizationFactor`, for example the default initial delay will be between 500 to 1500ms. |
+| `RandomizationFactor` | `0.5` | 0 <= RandomizationFactor <= 1 |
+| `ConnectionTimeout` | `20000` | connection timeout |
+| `Query` | `IEnumerable<KeyValuePair<string, string>>` | additional query parameters that are sent when connecting a namespace (then found in `socket.handshake.query` object on the server-side) |
+| `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
+
+## Ack
+
+### The server executes the client's ack function
+
+**Client**
+
+```cs
+await client.EmitAsync("ack", response =>
+{
+    // You can print the returned data first to decide what to do next.
+    // output: [{"result":true,"message":"Prometheus - server"}]
+    Console.WriteLine(response);
+    var result = response.GetValue<BaseResult>();
+}, "Prometheus");
+```
+
+**Server**
+
+```js
+socket.on("ack", (name, fn) => {
+    fn({
+        result: true,
+        message: `${name} - server`
+    });
+});
+```
+
+### The client executes the server's ack function
+
+**Client**
+
+```cs
+client.On("ack2", async response =>
+{
+    // You can print the returned data first to decide what to do next.
+    // output: [1, 2]
+    Console.WriteLine(response);
+    int a = response.GetValue<int>();
+    int b = response.GetValue<int>(1);
+    
+    await response.CallbackAsync(b, a);
+});
+```
+
+**Server**
+
+```js
+socket.emit("ack2", 1, 2, (arg1, arg2) => {
+    console.log(`arg1: ${arg1}, arg2: ${arg2}`);
+});
+```
+
+The output of the server is:
+
+```
+arg1: 2, arg2: 1
+```
+
+## Binary messages
+
+This example shows how to emit and receive binary messages, The library uses System.Text.Json to serialize and deserialize json by default.
+
+```cs
+class FileDTO
+{
+    [JsonPropertyName("name")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("mimeType")]
+    public string MimeType { get; set; }
+
+    [JsonPropertyName("bytes")]
+    public byte[] Bytes { get; set; }
+}
+```
+
+```cs
+client.OnConnected += async (sender, e) =>
+{
+    await client.EmitAsync("upload", new FileDTO
+    {
+        Name = "template.html"
+        MimeType = "text/html",
+        bytes = Encoding.UTF8.GetBytes("<div>test</div>")
+    });
+};
+
+client.On("new files", response =>
+{
+    // You can print the returned data first to decide what to do next.
+    // output: [{"name":"template.html","mimeType":"text/html","bytes":{"_placeholder":true,"num":0}}]
+    Console.WriteLine(response);
+    var result = response.GetValue<FileDTO>();
+    Console.WriteLine(Encoding.UTF8.GetString(result.Bytes))
+});
+```
+
+## JsonSerializer
+
+The library uses System.Text.Json to serialize and deserialize json by default, If you want to change JsonSerializerOptions, you can do this:
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+var jsonSerializer = socket.JsonSerializer as SystemTextJsonSerializer;
+jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true
+};
+```
+
+Of course you can also use Newtonsoft.Json library, for this, you need to install `SocketIOClient.Newtonsoft.Json` dependency.
+
+```cs
+var jsonSerializer = new NewtonsoftJsonSerializer();
+jsonSerializer.OptionsProvider = () => new JsonSerializerSettings
+{
+    ContractResolver = new DefaultContractResolver
+    {
+        NamingStrategy = new CamelCaseNamingStrategy()
+    }
+};
+socket.JsonSerializer = jsonSerializer;
+```
+
+## ClientWebSocket Options
+
+You can set proxy and add headers for WebSocket client, etc.
+
+```cs
+var client = new SocketIO("http://localhost:11000/");
+client.ClientWebSocketProvider = () =>
+{
+    var clientWebSocket = new DefaultClientWebSocket
+    {
+        ConfigOptions = o =>
+        {
+            var options = o as ClientWebSocketOptions;
+
+            var proxy = new WebProxy("http://example.com");
+            proxy.Credentials = new NetworkCredential("username", "password");
+            options.Proxy = proxy;
+
+            options.SetRequestHeader("key", "value");
+
+            options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+            {
+                Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
+                if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+                {
+                    return true;
+                }
+                return true;
+            };
+        }
+    };
+    return clientWebSocket;
+};
+```
+
+## Windows 7 Support
+
+The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIOClient.Windows7` dependency and then change the implementation of ClientWebSocket.
+
+```cs
+client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
+```
+
+# Breaking changes
+
+## Breaking changes in 3.x
 
 > While WebSocket is clearly the best way to establish a bidirectional communication, experience has shown that it is not always possible to establish a WebSocket connection, due to corporate proxies, personal firewall, antivirus software…
 
@@ -28,83 +281,13 @@ Since socket.io server v2 is not supported, the EIO option is not required.
 
 Use ClientWebSocketProvider instead of Socket object.
 
-# Breaking changes in 2.2.4
+## Breaking changes in 2.2.4
 
 Before SocketIOClient v2.2.4, the default EIO is 3, which works with socket.io v2.x, in SocketIOClient v2.2.4, the default EIO is 4, which works with socket.io v3.x and v4.x
 
-# Breaking changes in 2.2.0
+## Breaking changes in 2.2.0
 
 SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If you'd like to continue to use `Newtonsoft.Json`, add the **SocketIOClient.Newtonsoft.Json** NuGet package and set your **JsonSerializer** to **NewtonsoftJsonSerializer** on your SocketIO instance. System.Text.Json is faster and uses less memory.
-
-### Continue to use Newtonsoft.Json
-
-```cs
-var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new NewtonsoftJsonSerializer(client.Options.EIO);
-```
-
-### Custom JsonSerializerOptions/System.Text.Json
-
-```cs
-class MyJsonSerializer : SystemTextJsonSerializer
-{
-    public MyJsonSerializer(int eio) : base(eio) {}
-
-    public override JsonSerializerOptions CreateOptions()
-    {
-        var options = new JsonSerializerOption();
-        options.PropertyNameCaseInsensitive = true;
-        return options;
-    }
-}
-
-// ...
-
-var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
-```
-
-### Custom JsonSerializerSettings/Newtonsoft.Json
-
-```cs
-class MyJsonSerializer : NewtonsoftJsonSerializer
-{
-    public MyJsonSerializer(int eio) : base(eio) {}
-
-    public override JsonSerializerSettings CreateOptions()
-    {
-        return new JsonSerializerSettings
-        {
-            ContractResolver = new global::Newtonsoft.Json.Serialization.DefaultContractResolver
-            {
-                NamingStrategy = new global::Newtonsoft.Json.Serialization.CamelCaseNamingStrategy()
-            },
-            Formatting = Formatting.Indented
-        };
-    }
-}
-
-// ...
-
-var client = new SocketIO("http://localhost:11000/");
-client.JsonSerializer = new MyJsonSerializer(client.Options.EIO);
-```
-
-# Development
-
-Before development or testing, you need to install the nodejs.
-
-```bash
-# start socket.io v2 server
-cd src/socket.io-server-v2
-npm i # If the dependencies are already installed, you can ignore this step.
-npm start
-
-# start socket.io v3 server
-cd src/socket.io-server-v3
-npm i # If the dependencies are already installed, you can ignore this step.
-npm start
-```
 
 # Change log
 
