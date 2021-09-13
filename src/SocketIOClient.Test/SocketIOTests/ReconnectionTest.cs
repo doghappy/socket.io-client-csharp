@@ -185,14 +185,10 @@ namespace SocketIOClient.Test.SocketIOTests
             client.OnConnected += (sender, e) =>
             {
                 connectedCount++;
-                //Assert.IsTrue(client.Connected);
-                //Assert.IsFalse(client.Disconnected);
             };
             client.OnDisconnected += async (sender, e) =>
             {
                 disconnectedCount++;
-                //Assert.IsFalse(client.Connected);
-                //Assert.IsTrue(client.Disconnected);
                 if (disconnectedCount <= 1)
                 {
                     await client.ConnectAsync();
@@ -201,8 +197,6 @@ namespace SocketIOClient.Test.SocketIOTests
             client.OnPong += async (sender, e) =>
             {
                 pongCount++;
-                //Assert.IsTrue(client.Connected);
-                //Assert.IsFalse(client.Disconnected);
                 await client.EmitAsync("sever disconnect");
             };
             await client.ConnectAsync();
@@ -211,7 +205,7 @@ namespace SocketIOClient.Test.SocketIOTests
 
             Assert.AreEqual(2, connectedCount);
             Assert.AreEqual(2, disconnectedCount);
-            //Assert.AreEqual(2, pongCount);
+            Assert.AreEqual(2, pongCount);
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
         }
