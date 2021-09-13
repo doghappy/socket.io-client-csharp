@@ -19,6 +19,7 @@ namespace SocketIOClient.Transport
             _clientWebSocketProvider = clientWebSocketProvider;
             UriConverter = new UriConverter();
             Path = "/socket.io";
+            ConnectionTimeout = TimeSpan.FromSeconds(20);
             _messageQueue = new Queue<IMessage>();
         }
 
@@ -43,6 +44,8 @@ namespace SocketIOClient.Transport
 
         public IEnumerable<KeyValuePair<string, string>> QueryParams { get; set; }
 
+        public TimeSpan ConnectionTimeout { get; set; }
+
         public TransportProtocol Protocol { get; private set; }
 
         public string Sid { get; private set; }
@@ -62,7 +65,16 @@ namespace SocketIOClient.Transport
                 _webSocketTransport.Dispose();
             }
             Uri uri = UriConverter.GetHandshakeUri(ServerUri, Path, QueryParams);
-            string text = await _httpClient.GetStringAsync(uri).ConfigureAwait(false);
+
+            var req = new HttpRequestMessage(HttpMethod.Get, uri);
+
+            var resMsg = await _httpClient.SendAsync(req, new CancellationTokenSource(ConnectionTimeout).Token).ConfigureAwait(false);
+            if (!resMsg.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
+            }
+            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+
             int index = text.IndexOf('{');
             string json = text.Substring(index);
             var info = System.Text.Json.JsonSerializer.Deserialize<HandshakeInfo>(json);
@@ -70,7 +82,10 @@ namespace SocketIOClient.Transport
             if (info.Upgrades.Contains("websocket") && AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
-                _webSocketTransport = new WebSocketTransport(_clientWebSocket);
+                _webSocketTransport = new WebSocketTransport(_clientWebSocket)
+                {
+                    ConnectionTimeout = ConnectionTimeout
+                };
                 await WebSocketConnectAsync().ConfigureAwait(false);
                 Protocol = TransportProtocol.WebSocket;
             }
