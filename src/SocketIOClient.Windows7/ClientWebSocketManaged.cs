@@ -15,6 +15,8 @@ namespace SocketIOClient.Windows7
 
         readonly System.Net.WebSockets.Managed.ClientWebSocket _ws;
 
+        public Action<object> ConfigOptions { get; set; }
+
         public WebSocketState State => _ws.State;
 
         public async Task CloseAsync(WebSocketCloseStatus closeStatus, string statusDescription, CancellationToken cancellationToken)
@@ -24,6 +26,7 @@ namespace SocketIOClient.Windows7
 
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
+            ConfigOptions?.Invoke(_ws.Options);
             await _ws.ConnectAsync(uri, cancellationToken);
         }
 

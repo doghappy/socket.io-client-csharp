@@ -8,6 +8,7 @@ namespace SocketIOClient.Transport
     public interface IClientWebSocket : IDisposable
     {
         WebSocketState State { get; }
+        Action<object> ConfigOptions { get; set; }
         Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
         Task CloseAsync(WebSocketCloseStatus closeStatus, string statusDescription, CancellationToken cancellationToken);
         Task SendAsync(ArraySegment<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken);
