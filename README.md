@@ -8,18 +8,18 @@ An elegant socket.io client for .NET, Supports `.NET Standard 2.0`, support sock
 # Table of Contents
 
 - [Quick start](#quick-start)
-  - Options
-  - Ack
-  - Binary messages
-  - JsonSerializer
-  - ClientWebSocket Options
-  - Windows 7 Support
-- Breaking changes
-  - Breaking changes in 3.x
-  - Breaking changes in 2.2.4
-  - Breaking changes in 2.2.0
-- Change log
-- Sponsors
+  - [Options](#options)
+  - [Ack](#ack)
+  - [Binary messages](#binary-messages)
+  - [JsonSerializer](#jsonserializer)
+  - [ClientWebSocket Options](#clientwebsocket-options)
+  - [Windows 7 Support](#windows-7-support)
+- [Breaking changes](#breaking-changes)
+  - [Breaking changes in 3.x](#breaking-changes-in-3x)
+  - [Breaking changes in 2.2.4](#breaking-changes-in-224)
+  - [Breaking changes in 2.2.0](#breaking-changes-in-220)
+- [Change log](#change-log)
+- [Sponsors](#Sponsors)
 
 # Quick start
 
