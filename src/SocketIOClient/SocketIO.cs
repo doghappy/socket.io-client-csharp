@@ -101,7 +101,6 @@ namespace SocketIOClient
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
         CancellationTokenSource _connectionTokenSorce;
-        DateTime _pingTime;
         double _reconnectionDelay;
 
 
@@ -169,7 +168,8 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Path = Options.Path,
                     ServerUri = ServerUri,
-                    JsonSerializer = JsonSerializer
+                    JsonSerializer = JsonSerializer,
+                    ConnectionTimeout = Options.ConnectionTimeout
                 };
                 if (Options.Query != null)
                 {
@@ -206,7 +206,7 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
-                    if (e is TimeoutException || e is WebSocketException || e is HttpRequestException)
+                    if (e is TimeoutException || e is WebSocketException || e is HttpRequestException || e is TimeoutException)
                     {
                         if (!Options.Reconnection)
                         {
@@ -247,20 +247,16 @@ namespace SocketIOClient
         {
             try
             {
-                _pingTime = DateTime.Now;
+                OnPing?.Invoke(this, EventArgs.Empty);
+                DateTime pingTime = DateTime.Now;
                 await Router.SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                OnPong?.Invoke(this, DateTime.Now - _pingTime);
+                OnPong?.Invoke(this, DateTime.Now - pingTime);
             }
             catch (Exception e)
             {
                 Debug.WriteLine(e);
                 InvokeDisconnect(DisconnectReason.PingTimeout);
             }
-        }
-
-        private void PongHandler()
-        {
-            OnPong?.Invoke(this, DateTime.Now - _pingTime);
         }
 
         private void ConnectedHandler(ConnectedMessage msg)
@@ -380,7 +376,7 @@ namespace SocketIOClient
                         PingHandler();
                         break;
                     case MessageType.Pong:
-                        PongHandler();
+                        //PongHandler();
                         break;
                     case MessageType.Connected:
                         ConnectedHandler(msg as ConnectedMessage);

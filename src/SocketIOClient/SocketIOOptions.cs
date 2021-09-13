@@ -7,7 +7,7 @@ namespace SocketIOClient
     {
         public SocketIOOptions()
         {
-            RandomizationFactor = new Random().NextDouble();
+            RandomizationFactor = 0.5;
             ReconnectionDelay = 1000;
             ReconnectionDelayMax = 5000;
             ReconnectionAttempts = int.MaxValue;
@@ -21,7 +21,7 @@ namespace SocketIOClient
 
         public TimeSpan ConnectionTimeout { get; set; }
 
-        public Dictionary<string, string> Query { get; set; }
+        public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
 
         /// <summary>
         /// Whether to allow reconnection if accidentally disconnected
