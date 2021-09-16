@@ -77,7 +77,7 @@ namespace SocketIOClient.Transport
 
             int index = text.IndexOf('{');
             string json = text.Substring(index);
-            var info = System.Text.Json.JsonSerializer.Deserialize<HandshakeInfo>(json);
+            var info = JsonSerializer.Deserialize<HandshakeInfo>(json);
             Sid = info.Sid;
             if (info.Upgrades.Contains("websocket") && AutoUpgrade)
             {
