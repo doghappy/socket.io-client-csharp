@@ -72,7 +72,7 @@ namespace SocketIOClient.Transport
                 }
                 else
                 {
-                    OnTextReceived(text);
+                    OnTextReceived(item);
                 }
             }
         }
