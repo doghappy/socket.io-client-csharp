@@ -14,6 +14,7 @@ An elegant socket.io client for .NET, Supports `.NET Standard 2.0`, support sock
   - [JsonSerializer](#jsonserializer)
   - [ClientWebSocket Options](#clientwebsocket-options)
   - [Windows 7 Support](#windows-7-support)
+  - [Xamarin](#xamarin)
 - [Breaking changes](#breaking-changes)
   - [Breaking changes in 3.0.0](#breaking-changes-in-300)
   - [Breaking changes in 2.2.4](#breaking-changes-in-224)
@@ -259,6 +260,43 @@ The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately
 ```cs
 client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
 ```
+
+## Xamarin
+
+Optimized the support for Xamarin: the library will always try to connect to the server, and an exception will be thrown when the connection fails. The library catches some exception types, such as: TimeoutException, WebSocketException, HttpRequestException and OperationCanceledException. If it is one of then, the library will continue to try to connect to the server. If there are other exceptions, the library will stop reconnecting and throw this exception to the upper layer. You need extra attention in Xamarin.
+
+For Xamarin.Android you should add the following code:
+
+```cs
+    public partial class MainPage: ContentPage
+    {
+        public MainPage()
+        {
+            InitializeComponent();
+        }
+
+        public SocketIO Socket {get;}
+    }
+
+    ...
+
+    public class MainActivity: global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity
+    {
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            ...
+            var app = new App();
+            var mainPage = app.MainPage as MainPage;
+            mainPage.AddExpectedException(typeof(Java.Net.SocketException));
+            mainPage.AddExpectedException(typeof(Java.Net.SocketTimeoutException));
+            LoadApplication(app);
+        }
+
+        ...
+    }
+```
+
+I don't have a macOS device, and I don't know the specific exceptions of Xamarin.iOS. Welcome to create a pr and update this document. thanks :)
 
 # Breaking changes
 
