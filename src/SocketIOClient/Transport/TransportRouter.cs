@@ -216,7 +216,14 @@ namespace SocketIOClient.Transport
             }
             else
             {
-                await _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+                try
+                {
+                    await _clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
                 _clientWebSocket.Dispose();
             }
         }
