@@ -96,7 +96,7 @@ namespace SocketIOClient
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
 
-        public List<Type> ExpectedExceptions { get; private set; }
+        List<Type> _expectedExceptions;
 
         int _packetId;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
@@ -153,7 +153,7 @@ namespace SocketIOClient
             _connectionTokenSorce = new CancellationTokenSource();
             HttpClient = new HttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
-            ExpectedExceptions = new List<Type>
+            _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),
                 typeof(WebSocketException),
@@ -215,7 +215,7 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
-                    if (ExpectedExceptions.Contains(e.GetType()))
+                    if (_expectedExceptions.Contains(e.GetType()))
                     {
                         if (!Options.Reconnection)
                         {
@@ -658,6 +658,14 @@ namespace SocketIOClient
                         await ConnectAsync().ConfigureAwait(false);
                     }
                 }
+            }
+        }
+
+        public void AddExpectedException(Type type)
+        {
+            if (!_expectedExceptions.Contains(type))
+            {
+                _expectedExceptions.Add(type);
             }
         }
 
