@@ -277,6 +277,7 @@ namespace SocketIOClient
             {
                 OnReconnected?.Invoke(this, Attempts);
             }
+            Attempts = 0;
         }
 
         private void DisconnectedHandler()
