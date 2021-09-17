@@ -96,6 +96,8 @@ namespace SocketIOClient
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
 
+        public List<Type> ExpectedExceptions { get; private set; }
+
         int _packetId;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
@@ -151,6 +153,13 @@ namespace SocketIOClient
             _connectionTokenSorce = new CancellationTokenSource();
             HttpClient = new HttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
+            ExpectedExceptions = new List<Type>
+            {
+                typeof(TimeoutException),
+                typeof(WebSocketException),
+                typeof(HttpRequestException),
+                typeof(OperationCanceledException)
+            };
         }
 
         internal static bool IsNamespaceDefault(string @namespace)
@@ -206,7 +215,7 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
-                    if (e is TimeoutException || e is WebSocketException || e is HttpRequestException || e is TimeoutException)
+                    if (ExpectedExceptions.Contains(e.GetType()))
                     {
                         if (!Options.Reconnection)
                         {
@@ -645,7 +654,7 @@ namespace SocketIOClient
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        _ = ConnectAsync().ConfigureAwait(false);
+                        await ConnectAsync().ConfigureAwait(false);
                     }
                 }
             }
