@@ -62,19 +62,18 @@ namespace SocketIOClient.Transport
 
         private void Produce(string text)
         {
-            if (text[0] == 'b')
+            string[] items = text.Split(new[] { '' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var item in items)
             {
-                //1E 
-                string[] items = text.Split('');
-                foreach (var item in items)
+                if (item[0] == 'b')
                 {
                     byte[] bytes = Convert.FromBase64String(item.Substring(1));
                     OnBinaryReceived(bytes);
                 }
-            }
-            else
-            {
-                OnTextReceived(text);
+                else
+                {
+                    OnTextReceived(text);
+                }
             }
         }
     }
