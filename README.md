@@ -263,7 +263,7 @@ client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
 
 ## Xamarin
 
-Optimized the support for Xamarin: the library will always try to connect to the server, and an exception will be thrown when the connection fails. The library catches some exception types, such as: TimeoutException, WebSocketException, HttpRequestException and OperationCanceledException. If it is one of then, the library will continue to try to connect to the server. If there are other exceptions, the library will stop reconnecting and throw this exception to the upper layer. You need extra attention in Xamarin.
+The library will always try to connect to the server, and an exception will be thrown when the connection fails. The library catches some exception types, such as: TimeoutException, WebSocketException, HttpRequestException and OperationCanceledException. If it is one of them, the library will continue to try to connect to the server. If there are other exceptions, the library will stop reconnecting and throw exception to the upper layer. You need extra attention in Xamarin.
 
 For Xamarin.Android you should add the following code:
 
