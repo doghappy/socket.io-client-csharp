@@ -168,7 +168,6 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Path = Options.Path,
                     ServerUri = ServerUri,
-                    JsonSerializer = JsonSerializer,
                     ConnectionTimeout = Options.ConnectionTimeout
                 };
                 if (Options.Query != null)

@@ -53,8 +53,6 @@ namespace SocketIOClient.Transport
 
         public IUriConverter UriConverter { get; set; }
 
-        public IJsonSerializer JsonSerializer { get; set; }
-
         public Action<IMessage> OnMessageReceived { get; set; }
 
         public Action OnTransportClosed { get; set; }
