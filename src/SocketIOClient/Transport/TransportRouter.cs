@@ -1,5 +1,4 @@
-﻿using SocketIOClient.JsonSerializer;
-using SocketIOClient.Messages;
+﻿using SocketIOClient.Messages;
 using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
@@ -14,20 +13,20 @@ namespace SocketIOClient.Transport
 {
     public class TransportRouter : IDisposable
     {
-        public TransportRouter(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider)
+        public TransportRouter(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider, SocketIOOptions options)
         {
             _httpClient = httpClient;
             _clientWebSocketProvider = clientWebSocketProvider;
             UriConverter = new UriConverter();
-            Path = "/socket.io";
-            ConnectionTimeout = TimeSpan.FromSeconds(20);
             _messageQueue = new Queue<IMessage>();
+            _options = options;
         }
 
         readonly HttpClient _httpClient;
         IClientWebSocket _clientWebSocket;
         readonly Queue<IMessage> _messageQueue;
         readonly Func<IClientWebSocket> _clientWebSocketProvider;
+        readonly SocketIOOptions _options;
 
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
@@ -37,15 +36,7 @@ namespace SocketIOClient.Transport
 
         public Uri ServerUri { get; set; }
 
-        public string Path { get; set; }
-
         public string Namespace { get; set; }
-
-        public bool AutoUpgrade { get; set; }
-
-        public IEnumerable<KeyValuePair<string, string>> QueryParams { get; set; }
-
-        public TimeSpan ConnectionTimeout { get; set; }
 
         public TransportProtocol Protocol { get; private set; }
 
@@ -63,11 +54,11 @@ namespace SocketIOClient.Transport
             {
                 _webSocketTransport.Dispose();
             }
-            Uri uri = UriConverter.GetHandshakeUri(ServerUri, Path, QueryParams);
+            Uri uri = UriConverter.GetHandshakeUri(ServerUri, _options.Path, _options.Query);
 
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
 
-            var resMsg = await _httpClient.SendAsync(req, new CancellationTokenSource(ConnectionTimeout).Token).ConfigureAwait(false);
+            var resMsg = await _httpClient.SendAsync(req, new CancellationTokenSource(_options.ConnectionTimeout).Token).ConfigureAwait(false);
             if (!resMsg.IsSuccessStatusCode)
             {
                 throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
@@ -77,15 +68,15 @@ namespace SocketIOClient.Transport
             int index = text.IndexOf('{');
             string json = text.Substring(index);
 
-            var doc= JsonDocument.Parse(json).RootElement;
+            var doc = JsonDocument.Parse(json).RootElement;
             Sid = doc.GetProperty("sid").GetString();
             string upgrades = doc.GetProperty("upgrades").GetRawText();
-            if (upgrades.Contains("websocket") && AutoUpgrade)
+            if (upgrades.Contains("websocket") && _options.AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
                 _webSocketTransport = new WebSocketTransport(_clientWebSocket)
                 {
-                    ConnectionTimeout = ConnectionTimeout
+                    ConnectionTimeout = _options.ConnectionTimeout
                 };
                 await WebSocketConnectAsync().ConfigureAwait(false);
                 Protocol = TransportProtocol.WebSocket;
@@ -101,7 +92,7 @@ namespace SocketIOClient.Transport
 
         private async Task WebSocketConnectAsync()
         {
-            Uri uri = UriConverter.GetWebSocketUri(ServerUri, Path, QueryParams, Sid);
+            Uri uri = UriConverter.GetWebSocketUri(ServerUri, _options.Path, _options.Query, Sid);
             await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
             _webSocketTransport.OnTextReceived = OnWebSocketTextReceived;
             _webSocketTransport.OnBinaryReceived = OnBinaryReceived;

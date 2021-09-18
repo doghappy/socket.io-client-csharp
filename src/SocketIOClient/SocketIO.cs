@@ -162,32 +162,15 @@ namespace SocketIOClient
             };
         }
 
-        internal static bool IsNamespaceDefault(string @namespace)
-        {
-            return string.IsNullOrEmpty(@namespace) || @namespace.Equals("/");
-        }
-
         private void CreateRouterIfNull()
         {
             if (Router == null)
             {
-                Router = new TransportRouter(HttpClient, ClientWebSocketProvider)
+                Router = new TransportRouter(HttpClient, ClientWebSocketProvider, Options)
                 {
-                    AutoUpgrade = Options.AutoUpgrade,
                     Namespace = Namespace,
-                    Path = Options.Path,
-                    ServerUri = ServerUri,
-                    ConnectionTimeout = Options.ConnectionTimeout
+                    ServerUri = ServerUri
                 };
-                if (Options.Query != null)
-                {
-                    var kvs = new List<KeyValuePair<string, string>>();
-                    foreach (var item in Options.Query)
-                    {
-                        kvs.Add(new KeyValuePair<string, string>(item.Key, item.Value));
-                    }
-                    Router.QueryParams = kvs;
-                }
                 Router.OnMessageReceived = OnMessageReceived;
                 Router.OnTransportClosed = OnTransportClosed;
             }
