@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -77,9 +78,11 @@ namespace SocketIOClient.Transport
 
             int index = text.IndexOf('{');
             string json = text.Substring(index);
-            var info = JsonSerializer.Deserialize<HandshakeInfo>(json);
-            Sid = info.Sid;
-            if (info.Upgrades.Contains("websocket") && AutoUpgrade)
+
+            var doc= JsonDocument.Parse(json).RootElement;
+            Sid = doc.GetProperty("sid").GetString();
+            string upgrades = doc.GetProperty("upgrades").GetRawText();
+            if (upgrades.Contains("websocket") && AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
                 _webSocketTransport = new WebSocketTransport(_clientWebSocket)
