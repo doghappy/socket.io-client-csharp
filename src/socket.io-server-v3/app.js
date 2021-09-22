@@ -32,6 +32,10 @@ io.on('connection', socket => {
         socket.emit('hi', prefix + msg);
     });
 
+    socket.on('headers', cb => {
+        cb(socket.request.headers)
+    });
+
     socket.on('welcome', () => {
         //socket.emit('welcome', Buffer.from("welcome " + socket.id, 'utf8'));
         socket.emit('welcome', Buffer.from("a", 'utf8'));
