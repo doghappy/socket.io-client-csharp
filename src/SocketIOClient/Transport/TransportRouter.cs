@@ -134,13 +134,13 @@ namespace SocketIOClient.Transport
             }, TaskCreationOptions.LongRunning);
         }
 
-        private void OnWebSocketTextReceived(string text)
+        private async void OnWebSocketTextReceived(string text)
         {
             if (text == "3probe")
             {
                 var msg = new ConnectedMessage { Namespace = Namespace, Sid = Sid };
-                _ = _webSocketTransport.SendAsync("5", CancellationToken.None);
-                _ = _webSocketTransport.SendAsync(msg.Write(), CancellationToken.None);
+                await _webSocketTransport.SendAsync("5", CancellationToken.None);
+                await _webSocketTransport.SendAsync(msg.Write(), CancellationToken.None);
             }
             else
             {

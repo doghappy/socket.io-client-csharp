@@ -10,9 +10,11 @@ namespace SocketIOClient.Transport
         public DefaultClientWebSocket()
         {
             _ws = new ClientWebSocket();
+            _sendLock = new SemaphoreSlim(1, 1);
         }
 
         readonly ClientWebSocket _ws;
+        readonly SemaphoreSlim _sendLock;
 
         public Action<object> ConfigOptions { get; set; }
 
@@ -20,23 +22,31 @@ namespace SocketIOClient.Transport
 
         public async Task CloseAsync(WebSocketCloseStatus closeStatus, string statusDescription, CancellationToken cancellationToken)
         {
-            await _ws.CloseAsync(closeStatus, statusDescription, cancellationToken);
+            await _ws.CloseAsync(closeStatus, statusDescription, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
             ConfigOptions?.Invoke(_ws.Options);
-            await _ws.ConnectAsync(uri, cancellationToken);
+            await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
         {
-            return await _ws.ReceiveAsync(buffer, cancellationToken);
+            return await _ws.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task SendAsync(ArraySegment<byte> buffer, WebSocketMessageType messageType, bool endOfMessage, CancellationToken cancellationToken)
         {
-            await _ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
+            try
+            {
+                await _sendLock.WaitAsync().ConfigureAwait(false);
+                await _ws.SendAsync(buffer, messageType, endOfMessage, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
         }
 
         public void Dispose()
