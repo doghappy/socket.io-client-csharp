@@ -8,19 +8,6 @@ namespace SocketIOClient.UnitTest.MessageTests
     public class MessageReadTest
     {
         [TestMethod]
-        public void Opened()
-        {
-            var msg = MessageFactory.CreateMessage(4, "0{\"sid\":\"6lV4Ef7YOyGF-5dCBvKy\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}");
-            Assert.AreEqual(MessageType.Opened, msg.Type);
-
-            var openedMsg = msg as OpenedMessage;
-
-            Assert.AreEqual("6lV4Ef7YOyGF-5dCBvKy", openedMsg.Sid);
-            Assert.AreEqual(10000, openedMsg.PingInterval);
-            Assert.AreEqual(5000, openedMsg.PingTimeout);
-        }
-
-        [TestMethod]
         public void Ping()
         {
             var msg = MessageFactory.CreateMessage(4, "2");
@@ -66,7 +53,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             var connectedMsg = msg as ConnectedMessage;
 
-            Assert.AreEqual(string.Empty, connectedMsg.Namespace);
+            Assert.IsTrue(string.IsNullOrEmpty(connectedMsg.Namespace));
             Assert.IsNull(connectedMsg.Sid);
         }
 

@@ -10,8 +10,6 @@ namespace SocketIOClient.Messages
         {
             switch (type)
             {
-                //case MessageType.Opened:
-                //    return new OpenedMessage();
                 case MessageType.Ping:
                     return new PingMessage();
                 case MessageType.Pong:

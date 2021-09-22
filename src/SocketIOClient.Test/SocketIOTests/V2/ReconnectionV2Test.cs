@@ -20,6 +20,13 @@ namespace SocketIOClient.Test.SocketIOTests.V2
         //    await base.ReconnectionTrueTest();
         //}
 
+        // NOTE: This test case is wrong, because the client will not automatically reconnect after the server closes the connection.
+        //[TestMethod]
+        //public override async Task ReconnectionAttemptsExceededTest()
+        //{
+        //    await base.ReconnectionAttemptsExceededTest();
+        //}
+
         [TestMethod]
         public override async Task ReconnectionFalseTest()
         {
@@ -31,13 +38,6 @@ namespace SocketIOClient.Test.SocketIOTests.V2
         //public override async Task ReconnectingTest()
         //{
         //    await base.ReconnectingTest();
-        //}
-
-        // NOTE: This test case is wrong, because the client will not automatically reconnect after the server closes the connection.
-        //[TestMethod]
-        //public override async Task ReconnectionAttemptsExceededTest()
-        //{
-        //    await base.ReconnectionAttemptsExceededTest();
         //}
 
         [TestMethod]

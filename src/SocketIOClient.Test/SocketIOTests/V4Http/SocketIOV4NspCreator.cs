@@ -20,6 +20,5 @@ namespace SocketIOClient.Test.SocketIOTests.V4Http
         public string Prefix => "/nsp,V4: ";
         public string Url => "http://localhost:11004/nsp";
         public string Token => "V4NSP";
-        public int EIO => 4;
     }
 }

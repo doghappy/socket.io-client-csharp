@@ -660,7 +660,7 @@ namespace SocketIOClient
             {
                 Connected = false;
                 OnDisconnected?.Invoke(this, reason);
-                _pingTokenSource.Cancel();
+                _pingTokenSource?.Cancel();
                 try
                 {
                     await Router.DisconnectAsync();

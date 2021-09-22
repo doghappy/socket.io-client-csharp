@@ -20,6 +20,5 @@ namespace SocketIOClient.Test.SocketIOTests.V4Http
         public string Prefix => "V4: ";
         public string Token => "V4";
         public string Url => "http://localhost:11004";
-        public int EIO => 4;
     }
 }

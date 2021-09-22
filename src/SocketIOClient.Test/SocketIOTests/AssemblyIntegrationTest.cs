@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Test.Configuration;
+using SocketIOClient.Test.SocketIOTests.V2;
+using SocketIOClient.Test.SocketIOTests.V3;
 using SocketIOClient.Test.SocketIOTests.V4;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,7 @@ namespace SocketIOClient.Test.SocketIOTests
     {
         private static readonly IEnumerable<IServerManager> Servers = new List<IServerManager>()
         {
-            //new ServerV2Manager(),
+            new ServerV2Manager(),
             new ServerV3Manager(),
             new ServerV4Manager()
         };

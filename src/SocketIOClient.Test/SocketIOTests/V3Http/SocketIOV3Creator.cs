@@ -20,6 +20,5 @@ namespace SocketIOClient.Test.SocketIOTests.V3Http
         public string Prefix => "V3: ";
         public string Token => "V3";
         public string Url => "http://localhost:11003";
-        public int EIO => 4;
     }
 }

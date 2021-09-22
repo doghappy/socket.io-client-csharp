@@ -6,46 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="SocketIOTests\V2\DisconnectionV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\DisconnectionV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\EmitV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\EmitV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\OffAnyV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\OffAnyV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\OffV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\OffV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\OnAnyV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\OnAnyV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\OnErrorV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\OnErrorV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\ReconnectionV2NspTest.cs" />
-    <Compile Remove="SocketIOTests\V2\ReconnectionV2Test.cs" />
-    <Compile Remove="SocketIOTests\V2\ServerV2Manager.cs" />
-    <Compile Remove="SocketIOTests\V2\SocketIOV2Creator.cs" />
-    <Compile Remove="SocketIOTests\V2\SocketIOV2NspCreator.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="SocketIOTests\V2\DisconnectionV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\DisconnectionV2Test.cs" />
-    <None Include="SocketIOTests\V2\EmitV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\EmitV2Test.cs" />
-    <None Include="SocketIOTests\V2\OffAnyV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\OffAnyV2Test.cs" />
-    <None Include="SocketIOTests\V2\OffV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\OffV2Test.cs" />
-    <None Include="SocketIOTests\V2\OnAnyV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\OnAnyV2Test.cs" />
-    <None Include="SocketIOTests\V2\OnErrorV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\OnErrorV2Test.cs" />
-    <None Include="SocketIOTests\V2\ReconnectionV2NspTest.cs" />
-    <None Include="SocketIOTests\V2\ReconnectionV2Test.cs" />
-    <None Include="SocketIOTests\V2\ServerV2Manager.cs" />
-    <None Include="SocketIOTests\V2\SocketIOV2Creator.cs" />
-    <None Include="SocketIOTests\V2\SocketIOV2NspCreator.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.2.5" />

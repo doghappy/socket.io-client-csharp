@@ -4,20 +4,19 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests.V2
 {
     [TestClass]
-    public class OnErrorV2NspTest : OnErrorTest
+    public class HeadersV2Test : HeadersTest
     {
-        public OnErrorV2NspTest()
+        public HeadersV2Test()
         {
-            SocketIOCreator = new SocketIOV2NspCreator();
+            SocketIOCreator = new SocketIOV2Creator();
         }
 
         protected override ISocketIOCreateable SocketIOCreator { get; }
 
-
         [TestMethod]
-        public override async Task Test()
+        public override async Task CustomHeader()
         {
-            await base.Test();
+            await base.CustomHeader();
         }
     }
 }

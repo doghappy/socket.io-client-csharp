@@ -21,7 +21,8 @@ namespace SocketIOClient.Sample
                 Query = new Dictionary<string, string>
                 {
                     {"token", "V2" }
-                }
+                },
+                AutoUpgrade = false
             });
 
             socket.OnConnected += Socket_OnConnected;
@@ -36,7 +37,7 @@ namespace SocketIOClient.Sample
             });
             socket.On("hi", response =>
             {
-               // Console.WriteLine(response.ToString());
+                // Console.WriteLine(response.ToString());
                 Console.WriteLine(response.GetValue<string>());
             });
 
@@ -67,7 +68,8 @@ namespace SocketIOClient.Sample
             //while (true)
             //{
             //    await Task.Delay(1000);
-                await socket.EmitAsync("hi", DateTime.Now.ToShortDateString());
+            //await socket.EmitAsync("hi", DateTime.Now.ToShortDateString());
+            await socket.EmitAsync("welcome");
             //}
             //byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
             //await socket.EmitAsync("client calls the server's callback 1", bytes);
