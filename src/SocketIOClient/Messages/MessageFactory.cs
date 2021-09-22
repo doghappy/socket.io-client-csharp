@@ -10,8 +10,8 @@ namespace SocketIOClient.Messages
         {
             switch (type)
             {
-                case MessageType.Opened:
-                    return new OpenedMessage();
+                //case MessageType.Opened:
+                //    return new OpenedMessage();
                 case MessageType.Ping:
                     return new PingMessage();
                 case MessageType.Pong:
@@ -34,7 +34,7 @@ namespace SocketIOClient.Messages
             return null;
         }
 
-        public static IMessage CreateMessage(string msg)
+        public static IMessage CreateMessage(int eio, string msg)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType item in enums)
@@ -45,6 +45,7 @@ namespace SocketIOClient.Messages
                     IMessage result = CreateMessage(item);
                     if (result != null)
                     {
+                        result.Eio = eio;
                         result.Read(msg.Substring(prefix.Length));
                         return result;
                     }
@@ -52,5 +53,28 @@ namespace SocketIOClient.Messages
             }
             return null;
         }
+
+        public static OpenedMessage CreateOpenedMessage(string msg)
+        {
+            var openedMessage = new OpenedMessage();
+            if (msg[0] == '0')
+            {
+                openedMessage.Eio = 4;
+                openedMessage.Read(msg.Substring(1));
+            }
+            else
+            {
+                openedMessage.Eio = 3;
+                int index = msg.IndexOf(':');
+                openedMessage.Read(msg.Substring(index + 2));
+            }
+            return openedMessage;
+        }
+
+        //public static List<IMessage> CreateMessages(string msg)
+        //{
+        //    var msgs = new List<IMessage>();
+
+        //}
     }
 }

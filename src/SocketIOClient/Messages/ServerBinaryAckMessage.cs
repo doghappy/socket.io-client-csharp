@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SocketIOClient.Transport;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
@@ -20,6 +21,10 @@ namespace SocketIOClient.Messages
         public int Id { get; set; }
 
         public int BinaryCount { get; }
+
+        public int Eio { get; set; }
+
+        public TransportProtocol Protocol { get; set; }
 
         public List<byte[]> OutgoingBytes { get; set; }
 

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using SocketIOClient.Transport;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
@@ -18,7 +20,38 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; }
 
+        public int Eio { get; set; }
+
+        public TransportProtocol Protocol { get; set; }
+
+        public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
+
         public void Read(string msg)
+        {
+            if (Eio == 3)
+            {
+                Eio3Read(msg);
+            }
+            else
+            {
+                Eio4Read(msg);
+            }
+        }
+
+        public string Write()
+        {
+            if (Eio == 3)
+            {
+                if (Protocol == TransportProtocol.Polling)
+                {
+                    return Eio3PollingWrite();
+                }
+                return Eio3Write();
+            }
+            return Eio4Write();
+        }
+
+        public void Eio4Read(string msg)
         {
             int index = msg.IndexOf('{');
             if (index > 0)
@@ -33,7 +66,7 @@ namespace SocketIOClient.Messages
             Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
         }
 
-        public string Write()
+        public string Eio4Write()
         {
             var builder = new StringBuilder("40");
             if (!string.IsNullOrEmpty(Namespace))
@@ -41,6 +74,63 @@ namespace SocketIOClient.Messages
                 builder.Append(Namespace).Append(',');
             }
             return builder.ToString();
+        }
+
+        public void Eio3Read(string msg)
+        {
+            if (msg.Length >= 2)
+            {
+                int startIndex = msg.IndexOf('/');
+                if (startIndex == -1)
+                {
+                    return;
+                }
+                int endIndex = msg.IndexOf('?', startIndex);
+                if (endIndex == -1)
+                {
+                    endIndex = msg.IndexOf(',', startIndex);
+                }
+                if (endIndex == -1)
+                {
+                    endIndex = msg.Length;
+                }
+                Namespace = msg.Substring(startIndex, endIndex);
+            }
+        }
+
+        public string Eio3Write()
+        {
+            if (string.IsNullOrEmpty(Namespace))
+            {
+                throw new InvalidOperationException("When no namespace is specified, this method should not be called.");
+            }
+            var builder = new StringBuilder("40");
+            builder.Append(Namespace);
+            if (Query != null)
+            {
+                int i = -1;
+                foreach (var item in Query)
+                {
+                    i++;
+                    if (i == 0)
+                    {
+                        builder.Append('?');
+                    }
+                    else
+                    {
+                        builder.Append('&');
+                    }
+                    builder.Append(item.Key).Append('=').Append(item.Value);
+                }
+            }
+            builder.Append(',');
+            return builder.ToString();
+        }
+
+        public string Eio3PollingWrite()
+        {
+            string message = Eio3Write();
+            return message.Length + ":" + message;
         }
     }
 }

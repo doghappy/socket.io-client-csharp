@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/socket.io-client@2.4.0/dist/socket.io.min.js"></script>
     <script>
         var socket = io(`http://localhost:11002/`, {
-            //transports: ["websocket"],
+            transports: ["websocket"],
             query: {
                 token: "V2"
             }

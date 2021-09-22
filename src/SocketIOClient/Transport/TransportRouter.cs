@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,8 +29,8 @@ namespace SocketIOClient.Transport
 
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
-        CancellationTokenSource _pingTokenSource;
-        CancellationToken _pingToken;
+        CancellationTokenSource _pollingTokenSource;
+        CancellationToken _pollingToken;
         string _httpUri;
 
         public Uri ServerUri { get; set; }
@@ -43,6 +42,10 @@ namespace SocketIOClient.Transport
         public string Sid { get; private set; }
 
         public IUriConverter UriConverter { get; set; }
+
+        public int Eio { get; private set; }
+
+        public int PingInterval { get; set; }
 
         public Action<IMessage> OnMessageReceived { get; set; }
 
@@ -65,14 +68,12 @@ namespace SocketIOClient.Transport
                 throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
             }
             string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var openedMessage = MessageFactory.CreateOpenedMessage(text);
 
-            int index = text.IndexOf('{');
-            string json = text.Substring(index);
-
-            var doc = JsonDocument.Parse(json).RootElement;
-            Sid = doc.GetProperty("sid").GetString();
-            string upgrades = doc.GetProperty("upgrades").GetRawText();
-            if (upgrades.Contains("websocket") && _options.AutoUpgrade)
+            Sid = openedMessage.Sid;
+            Eio = openedMessage.Eio;
+            PingInterval = openedMessage.PingInterval;
+            if (openedMessage.Upgrades.Contains("websocket") && _options.AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
                 _webSocketTransport = new WebSocketTransport(_clientWebSocket)
@@ -114,15 +115,22 @@ namespace SocketIOClient.Transport
 
         private async Task HttpConnectAsync()
         {
-            _pingTokenSource = new CancellationTokenSource();
-            _pingToken = _pingTokenSource.Token;
+            _pollingTokenSource = new CancellationTokenSource();
+            _pollingToken = _pollingTokenSource.Token;
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
 
             StartPolling();
+            if (Eio == 3 && string.IsNullOrEmpty(Namespace))
+            {
+                return;
+            }
             var msg = new ConnectedMessage
             {
-                Namespace = Namespace
+                Namespace = Namespace,
+                Eio = Eio,
+                Protocol = TransportProtocol.Polling,
+                Query = _options.Query
             };
             await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None).ConfigureAwait(false);
         }
@@ -131,7 +139,7 @@ namespace SocketIOClient.Transport
         {
             Task.Factory.StartNew(async () =>
             {
-                while (!_pingToken.IsCancellationRequested)
+                while (!_pollingToken.IsCancellationRequested)
                 {
                     try
                     {
@@ -150,8 +158,19 @@ namespace SocketIOClient.Transport
         {
             if (text == "3probe")
             {
-                var msg = new ConnectedMessage { Namespace = Namespace, Sid = Sid };
                 await _webSocketTransport.SendAsync("5", CancellationToken.None);
+
+                if (Eio == 3 && string.IsNullOrEmpty(Namespace))
+                {
+                    return;
+                }
+                var msg = new ConnectedMessage
+                {
+                    Namespace = Namespace,
+                    Sid = Sid,
+                    Protocol = TransportProtocol.WebSocket,
+                    Query = _options.Query
+                };
                 await _webSocketTransport.SendAsync(msg.Write(), CancellationToken.None);
             }
             else
@@ -163,14 +182,11 @@ namespace SocketIOClient.Transport
         private void OnTextReceived(string text)
         {
             Debug.WriteLine($"[Receive] {text}");
-            var msg = MessageFactory.CreateMessage(text);
+            var msg = MessageFactory.CreateMessage(Eio, text);
             if (msg != null)
             {
                 if (msg.BinaryCount > 0)
                 {
-                    //msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);
-                    //msg.IncomingBytes.AddRange(_incomingBytes);
-                    //_incomingBytes.Clear();
                     msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);
                     _messageQueue.Enqueue(msg);
                 }
@@ -184,7 +200,6 @@ namespace SocketIOClient.Transport
         private void OnBinaryReceived(byte[] bytes)
         {
             Debug.WriteLine($"[Receive] binary message");
-            //_incomingBytes.Add(bytes);
             if (_messageQueue.Count > 0)
             {
                 var msg = _messageQueue.Peek();
@@ -204,6 +219,8 @@ namespace SocketIOClient.Transport
 
         public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
         {
+            msg.Eio = Eio;
+            msg.Protocol = Protocol;
             string text = msg.Write();
             await SendAsync(text, cancellationToken).ConfigureAwait(false);
             if (msg.OutgoingBytes != null)
@@ -216,7 +233,7 @@ namespace SocketIOClient.Transport
         {
             if (Protocol == TransportProtocol.Polling)
             {
-                _pingTokenSource.Cancel();
+                _pollingTokenSource.Cancel();
             }
             else
             {

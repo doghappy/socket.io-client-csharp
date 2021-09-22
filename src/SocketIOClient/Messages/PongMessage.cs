@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SocketIOClient.Transport;
+using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
 {
@@ -11,6 +12,10 @@ namespace SocketIOClient.Messages
         public List<byte[]> IncomingBytes { get; set; }
 
         public int BinaryCount { get; }
+
+        public int Eio { get; set; }
+
+        public TransportProtocol Protocol { get; set; }
 
         public void Read(string msg)
         {

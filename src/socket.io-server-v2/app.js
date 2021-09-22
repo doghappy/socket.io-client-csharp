@@ -137,6 +137,13 @@ io.on('connection', socket => {
 });
 
 const nsp = io.of("/nsp");
+nsp.use((socket, next) => {
+    if (socket.handshake.query.token === "V2") {
+        next();
+    } else {
+        next(new Error("Authentication error nsp"));
+    }
+})
 nsp.on("connection", socket => {
     socket.on('hi', (msg) => {
         socket.emit('hi', nspPrefix + msg);
