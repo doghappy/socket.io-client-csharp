@@ -57,6 +57,7 @@ namespace SocketIOClient.Transport
             Uri uri = UriConverter.GetHandshakeUri(ServerUri, _options.Path, _options.Query);
 
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
+            SetHeaders(req);
 
             var resMsg = await _httpClient.SendAsync(req, new CancellationTokenSource(_options.ConnectionTimeout).Token).ConfigureAwait(false);
             if (!resMsg.IsSuccessStatusCode)
@@ -87,6 +88,17 @@ namespace SocketIOClient.Transport
                 _httpTransport = new HttpTransport(_httpClient);
                 await HttpConnectAsync().ConfigureAwait(false);
                 Protocol = TransportProtocol.Polling;
+            }
+        }
+
+        private void SetHeaders(HttpRequestMessage req)
+        {
+            if (_options.ExtraHeaders != null)
+            {
+                foreach (var item in _options.ExtraHeaders)
+                {
+                    req.Headers.Add(item.Key, item.Value);
+                }
             }
         }
 

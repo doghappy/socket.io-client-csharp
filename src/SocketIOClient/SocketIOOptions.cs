@@ -49,6 +49,8 @@ namespace SocketIOClient
             }
         }
 
+        public Dictionary<string, string> ExtraHeaders { get; set; }
+
         public bool AutoUpgrade { get; set; }
     }
 }
