@@ -93,6 +93,7 @@ var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
 | `ConnectionTimeout` | `20000` | connection timeout |
 | `Query` | `IEnumerable<KeyValuePair<string, string>>` | additional query parameters that are sent when connecting a namespace (then found in `socket.handshake.query` object on the server-side) |
 | `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
+| `ExtraHeaders` | `null` | Headers that will be passed for each request to the server (via xhr-polling and via websockets). These values then can be used during handshake or for special proxies. |
 
 ## Ack
 
