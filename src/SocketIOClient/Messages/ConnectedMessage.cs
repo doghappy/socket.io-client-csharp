@@ -42,10 +42,6 @@ namespace SocketIOClient.Messages
         {
             if (Eio == 3)
             {
-                if (Protocol == TransportProtocol.Polling)
-                {
-                    return Eio3PollingWrite();
-                }
                 return Eio3Write();
             }
             return Eio4Write();
@@ -125,12 +121,6 @@ namespace SocketIOClient.Messages
             }
             builder.Append(',');
             return builder.ToString();
-        }
-
-        public string Eio3PollingWrite()
-        {
-            string message = Eio3Write();
-            return message.Length + ":" + message;
         }
     }
 }

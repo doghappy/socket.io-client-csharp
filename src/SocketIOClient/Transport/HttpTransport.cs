@@ -34,16 +34,14 @@ namespace SocketIOClient.Transport
             {
                 throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
             }
-            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Produce(text);
+            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
         public async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             var httpContent = new StringContent(content);
             var resMsg = await _client.PostAsync(AppendRandom(uri), httpContent, cancellationToken).ConfigureAwait(false);
-            string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Produce(text);
+            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
         public async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
@@ -62,7 +60,21 @@ namespace SocketIOClient.Transport
             await PostAsync(uri, text, cancellationToken);
         }
 
-        private void Produce(string text)
+        private async Task ProduceMessageAsync(HttpResponseMessage resMsg)
+        {
+            if (resMsg.Content.Headers.ContentType.MediaType == "application/octet-stream")
+            {
+                byte[] bytes = await resMsg.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                ProduceBytes(bytes);
+            }
+            else
+            {
+                string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
+                ProduceText(text);
+            }
+        }
+
+        private void ProduceText(string text)
         {
             if (_eio == 3)
             {
@@ -83,7 +95,7 @@ namespace SocketIOClient.Transport
                         }
                     }
                     else
-                    {// 这里有问题，F5 启动 Sample 测试
+                    {
                         break;
                     }
                 }
@@ -103,6 +115,37 @@ namespace SocketIOClient.Transport
                         OnTextReceived(item);
                     }
                 }
+            }
+        }
+
+        private void ProduceBytes(byte[] bytes)
+        {
+            int i = 0;
+            while (bytes.Length > i + 4)
+            {
+                byte type = bytes[i];
+                var builder = new StringBuilder();
+                i++;
+                while (bytes[i] != byte.MaxValue)
+                {
+                    builder.Append(bytes[i]);
+                    i++;
+                }
+                i++;
+                int length = int.Parse(builder.ToString());
+                if (type == 0)
+                {
+                    var buffer = new byte[length];
+                    Buffer.BlockCopy(bytes, i, buffer, 0, buffer.Length);
+                    OnTextReceived(Encoding.UTF8.GetString(buffer));
+                }
+                else if (type == 1)
+                {
+                    var buffer = new byte[length - 1];
+                    Buffer.BlockCopy(bytes, i + 1, buffer, 0, buffer.Length);
+                    OnBinaryReceived(buffer);
+                }
+                i += length;
             }
         }
     }
