@@ -1,4 +1,5 @@
 ﻿using SocketIOClient.Transport;
+using System;
 using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
@@ -16,6 +17,8 @@ namespace SocketIOClient.Messages
         public int Eio { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+
+        public TimeSpan Duration { get; set; }
 
         public void Read(string msg)
         {

@@ -15,6 +15,7 @@ namespace SocketIOClient
             ConnectionTimeout = TimeSpan.FromSeconds(20);
             Reconnection = true;
             AutoUpgrade = true;
+            EIO = 4;
         }
 
         public string Path { get; set; }
@@ -52,5 +53,7 @@ namespace SocketIOClient
         public Dictionary<string, string> ExtraHeaders { get; set; }
 
         public bool AutoUpgrade { get; set; }
+
+        public int EIO { get; set; }
     }
 }

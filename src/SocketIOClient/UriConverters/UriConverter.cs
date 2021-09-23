@@ -6,7 +6,7 @@ namespace SocketIOClient.UriConverters
 {
     public class UriConverter : IUriConverter
     {
-        public Uri GetHandshakeUri(Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
+        public Uri GetHandshakeUri(Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
         {
             var builder = new StringBuilder();
             if (serverUri.Scheme == "https" || serverUri.Scheme == "wss")
@@ -34,7 +34,7 @@ namespace SocketIOClient.UriConverters
             {
                 builder.Append(path);
             }
-            builder.Append("/?EIO=4&transport=polling");
+            builder.Append("/?EIO=").Append(eio).Append("&transport=polling");
             if (queryParams != null)
             {
                 foreach (var item in queryParams)
@@ -46,7 +46,7 @@ namespace SocketIOClient.UriConverters
             return new Uri(builder.ToString());
         }
 
-        public Uri GetWebSocketUri(Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams, string sid)
+        public Uri GetWebSocketUri(Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams, string sid)
         {
             var builder = new StringBuilder();
             if (serverUri.Scheme == "https" || serverUri.Scheme == "wss")
@@ -74,7 +74,7 @@ namespace SocketIOClient.UriConverters
             {
                 builder.Append(path);
             }
-            builder.Append("/?EIO=4&transport=websocket");
+            builder.Append("/?EIO=").Append(eio).Append("&transport=websocket");
             if (queryParams != null)
             {
                 foreach (var item in queryParams)

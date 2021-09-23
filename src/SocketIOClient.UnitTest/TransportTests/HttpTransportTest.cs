@@ -29,12 +29,12 @@ namespace SocketIOClient.UnitTest.TransportTests
 
             var uriConverter = new Mock<IUriConverter>();
             uriConverter
-                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
+                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
                 .Returns(new Uri(uri));
 
             string resultText = null;
             var bytes = new List<byte[]>();
-            var transport = new HttpTransport(httpClient)
+            var transport = new HttpTransport(httpClient, 4)
             {
                 OnTextReceived = text => resultText = text,
                 OnBinaryReceived = b => bytes.Add(b)
@@ -69,6 +69,36 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             int c2 = CultureInfo.CurrentCulture.CompareInfo.Compare(str1, str2, CompareOptions.IgnoreSymbols);
             Assert.AreEqual(0, c1);
             Assert.AreEqual(0, c2);
+        }
+
+        [TestMethod]
+        public async Task Eio3HttpConnectedTest()
+        {
+            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(uri)
+                .Respond("text/plain", "2:40");
+            var httpClient = mockHttp.ToHttpClient();
+
+            var clientWebSocket = new Mock<IClientWebSocket>();
+
+            var uriConverter = new Mock<IUriConverter>();
+            uriConverter
+                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
+                .Returns(new Uri(uri));
+
+            var result = new List<string>();
+            var transport = new HttpTransport(httpClient, 3)
+            {
+                OnTextReceived = text => result.Add(text)
+            };
+            await transport.GetAsync(uri, CancellationToken.None);
+
+            await Task.Delay(100);
+
+            Assert.AreEqual(1, result.Count);
+            Assert.AreEqual("40", result[0]);
         }
     }
 }

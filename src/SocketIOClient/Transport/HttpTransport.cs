@@ -9,12 +9,14 @@ namespace SocketIOClient.Transport
 {
     public class HttpTransport : IReceivable
     {
-        public HttpTransport(HttpClient httpClient)
+        public HttpTransport(HttpClient httpClient, int eio)
         {
             _client = httpClient;
+            _eio = eio;
         }
 
         readonly HttpClient _client;
+        readonly int _eio;
 
         public Action<string> OnTextReceived { get; set; }
         public Action<byte[]> OnBinaryReceived { get; set; }
@@ -62,17 +64,44 @@ namespace SocketIOClient.Transport
 
         private void Produce(string text)
         {
-            string[] items = text.Split(new[] { '' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var item in items)
+            if (_eio == 3)
             {
-                if (item[0] == 'b')
+                while (true)
                 {
-                    byte[] bytes = Convert.FromBase64String(item.Substring(1));
-                    OnBinaryReceived(bytes);
+                    int index = text.IndexOf(':');
+                    if (index == -1)
+                    {
+                        break;
+                    }
+                    if (int.TryParse(text.Substring(0, index), out int length))
+                    {
+                        string msg = text.Substring(index + 1, length);
+                        OnTextReceived(msg);
+                        if (index + length + 1 > text.Length - 1)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {// 这里有问题，F5 启动 Sample 测试
+                        break;
+                    }
                 }
-                else
+            }
+            else
+            {
+                string[] items = text.Split(new[] { '' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var item in items)
                 {
-                    OnTextReceived(item);
+                    if (item[0] == 'b')
+                    {
+                        byte[] bytes = Convert.FromBase64String(item.Substring(1));
+                        OnBinaryReceived(bytes);
+                    }
+                    else
+                    {
+                        OnTextReceived(item);
+                    }
                 }
             }
         }

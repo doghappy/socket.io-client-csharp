@@ -32,6 +32,10 @@ namespace SocketIOClient.Transport
         CancellationTokenSource _pollingTokenSource;
         CancellationToken _pollingToken;
         string _httpUri;
+        int _ingInterval;
+        CancellationTokenSource _pingTokenSource;
+        CancellationToken _pingToken;
+        DateTime _pingTime;
 
         public Uri ServerUri { get; set; }
 
@@ -45,19 +49,18 @@ namespace SocketIOClient.Transport
 
         public int Eio { get; private set; }
 
-        public int PingInterval { get; set; }
-
         public Action<IMessage> OnMessageReceived { get; set; }
 
         public Action OnTransportClosed { get; set; }
 
         public async Task ConnectAsync()
         {
+            Eio = _options.EIO;
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();
             }
-            Uri uri = UriConverter.GetHandshakeUri(ServerUri, _options.Path, _options.Query);
+            Uri uri = UriConverter.GetHandshakeUri(ServerUri, Eio, _options.Path, _options.Query);
 
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             SetHeaders(req);
@@ -71,8 +74,7 @@ namespace SocketIOClient.Transport
             var openedMessage = MessageFactory.CreateOpenedMessage(text);
 
             Sid = openedMessage.Sid;
-            Eio = openedMessage.Eio;
-            PingInterval = openedMessage.PingInterval;
+            _ingInterval = openedMessage.PingInterval;
             if (openedMessage.Upgrades.Contains("websocket") && _options.AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
@@ -86,7 +88,7 @@ namespace SocketIOClient.Transport
             else
             {
                 _httpUri = uri + "&sid=" + Sid;
-                _httpTransport = new HttpTransport(_httpClient);
+                _httpTransport = new HttpTransport(_httpClient, Eio);
                 await HttpConnectAsync().ConfigureAwait(false);
                 Protocol = TransportProtocol.Polling;
             }
@@ -105,7 +107,7 @@ namespace SocketIOClient.Transport
 
         private async Task WebSocketConnectAsync()
         {
-            Uri uri = UriConverter.GetWebSocketUri(ServerUri, _options.Path, _options.Query, Sid);
+            Uri uri = UriConverter.GetWebSocketUri(ServerUri, _options.EIO, _options.Path, _options.Query, Sid);
             await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
             _webSocketTransport.OnTextReceived = OnWebSocketTextReceived;
             _webSocketTransport.OnBinaryReceived = OnBinaryReceived;
@@ -154,6 +156,29 @@ namespace SocketIOClient.Transport
             }, TaskCreationOptions.LongRunning);
         }
 
+        private async Task PingAsync()
+        {
+            while (!_pingToken.IsCancellationRequested)
+            {
+                await Task.Delay(_ingInterval);
+                try
+                {
+                    await SendAsync(new PingMessage(), CancellationToken.None).ConfigureAwait(false);
+                    _pingTime = DateTime.Now;
+                    OnMessageReceived(new PingMessage
+                    {
+                        Eio = Eio,
+                        Protocol = Protocol
+                    });
+                }
+                catch
+                {
+                    OnTransportClosed();
+                    throw;
+                }
+            }
+        }
+
         private async void OnWebSocketTextReceived(string text)
         {
             if (text == "3probe")
@@ -179,7 +204,7 @@ namespace SocketIOClient.Transport
             }
         }
 
-        private void OnTextReceived(string text)
+        private async void OnTextReceived(string text)
         {
             Debug.WriteLine($"[Receive] {text}");
             var msg = MessageFactory.CreateMessage(Eio, text);
@@ -193,6 +218,51 @@ namespace SocketIOClient.Transport
                 else
                 {
                     OnMessageReceived(msg);
+                    if (msg.Type == MessageType.Ping)
+                    {
+                        _pingTime = DateTime.Now;
+                        try
+                        {
+                            await SendAsync(new PongMessage
+                            {
+                                Eio = Eio,
+                                Protocol = Protocol
+                            }, CancellationToken.None).ConfigureAwait(false);
+                            OnMessageReceived(new PongMessage
+                            {
+                                Eio = Eio,
+                                Protocol = Protocol,
+                                Duration = DateTime.Now - _pingTime
+                            });
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.WriteLine(e);
+                            OnTransportClosed();
+                        }
+                    }
+                    else if (msg.Type == MessageType.Pong)
+                    {
+                        var pong = msg as PongMessage;
+                        pong.Duration = DateTime.Now - _pingTime;
+                    }
+                    else if (msg.Type == MessageType.Connected)
+                    {
+                        var connectMsg = msg as ConnectedMessage;
+                        if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(connectMsg.Namespace)) || connectMsg.Namespace == Namespace)
+                        {
+                            if (Eio == 3)
+                            {
+                                if (_pingTokenSource != null)
+                                {
+                                    _pingTokenSource.Cancel();
+                                    _pingTokenSource = new CancellationTokenSource();
+                                    _pingToken = _pingTokenSource.Token;
+                                }
+                                _ = Task.Factory.StartNew(PingAsync, TaskCreationOptions.LongRunning);
+                            }
+                        }
+                    }
                 }
             }
         }

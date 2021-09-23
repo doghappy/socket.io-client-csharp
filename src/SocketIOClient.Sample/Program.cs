@@ -22,7 +22,8 @@ namespace SocketIOClient.Sample
                 {
                     {"token", "V2" }
                 },
-                AutoUpgrade = false
+                AutoUpgrade = false,
+                EIO = 3
             });
 
             socket.OnConnected += Socket_OnConnected;
@@ -68,8 +69,8 @@ namespace SocketIOClient.Sample
             //while (true)
             //{
             //    await Task.Delay(1000);
-            //await socket.EmitAsync("hi", DateTime.Now.ToShortDateString());
-            await socket.EmitAsync("welcome");
+            await socket.EmitAsync("hi", DateTime.Now.ToShortDateString());
+            //await socket.EmitAsync("welcome");
             //}
             //byte[] bytes = Encoding.UTF8.GetBytes("ClientCallsServerCallback_1Params_0");
             //await socket.EmitAsync("client calls the server's callback 1", bytes);

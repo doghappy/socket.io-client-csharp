@@ -104,10 +104,6 @@ namespace SocketIOClient
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
         CancellationTokenSource _connectionTokenSorce;
         double _reconnectionDelay;
-        CancellationTokenSource _pingTokenSource;
-        CancellationToken _pingToken;
-        DateTime _pingTime;
-
 
         #region Socket.IO event
         public event EventHandler OnConnected;
@@ -237,25 +233,14 @@ namespace SocketIOClient
             }
         }
 
-        private async void PingHandler()
+        private void PingHandler()
         {
-            try
-            {
-                OnPing?.Invoke(this, EventArgs.Empty);
-                DateTime pingTime = DateTime.Now;
-                await Router.SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                OnPong?.Invoke(this, DateTime.Now - pingTime);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                InvokeDisconnect(DisconnectReason.PingTimeout);
-            }
+            OnPing?.Invoke(this, EventArgs.Empty);
         }
 
-        private void PongHandler()
+        private void PongHandler(PongMessage msg)
         {
-            OnPong?.Invoke(this, DateTime.Now - _pingTime);
+            OnPong?.Invoke(this, msg.Duration);
         }
 
         private void ConnectedHandler(ConnectedMessage msg)
@@ -268,34 +253,6 @@ namespace SocketIOClient
                 OnReconnected?.Invoke(this, Attempts);
             }
             Attempts = 0;
-            if (Router.Eio == 3)
-            {
-                if (_pingTokenSource != null)
-                {
-                    _pingTokenSource.Cancel();
-                    _pingTokenSource = new CancellationTokenSource();
-                    _pingToken = _pingTokenSource.Token;
-                }
-                Task.Factory.StartNew(PingAsync, TaskCreationOptions.LongRunning);
-            }
-        }
-
-        private async Task PingAsync()
-        {
-            while (!_pingToken.IsCancellationRequested)
-            {
-                await Task.Delay(Router.PingInterval);
-                try
-                {
-                    await Router.SendAsync(new PingMessage(), CancellationToken.None).ConfigureAwait(false);
-                    _pingTime = DateTime.Now;
-                    OnPing?.Invoke(this, EventArgs.Empty);
-                }
-                catch
-                {
-                    InvokeDisconnect(DisconnectReason.PingTimeout);
-                }
-            }
         }
 
         private void DisconnectedHandler()
@@ -404,7 +361,7 @@ namespace SocketIOClient
                         PingHandler();
                         break;
                     case MessageType.Pong:
-                        PongHandler();
+                        PongHandler(msg as PongMessage);
                         break;
                     case MessageType.Connected:
                         ConnectedHandler(msg as ConnectedMessage);
@@ -660,7 +617,6 @@ namespace SocketIOClient
             {
                 Connected = false;
                 OnDisconnected?.Invoke(this, reason);
-                _pingTokenSource?.Cancel();
                 try
                 {
                     await Router.DisconnectAsync();
@@ -697,11 +653,6 @@ namespace SocketIOClient
             _eventHandlers.Clear();
             _connectionTokenSorce.Cancel();
             _connectionTokenSorce.Dispose();
-            if (_pingTokenSource != null)
-            {
-                _pingTokenSource.Cancel();
-                _pingTokenSource.Dispose();
-            }
         }
     }
 }
