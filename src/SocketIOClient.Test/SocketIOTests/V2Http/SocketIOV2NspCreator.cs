@@ -19,6 +19,6 @@ namespace SocketIOClient.Test.SocketIOTests.V2Http
 
         public string Prefix => "/nsp,V2: ";
         public string Url => "http://localhost:11002/nsp";
-        public string Token => "V2NSP";
+        public string Token => "V2";
     }
 }
