@@ -25,8 +25,12 @@ io.on('connection', socket => {
         socket.emit('hi', prefix + msg);
     });
 
+    socket.on('headers', cb => {
+        cb(socket.request.headers)
+    });
+
     socket.on('welcome', () => {
-        socket.emit('welcome', Buffer.from("welcome " + socket.id, 'utf8'));
+        socket.emit('welcome', Buffer.from("welcome " + socket.id, 'utf8'), Buffer.from("test", 'utf8'));
     });
 
     socket.on("no params", () => {
@@ -34,7 +38,6 @@ io.on('connection', socket => {
     });
 
     socket.on("1 params", p1 => {
-        console.log(p1);
         socket.emit("1 params", p1);
     });
 
@@ -137,6 +140,13 @@ io.on('connection', socket => {
 });
 
 const nsp = io.of("/nsp");
+nsp.use((socket, next) => {
+    if (socket.handshake.query.token === "V2") {
+        next();
+    } else {
+        next(new Error("Authentication error nsp"));
+    }
+})
 nsp.on("connection", socket => {
     socket.on('hi', (msg) => {
         socket.emit('hi', nspPrefix + msg);

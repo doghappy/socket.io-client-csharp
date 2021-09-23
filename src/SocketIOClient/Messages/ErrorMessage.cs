@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SocketIOClient.Transport;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -18,16 +19,27 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; }
 
+        public int Eio { get; set; }
+
+        public TransportProtocol Protocol { get; set; }
+
         public void Read(string msg)
         {
-            int index = msg.IndexOf('{');
-            if (index > 0)
+            if (Eio == 3)
             {
-                Namespace = msg.Substring(0, index - 1);
-                msg = msg.Substring(index);
+                Message = msg.Trim('"');
             }
-            var doc = JsonDocument.Parse(msg);
-            Message = doc.RootElement.GetProperty("message").GetString();
+            else
+            {
+                int index = msg.IndexOf('{');
+                if (index > 0)
+                {
+                    Namespace = msg.Substring(0, index - 1);
+                    msg = msg.Substring(index);
+                }
+                var doc = JsonDocument.Parse(msg);
+                Message = doc.RootElement.GetProperty("message").GetString();
+            }
         }
 
         public string Write()

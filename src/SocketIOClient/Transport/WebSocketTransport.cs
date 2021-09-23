@@ -9,8 +9,9 @@ namespace SocketIOClient.Transport
 {
     public class WebSocketTransport : IReceivable, IDisposable
     {
-        public WebSocketTransport(IClientWebSocket ws)
+        public WebSocketTransport(IClientWebSocket ws, int eio)
         {
+            _eio = eio;
             _ws = ws;
             ReceiveChunkSize = 1024 * 8;
             SendChunkSize = 1024 * 8;
@@ -27,6 +28,7 @@ namespace SocketIOClient.Transport
         public Action<byte[]> OnBinaryReceived { get; set; }
         public Action<Exception> OnAborted { get; set; }
 
+        readonly int _eio;
         readonly IClientWebSocket _ws;
         readonly CancellationTokenSource _listenCancellation;
 
@@ -53,7 +55,17 @@ namespace SocketIOClient.Transport
         /// <exception cref="TaskCanceledException"></exception>
         public async Task SendAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            await SendAsync(WebSocketMessageType.Binary, bytes, cancellationToken);
+            if (_eio == 3)
+            {
+                byte[] buffer = new byte[bytes.Length + 1];
+                buffer[0] = 4;
+                Buffer.BlockCopy(bytes, 0, buffer, 1, bytes.Length);
+                await SendAsync(WebSocketMessageType.Binary, buffer, cancellationToken);
+            }
+            else
+            {
+                await SendAsync(WebSocketMessageType.Binary, bytes, cancellationToken);
+            }
         }
 
         private async Task SendAsync(WebSocketMessageType type, byte[] bytes, CancellationToken cancellationToken)
@@ -135,8 +147,17 @@ namespace SocketIOClient.Transport
                         OnTextReceived(text);
                         break;
                     case WebSocketMessageType.Binary:
-                        byte[] bytes = new byte[count];
-                        Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
+                        byte[] bytes;
+                        if (_eio == 3)
+                        {
+                            bytes = new byte[count - 1];
+                            Buffer.BlockCopy(buffer, 1, bytes, 0, bytes.Length);
+                        }
+                        else
+                        {
+                            bytes = new byte[count];
+                            Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
+                        }
                         OnBinaryReceived(bytes);
                         break;
                     case WebSocketMessageType.Close:

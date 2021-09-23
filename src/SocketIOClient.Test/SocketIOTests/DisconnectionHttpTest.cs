@@ -34,7 +34,7 @@ namespace SocketIOClient.Test.SocketIOTests
 
             await client.ConnectAsync();
 
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
 
             Assert.IsFalse(client.Connected);

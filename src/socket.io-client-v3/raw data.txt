@@ -1,6 +1,5 @@
 v2
     ⬇ 2021/6/9 14:39:51 0{"sid":"6lV4Ef7YOyGF-5dCBvKy","upgrades":[],"pingInterval":10000,"pingTimeout":5000}
-    ⬆ 2021/6/9 14:39:51 40?token=V2
     ⬇ 2021/6/9 14:39:51 40
     ⬆ 2021/6/9 14:39:51 42["hi","onAny"]
     ⬇ 2021/6/9 14:39:51 42["hi","V2: onAny"]

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Messages;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 
@@ -25,22 +26,122 @@ namespace SocketIOClient.UnitTest.MessageTests
         }
 
         [TestMethod]
-        public void Connected()
+        public void Eio4Connected()
         {
-            var msg = new ConnectedMessage();
+            var msg = new ConnectedMessage
+            {
+                Eio = 4
+            };
             string text = msg.Write();
             Assert.AreEqual("40", text);
         }
 
         [TestMethod]
-        public void NamespaceConnected()
+        public void Eio4NamespaceConnected()
         {
             var msg = new ConnectedMessage
             {
+                Eio = 4,
                 Namespace = "/microsoft"
             };
             string text = msg.Write();
             Assert.AreEqual("40/microsoft,", text);
+        }
+
+        [TestMethod]
+        public void Eio3WsWithoutQueryConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.WebSocket,
+                Namespace = "/admin"
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/admin,", text);
+        }
+
+        [TestMethod]
+        public void Eio3WsWith1ParamConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.WebSocket,
+                Namespace = "/apple",
+                Query = new Dictionary<string,string>
+                {
+                    { "a", "123" }
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/apple?a=123,", text);
+        }
+
+        [TestMethod]
+        public void Eio3WsWith2ParamConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.WebSocket,
+                Namespace = "/razer",
+                Query = new Dictionary<string, string>
+                {
+                    { "a", "123" },
+                    { "token", "qwer" }
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/razer?a=123&token=qwer,", text);
+        }
+
+        [TestMethod]
+        public void Eio3PollingWithoutQueryConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.Polling,
+                Namespace = "/admin"
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/admin,", text);
+        }
+
+        [TestMethod]
+        public void Eio3PollingWith1ParamConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.Polling,
+                Namespace = "/apple",
+                Query = new Dictionary<string, string>
+                {
+                    { "a", "123" }
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/apple?a=123,", text);
+        }
+
+        [TestMethod]
+        public void Eio3PollingWith2ParamConnected()
+        {
+            var msg = new ConnectedMessage
+            {
+                Eio = 3,
+                Protocol = TransportProtocol.Polling,
+                Namespace = "/razer",
+                Query = new Dictionary<string, string>
+                {
+                    { "a", "123" },
+                    { "token", "qwer" }
+                }
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/razer?a=123&token=qwer,", text);
         }
 
         [TestMethod]

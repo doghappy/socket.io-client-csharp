@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace SocketIOClient.Test.SocketIOTests.V2
 {
     [TestClass]
-    public class OffAnyV2NspTest : OnAnyTest
+    public class OffAnyV2NspTest : OffTest
     {
         public OffAnyV2NspTest()
         {

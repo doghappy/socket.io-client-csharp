@@ -25,6 +25,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
+            await Task.Delay(200);
 
             client.Off("hi");
             await client.EmitAsync("hi", ".net core 1");

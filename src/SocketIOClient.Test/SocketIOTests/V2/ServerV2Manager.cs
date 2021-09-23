@@ -1,4 +1,4 @@
-﻿namespace SocketIOClient.Test.SocketIOTests.V4
+﻿namespace SocketIOClient.Test.SocketIOTests.V2
 {
     public class ServerV2Manager : BaseServerManager, IServerManager
     {

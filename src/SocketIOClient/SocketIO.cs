@@ -105,7 +105,6 @@ namespace SocketIOClient
         CancellationTokenSource _connectionTokenSorce;
         double _reconnectionDelay;
 
-
         #region Socket.IO event
         public event EventHandler OnConnected;
         //public event EventHandler<string> OnConnectError;
@@ -234,20 +233,14 @@ namespace SocketIOClient
             }
         }
 
-        private async void PingHandler()
+        private void PingHandler()
         {
-            try
-            {
-                OnPing?.Invoke(this, EventArgs.Empty);
-                DateTime pingTime = DateTime.Now;
-                await Router.SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                OnPong?.Invoke(this, DateTime.Now - pingTime);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                InvokeDisconnect(DisconnectReason.PingTimeout);
-            }
+            OnPing?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void PongHandler(PongMessage msg)
+        {
+            OnPong?.Invoke(this, msg.Duration);
         }
 
         private void ConnectedHandler(ConnectedMessage msg)
@@ -368,7 +361,7 @@ namespace SocketIOClient
                         PingHandler();
                         break;
                     case MessageType.Pong:
-                        //PongHandler();
+                        PongHandler(msg as PongMessage);
                         break;
                     case MessageType.Connected:
                         ConnectedHandler(msg as ConnectedMessage);
