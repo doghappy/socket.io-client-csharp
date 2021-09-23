@@ -80,7 +80,7 @@ namespace SocketIOClient.Transport
             if (openedMessage.Upgrades.Contains("websocket") && _options.AutoUpgrade)
             {
                 _clientWebSocket = _clientWebSocketProvider();
-                _webSocketTransport = new WebSocketTransport(_clientWebSocket)
+                _webSocketTransport = new WebSocketTransport(_clientWebSocket, Eio)
                 {
                     ConnectionTimeout = _options.ConnectionTimeout
                 };
@@ -232,6 +232,10 @@ namespace SocketIOClient.Transport
                                     _pingToken = _pingTokenSource.Token;
                                 }
                                 _ = Task.Factory.StartNew(PingAsync, TaskCreationOptions.LongRunning);
+                            }
+                            else
+                            {
+                                return;
                             }
                         }
                         else if (msg.Type == MessageType.Pong)
