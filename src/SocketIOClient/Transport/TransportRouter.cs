@@ -19,6 +19,7 @@ namespace SocketIOClient.Transport
             UriConverter = new UriConverter();
             _messageQueue = new Queue<IMessage>();
             _options = options;
+            Eio = 4;
         }
 
         readonly HttpClient _httpClient;
@@ -55,12 +56,12 @@ namespace SocketIOClient.Transport
 
         public async Task ConnectAsync()
         {
-            //Eio = _options.EIO;
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();
             }
-            Uri uri = UriConverter.GetHandshakeUri(ServerUri, 3, _options.Path, _options.Query);
+        Handshake:
+            Uri uri = UriConverter.GetHandshakeUri(ServerUri, Eio, _options.Path, _options.Query);
 
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             SetHeaders(req);
@@ -72,6 +73,12 @@ namespace SocketIOClient.Transport
             }
             string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
             var openedMessage = MessageFactory.CreateOpenedMessage(text);
+
+            if (openedMessage.Eio == 3 && Eio == 4)
+            {
+                Eio = 3;
+                goto Handshake;
+            }
 
             Sid = openedMessage.Sid;
             Eio = openedMessage.Eio;
@@ -124,20 +131,45 @@ namespace SocketIOClient.Transport
             _httpTransport.OnTextReceived = OnTextReceived;
             _httpTransport.OnBinaryReceived = OnBinaryReceived;
 
+            //if (Eio == 3 && !string.IsNullOrEmpty(Namespace))
+            //{
+            //    await ConnectAckAsync().ConfigureAwait(false);
+            //}
+
+            //StartPolling();
+
+            //if (Eio == 4)
+            //{
+            //    await ConnectAckAsync().ConfigureAwait(false);
+            //}
+
             StartPolling();
-            if (Eio == 3 && string.IsNullOrEmpty(Namespace))
+
+            if (!(Eio == 3 && string.IsNullOrEmpty(Namespace)))
             {
-                return;
+                var msg = new ConnectedMessage
+                {
+                    Namespace = Namespace,
+                    Eio = Eio,
+                    Protocol = TransportProtocol.Polling,
+                    Query = _options.Query
+                };
+                //await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None).ConfigureAwait(false);
+                await SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
             }
-            var msg = new ConnectedMessage
-            {
-                Namespace = Namespace,
-                Eio = Eio,
-                Protocol = TransportProtocol.Polling,
-                Query = _options.Query
-            };
-            await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None).ConfigureAwait(false);
         }
+
+        //private async Task ConnectAckAsync()
+        //{
+        //    var msg = new ConnectedMessage
+        //    {
+        //        Namespace = Namespace,
+        //        Eio = Eio,
+        //        Protocol = TransportProtocol.Polling,
+        //        Query = _options.Query
+        //    };
+        //    await _httpTransport.PostAsync(_httpUri, msg.Write(), CancellationToken.None).ConfigureAwait(false);
+        //}
 
         private void StartPolling()
         {

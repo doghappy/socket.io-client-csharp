@@ -774,6 +774,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.IsTrue(flag2);
             Assert.IsTrue(flag1);
             Assert.IsFalse(flag0);
+            client.Dispose();
         }
 
         public virtual async Task ClientCallsServerCallback_NoParams_1()
@@ -827,6 +828,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(1, result.InComingBytes.Count);
             Assert.AreEqual("ClientCallsServerCallback_1Params_0...", Encoding.UTF8.GetString(result.GetValue<byte[]>()));
+            client.Dispose();
         }
         #endregion
     }

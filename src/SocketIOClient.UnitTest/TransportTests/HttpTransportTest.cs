@@ -27,13 +27,6 @@ namespace SocketIOClient.UnitTest.TransportTests
                 .Respond("text/plain", "452-[\"2 params\",{\"_placeholder\":true,\"num\":0},{\"code\":64,\"msg\":{\"_placeholder\":true,\"num\":1}}]bCjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAoxMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEKMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyCjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMwo0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQKNTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1CjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Ngo3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzcKODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4Cjk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQpBbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWUK5L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2gCuOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBrgphYmM=bCjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAoxMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEKMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyCjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMwo0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQKNTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1CjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Ngo3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzcKODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4Cjk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQpBbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWUK5L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2gCuOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBrgp4eXo=");
             var httpClient = mockHttp.ToHttpClient();
 
-            var clientWebSocket = new Mock<IClientWebSocket>();
-
-            var uriConverter = new Mock<IUriConverter>();
-            uriConverter
-                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
-                .Returns(new Uri(uri));
-
             string resultText = null;
             var bytes = new List<byte[]>();
             var transport = new HttpTransport(httpClient, 4)
@@ -83,13 +76,6 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 .Respond("text/plain", "2:40");
             var httpClient = mockHttp.ToHttpClient();
 
-            var clientWebSocket = new Mock<IClientWebSocket>();
-
-            var uriConverter = new Mock<IUriConverter>();
-            uriConverter
-                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
-                .Returns(new Uri(uri));
-
             var result = new List<string>();
             var transport = new HttpTransport(httpClient, 3)
             {
@@ -104,7 +90,53 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         }
 
         [TestMethod]
-        public async Task Eio3HttpBinaryTest()
+        public async Task Eio3HttpConnected2Test()
+        {
+            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(uri)
+                .Respond("text/plain", "1:21:3");
+            var httpClient = mockHttp.ToHttpClient();
+
+            var result = new List<string>();
+            var transport = new HttpTransport(httpClient, 3)
+            {
+                OnTextReceived = text => result.Add(text)
+            };
+            await transport.GetAsync(uri, CancellationToken.None);
+
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual("2", result[0]);
+            Assert.AreEqual("3", result[1]);
+        }
+
+        [TestMethod]
+        public async Task Eio3HttpConnected3Test()
+        {
+            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+
+            var mockHttp = new MockHttpMessageHandler();
+            mockHttp.When(uri)
+                .Respond("text/plain", "2:4024:42[\"hi\",\"doghappy:test\"]");
+            var httpClient = mockHttp.ToHttpClient();
+
+            var result = new List<string>();
+            var transport = new HttpTransport(httpClient, 3)
+            {
+                OnTextReceived = text => result.Add(text)
+            };
+            await transport.GetAsync(uri, CancellationToken.None);
+
+            await Task.Delay(100);
+
+            Assert.AreEqual(2, result.Count);
+            Assert.AreEqual("40", result[0]);
+            Assert.AreEqual("42[\"hi\",\"doghappy:test\"]", result[1]);
+        }
+
+        [TestMethod]
+        public async Task Eio3GetBinaryTest()
         {
             string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
             byte[] arrOutput = { 0x00, 0x07, 0x05, 0xFF, 0x34, 0x35, 0x32, 0x2D, 0x5B, 0x22, 0x77, 0x65, 0x6C, 0x63, 0x6F, 0x6D, 0x65, 0x22, 0x2C, 0x7B, 0x22, 0x5F, 0x70, 0x6C, 0x61, 0x63, 0x65, 0x68, 0x6F, 0x6C, 0x64, 0x65, 0x72, 0x22, 0x3A, 0x74, 0x72, 0x75, 0x65, 0x2C, 0x22, 0x6E, 0x75, 0x6D, 0x22, 0x3A, 0x30, 0x7D, 0x2C, 0x7B, 0x22, 0x5F, 0x70, 0x6C, 0x61, 0x63, 0x65, 0x68, 0x6F, 0x6C, 0x64, 0x65, 0x72, 0x22, 0x3A, 0x74, 0x72, 0x75, 0x65, 0x2C, 0x22, 0x6E, 0x75, 0x6D, 0x22, 0x3A, 0x31, 0x7D, 0x5D, 0x01, 0x02, 0x09, 0xFF, 0x04, 0x77, 0x65, 0x6C, 0x63, 0x6F, 0x6D, 0x65, 0x20, 0x42, 0x71, 0x46, 0x63, 0x32, 0x53, 0x6F, 0x72, 0x67, 0x75, 0x6B, 0x4F, 0x32, 0x36, 0x2D, 0x6C, 0x41, 0x41, 0x41, 0x4A, 0x01, 0x05, 0xFF, 0x04, 0x74, 0x65, 0x73, 0x74 };
@@ -120,13 +152,6 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                     };
                 });
             var httpClient = mockHttp.ToHttpClient();
-
-            var clientWebSocket = new Mock<IClientWebSocket>();
-
-            var uriConverter = new Mock<IUriConverter>();
-            uriConverter
-                .Setup(x => x.GetHandshakeUri(It.IsAny<Uri>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<IEnumerable<KeyValuePair<string, string>>>()))
-                .Returns(new Uri(uri));
 
             var texts = new List<string>();
             var bytes = new List<byte[]>();

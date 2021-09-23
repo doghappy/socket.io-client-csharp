@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Net.Http.Headers;
 
 namespace SocketIOClient.Transport
 {
@@ -46,18 +48,51 @@ namespace SocketIOClient.Transport
 
         public async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
-            var builder = new StringBuilder();
-            foreach (var item in bytes)
+            if (_eio == 3)
             {
-                //1E 
-                builder.Append('b').Append(Convert.ToBase64String(item)).Append('');
+                var list = new List<byte>();
+                foreach (var item in bytes)
+                {
+                    list.Add(1);
+                    var length = SplitInt(item.Length + 1).Select(x => (byte)x);
+                    list.AddRange(length);
+                    list.Add(byte.MaxValue);
+                    list.Add(4);
+                    list.AddRange(item);
+                }
+                var content = new ByteArrayContent(list.ToArray());
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                await _client.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
+                //var resMsg = await _client.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
+                //await ProduceMessageAsync(resMsg).ConfigureAwait(false);
             }
-            if (builder.Length == 0)
+            else
             {
-                return;
+                var builder = new StringBuilder();
+                foreach (var item in bytes)
+                {
+                    //1E 
+                    builder.Append('b').Append(Convert.ToBase64String(item)).Append('');
+                }
+                if (builder.Length == 0)
+                {
+                    return;
+                }
+                string text = builder.ToString().TrimEnd('');
+                await PostAsync(uri, text, cancellationToken);
             }
-            string text = builder.ToString().TrimEnd('');
-            await PostAsync(uri, text, cancellationToken);
+        }
+
+        private List<int> SplitInt(int number)
+        {
+            List<int> list = new List<int>();
+            while (number > 0)
+            {
+                list.Add(number % 10);
+                number /= 10;
+            }
+            list.Reverse();
+            return list;
         }
 
         private async Task ProduceMessageAsync(HttpResponseMessage resMsg)
@@ -78,23 +113,25 @@ namespace SocketIOClient.Transport
         {
             if (_eio == 3)
             {
+                int p = 0;
                 while (true)
                 {
-                    int index = text.IndexOf(':');
+                    int index = text.IndexOf(':', p);
                     if (index == -1)
                     {
                         break;
                     }
-                    if (int.TryParse(text.Substring(0, index), out int length))
+                    if (int.TryParse(text.Substring(p, index - p), out int length))
                     {
                         string msg = text.Substring(index + 1, length);
                         OnTextReceived(msg);
-                        if (index + length + 1 > text.Length - 1)
-                        {
-                            break;
-                        }
                     }
                     else
+                    {
+                        break;
+                    }
+                    p = index + length + 1;
+                    if (p >= text.Length)
                     {
                         break;
                     }

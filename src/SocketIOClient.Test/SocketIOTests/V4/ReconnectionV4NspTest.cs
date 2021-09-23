@@ -40,10 +40,11 @@ namespace SocketIOClient.Test.SocketIOTests.V4
         //    await base.ReconnectionAttemptsExceededTest();
         //}
 
-        [TestMethod]
-        public override async Task ManuallyReconnectionTest()
-        {
-            await base.ManuallyReconnectionTest();
-        }
+        // NOTE: This test takes a long time, disable it.
+        //[TestMethod]
+        //public override async Task ManuallyReconnectionTest()
+        //{
+        //    await base.ManuallyReconnectionTest();
+        //}
     }
 }

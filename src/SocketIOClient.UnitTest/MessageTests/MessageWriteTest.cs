@@ -106,7 +106,7 @@ namespace SocketIOClient.UnitTest.MessageTests
                 Namespace = "/admin"
             };
             string text = msg.Write();
-            Assert.AreEqual("9:40/admin,", text);
+            Assert.AreEqual("40/admin,", text);
         }
 
         [TestMethod]
@@ -123,7 +123,7 @@ namespace SocketIOClient.UnitTest.MessageTests
                 }
             };
             string text = msg.Write();
-            Assert.AreEqual("15:40/apple?a=123,", text);
+            Assert.AreEqual("40/apple?a=123,", text);
         }
 
         [TestMethod]
@@ -141,7 +141,7 @@ namespace SocketIOClient.UnitTest.MessageTests
                 }
             };
             string text = msg.Write();
-            Assert.AreEqual("26:40/razer?a=123&token=qwer,", text);
+            Assert.AreEqual("40/razer?a=123&token=qwer,", text);
         }
 
         [TestMethod]
