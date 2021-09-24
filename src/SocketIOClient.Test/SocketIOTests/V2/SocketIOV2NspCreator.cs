@@ -8,7 +8,8 @@ namespace SocketIOClient.Test.SocketIOTests.V2
         {
             return new SocketIO(Url, new SocketIOOptions
             {
-                Reconnection = reconnection,
+                Reconnection = false,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }
@@ -19,5 +20,6 @@ namespace SocketIOClient.Test.SocketIOTests.V2
         public string Prefix => "/nsp,V2: ";
         public string Url => "http://localhost:11002/nsp";
         public string Token => "V2";
+        public int EIO => 3;
     }
 }

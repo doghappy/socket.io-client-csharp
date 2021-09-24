@@ -43,6 +43,7 @@ namespace SocketIOClient.Test.SocketIOTests
 
             Assert.AreEqual("hi[on('hi')]", name);
             Assert.AreEqual(2, hiCount);
+            client.Dispose();
         }
     }
 }

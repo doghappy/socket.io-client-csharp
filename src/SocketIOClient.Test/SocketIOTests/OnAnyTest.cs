@@ -31,6 +31,7 @@ namespace SocketIOClient.Test.SocketIOTests
 
             Assert.AreEqual("hi[on('hi')]", name);
             Assert.AreEqual($"{SocketIOCreator.Prefix}onAny", result.GetValue<string>());
+            client.Dispose();
         }
     }
 }

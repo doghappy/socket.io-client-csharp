@@ -19,5 +19,6 @@ namespace SocketIOClient.Test.SocketIOTests.V3
         public string Prefix => "/nsp,V3: ";
         public string Url => "http://localhost:11003/nsp";
         public string Token => "V3NSP";
+        public int EIO => 4;
     }
 }

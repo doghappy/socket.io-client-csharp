@@ -5,7 +5,6 @@ namespace SocketIOClient.UriConverters
 {
     public interface IUriConverter
     {
-        Uri GetHandshakeUri(Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams);
-        Uri GetWebSocketUri(Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams, string sid);
+        Uri GetServerUri(bool ws, Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams);
     }
 }

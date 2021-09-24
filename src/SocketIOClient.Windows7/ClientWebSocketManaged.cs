@@ -50,6 +50,11 @@ namespace SocketIOClient.Windows7
             }
         }
 
+        public void SetRequestHeader(string headerName, string headerValue)
+        {
+            _ws.Options.SetRequestHeader(headerName, headerValue);
+        }
+
         public void Dispose()
         {
             _ws.Dispose();

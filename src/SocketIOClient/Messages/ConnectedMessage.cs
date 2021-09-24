@@ -98,7 +98,7 @@ namespace SocketIOClient.Messages
         {
             if (string.IsNullOrEmpty(Namespace))
             {
-                throw new InvalidOperationException("When no namespace is specified, this method should not be called.");
+                return string.Empty;
             }
             var builder = new StringBuilder("40");
             builder.Append(Namespace);

@@ -54,14 +54,7 @@ namespace SocketIOClient.Test.SocketIOTests
             int hiCount = 0;
             string res = null;
             int disconnectionCount = 0;
-            var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
-            {
-                Reconnection = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", SocketIOCreator.Token }
-                }
-            });
+            var client = SocketIOCreator.Create();
             client.On("hi", response =>
             {
                 res = response.GetValue<string>();
@@ -94,6 +87,7 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(1, hiCount);
             Assert.AreEqual(1, disconnectionCount);
             Assert.AreEqual($"{SocketIOCreator.Prefix}SocketIOClient.Test", res);
+            client.Dispose();
         }
 
 
@@ -208,6 +202,7 @@ namespace SocketIOClient.Test.SocketIOTests
             //Assert.AreEqual(2, pongCount);
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
+            client.Dispose();
         }
     }
 }

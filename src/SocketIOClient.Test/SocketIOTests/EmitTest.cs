@@ -28,6 +28,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWithoutParams()
@@ -43,10 +44,11 @@ namespace SocketIOClient.Test.SocketIOTests
                 await client.EmitAsync("no params");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(800);
             await client.DisconnectAsync();
 
             Assert.IsTrue(result);
+            client.Dispose();
         }
 
         #region Emit with 1 params
@@ -68,6 +70,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(JsonValueKind.Null, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsTrue()
@@ -88,6 +91,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(JsonValueKind.True, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsFalse()
@@ -108,6 +112,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(JsonValueKind.False, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsNumber0()
@@ -127,6 +132,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(0, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsNumberMin()
@@ -146,6 +152,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(int.MinValue, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsNumberMax()
@@ -165,6 +172,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(int.MaxValue, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsEmptyString()
@@ -184,6 +192,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual(string.Empty, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsShortString()
@@ -203,6 +212,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await client.DisconnectAsync();
 
             Assert.AreEqual("American, 中国, の", result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsLongString()
@@ -237,6 +247,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await client.DisconnectAsync();
 
             Assert.AreEqual(longString, result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsEmptyObject()
@@ -257,6 +268,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await client.DisconnectAsync();
 
             Assert.AreEqual("{}", result);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsObject()
@@ -293,6 +305,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual("b", result.B);
             Assert.AreEqual("d", result.C.D);
             Assert.AreEqual(2.71828182846, result.C.E);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsBytes()
@@ -330,6 +343,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(1, result.InComingBytes.Count);
             Assert.AreEqual(longString, Encoding.UTF8.GetString(result.InComingBytes[0]));
             Assert.AreEqual(longString, Encoding.UTF8.GetString(result.GetValue<byte[]>()));
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsBytesInObject()
@@ -365,7 +379,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(600);
             await client.DisconnectAsync();
 
             Assert.AreEqual(1, result.InComingBytes.Count);
@@ -374,6 +388,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var model = result.GetValue<BytesInObjectResponse>();
             Assert.AreEqual(6, model.Code);
             Assert.AreEqual(longString, Encoding.UTF8.GetString(model.Message));
+            client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsArray()
@@ -396,6 +411,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
             Assert.AreEqual("test", result.GetValue()[2].GetString());
             Assert.AreEqual("[[1,true,\"test\"]]", result.ToString());
+            client.Dispose();
         }
         #endregion
 
@@ -422,6 +438,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(JsonValueKind.Null, result0);
             Assert.AreEqual(JsonValueKind.Null, result1);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueTrue()
@@ -444,6 +461,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(JsonValueKind.True, result0);
             Assert.AreEqual(JsonValueKind.True, result1);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueFalse()
@@ -466,6 +484,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(JsonValueKind.True, result0);
             Assert.AreEqual(JsonValueKind.False, result1);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsFalseTrue()
@@ -488,6 +507,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(JsonValueKind.False, result0);
             Assert.AreEqual(JsonValueKind.True, result1);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueNull()
@@ -510,6 +530,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             Assert.AreEqual(JsonValueKind.True, result0);
             Assert.AreEqual(JsonValueKind.Null, result1);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsStringObject()
@@ -551,7 +572,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(600);
             await client.DisconnectAsync();
 
             Assert.AreEqual(longString, result0);
@@ -559,6 +580,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual("b", result1.B);
             Assert.AreEqual("d", result1.C.D);
             Assert.AreEqual(2.71828182846, result1.C.E);
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsBytes()
@@ -593,7 +615,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 });
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(1000);
             await client.DisconnectAsync();
 
             Assert.AreEqual(2, result.InComingBytes.Count);
@@ -606,6 +628,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var model = result.GetValue<BytesInObjectResponse>(1);
             Assert.AreEqual(64, model.Code);
             Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(model.Message));
+            client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsArrayAndString()
@@ -629,6 +652,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual("test", result.GetValue()[2].GetString());
             Assert.AreEqual("coooooool", result.GetValue(1).GetString());
             Assert.AreEqual("[[1,true,\"test\"],\"coooooool\"]", result.ToString());
+            client.Dispose();
         }
         #endregion
 
@@ -649,6 +673,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await client.DisconnectAsync();
 
             Assert.IsTrue(result);
+            client.Dispose();
         }
 
         public virtual async Task OneParams_OneParams_String()
@@ -667,6 +692,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await client.DisconnectAsync();
 
             Assert.AreEqual("str1", result);
+            client.Dispose();
         }
 
         public virtual async Task TwoParams_TwoParams_StringObject()
@@ -702,6 +728,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             Assert.AreEqual("b", model.B);
             Assert.AreEqual("d", model.C.D);
             Assert.AreEqual(2.71828182846, model.C.E);
+            client.Dispose();
         }
 
         public virtual async Task TwoParams_TwoParams_2Binary()
@@ -750,6 +777,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var model = result.GetValue<BytesInObjectResponse>(1);
             Assert.AreEqual(64, model.Code);
             Assert.AreEqual(longString + "xyz", Encoding.UTF8.GetString(model.Message));
+            client.Dispose();
         }
         #endregion
 
@@ -768,7 +796,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 await client.EmitAsync("client calls the server's callback 0");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(600);
             await client.DisconnectAsync();
 
             Assert.IsTrue(flag2);
@@ -795,12 +823,13 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 await client.EmitAsync("client calls the server's callback 0");
             };
             await client.ConnectAsync();
-            await Task.Delay(400);
+            await Task.Delay(2000);
             await client.DisconnectAsync();
 
             Assert.IsTrue(flag2);
             Assert.IsTrue(flag1);
             Assert.IsTrue(flag0);
+            client.Dispose();
         }
 
         public virtual async Task ClientCallsServerCallback_1Params_0()

@@ -9,7 +9,7 @@ const nspPrefix = "/nsp," + prefix;
 
 var io = socket(server, {
     pingInterval: 10000,
-    pingTimeout: 5000
+    pingTimeout: 5000,
 });
 
 io.use((socket, next) => {

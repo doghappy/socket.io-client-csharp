@@ -57,7 +57,8 @@ namespace SocketIOClient.Test.SocketIOTests
             var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
                 Reconnection = false,
-                AutoUpgrade = false,
+                EIO = SocketIOCreator.EIO,
+                Transport = Transport.TransportProtocol.Polling,
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
@@ -95,6 +96,7 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(1, hiCount);
             Assert.AreEqual(1, disconnectionCount);
             Assert.AreEqual($"{SocketIOCreator.Prefix}SocketIOClient.Test", res);
+            client.Dispose();
         }
 
 
@@ -170,7 +172,8 @@ namespace SocketIOClient.Test.SocketIOTests
             var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
                 Reconnection = false,
-                AutoUpgrade = false,
+                EIO = SocketIOCreator.EIO,
+                Transport = Transport.TransportProtocol.Polling,
                 Query = new Dictionary<string, string>
                 {
                     { "token", SocketIOCreator.Token }
@@ -210,6 +213,7 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.AreEqual(2, pongCount);
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
+            client.Dispose();
         }
     }
 }

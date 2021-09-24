@@ -13,7 +13,8 @@ namespace SocketIOClient.Test.SocketIOTests
             string error = null;
             var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
             {
-                Reconnection = false
+                Reconnection = false,
+                EIO = SocketIOCreator.EIO
             });
             client.OnConnected += (sender, e) => connected = true;
             client.OnError += (sender, e) => error = e;
@@ -29,6 +30,7 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.IsTrue(client.Disconnected);
             Assert.IsFalse(connected);
             Assert.AreEqual("Authentication error", error);
+            client.Dispose();
         }
     }
 }

@@ -9,7 +9,8 @@ namespace SocketIOClient.Test.SocketIOTests.V2Http
             return new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = reconnection,
-                AutoUpgrade = false,
+                Transport = Transport.TransportProtocol.Polling,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }
@@ -20,5 +21,6 @@ namespace SocketIOClient.Test.SocketIOTests.V2Http
         public string Prefix => "/nsp,V2: ";
         public string Url => "http://localhost:11002/nsp";
         public string Token => "V2";
+        public int EIO => 3;
     }
 }

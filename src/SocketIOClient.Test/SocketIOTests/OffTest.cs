@@ -22,17 +22,16 @@ namespace SocketIOClient.Test.SocketIOTests
                 await client.EmitAsync("hi", $".net core");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
-            Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
+            await Task.Delay(400);
             Assert.AreEqual(1, hiCount);
-            await Task.Delay(200);
+            await Task.Delay(400);
 
             client.Off("hi");
             await client.EmitAsync("hi", ".net core 1");
-            await Task.Delay(200);
+            await Task.Delay(400);
             await client.DisconnectAsync();
-            Assert.AreEqual($"{SocketIOCreator.Prefix}.net core", result);
             Assert.AreEqual(1, hiCount);
+            client.Dispose();
         }
     }
 }

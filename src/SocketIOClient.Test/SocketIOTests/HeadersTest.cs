@@ -12,18 +12,11 @@ namespace SocketIOClient.Test.SocketIOTests
         {
             string result = null;
 
-            var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
+            var client = SocketIOCreator.Create(false);
+            client.Options.ExtraHeaders = new Dictionary<string, string>
             {
-                Reconnection = false,
-                Query = new List<KeyValuePair<string, string>>
-                {
-                    new KeyValuePair<string, string>("token", SocketIOCreator.Token)
-                },
-                ExtraHeaders = new Dictionary<string, string>
-                {
-                    { "CustomHeader", "CustomHeader-Value" }
-                }
-            });
+                { "CustomHeader", "CustomHeader-Value" }
+            };
 
             client.OnConnected += async (sender, e) =>
             {
@@ -38,6 +31,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(400);
 
             Assert.AreEqual(result, "CustomHeader-Value");
+            client.Dispose();
         }
     }
 }

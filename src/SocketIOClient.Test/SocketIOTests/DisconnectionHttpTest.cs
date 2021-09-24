@@ -11,15 +11,7 @@ namespace SocketIOClient.Test.SocketIOTests
         public virtual async Task ServerDisconnect()
         {
             string reason = null;
-            var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
-            {
-                Reconnection = false,
-                AutoUpgrade = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", SocketIOCreator.Token }
-                }
-            });
+            var client = SocketIOCreator.Create();
 
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
@@ -40,20 +32,13 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
             Assert.AreEqual("io server disconnect", reason);
+            client.Dispose();
         }
 
         public virtual async Task ClientDisconnect()
         {
             string reason = null;
-            var client = new SocketIO(SocketIOCreator.Url, new SocketIOOptions
-            {
-                Reconnection = false,
-                AutoUpgrade = false,
-                Query = new Dictionary<string, string>
-                {
-                    { "token", SocketIOCreator.Token }
-                }
-            });
+            var client = SocketIOCreator.Create();
 
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
@@ -67,6 +52,7 @@ namespace SocketIOClient.Test.SocketIOTests
             Assert.IsFalse(client.Connected);
             Assert.IsTrue(client.Disconnected);
             Assert.AreEqual("io client disconnect", reason);
+            client.Dispose();
         }
     }
 }

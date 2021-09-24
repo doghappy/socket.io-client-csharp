@@ -39,6 +39,16 @@ namespace SocketIOClient.Transport
             await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
+        public async Task SendAsync(HttpRequestMessage req, CancellationToken cancellationToken)
+        {
+            var resMsg = await _client.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            if (!resMsg.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
+            }
+            await ProduceMessageAsync(resMsg).ConfigureAwait(false);
+        }
+
         public async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             var httpContent = new StringContent(content);

@@ -21,7 +21,7 @@ namespace SocketIOClient.UnitTest
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetHandshakeUri(serverUri, 4, string.Empty, kvs);
+            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
@@ -35,7 +35,7 @@ namespace SocketIOClient.UnitTest
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetHandshakeUri(serverUri, 4, string.Empty, kvs);
+            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
@@ -49,7 +49,7 @@ namespace SocketIOClient.UnitTest
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetHandshakeUri(serverUri, 4, "/sio", kvs);
+            var result = cvt.GetServerUri(false, serverUri, 4, "/sio", kvs);
             Assert.AreEqual("https://localhost/sio/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
@@ -60,8 +60,8 @@ namespace SocketIOClient.UnitTest
 
             var serverUri = new Uri("ws://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>();
-            var result = cvt.GetHandshakeUri(serverUri, 4, string.Empty, kvs);
-            Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling", result.ToString());
+            var result = cvt.GetServerUri(true, serverUri, 4, string.Empty, kvs);
+            Assert.AreEqual("ws://localhost/socket.io/?EIO=4&transport=websocket", result.ToString());
         }
 
         [TestMethod]
@@ -74,8 +74,9 @@ namespace SocketIOClient.UnitTest
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetHandshakeUri(serverUri, 4, string.Empty, kvs);
-            Assert.AreEqual("https://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
+            var result = cvt.GetServerUri(true, serverUri, 4, string.Empty, kvs);
+
+            Assert.AreEqual("wss://localhost/socket.io/?EIO=4&transport=websocket&token=test", result.ToString());
         }
 
         [TestMethod]
@@ -88,7 +89,7 @@ namespace SocketIOClient.UnitTest
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetHandshakeUri(serverUri, 4, string.Empty, kvs);
+            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
             Assert.AreEqual("https://localhost:80/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
     }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SocketIOClient.Transport;
+using System;
 using System.Collections.Generic;
 
 namespace SocketIOClient
@@ -14,7 +15,8 @@ namespace SocketIOClient
             Path = "/socket.io";
             ConnectionTimeout = TimeSpan.FromSeconds(20);
             Reconnection = true;
-            AutoUpgrade = true;
+            Transport = TransportProtocol.WebSocket;
+            EIO = 4;
         }
 
         public string Path { get; set; }
@@ -51,6 +53,8 @@ namespace SocketIOClient
 
         public Dictionary<string, string> ExtraHeaders { get; set; }
 
-        public bool AutoUpgrade { get; set; }
+        public TransportProtocol Transport { get; set; }
+
+        public int EIO { get; set; }
     }
 }

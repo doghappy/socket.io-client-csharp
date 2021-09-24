@@ -9,7 +9,7 @@ namespace SocketIOClient.Test.SocketIOTests.V3Http
             return new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = reconnection,
-                AutoUpgrade = false,
+                Transport = Transport.TransportProtocol.Polling,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }
@@ -20,5 +20,6 @@ namespace SocketIOClient.Test.SocketIOTests.V3Http
         public string Prefix => "/nsp,V3: ";
         public string Url => "http://localhost:11003/nsp";
         public string Token => "V3NSP";
+        public int EIO => 4;
     }
 }
