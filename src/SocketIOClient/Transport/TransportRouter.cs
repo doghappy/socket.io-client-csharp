@@ -3,7 +3,6 @@ using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading;
@@ -31,12 +30,9 @@ namespace SocketIOClient.Transport
         HttpTransport _httpTransport;
         WebSocketTransport _webSocketTransport;
         CancellationTokenSource _pollingTokenSource;
-        CancellationToken _pollingToken;
         string _httpUri;
-        //int _pingInterval;
         OpenedMessage _openedMessage;
         CancellationTokenSource _pingTokenSource;
-        CancellationToken _pingToken;
         DateTime _pingTime;
 
         public Uri ServerUri { get; set; }
@@ -65,60 +61,6 @@ namespace SocketIOClient.Transport
             {
                 await ConnectByPollingAsync().ConfigureAwait(false);
             }
-
-            //    if (_webSocketTransport != null)
-            //    {
-            //        _webSocketTransport.Dispose();
-            //    }
-            //Handshake:
-            //    Uri uri = UriConverter.GetHandshakeUri(ServerUri, EIO, _options.Path, _options.Query);
-
-            //    var req = new HttpRequestMessage(HttpMethod.Get, uri);
-            //    SetHeaders(req);
-
-            //    var resMsg = await _httpClient.SendAsync(req, new CancellationTokenSource(_options.ConnectionTimeout).Token).ConfigureAwait(false);
-            //    if (!resMsg.IsSuccessStatusCode)
-            //    {
-            //        if (resMsg.StatusCode == HttpStatusCode.NotFound)
-            //        {
-            //            string errMsg = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-            //            if (errMsg.Contains("Transport unknown"))
-            //            {
-
-            //            }
-            //        }
-            //        throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
-            //    }
-            //    string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-            //    var openedMessage = MessageFactory.CreateOpenedMessage(text);
-
-            //    if (openedMessage.EIO == 3 && EIO == 4)
-            //    {
-            //        EIO = 3;
-            //        goto Handshake;
-            //    }
-
-            //    Sid = openedMessage.Sid;
-            //    EIO = openedMessage.EIO;
-            //    uri = UriConverter.GetHandshakeUri(ServerUri, EIO, _options.Path, _options.Query);
-            //    _pingInterval = openedMessage.PingInterval;
-            //    if (openedMessage.Upgrades.Contains("websocket") && _options.AutoUpgrade)
-            //    {
-            //        _clientWebSocket = _clientWebSocketProvider();
-            //        _webSocketTransport = new WebSocketTransport(_clientWebSocket, EIO)
-            //        {
-            //            ConnectionTimeout = _options.ConnectionTimeout
-            //        };
-            //        await WebSocketConnectAsync().ConfigureAwait(false);
-            //        Protocol = TransportProtocol.WebSocket;
-            //    }
-            //    else
-            //    {
-            //        _httpUri = uri + "&sid=" + Sid;
-            //        _httpTransport = new HttpTransport(_httpClient, EIO);
-            //        await HttpConnectAsync().ConfigureAwait(false);
-            //        Protocol = TransportProtocol.Polling;
-            //    }
         }
 
         private async Task ConnectByWebsocketAsync()
@@ -140,10 +82,12 @@ namespace SocketIOClient.Transport
             {
                 ConnectionTimeout = _options.ConnectionTimeout
             };
-            await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
             _webSocketTransport.OnTextReceived = OnTextReceived;
             _webSocketTransport.OnBinaryReceived = OnBinaryReceived;
             _webSocketTransport.OnAborted = OnAborted;
+            Debug.WriteLine($"[Websocket] Connecting");
+            await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
+            Debug.WriteLine($"[Websocket] Connected");
         }
 
         private async Task ConnectByPollingAsync()
@@ -163,55 +107,24 @@ namespace SocketIOClient.Transport
                 OnBinaryReceived = OnBinaryReceived
             };
             await _httpTransport.SendAsync(req, new CancellationTokenSource(_options.ConnectionTimeout).Token).ConfigureAwait(false);
-            //_openedMessage = MessageFactory.CreateOpenedMessage(text);
-            //_httpUri = uri + "&sid=" + _openedMessage.Sid;
-            await HttpConnectAsync().ConfigureAwait(false);
-        }
-
-        //private async Task WebSocketConnectAsync()
-        //{
-        //    Uri uri = UriConverter.GetWebSocketUri(ServerUri, EIO, _options.Path, _options.Query, Sid);
-        //    await _webSocketTransport.ConnectAsync(uri).ConfigureAwait(false);
-        //    _webSocketTransport.OnTextReceived = OnWebSocketTextReceived;
-        //    _webSocketTransport.OnBinaryReceived = OnBinaryReceived;
-        //    _webSocketTransport.OnAborted = OnAborted;
-        //    await _webSocketTransport.SendAsync("2probe", CancellationToken.None);
-        //}
-
-        private async Task HttpConnectAsync()
-        {
+            if (_pollingTokenSource != null)
+            {
+                _pollingTokenSource.Cancel();
+            }
             _pollingTokenSource = new CancellationTokenSource();
-            _pollingToken = _pollingTokenSource.Token;
 
-            StartPolling();
-
-            //if (!(EIO == 3 && string.IsNullOrEmpty(Namespace)))
-            //{
-            //    var msg = new ConnectedMessage
-            //    {
-            //        Namespace = Namespace,
-            //        Eio = EIO,
-            //        Protocol = TransportProtocol.Polling,
-            //        Query = _options.Query
-            //    };
-            //    await SendAsync(msg.Write(), CancellationToken.None).ConfigureAwait(false);
-            //}
+            StartPolling(_pollingTokenSource.Token);
         }
 
-        private void StartPolling()
+        private void StartPolling(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
-                while (!_pollingToken.IsCancellationRequested)
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
                         await _httpTransport.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
-                    }
-                    catch (TaskCanceledException e)
-                    {
-                        Debug.WriteLine(e);
-                        break;
                     }
                     catch
                     {
@@ -222,53 +135,37 @@ namespace SocketIOClient.Transport
             }, TaskCreationOptions.LongRunning);
         }
 
-        private async Task PingAsync()
+        private void StartPing(CancellationToken cancellationToken)
         {
-            Debug.WriteLine($"PingInterval: {_openedMessage.PingInterval}");
-            while (!_pingToken.IsCancellationRequested)
+            Debug.WriteLine($"[Ping] Interval: {_openedMessage.PingInterval}");
+            Task.Factory.StartNew(async () =>
             {
-                await Task.Delay(_openedMessage.PingInterval);
-                try
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    var ping = new PingMessage();
-                    Debug.WriteLine($"Send Ping");
-                    await SendAsync(ping, CancellationToken.None).ConfigureAwait(false);
-                    _pingTime = DateTime.Now;
-                    OnMessageReceived(ping);
+                    await Task.Delay(_openedMessage.PingInterval);
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    try
+                    {
+                        var ping = new PingMessage();
+                        Debug.WriteLine($"[Ping] Sending");
+                        await SendAsync(ping, CancellationToken.None).ConfigureAwait(false);
+                        Debug.WriteLine($"[Ping] Has been sent");
+                        _pingTime = DateTime.Now;
+                        OnMessageReceived(ping);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine($"[Ping] Failed to send, {e.Message}");
+                        OnTransportClosed();
+                        throw;
+                    }
                 }
-                catch
-                {
-                    OnTransportClosed();
-                    throw;
-                }
-            }
+            }, TaskCreationOptions.LongRunning);
         }
 
-        //private async void OnWebSocketTextReceived(string text)
-        //{
-        //    if (text == "3probe")
-        //    {
-        //        await _webSocketTransport.SendAsync("5", CancellationToken.None);
-
-        //        if (EIO == 3 && string.IsNullOrEmpty(Namespace))
-        //        {
-        //            return;
-        //        }
-        //        var msg = new ConnectedMessage
-        //        {
-        //            Namespace = Namespace,
-        //            Eio = EIO,
-        //            Sid = Sid,
-        //            Protocol = TransportProtocol.WebSocket,
-        //            Query = _options.Query
-        //        };
-        //        await _webSocketTransport.SendAsync(msg.Write(), CancellationToken.None);
-        //    }
-        //    else
-        //    {
-        //        OnTextReceived(text);
-        //    }
-        //}
         private async Task OnOpened(OpenedMessage msg)
         {
             _openedMessage = msg;
@@ -314,10 +211,9 @@ namespace SocketIOClient.Transport
                                 if (_pingTokenSource != null)
                                 {
                                     _pingTokenSource.Cancel();
-                                    _pingTokenSource = new CancellationTokenSource();
-                                    _pingToken = _pingTokenSource.Token;
                                 }
-                                _ = Task.Factory.StartNew(PingAsync, TaskCreationOptions.LongRunning);
+                                _pingTokenSource = new CancellationTokenSource();
+                                StartPing(_pingTokenSource.Token);
                             }
                             else
                             {
@@ -376,6 +272,7 @@ namespace SocketIOClient.Transport
 
         private void OnAborted(Exception e)
         {
+            Debug.WriteLine($"[Websocket] Aborted, " + e.Message);
             OnTransportClosed();
         }
 
@@ -408,6 +305,10 @@ namespace SocketIOClient.Transport
                     Debug.WriteLine(e);
                 }
                 _clientWebSocket.Dispose();
+            }
+            if (_pingTokenSource != null)
+            {
+                _pingTokenSource.Cancel();
             }
         }
 
@@ -449,10 +350,6 @@ namespace SocketIOClient.Transport
             if (_webSocketTransport != null)
             {
                 _webSocketTransport.Dispose();
-            }
-            if (_pingTokenSource != null)
-            {
-                _pingTokenSource.Cancel();
             }
         }
     }

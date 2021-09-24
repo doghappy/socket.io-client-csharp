@@ -456,7 +456,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 await client.EmitAsync("2 params", true, true);
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(1000);
             await client.DisconnectAsync();
 
             Assert.AreEqual(JsonValueKind.True, result0);
@@ -688,7 +688,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                 }, "str1");
             };
             await client.ConnectAsync();
-            await Task.Delay(200);
+            await Task.Delay(800);
             await client.DisconnectAsync();
 
             Assert.AreEqual("str1", result);
