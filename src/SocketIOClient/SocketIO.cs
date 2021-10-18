@@ -102,7 +102,7 @@ namespace SocketIOClient
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
-        CancellationTokenSource _connectionTokenSorce;
+        CancellationTokenSource _connectionTokenSource;
         double _reconnectionDelay;
 
         #region Socket.IO event
@@ -149,7 +149,7 @@ namespace SocketIOClient
             _onAnyHandlers = new List<OnAnyHandler>();
 
             JsonSerializer = new SystemTextJsonSerializer();
-            _connectionTokenSorce = new CancellationTokenSource();
+            _connectionTokenSource = new CancellationTokenSource();
             HttpClient = new HttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
             _expectedExceptions = new List<Type>
@@ -183,7 +183,7 @@ namespace SocketIOClient
             {
                 try
                 {
-                    if (_connectionTokenSorce.IsCancellationRequested)
+                    if (_connectionTokenSource.IsCancellationRequested)
                     {
                         break;
                     }
@@ -651,8 +651,8 @@ namespace SocketIOClient
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();
-            _connectionTokenSorce.Cancel();
-            _connectionTokenSorce.Dispose();
+            _connectionTokenSource.Cancel();
+            _connectionTokenSource.Dispose();
         }
     }
 }
