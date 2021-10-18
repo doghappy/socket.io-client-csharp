@@ -7,24 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="EioHandlerTests\CheckConnectionTest.cs" />
-    <Compile Remove="EioHandlerTests\CreateConnectionMessageTest.cs" />
-    <Compile Remove="EioHandlerTests\GetBytesTest.cs" />
-    <Compile Remove="SocketIOTests\ConnectTest.cs" />
-    <Compile Remove="SocketIOTests\OnTextReceivedTest.cs" />
-    <Compile Remove="SocketIOTests\ReconnectionTest.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="EioHandlerTests\CheckConnectionTest.cs" />
-    <None Include="EioHandlerTests\CreateConnectionMessageTest.cs" />
-    <None Include="EioHandlerTests\GetBytesTest.cs" />
-    <None Include="SocketIOTests\ConnectTest.cs" />
-    <None Include="SocketIOTests\OnTextReceivedTest.cs" />
-    <None Include="SocketIOTests\ReconnectionTest.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
     <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.2.5" />
