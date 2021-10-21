@@ -505,7 +505,7 @@ namespace SocketIOClient
                     Id = packetId
                 };
             }
-            await Router.SendAsync(msg, cancellationToken);
+            await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -516,7 +516,7 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task EmitAsync(string eventName, params object[] data)
         {
-            await EmitAsync(eventName, CancellationToken.None, data);
+            await EmitAsync(eventName, CancellationToken.None, data).ConfigureAwait(false);
         }
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
@@ -533,7 +533,7 @@ namespace SocketIOClient
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -543,7 +543,7 @@ namespace SocketIOClient
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
             }
             else
@@ -553,7 +553,7 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Event = eventName
                 };
-                await Router.SendAsync(msg, cancellationToken);
+                await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -566,7 +566,7 @@ namespace SocketIOClient
         /// <returns></returns>
         public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
         {
-            await EmitAsync(eventName, CancellationToken.None, ack, data);
+            await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
         }
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, Action<SocketIOResponse> ack, params object[] data)
@@ -585,7 +585,7 @@ namespace SocketIOClient
                         Id = _packetId,
                         OutgoingBytes = new List<byte[]>(result.Bytes)
                     };
-                    await Router.SendAsync(msg, cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -596,7 +596,7 @@ namespace SocketIOClient
                         Id = _packetId,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken);
+                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
             }
             else
@@ -607,7 +607,7 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Id = _packetId
                 };
-                await Router.SendAsync(msg, cancellationToken);
+                await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -619,7 +619,7 @@ namespace SocketIOClient
                 OnDisconnected?.Invoke(this, reason);
                 try
                 {
-                    await Router.DisconnectAsync();
+                    await Router.DisconnectAsync().ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
