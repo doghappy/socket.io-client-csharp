@@ -75,7 +75,7 @@ SocketIOClient v3.0.0 supports http polling and websocket, socket.io server v2.x
 SocketIOCLient.Windows7 becomes a plug-in, the following code shows how to support Windows7 / Windows 2008 R2
 
 ```cs
-var client = new SocketIOClient(...);
+var client = new SocketIO(...);
 client.Socket = new ClientWebSocketManaged();
 ```
 
