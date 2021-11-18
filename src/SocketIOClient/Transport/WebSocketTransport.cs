@@ -18,6 +18,7 @@ namespace SocketIOClient.Transport
             ConnectionTimeout = TimeSpan.FromSeconds(10);
             ReceiveWait = TimeSpan.FromSeconds(1);
             _listenCancellation = new CancellationTokenSource();
+            _sendLock = new SemaphoreSlim(1, 1);
         }
 
         public int ReceiveChunkSize { get; set; }
@@ -31,6 +32,7 @@ namespace SocketIOClient.Transport
         readonly int _eio;
         readonly IClientWebSocket _ws;
         readonly CancellationTokenSource _listenCancellation;
+        readonly SemaphoreSlim _sendLock;
 
 
         /// <exception cref="WebSocketException"></exception>
@@ -70,19 +72,27 @@ namespace SocketIOClient.Transport
 
         private async Task SendAsync(WebSocketMessageType type, byte[] bytes, CancellationToken cancellationToken)
         {
-            int pages = (int)Math.Ceiling(bytes.Length * 1.0 / SendChunkSize);
-            for (int i = 0; i < pages; i++)
+            try
             {
-                int offset = i * SendChunkSize;
-                int length = SendChunkSize;
-                if (offset + length > bytes.Length)
+                await _sendLock.WaitAsync().ConfigureAwait(false);
+                int pages = (int)Math.Ceiling(bytes.Length * 1.0 / SendChunkSize);
+                for (int i = 0; i < pages; i++)
                 {
-                    length = bytes.Length - offset;
+                    int offset = i * SendChunkSize;
+                    int length = SendChunkSize;
+                    if (offset + length > bytes.Length)
+                    {
+                        length = bytes.Length - offset;
+                    }
+                    byte[] subBuffer = new byte[length];
+                    Buffer.BlockCopy(bytes, offset, subBuffer, 0, subBuffer.Length);
+                    bool endOfMessage = pages - 1 == i;
+                    await _ws.SendAsync(new ArraySegment<byte>(subBuffer), type, endOfMessage, cancellationToken).ConfigureAwait(false);
                 }
-                byte[] subBuffer = new byte[length];
-                Buffer.BlockCopy(bytes, offset, subBuffer, 0, subBuffer.Length);
-                bool endOfMessage = pages - 1 == i;
-                await _ws.SendAsync(new ArraySegment<byte>(subBuffer), type, endOfMessage, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _sendLock.Release();
             }
         }
 
