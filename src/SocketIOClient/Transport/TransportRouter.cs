@@ -180,7 +180,40 @@ namespace SocketIOClient.Transport
                 Eio = EIO,
                 Query = _options.Query
             };
-            await SendAsync(connectMsg.Write(), CancellationToken.None).ConfigureAwait(false);
+
+            for (int i = 1; i <= 3; i++)
+            {
+                try
+                {
+                    await SendAsync(connectMsg.Write(), CancellationToken.None).ConfigureAwait(false);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    if (i == 3)
+                        Trace.TraceError(e.ToString());
+                    else
+                        await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, i) * 100));
+                }
+            }
+            /*
+            try
+            {
+                await Policy
+                   .Handle<Exception>()
+                   .WaitAndRetryAsync(3, attempt => TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 100))
+                   .ExecuteAsync(async () =>
+                   {
+                       await SendAsync(connectMsg.Write(), CancellationToken.None).ConfigureAwait(false);
+                   }).ConfigureAwait(false);
+
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError(e.ToString());
+                OnTransportClosed();
+            }
+            */
         }
 
         private async void OnTextReceived(string text)
