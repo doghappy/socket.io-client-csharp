@@ -11,32 +11,18 @@ namespace SocketIOClient.Sample
     {
         static async Task Main(string[] args)
         {
-            //Console.OutputEncoding = Encoding.UTF8;
-            //Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            // Show Debug and Trace messages
+            Console.OutputEncoding = Encoding.UTF8;
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
 
-
-            //var uri = new Uri("http://localhost:11003/nsp");
-
-            //var socket = new SocketIO(uri, new SocketIOOptions
-            //{
-            //    Query = new Dictionary<string, string>
-            //    {
-            //        {"token", "V3NSP" }
-            //    },
-            //    //EIO = 3,
-            //    Transport = Transport.TransportProtocol.Polling
-            //});
-
-            var uri = new Uri("http://localhost:11002/nsp");
+            var uri = new Uri("http://localhost:11003/");
 
             var socket = new SocketIO(uri, new SocketIOOptions
             {
                 Query = new Dictionary<string, string>
                 {
-                    {"token", "V2" }
+                    {"token", "V3" }
                 },
-                EIO = 3,
-                Transport = Transport.TransportProtocol.Polling
             });
 
             socket.OnConnected += Socket_OnConnected;
