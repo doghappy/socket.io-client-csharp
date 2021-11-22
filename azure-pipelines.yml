@@ -17,7 +17,7 @@ steps:
     task: UseDotNet@2
     displayName: 'Install .NET Core SDK'
     inputs:
-      version: 5.0.x
+      version: 6.x
   -
     task: NodeTool@0
     displayName: 'Install Node.js'
