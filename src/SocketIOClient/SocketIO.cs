@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
+using SocketIOClient.Routers;
 using SocketIOClient.Transport;
 
 namespace SocketIOClient
@@ -64,7 +65,7 @@ namespace SocketIOClient
             }
         }
 
-        public TransportRouter Router { get; private set; }
+        public Router Router { get; private set; }
 
         /// <summary>
         /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
@@ -165,11 +166,16 @@ namespace SocketIOClient
         {
             if (Router == null)
             {
-                Router = new TransportRouter(HttpClient, ClientWebSocketProvider, Options)
+                if (Options.Transport == TransportProtocol.Polling)
                 {
-                    Namespace = Namespace,
-                    ServerUri = ServerUri
-                };
+                    Router = new HttpRouter(HttpClient, ClientWebSocketProvider, Options);
+                }
+                else
+                {
+                    Router = new WebSocketRouter(HttpClient, ClientWebSocketProvider, Options);
+                }
+                Router.Namespace = Namespace;
+                Router.ServerUri = ServerUri;
                 Router.OnMessageReceived = OnMessageReceived;
                 Router.OnTransportClosed = OnTransportClosed;
             }

@@ -29,7 +29,7 @@ namespace SocketIOClient.UnitTest.TransportTests
 
             string resultText = null;
             var bytes = new List<byte[]>();
-            var transport = new HttpTransport(httpClient, 4)
+            var transport = new HttpEio4Transport(httpClient)
             {
                 OnTextReceived = text => resultText = text,
                 OnBinaryReceived = b => bytes.Add(b)
@@ -77,7 +77,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var httpClient = mockHttp.ToHttpClient();
 
             var result = new List<string>();
-            var transport = new HttpTransport(httpClient, 3)
+            var transport = new HttpEio3Transport(httpClient)
             {
                 OnTextReceived = text => result.Add(text)
             };
@@ -100,7 +100,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var httpClient = mockHttp.ToHttpClient();
 
             var result = new List<string>();
-            var transport = new HttpTransport(httpClient, 3)
+            var transport = new HttpEio3Transport(httpClient)
             {
                 OnTextReceived = text => result.Add(text)
             };
@@ -122,7 +122,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             var httpClient = mockHttp.ToHttpClient();
 
             var result = new List<string>();
-            var transport = new HttpTransport(httpClient, 3)
+            var transport = new HttpEio3Transport(httpClient)
             {
                 OnTextReceived = text => result.Add(text)
             };
@@ -155,7 +155,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
             var texts = new List<string>();
             var bytes = new List<byte[]>();
-            var transport = new HttpTransport(httpClient, 3)
+            var transport = new HttpEio3Transport(httpClient)
             {
                 OnTextReceived = text => texts.Add(text),
                 OnBinaryReceived = b => bytes.Add(b)
