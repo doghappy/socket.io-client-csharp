@@ -29,13 +29,33 @@ namespace SocketIOClient.Messages
 
         public TransportProtocol Protocol { get; set; }
 
+        private int GetInt32FromJsonElement(JsonElement element, string msg, string name)
+        {
+            var p = element.GetProperty(name);
+            int val;
+            switch (p.ValueKind)
+            {
+                case JsonValueKind.String:
+                    val = int.Parse(p.GetString());
+                    break;
+                case JsonValueKind.Number:
+                    val = p.GetInt32();
+                    break;
+                default:
+                    throw new ArgumentException($"Invalid message: '{msg}'");
+            }
+            return val;
+        }
+
         public void Read(string msg)
         {
             var doc = JsonDocument.Parse(msg);
             var root = doc.RootElement;
             Sid = root.GetProperty("sid").GetString();
-            PingInterval = root.GetProperty("pingInterval").GetInt32();
-            PingTimeout = root.GetProperty("pingTimeout").GetInt32();
+
+            PingInterval = GetInt32FromJsonElement(root, msg, "pingInterval");
+            PingTimeout = GetInt32FromJsonElement(root, msg, "pingTimeout");
+
             Upgrades = new List<string>();
             var upgrades = root.GetProperty("upgrades").EnumerateArray();
             foreach (var item in upgrades)
