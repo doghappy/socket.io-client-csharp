@@ -29,6 +29,9 @@ namespace SocketIOClient.Routers
 
             if (_webSocketTransport != null)
             {
+                _webSocketTransport.OnTextReceived -= OnTextReceived;
+                _webSocketTransport.OnBinaryReceived -= OnBinaryReceived;
+                _webSocketTransport.OnAborted -= OnAborted;
                 _webSocketTransport.Dispose();
             }
             Uri uri = UriConverter.GetServerUri(true, ServerUri, EIO, Options.Path, Options.Query);
