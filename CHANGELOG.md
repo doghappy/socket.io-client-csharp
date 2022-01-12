@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.5] - 2022-01-12
+
+### Changed
+
+- Fixed an error when pinInterval and pingTimeout are strings #243
+- Clean up event handler when the connection is disconnected
+- Fixed IOClientDisconnect #254
+
 ## [3.0.4] - 2021-12-6
 
 ### Changed
