@@ -201,7 +201,7 @@ The library uses System.Text.Json to serialize and deserialize json by default, 
 
 ```cs
 var client = new SocketIO("http://localhost:11000/");
-var jsonSerializer = socket.JsonSerializer as SystemTextJsonSerializer;
+var jsonSerializer = client.JsonSerializer as SystemTextJsonSerializer;
 jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
 {
     PropertyNameCaseInsensitive = true
