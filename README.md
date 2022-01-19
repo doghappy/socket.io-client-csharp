@@ -219,7 +219,7 @@ jsonSerializer.OptionsProvider = () => new JsonSerializerSettings
         NamingStrategy = new CamelCaseNamingStrategy()
     }
 };
-socket.JsonSerializer = jsonSerializer;
+client.JsonSerializer = jsonSerializer;
 ```
 
 ## ClientWebSocket Options
