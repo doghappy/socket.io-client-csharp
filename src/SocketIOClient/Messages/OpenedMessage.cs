@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Text.Json;
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json.Linq;
 using SocketIOClient.Transport;
 
 namespace SocketIOClient.Messages
@@ -29,17 +30,17 @@ namespace SocketIOClient.Messages
 
         public TransportProtocol Protocol { get; set; }
 
-        private int GetInt32FromJsonElement(JsonElement element, string msg, string name)
+        private int GetInt32FromJsonElement(JObject element, string msg, string name)
         {
-            var p = element.GetProperty(name);
+            var p = element.Property(name);
             int val;
-            switch (p.ValueKind)
+            switch (p.Value.Type)
             {
-                case JsonValueKind.String:
-                    val = int.Parse(p.GetString());
+                case JTokenType.String:
+                    val = int.Parse(p.Value.Value<string>());
                     break;
-                case JsonValueKind.Number:
-                    val = p.GetInt32();
+                case JTokenType.Integer:
+                    val = p.Value.Value<int>();
                     break;
                 default:
                     throw new ArgumentException($"Invalid message: '{msg}'");
@@ -49,19 +50,11 @@ namespace SocketIOClient.Messages
 
         public void Read(string msg)
         {
-            var doc = JsonDocument.Parse(msg);
-            var root = doc.RootElement;
-            Sid = root.GetProperty("sid").GetString();
-
-            PingInterval = GetInt32FromJsonElement(root, msg, "pingInterval");
-            PingTimeout = GetInt32FromJsonElement(root, msg, "pingTimeout");
-
-            Upgrades = new List<string>();
-            var upgrades = root.GetProperty("upgrades").EnumerateArray();
-            foreach (var item in upgrades)
-            {
-                Upgrades.Add(item.GetString());
-            }
+            var doc = JObject.Parse(msg);
+            Sid = doc.Value<string>("sid");
+            PingInterval = GetInt32FromJsonElement(doc, msg, "pingInterval");
+            PingTimeout = GetInt32FromJsonElement(doc, msg, "pingTimeout");
+            Upgrades = doc.Property("upgrades").Value.ToObject<List<string>>();
         }
 
         public string Write()

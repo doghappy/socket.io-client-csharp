@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -23,7 +24,8 @@ namespace SocketIOClient.Test.SocketIOTests
                 var sio = sender as SocketIO;
                 await sio.EmitAsync("headers", response =>
                 {
-                    result = response.GetValue().GetProperty("customheader").GetString();
+                    var jobj = response.GetValue() as JObject;
+                    result = jobj.Value<string>("customheader");
                 });
             };
 

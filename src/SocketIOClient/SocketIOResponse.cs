@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +9,7 @@ namespace SocketIOClient
 {
     public class SocketIOResponse
     {
-        public SocketIOResponse(IList<JsonElement> array, SocketIO socket)
+        public SocketIOResponse(JArray array, SocketIO socket)
         {
             _array = array;
             InComingBytes = new List<byte[]>();
@@ -16,7 +17,7 @@ namespace SocketIOClient
             PacketId = -1;
         }
 
-        readonly IList<JsonElement> _array;
+        readonly JArray _array;
 
         public List<byte[]> InComingBytes { get; }
         public SocketIO SocketIO { get; }
@@ -25,11 +26,18 @@ namespace SocketIOClient
         public T GetValue<T>(int index = 0)
         {
             var element = GetValue(index);
-            string json = element.GetRawText();
-            return SocketIO.JsonSerializer.Deserialize<T>(json, InComingBytes);
+            if (element.Type == JTokenType.Object || element.Type == JTokenType.Array)
+            {
+                string json = element.ToString();
+                return SocketIO.JsonSerializer.Deserialize<T>(json, InComingBytes);
+            }
+            else
+            {
+                return element.ToObject<T>();
+            }
         }
 
-        public JsonElement GetValue(int index = 0) => _array[index];
+        public JToken GetValue(int index = 0) => _array[index];
 
         public int Count => _array.Count;
 
@@ -39,7 +47,7 @@ namespace SocketIOClient
             builder.Append('[');
             foreach (var item in _array)
             {
-                builder.Append(item.GetRawText());
+                builder.Append(item.ToString(Formatting.None));
                 if (_array.IndexOf(item) < _array.Count - 1)
                 {
                     builder.Append(',');

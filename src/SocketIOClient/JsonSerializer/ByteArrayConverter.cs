@@ -1,38 +1,47 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace SocketIOClient.JsonSerializer
 {
-    class ByteArrayConverter : JsonConverter<byte[]>
+    class ByteArrayConverter : JsonConverter
     {
         public ByteArrayConverter()
         {
             Bytes = new List<byte[]>();
         }
 
+        internal List<byte[]> Bytes { get; }
 
-        public List<byte[]> Bytes { get; }
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(byte[]);
+        }
 
-        public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, global::Newtonsoft.Json.JsonSerializer serializer)
         {
             byte[] bytes = null;
-            if (reader.TokenType == JsonTokenType.StartObject)
+            if (reader.TokenType == JsonToken.StartObject)
             {
                 reader.Read();
-                if (reader.TokenType == JsonTokenType.PropertyName && reader.GetString() == "_placeholder")
+                if (reader.TokenType == JsonToken.PropertyName && reader.Value?.ToString() == "_placeholder")
                 {
                     reader.Read();
-                    if (reader.TokenType == JsonTokenType.True && reader.GetBoolean())
+                    if (reader.TokenType == JsonToken.Boolean && (bool)reader.Value)
                     {
                         reader.Read();
-                        if (reader.TokenType == JsonTokenType.PropertyName && reader.GetString() == "num")
+                        if (reader.TokenType == JsonToken.PropertyName && reader.Value?.ToString() == "num")
                         {
                             reader.Read();
-                            int num = reader.GetInt32();
-                            bytes = Bytes[num];
-                            reader.Read();
+                            if (reader.Value != null)
+                            {
+                                if (int.TryParse(reader.Value.ToString(), out int num))
+                                {
+                                    bytes = Bytes[num];
+                                    reader.Read();
+                                }
+                            }
                         }
                     }
                 }
@@ -40,14 +49,15 @@ namespace SocketIOClient.JsonSerializer
             return bytes;
         }
 
-        public override void Write(Utf8JsonWriter writer, byte[] value, JsonSerializerOptions options)
+        public override void WriteJson(JsonWriter writer, object value, global::Newtonsoft.Json.JsonSerializer serializer)
         {
-            Bytes.Add(value);
+            var source = value as byte[];
+            Bytes.Add(source.ToArray());
             writer.WriteStartObject();
             writer.WritePropertyName("_placeholder");
-            writer.WriteBooleanValue(true);
+            writer.WriteValue(true);
             writer.WritePropertyName("num");
-            writer.WriteNumberValue(Bytes.Count - 1);
+            writer.WriteValue(Bytes.Count - 1);
             writer.WriteEndObject();
         }
     }

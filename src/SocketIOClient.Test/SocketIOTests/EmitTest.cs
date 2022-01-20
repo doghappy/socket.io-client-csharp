@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Test.Models;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Test.SocketIOTests
@@ -54,12 +54,12 @@ namespace SocketIOClient.Test.SocketIOTests
         #region Emit with 1 params
         public virtual async Task EmitWith1ParamsNull()
         {
-            JsonValueKind result = JsonValueKind.Undefined;
+            JTokenType result = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
-                result = element.ValueKind;
+                result = element.Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -69,18 +69,18 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.Null, result);
+            Assert.AreEqual(JTokenType.Null, result);
             client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsTrue()
         {
-            JsonValueKind result = JsonValueKind.Undefined;
+            JTokenType result = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
-                result = element.ValueKind;
+                result = element.Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -90,18 +90,18 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.True, result);
+            Assert.AreEqual(JTokenType.Boolean, result);
             client.Dispose();
         }
 
         public virtual async Task EmitWith1ParamsFalse()
         {
-            JsonValueKind result = JsonValueKind.Undefined;
+            JTokenType result = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
-                result = element.ValueKind;
+                result = element.Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -111,7 +111,7 @@ namespace SocketIOClient.Test.SocketIOTests
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.False, result);
+            Assert.AreEqual(JTokenType.Boolean, result);
             client.Dispose();
         }
 
@@ -257,7 +257,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             client.On("1 params", response =>
             {
                 var element = response.GetValue();
-                result = element.GetRawText();
+                result = element.ToString();
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -276,10 +276,6 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             ObjectResponse result = null;
             var client = SocketIOCreator.Create();
             var jsonSerializer = client.JsonSerializer as SystemTextJsonSerializer;
-            jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
             client.On("1 params", response =>
             {
                 result = response.GetValue<ObjectResponse>();
@@ -407,9 +403,9 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(1, result.GetValue()[0].GetInt32());
-            Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
-            Assert.AreEqual("test", result.GetValue()[2].GetString());
+            Assert.AreEqual(1, result.GetValue()[0].ToObject<int>());
+            Assert.AreEqual(true, result.GetValue()[1].ToObject<bool>());
+            Assert.AreEqual("test", result.GetValue()[2].ToString());
             Assert.AreEqual("[[1,true,\"test\"]]", result.ToString());
             client.Dispose();
         }
@@ -418,15 +414,15 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         #region Emit with 2 params
         public virtual async Task EmitWith2ParamsNull()
         {
-            JsonValueKind result0 = JsonValueKind.Undefined;
-            JsonValueKind result1 = JsonValueKind.Undefined;
+            JTokenType result0 = JTokenType.Undefined;
+            JTokenType result1 = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
                 var element0 = response.GetValue();
-                result0 = element0.ValueKind;
+                result0 = element0.Type;
                 var element1 = response.GetValue(1);
-                result1 = element1.ValueKind;
+                result1 = element1.Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -436,20 +432,20 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.Null, result0);
-            Assert.AreEqual(JsonValueKind.Null, result1);
+            Assert.AreEqual(JTokenType.Null, result0);
+            Assert.AreEqual(JTokenType.Null, result1);
             client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueTrue()
         {
-            JsonValueKind result0 = JsonValueKind.Undefined;
-            JsonValueKind result1 = JsonValueKind.Undefined;
+            JTokenType result0 = JTokenType.Undefined;
+            JTokenType result1 = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
-                result0 = response.GetValue().ValueKind;
-                result1 = response.GetValue(1).ValueKind;
+                result0 = response.GetValue().Type;
+                result1 = response.GetValue(1).Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -459,20 +455,20 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(1000);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.True, result0);
-            Assert.AreEqual(JsonValueKind.True, result1);
+            Assert.AreEqual(JTokenType.Boolean, result0);
+            Assert.AreEqual(JTokenType.Boolean, result1);
             client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueFalse()
         {
-            JsonValueKind result0 = JsonValueKind.Undefined;
-            JsonValueKind result1 = JsonValueKind.Undefined;
+            JTokenType result0 = JTokenType.Undefined;
+            JTokenType result1 = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
-                result0 = response.GetValue().ValueKind;
-                result1 = response.GetValue(1).ValueKind;
+                result0 = response.GetValue().Type;
+                result1 = response.GetValue(1).Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -482,20 +478,20 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.True, result0);
-            Assert.AreEqual(JsonValueKind.False, result1);
+            Assert.AreEqual(JTokenType.Boolean, result0);
+            Assert.AreEqual(JTokenType.Boolean, result1);
             client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsFalseTrue()
         {
-            JsonValueKind result0 = JsonValueKind.Undefined;
-            JsonValueKind result1 = JsonValueKind.Undefined;
+            JTokenType result0 = JTokenType.Undefined;
+            JTokenType result1 = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
-                result0 = response.GetValue().ValueKind;
-                result1 = response.GetValue(1).ValueKind;
+                result0 = response.GetValue().Type;
+                result1 = response.GetValue(1).Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -505,20 +501,20 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.False, result0);
-            Assert.AreEqual(JsonValueKind.True, result1);
+            Assert.AreEqual(JTokenType.Boolean, result0);
+            Assert.AreEqual(JTokenType.Boolean, result1);
             client.Dispose();
         }
 
         public virtual async Task EmitWith2ParamsTrueNull()
         {
-            JsonValueKind result0 = JsonValueKind.Undefined;
-            JsonValueKind result1 = JsonValueKind.Undefined;
+            JTokenType result0 = JTokenType.Undefined;
+            JTokenType result1 = JTokenType.Undefined;
             var client = SocketIOCreator.Create();
             client.On("2 params", response =>
             {
-                result0 = response.GetValue().ValueKind;
-                result1 = response.GetValue(1).ValueKind;
+                result0 = response.GetValue().Type;
+                result1 = response.GetValue(1).Type;
             });
             client.OnConnected += async (sender, e) =>
             {
@@ -528,8 +524,8 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(JsonValueKind.True, result0);
-            Assert.AreEqual(JsonValueKind.Null, result1);
+            Assert.AreEqual(JTokenType.Boolean, result0);
+            Assert.AreEqual(JTokenType.Null, result1);
             client.Dispose();
         }
 
@@ -647,10 +643,10 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
             await Task.Delay(200);
             await client.DisconnectAsync();
 
-            Assert.AreEqual(1, result.GetValue()[0].GetInt32());
-            Assert.AreEqual(true, result.GetValue()[1].GetBoolean());
-            Assert.AreEqual("test", result.GetValue()[2].GetString());
-            Assert.AreEqual("coooooool", result.GetValue(1).GetString());
+            Assert.AreEqual(1, result.GetValue()[0].ToObject<int>());
+            Assert.AreEqual(true, result.GetValue()[1].ToObject<bool>());
+            Assert.AreEqual("test", result.GetValue()[2].ToString());
+            Assert.AreEqual("coooooool", result.GetValue(1).ToString());
             Assert.AreEqual("[[1,true,\"test\"],\"coooooool\"]", result.ToString());
             client.Dispose();
         }

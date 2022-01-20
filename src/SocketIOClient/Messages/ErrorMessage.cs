@@ -1,7 +1,7 @@
-﻿using SocketIOClient.Transport;
+﻿using Newtonsoft.Json.Linq;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
@@ -37,8 +37,8 @@ namespace SocketIOClient.Messages
                     Namespace = msg.Substring(0, index - 1);
                     msg = msg.Substring(index);
                 }
-                var doc = JsonDocument.Parse(msg);
-                Message = doc.RootElement.GetProperty("message").GetString();
+                var doc = JObject.Parse(msg);
+                Message = doc.Value<string>("message");
             }
         }
 

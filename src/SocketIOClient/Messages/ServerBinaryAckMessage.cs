@@ -1,7 +1,7 @@
-﻿using SocketIOClient.Transport;
+﻿using Newtonsoft.Json.Linq;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
@@ -14,7 +14,7 @@ namespace SocketIOClient.Messages
 
         public string Namespace { get; set; }
 
-        public List<JsonElement> JsonElements { get; set; }
+        public JArray JsonElements { get; set; }
 
         public string Json { get; set; }
 

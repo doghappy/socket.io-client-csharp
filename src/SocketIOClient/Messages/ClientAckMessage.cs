@@ -1,8 +1,7 @@
-﻿using SocketIOClient.Transport;
+﻿using Newtonsoft.Json.Linq;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
@@ -17,7 +16,7 @@ namespace SocketIOClient.Messages
 
         public string Event { get; set; }
 
-        public List<JsonElement> JsonElements { get; set; }
+        public JArray JsonElements { get; set; }
 
         public string Json { get; set; }
 
@@ -48,7 +47,7 @@ namespace SocketIOClient.Messages
                 Id = int.Parse(msg.Substring(0, index));
             }
             msg = msg.Substring(index);
-            JsonElements = JsonDocument.Parse(msg).RootElement.EnumerateArray().ToList();
+            JsonElements = JArray.Parse(msg);
         }
 
         public string Write()

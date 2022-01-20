@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using SocketIOClient.Messages;
-using System.Text.Json;
 
 namespace SocketIOClient.UnitTest.MessageTests
 {
@@ -153,7 +153,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             Assert.AreEqual("hi", realMsg.Event);
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual("V3: onAny", realMsg.JsonElements[0].GetString());
+            Assert.AreEqual("V3: onAny", realMsg.JsonElements[0].ToString());
         }
 
         [TestMethod]
@@ -182,7 +182,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             Assert.AreEqual("qww", realMsg.Event);
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.IsTrue(realMsg.JsonElements[0].GetBoolean());
+            Assert.IsTrue(bool.Parse(realMsg.JsonElements[0].ToString()));
         }
 
         [TestMethod]
@@ -212,7 +212,7 @@ namespace SocketIOClient.UnitTest.MessageTests
             Assert.AreEqual(1, realMsg.Id);
 
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual("doghappy", realMsg.JsonElements[0].GetString());
+            Assert.AreEqual("doghappy", realMsg.JsonElements[0].ToString());
         }
 
         [TestMethod]
@@ -227,7 +227,7 @@ namespace SocketIOClient.UnitTest.MessageTests
             Assert.AreEqual(15, realMsg.Id);
 
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual("doghappy", realMsg.JsonElements[0].GetString());
+            Assert.AreEqual("doghappy", realMsg.JsonElements[0].ToString());
         }
 
         [TestMethod]
@@ -267,7 +267,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             Assert.AreEqual("1 params", realMsg.Event);
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+            Assert.AreEqual(JTokenType.Object, realMsg.JsonElements[0].Type);
         }
 
         [TestMethod]
@@ -283,7 +283,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             Assert.AreEqual("1 params", realMsg.Event);
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+            Assert.AreEqual(JTokenType.Object, realMsg.JsonElements[0].Type);
         }
 
         [TestMethod]
@@ -300,7 +300,7 @@ namespace SocketIOClient.UnitTest.MessageTests
 
             Assert.AreEqual("1 params", realMsg.Event);
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+            Assert.AreEqual(JTokenType.Object, realMsg.JsonElements[0].Type);
         }
 
         [TestMethod]
@@ -316,7 +316,7 @@ namespace SocketIOClient.UnitTest.MessageTests
             Assert.AreEqual(6, realMsg.Id);
 
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+            Assert.AreEqual(JTokenType.Object, realMsg.JsonElements[0].Type);
         }
 
         [TestMethod]
@@ -332,7 +332,7 @@ namespace SocketIOClient.UnitTest.MessageTests
             Assert.AreEqual(6, realMsg.Id);
 
             Assert.AreEqual(1, realMsg.JsonElements.Count);
-            Assert.AreEqual(JsonValueKind.Object, realMsg.JsonElements[0].ValueKind);
+            Assert.AreEqual(JTokenType.Object, realMsg.JsonElements[0].Type);
         }
     }
 }

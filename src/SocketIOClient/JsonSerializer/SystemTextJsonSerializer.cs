@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace SocketIOClient.JsonSerializer
 {
@@ -11,7 +11,7 @@ namespace SocketIOClient.JsonSerializer
             var converter = new ByteArrayConverter();
             var options = GetOptions();
             options.Converters.Add(converter);
-            string json = System.Text.Json.JsonSerializer.Serialize(data, options);
+            string json = JsonConvert.SerializeObject(data, options);
             return new JsonSerializeResult
             {
                 Json = json,
@@ -22,7 +22,7 @@ namespace SocketIOClient.JsonSerializer
         public T Deserialize<T>(string json)
         {
             var options = GetOptions();
-            return System.Text.Json.JsonSerializer.Deserialize<T>(json, options);
+            return JsonConvert.DeserializeObject<T>(json, options);
         }
 
         public T Deserialize<T>(string json, IList<byte[]> bytes)
@@ -31,33 +31,23 @@ namespace SocketIOClient.JsonSerializer
             var converter = new ByteArrayConverter();
             options.Converters.Add(converter);
             converter.Bytes.AddRange(bytes);
-            return System.Text.Json.JsonSerializer.Deserialize<T>(json, options);
+            return JsonConvert.DeserializeObject<T>(json, options);
         }
 
-        private JsonSerializerOptions GetOptions()
+        private JsonSerializerSettings GetOptions()
         {
-            JsonSerializerOptions options;
+            JsonSerializerSettings options = null;
             if (OptionsProvider != null)
             {
                 options = OptionsProvider();
             }
-            else
-            {
-                options = CreateOptions();
-            }
             if (options == null)
             {
-                options = new JsonSerializerOptions();
+                options = new JsonSerializerSettings();
             }
             return options;
         }
 
-        [Obsolete("Use OptionsProvider instead.")]
-        public virtual JsonSerializerOptions CreateOptions()
-        {
-            return new JsonSerializerOptions();
-        }
-
-        public Func<JsonSerializerOptions> OptionsProvider { get; set; }
+        public Func<JsonSerializerSettings> OptionsProvider { get; set; }
     }
 }
