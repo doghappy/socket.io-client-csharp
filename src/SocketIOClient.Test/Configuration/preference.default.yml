@@ -4,6 +4,6 @@
 # When the test program is running, it will use 'preference.user.yml'.
 
 # Automatically run socket.io-server before test run
-RunServers: true
+RunServers: false
 # Automatically stop socket.io-server after test run
-StopServersAfterRun: true
+StopServersAfterRun: false
