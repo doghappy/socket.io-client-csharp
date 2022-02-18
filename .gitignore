@@ -342,3 +342,5 @@ healthchecksdb
 
 # Ignore user config file
 /src/SocketIOClient.Test/user.json
+
+.vscode/
