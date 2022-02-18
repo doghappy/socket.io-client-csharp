@@ -27,6 +27,7 @@ namespace SocketIOClient.Routers
         protected SocketIOOptions Options { get; }
 
         protected OpenedMessage OpenedMessage { get; set; }
+
         CancellationTokenSource _pingTokenSource;
         DateTime _pingTime;
 
@@ -253,6 +254,16 @@ namespace SocketIOClient.Routers
         public virtual void Dispose()
         {
             _messageQueue.Clear();
+        }
+
+        public static async Task<TransportProtocol> GetProtocolAsync(HttpClient httpClient, Uri uri)
+        {
+            string text = await httpClient.GetStringAsync(uri);
+            if (text.Contains("websocket"))
+            {
+                return TransportProtocol.WebSocket;
+            }
+            return TransportProtocol.Polling;
         }
     }
 }

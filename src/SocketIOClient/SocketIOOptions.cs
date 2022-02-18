@@ -15,8 +15,9 @@ namespace SocketIOClient
             Path = "/socket.io";
             ConnectionTimeout = TimeSpan.FromSeconds(20);
             Reconnection = true;
-            Transport = TransportProtocol.WebSocket;
+            Transport = TransportProtocol.Polling;
             EIO = 4;
+            AutoUpgrade = true;
         }
 
         public string Path { get; set; }
@@ -56,5 +57,7 @@ namespace SocketIOClient
         public TransportProtocol Transport { get; set; }
 
         public int EIO { get; set; }
+
+        public bool AutoUpgrade { get; set; }
     }
 }

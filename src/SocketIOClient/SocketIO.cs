@@ -9,6 +9,7 @@ using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Routers;
 using SocketIOClient.Transport;
+using SocketIOClient.UriConverters;
 
 namespace SocketIOClient
 {
@@ -162,10 +163,16 @@ namespace SocketIOClient
             };
         }
 
-        private void CreateRouterIfNull()
+        private async Task CreateRouterAsync()
         {
             if (Router == null)
             {
+                if (Options.AutoUpgrade && Options.Transport == TransportProtocol.Polling)
+                {
+                    var uriConverter = new UriConverter();
+                    Uri uri = uriConverter.GetServerUri(false, ServerUri, Options.EIO, Options.Path, Options.Query);
+                    Options.Transport = await Routers.Router.GetProtocolAsync(HttpClient, uri);
+                }
                 if (Options.Transport == TransportProtocol.Polling)
                 {
                     Router = new HttpRouter(HttpClient, ClientWebSocketProvider, Options);
@@ -183,7 +190,7 @@ namespace SocketIOClient
 
         public async Task ConnectAsync()
         {
-            CreateRouterIfNull();
+            await CreateRouterAsync();
             _reconnectionDelay = Options.ReconnectionDelay;
             while (true)
             {
