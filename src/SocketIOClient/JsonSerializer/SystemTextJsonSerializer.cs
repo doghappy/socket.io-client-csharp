@@ -36,26 +36,16 @@ namespace SocketIOClient.JsonSerializer
 
         private JsonSerializerOptions GetOptions()
         {
-            JsonSerializerOptions options;
+            JsonSerializerOptions options = null;
             if (OptionsProvider != null)
             {
                 options = OptionsProvider();
-            }
-            else
-            {
-                options = CreateOptions();
             }
             if (options == null)
             {
                 options = new JsonSerializerOptions();
             }
             return options;
-        }
-
-        [Obsolete("Use OptionsProvider instead.")]
-        public virtual JsonSerializerOptions CreateOptions()
-        {
-            return new JsonSerializerOptions();
         }
 
         public Func<JsonSerializerOptions> OptionsProvider { get; set; }

@@ -39,26 +39,16 @@ namespace SocketIOClient.Newtonsoft.Json
 
         private JsonSerializerSettings GetOptions()
         {
-            JsonSerializerSettings options;
+            JsonSerializerSettings options = null;
             if (OptionsProvider != null)
             {
                 options = OptionsProvider();
-            }
-            else
-            {
-                options = CreateOptions();
             }
             if (options == null)
             {
                 options = new JsonSerializerSettings();
             }
             return options;
-        }
-
-        [Obsolete("Use Options instead.")]
-        public virtual JsonSerializerSettings CreateOptions()
-        {
-            return new JsonSerializerSettings();
         }
 
         public Func<JsonSerializerSettings> OptionsProvider { get; set; }
