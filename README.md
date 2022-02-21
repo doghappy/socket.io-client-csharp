@@ -291,8 +291,8 @@ For Xamarin.Android you should add the following code:
             ...
             var app = new App();
             var mainPage = app.MainPage as MainPage;
-            mainPage.AddExpectedException(typeof(Java.Net.SocketException));
-            mainPage.AddExpectedException(typeof(Java.Net.SocketTimeoutException));
+            mainPage.Socket.AddExpectedException(typeof(Java.Net.SocketException));
+            mainPage.Socket.AddExpectedException(typeof(Java.Net.SocketTimeoutException));
             LoadApplication(app);
         }
 
