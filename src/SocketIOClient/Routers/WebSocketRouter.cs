@@ -1,4 +1,5 @@
-﻿using SocketIOClient.Messages;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.UriConverters;
 using System;
@@ -14,7 +15,10 @@ namespace SocketIOClient.Routers
 {
     public class WebSocketRouter : Router
     {
-        public WebSocketRouter(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider, SocketIOOptions options) : base(httpClient, clientWebSocketProvider, options)
+        public WebSocketRouter(HttpClient httpClient,
+            Func<IClientWebSocket> clientWebSocketProvider,
+            SocketIOOptions options,
+            IJsonSerializer jsonSerializer) : base(httpClient, clientWebSocketProvider, options, jsonSerializer)
         {
         }
 

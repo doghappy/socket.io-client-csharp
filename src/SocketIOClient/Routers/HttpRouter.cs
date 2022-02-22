@@ -1,11 +1,10 @@
-﻿using SocketIOClient.Messages;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.Transport;
-using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,7 +12,10 @@ namespace SocketIOClient.Routers
 {
     public class HttpRouter : Router
     {
-        public HttpRouter(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider, SocketIOOptions options) : base(httpClient, clientWebSocketProvider, options)
+        public HttpRouter(HttpClient httpClient,
+            Func<IClientWebSocket> clientWebSocketProvider,
+            SocketIOOptions options,
+            IJsonSerializer jsonSerializer) : base(httpClient, clientWebSocketProvider, options, jsonSerializer)
         {
         }
 

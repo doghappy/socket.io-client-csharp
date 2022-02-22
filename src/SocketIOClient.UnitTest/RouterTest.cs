@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient.Transport;
 using RichardSzalay.MockHttp;
+using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.UnitTest
 {
@@ -39,6 +40,23 @@ namespace SocketIOClient.UnitTest
 
             TransportProtocol protocol = await Router.GetProtocolAsync(httpClient, new Uri(uri));
             Assert.AreEqual(TransportProtocol.WebSocket, protocol);
+        }
+
+        [TestMethod]
+        public void AuthObject_ReturnsJson()
+        {
+            var options = new SocketIOOptions
+            {
+                Auth = new
+                {
+                    user = "admin",
+                    pwd = "123"
+                }
+            };
+            var serializer = new SystemTextJsonSerializer();
+            var router = new WebSocketRouter(null, null, options, serializer);
+            string actual = router.GetAuthJson();
+            Assert.AreEqual("{\"user\":\"admin\",\"pwd\":\"123\"}", actual);
         }
     }
 }

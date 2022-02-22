@@ -59,5 +59,7 @@ namespace SocketIOClient
         public int EIO { get; set; }
 
         public bool AutoUpgrade { get; set; }
+
+        public object Auth { get; set; }
     }
 }

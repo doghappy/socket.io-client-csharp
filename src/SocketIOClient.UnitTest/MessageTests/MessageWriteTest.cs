@@ -145,6 +145,36 @@ namespace SocketIOClient.UnitTest.MessageTests
         }
 
         [TestMethod]
+        public void Eio4_Auth_Query_Namespace_Should_Include_Auth_Namespace(){
+            var msg = new ConnectedMessage
+            {
+                Eio = 4,
+                Protocol = TransportProtocol.Polling,
+                Namespace = "/razer",
+                Query = new Dictionary<string, string>
+                {
+                    { "a", "123" },
+                    { "token", "qwer" }
+                },
+                AuthJsonStr = "{\"test\":\"vvs\"}"
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40/razer,{\"test\":\"vvs\"}", text);
+        }
+
+        [TestMethod]
+        public void Eio4_Auth_Should_Include_Auth(){
+            var msg = new ConnectedMessage
+            {
+                Eio = 4,
+                Protocol = TransportProtocol.Polling,
+                AuthJsonStr = "{\"test\":\"vvs\"}"
+            };
+            string text = msg.Write();
+            Assert.AreEqual("40{\"test\":\"vvs\"}", text);
+        }
+
+        [TestMethod]
         public void Disconnected()
         {
             var msg = new DisconnectedMessage();

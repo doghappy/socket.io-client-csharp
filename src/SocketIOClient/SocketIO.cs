@@ -175,11 +175,11 @@ namespace SocketIOClient
                 }
                 if (Options.Transport == TransportProtocol.Polling)
                 {
-                    Router = new HttpRouter(HttpClient, ClientWebSocketProvider, Options);
+                    Router = new HttpRouter(HttpClient, ClientWebSocketProvider, Options, JsonSerializer);
                 }
                 else
                 {
-                    Router = new WebSocketRouter(HttpClient, ClientWebSocketProvider, Options);
+                    Router = new WebSocketRouter(HttpClient, ClientWebSocketProvider, Options, JsonSerializer);
                 }
                 Router.Namespace = Namespace;
                 Router.ServerUri = ServerUri;

@@ -1,4 +1,5 @@
-﻿using SocketIOClient.Messages;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.UriConverters;
 using System;
@@ -12,20 +13,25 @@ namespace SocketIOClient.Routers
 {
     public abstract class Router : IDisposable
     {
-        public Router(HttpClient httpClient, Func<IClientWebSocket> clientWebSocketProvider, SocketIOOptions options)
+        public Router(
+            HttpClient httpClient,
+            Func<IClientWebSocket> clientWebSocketProvider,
+            SocketIOOptions options,
+            IJsonSerializer jsonSerializer)
         {
             HttpClient = httpClient;
             ClientWebSocketProvider = clientWebSocketProvider;
             UriConverter = new UriConverter();
             _messageQueue = new Queue<IMessage>();
             Options = options;
+            JsonSerializer = jsonSerializer;
         }
 
         protected HttpClient HttpClient { get; }
         readonly Queue<IMessage> _messageQueue;
         protected Func<IClientWebSocket> ClientWebSocketProvider { get; }
         protected SocketIOOptions Options { get; }
-
+        protected IJsonSerializer JsonSerializer { get; }
         protected OpenedMessage OpenedMessage { get; set; }
 
         CancellationTokenSource _pingTokenSource;
@@ -51,6 +57,11 @@ namespace SocketIOClient.Routers
             return Task.CompletedTask;
         }
 
+        public string GetAuthJson()
+        {
+            return JsonSerializer.Serialize(new[] { Options.Auth }).Json.TrimStart('[').TrimEnd(']');
+        }
+
         protected virtual async Task OpenAsync(OpenedMessage msg)
         {
             OpenedMessage = msg;
@@ -58,7 +69,8 @@ namespace SocketIOClient.Routers
             {
                 Namespace = Namespace,
                 Eio = EIO,
-                Query = Options.Query
+                Query = Options.Query,
+                AuthJsonStr = GetAuthJson()
             };
 
             for (int i = 1; i <= 3; i++)

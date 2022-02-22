@@ -25,6 +25,7 @@ namespace SocketIOClient.Messages
         public TransportProtocol Protocol { get; set; }
 
         public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
+        public string AuthJsonStr { get; set; }
 
         public void Read(string msg)
         {
@@ -69,6 +70,7 @@ namespace SocketIOClient.Messages
             {
                 builder.Append(Namespace).Append(',');
             }
+            builder.Append(AuthJsonStr);
             return builder.ToString();
         }
 
