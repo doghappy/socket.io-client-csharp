@@ -1,14 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using RichardSzalay.MockHttp;
+using SocketIOClient.JsonSerializer;
+using SocketIOClient.Messages;
 using SocketIOClient.Transport;
-using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
+using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,157 +17,208 @@ namespace SocketIOClient.UnitTest.TransportTests
     public class HttpTransportTest
     {
         [TestMethod]
-        public async Task TextWithBinaryTest()
+        public async Task Polling_Should_Work()
         {
-            string uri = "http://localhost:11003/socket.io/?token=V3&EIO=4&transport=polling";
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.Setup(h => h.GetAsync(It.IsAny<string>(), CancellationToken.None)).Returns(async () => await Task.Delay(100));
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
 
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(uri)
-                .Respond("text/plain", "452-[\"2 params\",{\"_placeholder\":true,\"num\":0},{\"code\":64,\"msg\":{\"_placeholder\":true,\"num\":1}}]bCjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAoxMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEKMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyCjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMwo0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQKNTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1CjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Ngo3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzcKODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4Cjk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQpBbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWUK5L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2gCuOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBrgphYmM=bCjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAoxMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEKMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyCjMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMwo0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQKNTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU1CjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2Ngo3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3Nzc3NzcKODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4Cjk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OQpBbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWVyaWNhbkFtZXJpY2FuQW1lcmljYW5BbWUK5L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2g5aW95L2gCuOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBruOBrgp4eXo=");
-            var httpClient = mockHttp.ToHttpClient();
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, new SocketIOOptions(), null);
+            Uri uri = new("http://localhost:11002/socket.io/?EIO=3&transport=polling");
+            await transport.ConnectAsync(uri, CancellationToken.None);
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
+            await Task.Delay(1000);
 
-            string resultText = null;
-            var bytes = new List<byte[]>();
-            var transport = new HttpEio4Transport(httpClient)
-            {
-                OnTextReceived = text => resultText = text,
-                OnBinaryReceived = b => bytes.Add(b)
-            };
-            await transport.GetAsync(uri, CancellationToken.None);
-
-            await Task.Delay(100);
-
-            string longString = @"
-000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
-222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
-333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333
-444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
-555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
-666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
-777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
-888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
-999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
-AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAme
-你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你
-ののののののののののののののののののののののののののののののののののののののののののののののののののののののののののののの
-";
-
-            Assert.AreEqual("452-[\"2 params\",{\"_placeholder\":true,\"num\":0},{\"code\":64,\"msg\":{\"_placeholder\":true,\"num\":1}}]", resultText);
-            Assert.AreEqual(2, bytes.Count);
-            string str1 = longString + "abc";
-            string str2 = Encoding.UTF8.GetString(bytes[0]);
-            int c1 = CultureInfo.CurrentCulture.CompareInfo.Compare(str1, str2, CompareOptions.IgnoreSymbols);
-            string str3 = longString + "xyz";
-            string str4 = Encoding.UTF8.GetString(bytes[1]);
-            int c2 = CultureInfo.CurrentCulture.CompareInfo.Compare(str1, str2, CompareOptions.IgnoreSymbols);
-            Assert.AreEqual(0, c1);
-            Assert.AreEqual(0, c2);
+            mockHttpPollingHandler.Verify(e => e.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
+            mockHttpPollingHandler.Verify(e => e.GetAsync(It.IsAny<string>(), CancellationToken.None), Times.Between(9, 10, Moq.Range.Inclusive));
         }
 
         [TestMethod]
-        public async Task Eio3HttpConnectedTest()
+        public void Message_Is_Empty_Should_Work()
         {
-            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
 
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(uri)
-                .Respond("text/plain", "2:40");
-            var httpClient = mockHttp.ToHttpClient();
-
-            var result = new List<string>();
-            var transport = new HttpEio3Transport(httpClient)
-            {
-                OnTextReceived = text => result.Add(text)
-            };
-            await transport.GetAsync(uri, CancellationToken.None);
-
-            await Task.Delay(100);
-
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual("40", result[0]);
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, new SocketIOOptions(), null);
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext(string.Empty);
+            Assert.AreEqual(0, msgs.Count);
         }
 
         [TestMethod]
-        public async Task Eio3HttpConnected2Test()
+        public void Eio3_Should_Receive_Opened_Without_Auth_Message()
         {
-            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
 
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(uri)
-                .Respond("text/plain", "1:21:3");
-            var httpClient = mockHttp.ToHttpClient();
+            var options = new SocketIOOptions { EIO = 3 };
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
-            var result = new List<string>();
-            var transport = new HttpEio3Transport(httpClient)
-            {
-                OnTextReceived = text => result.Add(text)
-            };
-            await transport.GetAsync(uri, CancellationToken.None);
-
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("2", result[0]);
-            Assert.AreEqual("3", result[1]);
+            mockHttpPollingHandler.Verify(h => h.PostAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never());
+            Assert.AreEqual(1, msgs.Count);
+            Assert.AreEqual(MessageType.Opened, msgs[0].Type);
         }
 
         [TestMethod]
-        public async Task Eio3HttpConnected3Test()
+        public void Eio4_Should_Receive_Opened_Without_Auth_Message()
         {
-            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
 
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(uri)
-                .Respond("text/plain", "2:4024:42[\"hi\",\"doghappy:test\"]");
-            var httpClient = mockHttp.ToHttpClient();
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, new SocketIOOptions(), new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
-            var result = new List<string>();
-            var transport = new HttpEio3Transport(httpClient)
-            {
-                OnTextReceived = text => result.Add(text)
-            };
-            await transport.GetAsync(uri, CancellationToken.None);
-
-            await Task.Delay(100);
-
-            Assert.AreEqual(2, result.Count);
-            Assert.AreEqual("40", result[0]);
-            Assert.AreEqual("42[\"hi\",\"doghappy:test\"]", result[1]);
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "40", CancellationToken.None), Times.Once());
+            Assert.AreEqual(1, msgs.Count);
+            Assert.AreEqual(MessageType.Opened, msgs[0].Type);
         }
 
         [TestMethod]
-        public async Task Eio3GetBinaryTest()
+        public void Should_Receive_Opened_With_Auth_Message()
         {
-            string uri = "http://localhost:11002/socket.io/?token=V3&EIO=3&transport=polling";
-            byte[] arrOutput = { 0x00, 0x07, 0x05, 0xFF, 0x34, 0x35, 0x32, 0x2D, 0x5B, 0x22, 0x77, 0x65, 0x6C, 0x63, 0x6F, 0x6D, 0x65, 0x22, 0x2C, 0x7B, 0x22, 0x5F, 0x70, 0x6C, 0x61, 0x63, 0x65, 0x68, 0x6F, 0x6C, 0x64, 0x65, 0x72, 0x22, 0x3A, 0x74, 0x72, 0x75, 0x65, 0x2C, 0x22, 0x6E, 0x75, 0x6D, 0x22, 0x3A, 0x30, 0x7D, 0x2C, 0x7B, 0x22, 0x5F, 0x70, 0x6C, 0x61, 0x63, 0x65, 0x68, 0x6F, 0x6C, 0x64, 0x65, 0x72, 0x22, 0x3A, 0x74, 0x72, 0x75, 0x65, 0x2C, 0x22, 0x6E, 0x75, 0x6D, 0x22, 0x3A, 0x31, 0x7D, 0x5D, 0x01, 0x02, 0x09, 0xFF, 0x04, 0x77, 0x65, 0x6C, 0x63, 0x6F, 0x6D, 0x65, 0x20, 0x42, 0x71, 0x46, 0x63, 0x32, 0x53, 0x6F, 0x72, 0x67, 0x75, 0x6B, 0x4F, 0x32, 0x36, 0x2D, 0x6C, 0x41, 0x41, 0x41, 0x4A, 0x01, 0x05, 0xFF, 0x04, 0x74, 0x65, 0x73, 0x74 };
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When(uri)
-                .Respond(req =>
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
+
+            var options = new SocketIOOptions
+            {
+                Auth = new
                 {
-                    var content = new ByteArrayContent(arrOutput);
-                    content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                    return new HttpResponseMessage
-                    {
-                        Content = content
-                    };
-                });
-            var httpClient = mockHttp.ToHttpClient();
-
-            var texts = new List<string>();
-            var bytes = new List<byte[]>();
-            var transport = new HttpEio3Transport(httpClient)
-            {
-                OnTextReceived = text => texts.Add(text),
-                OnBinaryReceived = b => bytes.Add(b)
+                    name = "admin"
+                }
             };
-            await transport.GetAsync(uri, CancellationToken.None);
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
-            await Task.Delay(100);
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "40{\"name\":\"admin\"}", CancellationToken.None), Times.Once());
+            Assert.AreEqual(1, msgs.Count);
+            Assert.AreEqual(MessageType.Opened, msgs[0].Type);
+        }
 
-            Assert.AreEqual(1, texts.Count);
-            Assert.AreEqual("452-[\"welcome\",{\"_placeholder\":true,\"num\":0},{\"_placeholder\":true,\"num\":1}]", texts[0]);
-            Assert.AreEqual(2, bytes.Count);
-            Assert.AreEqual("welcome BqFc2SorgukO26-lAAAJ", Encoding.UTF8.GetString(bytes[0]));
-            Assert.AreEqual("test", Encoding.UTF8.GetString(bytes[1]));
+        [TestMethod]
+        public async Task Eio3_Connected_Without_Namespace_Logic_Should_Work()
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
+
+            var options = new SocketIOOptions { EIO = 3 };
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":100,\"pingTimeout\":5000}");
+            transport.OnNext("40");
+            await Task.Delay(120);
+
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", CancellationToken.None), Times.Once());
+            Assert.AreEqual(3, msgs.Count);
+            Assert.AreEqual(MessageType.Opened, msgs[0].Type);
+            Assert.AreEqual(MessageType.Connected, msgs[1].Type);
+            Assert.AreEqual(MessageType.Ping, msgs[2].Type);
+        }
+
+        [TestMethod]
+        public async Task Eio3_Connected_With_Namespace_Logic_Should_Work()
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
+
+            var options = new SocketIOOptions
+            {
+                EIO = 3,
+                Auth = new { token = "abc" },
+                Query = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>("token", "V2")
+                },
+            };
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Namespace = "/nsp";
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":100,\"pingTimeout\":5000}");
+            transport.OnNext("40/nsp,");
+            await Task.Delay(120);
+
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", CancellationToken.None), Times.Once());
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "40/nsp?token=V2,", CancellationToken.None), Times.Once());
+            Assert.AreEqual(3, msgs.Count);
+            Assert.AreEqual(MessageType.Opened, msgs[0].Type);
+            Assert.AreEqual(MessageType.Connected, msgs[1].Type);
+            Assert.AreEqual(MessageType.Ping, msgs[2].Type);
+        }
+
+        [TestMethod]
+        public void Should_Receive_Eio3_Pong_Message()
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
+
+            var options = new SocketIOOptions { EIO = 3 };
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("3");
+
+            Assert.AreEqual(1, msgs.Count);
+            Assert.AreEqual(MessageType.Pong, msgs[0].Type);
+            var msg0 = msgs[0] as PongMessage;
+
+            Assert.AreEqual((DateTime.Now - DateTime.MinValue).TotalSeconds, msg0.Duration.TotalSeconds, 1);
+        }
+
+        [TestMethod]
+        public void Should_Receive_Eio4_Ping_Message()
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            var textSubject = new Subject<string>();
+            var bytesSubject = new Subject<byte[]>();
+            mockHttpPollingHandler.Setup(h => h.TextObservable).Returns(textSubject);
+            mockHttpPollingHandler.Setup(h => h.BytesObservable).Returns(bytesSubject);
+
+            var options = new SocketIOOptions { EIO = 4 };
+            var transport = new HttpTransport(null, mockHttpPollingHandler.Object, options, new SystemTextJsonSerializer());
+            transport.Subscribe(msg => msgs.Add(msg));
+            transport.OnNext("2");
+
+            mockHttpPollingHandler.Verify(h => h.PostAsync(null, "3", CancellationToken.None), Times.Once());
+            Assert.AreEqual(2, msgs.Count);
+            Assert.AreEqual(MessageType.Ping, msgs[0].Type);
+            Assert.AreEqual(MessageType.Pong, msgs[1].Type);
+            var msg1 = msgs[1] as PongMessage;
+
+            Assert.IsTrue(msg1.Duration.TotalMilliseconds > 0 && msg1.Duration.TotalMilliseconds < 10);
         }
     }
 }

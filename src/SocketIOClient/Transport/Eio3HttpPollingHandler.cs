@@ -7,9 +7,9 @@ using System.Net.Http.Headers;
 
 namespace SocketIOClient.Transport
 {
-    public class HttpEio3Transport : HttpTransport
+    public class Eio3HttpPollingHandler : HttpPollingHandler
     {
-        public HttpEio3Transport(HttpClient httpClient) : base(httpClient) { }
+        public Eio3HttpPollingHandler(HttpClient httpClient) : base(httpClient) { }
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
@@ -53,7 +53,7 @@ namespace SocketIOClient.Transport
                 if (int.TryParse(text.Substring(p, index - p), out int length))
                 {
                     string msg = text.Substring(index + 1, length);
-                    OnTextReceived(msg);
+                    TextSubject.OnNext(msg);
                 }
                 else
                 {
@@ -65,6 +65,12 @@ namespace SocketIOClient.Transport
                     break;
                 }
             }
+        }
+
+        public override Task PostAsync(string uri, string content, CancellationToken cancellationToken)
+        {
+            content = content.Length + ":" + content;
+            return base.PostAsync(uri, content, cancellationToken);
         }
     }
 }

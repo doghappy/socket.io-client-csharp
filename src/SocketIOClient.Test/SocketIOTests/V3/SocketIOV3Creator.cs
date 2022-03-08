@@ -9,6 +9,8 @@ namespace SocketIOClient.Test.SocketIOTests.V3
             return new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = reconnection,
+                AutoUpgrade = false,
+                Transport = Transport.TransportProtocol.WebSocket,
                 Query = new Dictionary<string, string>
                 {
                     { "token", Token }

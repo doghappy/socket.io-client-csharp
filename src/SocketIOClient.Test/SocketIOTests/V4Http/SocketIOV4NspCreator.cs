@@ -9,6 +9,7 @@ namespace SocketIOClient.Test.SocketIOTests.V4Http
             return new SocketIO(Url, new SocketIOOptions
             {
                 Reconnection = reconnection,
+                AutoUpgrade = false,
                 Transport = Transport.TransportProtocol.Polling,
                 Query = new Dictionary<string, string>
                 {

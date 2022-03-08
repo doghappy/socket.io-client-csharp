@@ -7,39 +7,40 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Transport
 {
-    public class HttpEio4Transport : HttpTransport
+    public class Eio4HttpPollingHandler : HttpPollingHandler
     {
-        public HttpEio4Transport(HttpClient httpClient) : base(httpClient) { }
+        public Eio4HttpPollingHandler(HttpClient httpClient) : base(httpClient) { }
+
+        const char Separator = '\u001E'; //1E 
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
             var builder = new StringBuilder();
             foreach (var item in bytes)
             {
-                //1E 
-                builder.Append('b').Append(Convert.ToBase64String(item)).Append('');
+                builder.Append('b').Append(Convert.ToBase64String(item)).Append(Separator);
             }
             if (builder.Length == 0)
             {
                 return;
             }
-            string text = builder.ToString().TrimEnd('');
+            string text = builder.ToString().TrimEnd(Separator);
             await PostAsync(uri, text, cancellationToken);
         }
 
         protected override void ProduceText(string text)
         {
-            string[] items = text.Split(new[] { '' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] items = text.Split(new[] { Separator }, StringSplitOptions.RemoveEmptyEntries);
             foreach (var item in items)
             {
                 if (item[0] == 'b')
                 {
                     byte[] bytes = Convert.FromBase64String(item.Substring(1));
-                    OnBinaryReceived(bytes);
+                    BytesSubject.OnNext(bytes);
                 }
                 else
                 {
-                    OnTextReceived(item);
+                    TextSubject.OnNext(item);
                 }
             }
         }

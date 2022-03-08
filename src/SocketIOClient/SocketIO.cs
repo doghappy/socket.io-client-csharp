@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
-using SocketIOClient.Routers;
 using SocketIOClient.Transport;
 using SocketIOClient.UriConverters;
 
@@ -66,8 +65,6 @@ namespace SocketIOClient
             }
         }
 
-        public Router Router { get; private set; }
-
         /// <summary>
         /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
         /// </summary>
@@ -94,13 +91,21 @@ namespace SocketIOClient
 
         public IJsonSerializer JsonSerializer { get; set; }
 
+        public IUriConverter UriConverter { get; set; }
+
         public HttpClient HttpClient { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
+        private IClientWebSocket _clientWebsocket;
+
+        BaseTransport _transport;
 
         List<Type> _expectedExceptions;
 
         int _packetId;
+        bool _isConnectCoreRunning;
+        Uri _realServerUri;
+        Exception _connectCoreException;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
@@ -151,98 +156,156 @@ namespace SocketIOClient
             _onAnyHandlers = new List<OnAnyHandler>();
 
             JsonSerializer = new SystemTextJsonSerializer();
-            _connectionTokenSource = new CancellationTokenSource();
+            UriConverter = new UriConverter();
+
             HttpClient = new HttpClient();
-            ClientWebSocketProvider = () => new DefaultClientWebSocket();
+            ClientWebSocketProvider = () => new SystemNetWebSocketsClientWebSocket(Options.EIO);
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),
                 typeof(WebSocketException),
                 typeof(HttpRequestException),
-                typeof(OperationCanceledException)
+                typeof(OperationCanceledException),
+                typeof(TaskCanceledException)
             };
         }
 
-        private async Task CreateRouterAsync()
+        private async Task CreateTransportAsync()
         {
-            if (Router == null)
+            Options.Transport = await GetProtocolAsync();
+            if (Options.Transport == TransportProtocol.Polling)
             {
-                if (Options.AutoUpgrade && Options.Transport == TransportProtocol.Polling)
-                {
-                    var uriConverter = new UriConverter();
-                    Uri uri = uriConverter.GetServerUri(false, ServerUri, Options.EIO, Options.Path, Options.Query);
-                    Options.Transport = await Routers.Router.GetProtocolAsync(HttpClient, uri);
-                }
-                if (Options.Transport == TransportProtocol.Polling)
-                {
-                    Router = new HttpRouter(HttpClient, ClientWebSocketProvider, Options, JsonSerializer);
-                }
+                HttpPollingHandler handler;
+                if (Options.EIO == 3)
+                    handler = new Eio3HttpPollingHandler(HttpClient);
                 else
-                {
-                    Router = new WebSocketRouter(HttpClient, ClientWebSocketProvider, Options, JsonSerializer);
-                }
-                Router.Namespace = Namespace;
-                Router.ServerUri = ServerUri;
-                Router.OnMessageReceived = OnMessageReceived;
-                Router.OnTransportClosed = OnTransportClosed;
+                    handler = new Eio4HttpPollingHandler(HttpClient);
+                _transport = new HttpTransport(HttpClient, handler, Options, JsonSerializer);
             }
+            else
+            {
+                _clientWebsocket = ClientWebSocketProvider();
+                _transport = new WebSocketTransport(_clientWebsocket, Options, JsonSerializer);
+            }
+            _transport.Namespace = Namespace;
+            SetHeaders();
+        }
+
+        private void SetHeaders()
+        {
+            if (Options.ExtraHeaders != null)
+            {
+                foreach (var item in Options.ExtraHeaders)
+                {
+                    _transport.AddHeader(item.Key, item.Value);
+                }
+            }
+        }
+
+        private void SyncExceptionToMain(Exception e)
+        {
+            _connectCoreException = e;
+            _isConnectCoreRunning = false;
+        }
+
+        private void ConnectCore()
+        {
+            DisposeForReconnect();
+            _reconnectionDelay = Options.ReconnectionDelay;
+            _connectionTokenSource = new CancellationTokenSource();
+            var cct = _connectionTokenSource.Token;
+            _isConnectCoreRunning = true;
+            _connectCoreException = null;
+            Task.Factory.StartNew(async () =>
+            {
+                while (true)
+                {
+                    _clientWebsocket?.Dispose();
+                    _transport?.Dispose();
+                    CreateTransportAsync().Wait();
+                    _realServerUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket, ServerUri, Options.EIO, Options.Path, Options.Query);
+                    try
+                    {
+                        if (cct.IsCancellationRequested)
+                            break;
+                        if (Attempts > 0)
+                            OnReconnectAttempt?.Invoke(this, Attempts);
+                        var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
+                        _transport.Subscribe(OnMessageReceived, OnErrorReceived);
+                        await _transport.ConnectAsync(_realServerUri, timeoutCts.Token).ConfigureAwait(false);
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        if (_expectedExceptions.Contains(e.GetType()))
+                        {
+                            if (!Options.Reconnection)
+                            {
+                                SyncExceptionToMain(e);
+                                throw;
+                            }
+                            if (Attempts > 0)
+                            {
+                                OnReconnectError?.Invoke(this, e);
+                            }
+                            Attempts++;
+                            if (Attempts <= Options.ReconnectionAttempts)
+                            {
+                                if (_reconnectionDelay < Options.ReconnectionDelayMax)
+                                {
+                                    _reconnectionDelay += 2 * Options.RandomizationFactor;
+                                }
+                                if (_reconnectionDelay > Options.ReconnectionDelayMax)
+                                {
+                                    _reconnectionDelay = Options.ReconnectionDelayMax;
+                                }
+                                await Task.Delay((int)_reconnectionDelay).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                OnReconnectFailed?.Invoke(this, EventArgs.Empty);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            SyncExceptionToMain(e);
+                            throw;
+                        }
+                    }
+                }
+                _isConnectCoreRunning = false;
+            });
+        }
+
+        private async Task<TransportProtocol> GetProtocolAsync()
+        {
+            if (Options.Transport == TransportProtocol.Polling && Options.AutoUpgrade)
+            {
+                Uri uri = UriConverter.GetServerUri(false, ServerUri, Options.EIO, Options.Path, Options.Query);
+                try
+                {
+                    string text = await HttpClient.GetStringAsync(uri);
+                    if (text.Contains("websocket"))
+                    {
+                        return TransportProtocol.WebSocket;
+                    }
+                }
+                catch { }
+            }
+            return Options.Transport;
         }
 
         public async Task ConnectAsync()
         {
-            await CreateRouterAsync();
-            _reconnectionDelay = Options.ReconnectionDelay;
-            while (true)
+            ConnectCore();
+            while (_isConnectCoreRunning)
             {
-                try
-                {
-                    if (_connectionTokenSource.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    if (Attempts > 0)
-                    {
-                        OnReconnectAttempt?.Invoke(this, Attempts);
-                    }
-                    await Router.ConnectAsync().ConfigureAwait(false);
-                    break;
-                }
-                catch (Exception e)
-                {
-                    if (_expectedExceptions.Contains(e.GetType()))
-                    {
-                        if (!Options.Reconnection)
-                        {
-                            throw;
-                        }
-                        if (Attempts > 0)
-                        {
-                            OnReconnectError?.Invoke(this, e);
-                        }
-                        Attempts++;
-                        if (Attempts <= Options.ReconnectionAttempts)
-                        {
-                            if (_reconnectionDelay < Options.ReconnectionDelayMax)
-                            {
-                                _reconnectionDelay += 2 * Options.RandomizationFactor;
-                            }
-                            if (_reconnectionDelay > Options.ReconnectionDelayMax)
-                            {
-                                _reconnectionDelay = Options.ReconnectionDelayMax;
-                            }
-                            await Task.Delay((int)_reconnectionDelay).ConfigureAwait(false);
-                        }
-                        else
-                        {
-                            OnReconnectFailed?.Invoke(this, EventArgs.Empty);
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                await Task.Delay(20);
+            }
+            if (_connectCoreException != null)
+            {
+                throw _connectCoreException;
             }
         }
 
@@ -364,6 +427,11 @@ namespace SocketIOClient
             }
         }
 
+        private void OnErrorReceived(Exception ex)
+        {
+            InvokeDisconnect(DisconnectReason.TransportClose);
+        }
+
         private void OnMessageReceived(IMessage msg)
         {
             try
@@ -405,11 +473,6 @@ namespace SocketIOClient
             }
         }
 
-        private void OnTransportClosed()
-        {
-            InvokeDisconnect(DisconnectReason.TransportClose);
-        }
-
         public async Task DisconnectAsync()
         {
             if (Connected)
@@ -420,7 +483,7 @@ namespace SocketIOClient
                 };
                 try
                 {
-                    await Router.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
+                    await _transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -518,7 +581,7 @@ namespace SocketIOClient
                     Id = packetId
                 };
             }
-            await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -546,7 +609,7 @@ namespace SocketIOClient
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                    await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -556,7 +619,7 @@ namespace SocketIOClient
                         Event = eventName,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                    await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
             }
             else
@@ -566,7 +629,7 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Event = eventName
                 };
-                await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -598,7 +661,7 @@ namespace SocketIOClient
                         Id = _packetId,
                         OutgoingBytes = new List<byte[]>(result.Bytes)
                     };
-                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                    await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
@@ -609,7 +672,7 @@ namespace SocketIOClient
                         Id = _packetId,
                         Json = result.Json
                     };
-                    await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                    await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
                 }
             }
             else
@@ -620,7 +683,7 @@ namespace SocketIOClient
                     Namespace = Namespace,
                     Id = _packetId
                 };
-                await Router.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+                await _transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -632,18 +695,15 @@ namespace SocketIOClient
                 OnDisconnected?.Invoke(this, reason);
                 try
                 {
-                    await Router.DisconnectAsync().ConfigureAwait(false);
+                    await _transport.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
                 }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                catch { }
                 if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOClientDisconnect)
                 {
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        await ConnectAsync().ConfigureAwait(false);
+                        ConnectCore();
                     }
                 }
             }
@@ -657,10 +717,21 @@ namespace SocketIOClient
             }
         }
 
+        private void DisposeForReconnect()
+        {
+            _packetId = -1;
+            _ackHandlers.Clear();
+            if (_connectionTokenSource != null)
+            {
+                _connectionTokenSource.Cancel();
+                _connectionTokenSource.Dispose();
+            }
+        }
+
         public void Dispose()
         {
             HttpClient.Dispose();
-            Router.Dispose();
+            _transport.Dispose();
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();

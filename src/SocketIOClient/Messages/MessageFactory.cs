@@ -70,11 +70,5 @@ namespace SocketIOClient.Messages
             }
             return openedMessage;
         }
-
-        //public static List<IMessage> CreateMessages(string msg)
-        //{
-        //    var msgs = new List<IMessage>();
-
-        //}
     }
 }

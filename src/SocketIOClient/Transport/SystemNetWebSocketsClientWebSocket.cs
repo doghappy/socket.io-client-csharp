@@ -1,5 +1,4 @@
-﻿using SocketIOClient.Transport;
-using System;
+﻿using System;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -7,18 +6,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Windows7
+namespace SocketIOClient.Transport
 {
-    public sealed class ClientWebSocketManaged : IClientWebSocket
+    public class SystemNetWebSocketsClientWebSocket : IClientWebSocket
     {
-        public ClientWebSocketManaged(int eio)
+        public SystemNetWebSocketsClientWebSocket(int eio)
         {
             _eio = eio;
             _textSubject = new Subject<string>();
             _bytesSubject = new Subject<byte[]>();
             TextObservable = _textSubject.AsObservable();
             BytesObservable = _bytesSubject.AsObservable();
-            _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
+            _ws = new ClientWebSocket();
             _listenCancellation = new CancellationTokenSource();
             _sendLock = new SemaphoreSlim(1, 1);
         }
@@ -26,7 +25,7 @@ namespace SocketIOClient.Windows7
         const int ReceiveChunkSize = 1024 * 8;
 
         readonly int _eio;
-        readonly System.Net.WebSockets.Managed.ClientWebSocket _ws;
+        readonly ClientWebSocket _ws;
         readonly Subject<string> _textSubject;
         readonly Subject<byte[]> _bytesSubject;
         readonly CancellationTokenSource _listenCancellation;
@@ -37,7 +36,7 @@ namespace SocketIOClient.Windows7
 
         private void Listen()
         {
-            Task.Factory.StartNew(async () =>
+            Task.Factory.StartNew(async() =>
             {
                 while (true)
                 {

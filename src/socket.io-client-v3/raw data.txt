@@ -36,6 +36,6 @@ v2
 v3
 44{"message":"Authentication error"}
 
-
+96:0{"sid":"LgtKYhIy7tUzKHH9AAAB","upgrades":["websocket"],"pingInterval":10000,"pingTimeout":5000}
 2:4027:44/nsp9,"Invalid namespace"
 2:407:40/nsp,
