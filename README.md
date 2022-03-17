@@ -96,7 +96,9 @@ var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
 | `Query` | `IEnumerable<KeyValuePair<string, string>>` | additional query parameters that are sent when connecting a namespace (then found in `socket.handshake.query` object on the server-side) |
 | `EIO` | `4` | If your server is using socket.io server v2.x, please explicitly set it to 3 |
 | `ExtraHeaders` | `null` | Headers that will be passed for each request to the server (via xhr-polling and via websockets). These values then can be used during handshake or for special proxies. |
-| `Transport` | `WebSocket` | Websocket is used by default, you can change to http polling. |
+| `Transport` | `Polling` | Websocket is used by default, you can change to http polling. |
+| `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
+| `Auth` | `null` | Credentials that are sent when accessing a namespace |
 
 ## Ack
 
@@ -347,3 +349,5 @@ SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If y
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/54770), October 2021
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/57210), November 2021
 - [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/60280), December 2021
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/63314), January 2022
+- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/66147), February 2022

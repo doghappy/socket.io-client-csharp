@@ -20,7 +20,6 @@ namespace SocketIOClient.Windows7
             BytesObservable = _bytesSubject.AsObservable();
             _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
             _listenCancellation = new CancellationTokenSource();
-            _sendLock = new SemaphoreSlim(1, 1);
         }
 
         const int ReceiveChunkSize = 1024 * 8;
@@ -30,7 +29,6 @@ namespace SocketIOClient.Windows7
         readonly Subject<string> _textSubject;
         readonly Subject<byte[]> _bytesSubject;
         readonly CancellationTokenSource _listenCancellation;
-        readonly SemaphoreSlim _sendLock;
 
         public IObservable<string> TextObservable { get; }
         public IObservable<byte[]> BytesObservable { get; }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using SocketIOClient.Newtonsoft.Json;
+using SocketIOClient.Windows7;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -102,68 +103,4 @@ namespace SocketIOClient.Sample
             Console.WriteLine("Pong: " + e.TotalMilliseconds);
         }
     }
-
-    //class Program
-    //{
-    //    public static void Main(string[] args)
-    //        => new Program().Main().GetAwaiter().GetResult();
-
-    //    private static string GenerateToken()
-    //    {
-    //        string chars = "abcdefghi1234567890";
-
-    //        StringBuilder token = new StringBuilder("WDN");
-
-    //        while (token.Length < 35)
-    //            token.Append(chars.OrderBy(r => Guid.NewGuid()).FirstOrDefault());
-
-    //        return token.ToString().Trim();
-    //    }
-
-    //    public async Task Main()
-    //    {
-    //        var socket = new SocketIO("https://v3-rc.palringo.com:3051/",
-    //            new SocketIOOptions()
-    //            {
-    //                Transport = SocketIOClient.Transport.TransportProtocol.WebSocket,
-    //                Query = new Dictionary<string, string>()
-    //                {
-    //                    ["token"] = GenerateToken(),
-    //                    ["device"] = "wolfnetframework",
-    //                    ["state"] = "1",// Online State = 1 (Online)
-    //                },
-    //            }
-    //        ); ;
-
-    //        socket.JsonSerializer = new NewtonsoftJsonSerializer()
-    //        {
-    //            OptionsProvider = () => new JsonSerializerSettings()
-    //            {
-    //                NullValueHandling = NullValueHandling.Ignore,
-    //                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-    //            }
-    //        };
-
-
-    //        socket.OnConnected += (s, e) => Console.WriteLine("Connected To V3 Server");
-
-    //        socket.OnDisconnected += (s, reason) => Console.WriteLine($"Disconnected From V3 Server -${reason}");
-
-    //        socket.OnError += (s, error) => Console.WriteLine($"Connection Error Occurred - {error}");
-
-    //        /*
-    //        socket.OnPing += (s, e) => Console.WriteLine($"Ping");
-    //        socket.OnPong += (s, timespan) => Console.WriteLine($"Pong"); // 0 Ms???
-    //        */
-    //        socket.OnAny((name, body) => Console.WriteLine($"Recieved Packet - {name}"));
-
-    //        socket.OnReconnectAttempt += (sender, attmept) => Console.WriteLine($"Reconnecting To V3 Servers - Attempt {attmept}");
-
-    //        socket.OnReconnectFailed += (sender, reason) => Console.WriteLine($"Failed to reconnect to V3 servers - {reason}");
-
-    //        await socket.ConnectAsync();
-
-    //        await Task.Delay(-1); // Prevent program from exiting
-    //    }
-    //}
 }
