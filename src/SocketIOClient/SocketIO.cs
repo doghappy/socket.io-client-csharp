@@ -389,14 +389,26 @@ namespace SocketIOClient
 
         private void BinaryMessageHandler(BinaryMessage msg)
         {
+            var response = new SocketIOResponse(msg.JsonElements, this)
+            {
+                PacketId = msg.Id,
+            };
+            response.InComingBytes.AddRange(msg.IncomingBytes);
+            foreach (var item in _onAnyHandlers)
+            {
+                try
+                {
+                    item(msg.Event, response);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            }
             if (_eventHandlers.ContainsKey(msg.Event))
             {
                 try
                 {
-                    var response = new SocketIOResponse(msg.JsonElements, this)
-                    {
-                        PacketId = msg.Id
-                    };
                     response.InComingBytes.AddRange(msg.IncomingBytes);
                     _eventHandlers[msg.Event](response);
                 }
