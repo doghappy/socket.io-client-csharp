@@ -409,7 +409,6 @@ namespace SocketIOClient
             {
                 try
                 {
-                    response.InComingBytes.AddRange(msg.IncomingBytes);
                     _eventHandlers[msg.Event](response);
                 }
                 catch (Exception e)
