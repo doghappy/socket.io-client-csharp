@@ -1,0 +1,14 @@
+{
+  "name": "socket.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "https://github.com/doghappy",
+  "license": "Apache",
+  "dependencies": {
+      "socket.io": "4.5.0"
+  }
+}
