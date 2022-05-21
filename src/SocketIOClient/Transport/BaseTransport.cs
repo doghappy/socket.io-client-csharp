@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Reactive.Subjects;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.UriConverters;
@@ -12,17 +12,19 @@ namespace SocketIOClient.Transport
 {
     public abstract class BaseTransport : IObserver<string>, IObserver<byte[]>, IObservable<IMessage>, IDisposable
     {
-        public BaseTransport(SocketIOOptions options, IJsonSerializer jsonSerializer)
+        public BaseTransport(SocketIOOptions options, IJsonSerializer jsonSerializer, ILogger logger)
         {
             Options = options;
             MessageSubject = new Subject<IMessage>();
             JsonSerializer = jsonSerializer;
             UriConverter = new UriConverter();
             _messageQueue = new Queue<IMessage>();
+            _logger = logger;
         }
 
         DateTime _pingTime;
         readonly Queue<IMessage> _messageQueue;
+        readonly ILogger _logger;
 
         protected SocketIOOptions Options { get; }
         protected Subject<IMessage> MessageSubject { get; }
@@ -94,7 +96,7 @@ namespace SocketIOClient.Transport
         /// <param name="cancellationToken"></param>
         private void StartPing(CancellationToken cancellationToken)
         {
-            Debug.WriteLine($"[Ping] Interval: {OpenedMessage.PingInterval}");
+            _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
             Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -107,15 +109,15 @@ namespace SocketIOClient.Transport
                     try
                     {
                         var ping = new PingMessage();
-                        Debug.WriteLine($"[Ping] Sending");
+                        _logger.LogDebug($"[Ping] Sending");
                         await SendAsync(ping, CancellationToken.None).ConfigureAwait(false);
-                        Debug.WriteLine($"[Ping] Has been sent");
+                        _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
                         MessageSubject.OnNext(ping);
                     }
                     catch (Exception e)
                     {
-                        Debug.WriteLine($"[Ping] Failed to send, {e.Message}");
+                        _logger.LogDebug($"[Ping] Failed to send, {e.Message}");
                         MessageSubject.OnError(e);
                         break;
                     }
@@ -154,7 +156,7 @@ namespace SocketIOClient.Transport
 
         public void OnNext(string text)
         {
-            Debug.WriteLine($"[Receive] {text}");
+            _logger.LogDebug($"[Receive] {text}");
             var msg = MessageFactory.CreateMessage(Options.EIO, text);
             if (msg == null)
             {
@@ -222,7 +224,7 @@ namespace SocketIOClient.Transport
 
         public void OnNext(byte[] bytes)
         {
-            Debug.WriteLine($"[Receive] binary message");
+            _logger.LogDebug($"[Receive] binary message");
             if (_messageQueue.Count > 0)
             {
                 var msg = _messageQueue.Peek();

@@ -3,13 +3,15 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.Transport
 {
     public class WebSocketTransport : BaseTransport
     {
-        public WebSocketTransport(IClientWebSocket ws, SocketIOOptions options, IJsonSerializer jsonSerializer) : base(options, jsonSerializer)
+        public WebSocketTransport(IClientWebSocket ws, SocketIOOptions options, IJsonSerializer jsonSerializer, ILogger logger)
+            : base(options, jsonSerializer, logger)
         {
             _ws = ws;
             _sendLock = new SemaphoreSlim(1, 1);

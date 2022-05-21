@@ -1,4 +1,6 @@
-﻿namespace SocketIOClient.IntegrationTests
+﻿using Microsoft.Extensions.Logging;
+
+namespace SocketIOClient.IntegrationTests
 {
     public abstract class WebSocketBaseTests : SocketIOBaseTests
     {
@@ -12,10 +14,16 @@
 
         protected override SocketIO CreateSocketIO()
         {
-            return CreateSocketIO(new SocketIOOptions
+            var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false
             });
+            io.LoggerFactory = LoggerFactory.Create(options =>
+            {
+                options.AddConsole();
+                options.AddFilter(nameof(SocketIO), LogLevel.Debug);
+            });
+            return io;
         }
     }
 }

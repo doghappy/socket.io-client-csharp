@@ -1,4 +1,6 @@
-﻿namespace SocketIOClient.IntegrationTests
+﻿using Microsoft.Extensions.Logging;
+
+namespace SocketIOClient.IntegrationTests
 {
     public abstract class HttpBaseTests : SocketIOBaseTests
     {
@@ -14,7 +16,12 @@
         {
             var options = CreateOptions();
             options.Reconnection = false;
-            return CreateSocketIO(options);
+            var io= CreateSocketIO(options);
+            io.LoggerFactory = LoggerFactory.Create(options =>
+            {
+                options.AddConsole();
+            });
+            return io;
         }
     }
 }

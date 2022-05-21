@@ -10,6 +10,8 @@ using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.UriConverters;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace SocketIOClient
 {
@@ -92,6 +94,19 @@ namespace SocketIOClient
 
         public IUriConverter UriConverter { get; set; }
 
+        internal ILogger Logger { get; set; }
+
+        ILoggerFactory _loggerFactory;
+        public ILoggerFactory LoggerFactory
+        {
+            get => _loggerFactory;
+            set
+            {
+                _loggerFactory = value ?? throw new ArgumentNullException(nameof(LoggerFactory));
+                Logger = _loggerFactory.CreateLogger<SocketIO>();
+            }
+        }
+
         public HttpClient HttpClient { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
@@ -169,6 +184,7 @@ namespace SocketIOClient
                 typeof(OperationCanceledException),
                 typeof(TaskCanceledException)
             };
+            LoggerFactory = NullLoggerFactory.Instance;
         }
 
         private async Task CreateTransportAsync()
@@ -181,12 +197,12 @@ namespace SocketIOClient
                     handler = new Eio3HttpPollingHandler(HttpClient);
                 else
                     handler = new Eio4HttpPollingHandler(HttpClient);
-                _transport = new HttpTransport(HttpClient, handler, Options, JsonSerializer);
+                _transport = new HttpTransport(HttpClient, handler, Options, JsonSerializer, Logger);
             }
             else
             {
                 _clientWebsocket = ClientWebSocketProvider();
-                _transport = new WebSocketTransport(_clientWebsocket, Options, JsonSerializer);
+                _transport = new WebSocketTransport(_clientWebsocket, Options, JsonSerializer, Logger);
             }
             _transport.Namespace = _namespace;
             SetHeaders();
@@ -313,40 +329,45 @@ namespace SocketIOClient
             }
             if (_connectCoreException != null)
             {
+                Logger.LogError(_connectCoreException, _connectCoreException.Message);
                 throw _connectCoreException;
             }
             while (!Connected)
             {
-                if (_hasError) break;
+                if (_hasError)
+                {
+                    Logger.LogWarning($"Got a connection error, try to use '{nameof(OnError)}' to detect it.");
+                    break;
+                }
                 await Task.Delay(100);
             }
         }
 
         private void PingHandler()
         {
-            OnPing?.Invoke(this, EventArgs.Empty);
+            OnPing.TryInvoke(this, EventArgs.Empty);
         }
 
         private void PongHandler(PongMessage msg)
         {
-            OnPong?.Invoke(this, msg.Duration);
+            OnPong.TryInvoke(this, msg.Duration);
         }
 
         private void ConnectedHandler(ConnectedMessage msg)
         {
             Id = msg.Sid;
             Connected = true;
-            OnConnected?.Invoke(this, EventArgs.Empty);
+            OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
-                OnReconnected?.Invoke(this, _attempts);
+                OnReconnected.TryInvoke(this, _attempts);
             }
             _attempts = 0;
         }
 
         private void DisconnectedHandler()
         {
-            InvokeDisconnect(DisconnectReason.IOServerDisconnect);
+            _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
         }
 
         private void EventMessageHandler(EventMessage m)
@@ -357,25 +378,11 @@ namespace SocketIOClient
             };
             foreach (var item in _onAnyHandlers)
             {
-                try
-                {
-                    item(m.Event, res);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                item.TryInvoke(m.Event, res);
             }
             if (_eventHandlers.ContainsKey(m.Event))
             {
-                try
-                {
-                    _eventHandlers[m.Event](res);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                _eventHandlers[m.Event].TryInvoke(res);
             }
         }
 
@@ -384,14 +391,8 @@ namespace SocketIOClient
             if (_ackHandlers.ContainsKey(m.Id))
             {
                 var res = new SocketIOResponse(m.JsonElements, this);
-                try
-                {
-                    _ackHandlers[m.Id](res);
-                }
-                finally
-                {
-                    _ackHandlers.Remove(m.Id);
-                }
+                _ackHandlers[m.Id].TryInvoke(res);
+                _ackHandlers.Remove(m.Id);
             }
         }
 
@@ -410,25 +411,11 @@ namespace SocketIOClient
             response.InComingBytes.AddRange(msg.IncomingBytes);
             foreach (var item in _onAnyHandlers)
             {
-                try
-                {
-                    item(msg.Event, response);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                item.TryInvoke(msg.Event, response);
             }
             if (_eventHandlers.ContainsKey(msg.Event))
             {
-                try
-                {
-                    _eventHandlers[msg.Event](response);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                _eventHandlers[msg.Event].TryInvoke(response);
             }
         }
 
@@ -436,25 +423,19 @@ namespace SocketIOClient
         {
             if (_ackHandlers.ContainsKey(msg.Id))
             {
-                try
+                var response = new SocketIOResponse(msg.JsonElements, this)
                 {
-                    var response = new SocketIOResponse(msg.JsonElements, this)
-                    {
-                        PacketId = msg.Id,
-                    };
-                    response.InComingBytes.AddRange(msg.IncomingBytes);
-                    _ackHandlers[msg.Id](response);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
+                    PacketId = msg.Id,
+                };
+                response.InComingBytes.AddRange(msg.IncomingBytes);
+                _ackHandlers[msg.Id].TryInvoke(response);
             }
         }
 
         private void OnErrorReceived(Exception ex)
         {
-            InvokeDisconnect(DisconnectReason.TransportClose);
+            Logger.LogError(ex, ex.Message);
+            _ = InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
         private void OnMessageReceived(IMessage msg)
@@ -494,7 +475,7 @@ namespace SocketIOClient
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                Logger.LogError(e, e.Message);
             }
         }
 
@@ -512,9 +493,9 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
-                    Debug.WriteLine(e);
+                    Logger.LogError(e, e.Message);
                 }
-                InvokeDisconnect(DisconnectReason.IOClientDisconnect);
+                await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
             }
         }
 
@@ -712,7 +693,7 @@ namespace SocketIOClient
             }
         }
 
-        private async void InvokeDisconnect(string reason)
+        private async Task InvokeDisconnect(string reason)
         {
             if (Connected)
             {
@@ -723,7 +704,10 @@ namespace SocketIOClient
                 {
                     await _transport.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Logger.LogError(e, e.Message);
+                }
                 if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOClientDisconnect)
                 {
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().

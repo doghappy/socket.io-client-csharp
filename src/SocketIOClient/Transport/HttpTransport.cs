@@ -2,9 +2,9 @@
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
-using SocketIOClient.UriConverters;
 
 namespace SocketIOClient.Transport
 {
@@ -13,7 +13,8 @@ namespace SocketIOClient.Transport
         public HttpTransport(HttpClient http,
             IHttpPollingHandler pollingHandler,
             SocketIOOptions options,
-            IJsonSerializer jsonSerializer) : base(options, jsonSerializer)
+            IJsonSerializer jsonSerializer,
+            ILogger logger) : base(options, jsonSerializer, logger)
         {
             _http = http;
             _httpPollingHandler = pollingHandler;

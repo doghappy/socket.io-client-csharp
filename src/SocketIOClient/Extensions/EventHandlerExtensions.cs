@@ -8,5 +8,10 @@ namespace SocketIOClient.Extensions
         {
             handler?.Invoke(sender, args);
         }
+
+        public static void TryInvoke(this EventHandler handler, object sender, EventArgs args)
+        {
+            handler?.Invoke(sender, args);
+        }
     }
 }
