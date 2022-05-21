@@ -4,10 +4,10 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "v4-ws": "node v4-ws.js",
-    "v4-ws-token": "node v4-ws-token.js",
-    "v4-http": "node v4-http.js",
-    "v4-http-token": "node v4-http-token.js"
+    "v3-ws": "node v3-ws.js",
+    "v3-ws-token": "node v3-ws-token.js",
+    "v3-http": "node v3-http.js",
+    "v3-http-token": "node v3-http-token.js"
   },
   "author": "https://github.com/doghappy",
   "license": "Apache",

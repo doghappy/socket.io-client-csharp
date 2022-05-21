@@ -7,19 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Test", "Sock
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v3", "socket.io-server-v3\socket.io-server-v3.njsproj", "{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
 EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v2", "socket.io-server-v2\socket.io-server-v2.njsproj", "{34A53A83-E410-4B24-B970-F9EC3271A150}"
-EndProject
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "socket.io-server-v4", "socket.io-server-v4\socket.io-server-v4.njsproj", "{D9800B98-DD05-4507-B275-3C9567095FBE}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTest", "SocketIOClient.UnitTest\SocketIOClient.UnitTest.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests", "SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +29,6 @@ Global
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0CB72994-1A4B-4172-B1DA-2FFF0F572C7F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BAA4FB87-51B4-415F-AB05-315ED1132F78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BAA4FB87-51B4-415F-AB05-315ED1132F78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAA4FB87-51B4-415F-AB05-315ED1132F78}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -47,14 +37,6 @@ Global
 		{8EA5705A-16D6-4477-9682-26E819402149}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EA5705A-16D6-4477-9682-26E819402149}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EA5705A-16D6-4477-9682-26E819402149}.Release|Any CPU.Build.0 = Release|Any CPU
-		{34A53A83-E410-4B24-B970-F9EC3271A150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{34A53A83-E410-4B24-B970-F9EC3271A150}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{34A53A83-E410-4B24-B970-F9EC3271A150}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{34A53A83-E410-4B24-B970-F9EC3271A150}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D9800B98-DD05-4507-B275-3C9567095FBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D9800B98-DD05-4507-B275-3C9567095FBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D9800B98-DD05-4507-B275-3C9567095FBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D9800B98-DD05-4507-B275-3C9567095FBE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}.Release|Any CPU.ActiveCfg = Release|Any CPU

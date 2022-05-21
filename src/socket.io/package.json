@@ -1,0 +1,27 @@
+{
+  "name": "socket.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "v4-ws": "cd v4 && npm run v4-ws",
+    "v4-ws-token": "cd v4 && npm run v4-ws-token",
+    "v4-http": "cd v4 && npm run v4-http",
+    "v4-http-token": "cd v4 && npm run v4-http-token",
+    "v3-ws": "cd v3 && npm run v3-ws",
+    "v3-ws-token": "cd v3 && npm run v3-ws-token",
+    "v3-http": "cd v3 && npm run v3-http",
+    "v3-http-token": "cd v3 && npm run v3-http-token",
+    "v2-ws": "cd v2 && npm run v2-ws",
+    "v2-ws-token": "cd v2 && npm run v2-ws-token",
+    "v2-http": "cd v2 && npm run v2-http",
+    "v2-http-token": "cd v2 && npm run v2-http-token",
+    "install":"cd v4 && npm install && cd ../v3 && npm install && cd ../v2 && npm install",
+    "start": "concurrently \"npm run v4-ws\" \"npm run v4-ws-token\" \"npm run v4-http\" \"npm run v4-http-token\" \"npm run v3-ws\" \"npm run v3-ws-token\" \"npm run v3-http\" \"npm run v3-http-token\" \"npm run v2-ws\" \"npm run v2-ws-token\" \"npm run v2-http\" \"npm run v2-http-token\""
+  },
+  "author": "https://github.com/doghappy",
+  "license": "Apache",
+  "dependencies": {
+      "concurrently": "^7.2.0"
+  }
+}

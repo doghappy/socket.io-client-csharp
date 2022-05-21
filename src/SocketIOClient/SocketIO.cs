@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient.Extensions;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
@@ -109,6 +110,7 @@ namespace SocketIOClient
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
         CancellationTokenSource _connectionTokenSource;
         double _reconnectionDelay;
+        bool _hasError;
         readonly static object _connectionLock = new object();
 
         #region Socket.IO event
@@ -315,6 +317,7 @@ namespace SocketIOClient
             }
             while (!Connected)
             {
+                if (_hasError) break;
                 await Task.Delay(100);
             }
         }
@@ -394,7 +397,8 @@ namespace SocketIOClient
 
         private void ErrorMessageHandler(ErrorMessage msg)
         {
-            OnError?.Invoke(this, msg.Message);
+            _hasError = true;
+            OnError.TryInvoke(this, msg.Message);
         }
 
         private void BinaryMessageHandler(BinaryMessage msg)
@@ -713,7 +717,8 @@ namespace SocketIOClient
             if (Connected)
             {
                 Connected = false;
-                OnDisconnected?.Invoke(this, reason);
+                Id = null;
+                OnDisconnected.TryInvoke(this, reason);
                 try
                 {
                     await _transport.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
@@ -743,22 +748,20 @@ namespace SocketIOClient
             _packetId = -1;
             _ackHandlers.Clear();
             _connectCoreException = null;
-            if (_connectionTokenSource != null)
-            {
-                _connectionTokenSource.Cancel();
-                _connectionTokenSource.Dispose();
-            }
+            _hasError = false;
+            _connectionTokenSource.TryCancel();
+            _connectionTokenSource.TryDispose();
         }
 
         public void Dispose()
         {
             HttpClient.Dispose();
-            _transport?.Dispose();
+            _transport.TryDispose();
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();
-            _connectionTokenSource?.Cancel();
-            _connectionTokenSource?.Dispose();
+            _connectionTokenSource.TryCancel();
+            _connectionTokenSource.TryDispose();
         }
     }
 }

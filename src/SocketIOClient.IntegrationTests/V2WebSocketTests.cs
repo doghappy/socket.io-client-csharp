@@ -1,0 +1,11 @@
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace SocketIOClient.IntegrationTests
+{
+    [TestClass]
+    public class V2WebSocketTests : WebSocketBaseTests
+    {
+        protected override string ServerUrl => V3_WS;
+        protected override string ServerTokenUrl => V3_WS_TOKEN;
+    }
+}
