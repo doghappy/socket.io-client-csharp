@@ -24,22 +24,15 @@ steps:
     inputs:
       versionSpec: '10.x'
   -
-    script: |
+    script:
       cd src
       dotnet test SocketIOClient.UnitTest
-      cd socket.io-server-v2
-      npm install
-      npm start & cd ../socket.io-server-v3
-      npm install
-      npm start & cd ../socket.io-server-v4
-      npm install
+      cd socket.io
+      npm run install
+  -
+    task: Delay@1
+    inputs:
+      delayForMinutes: '0'
+  -
+    scripts:
       npm start & dotnet test ../SocketIOClient.Test
-
-# steps:
-# - task: UseDotNet@2
-#   displayName: 'Install .NET Core SDK'
-#   inputs:
-#     version: 5.0.x
-# - script: |
-#     cd src
-#     dotnet test SocketIOClient.UnitTest
