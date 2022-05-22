@@ -94,7 +94,7 @@ namespace SocketIOClient.UnitTest
             {
                 "0{\"sid\":\"CTWaM0_v5bx3C0S3AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
                 "40"
-            });
+            }, 1000);
             await io.ConnectAsync();
 
             mockWs.Verify(w => w.ConnectAsync(new Uri("ws://localhost:11002/socket.io/?EIO=3&transport=websocket"), It.IsAny<CancellationToken>()), Times.Once());
