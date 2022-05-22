@@ -29,10 +29,4 @@ steps:
       dotnet test SocketIOClient.UnitTest
       cd socket.io
       npm run install
-  -
-    task: Delay@1
-    inputs:
-      delayForMinutes: '1'
-  -
-    script:
       npm start & dotnet test ../SocketIOClient.Test
