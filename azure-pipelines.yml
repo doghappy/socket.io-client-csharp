@@ -13,7 +13,18 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+  - task: CmdLine@2
+    inputs:
+      script: |
+        cd src/socket.io
+        npm install
+        npm run install
+        nohup npm start &
   - task: DotNetCoreCLI@2
     inputs:
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest.csproj'
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: 'src/SocketIOClient.IntegrationTests.csproj'
