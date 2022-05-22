@@ -24,6 +24,7 @@ steps:
         npm install
         npm run install
         nohup npm start &
+        cd ../..
   - task: DotNetCoreCLI@2
     displayName: dotnet test SocketIOClient.UnitTest.csproj
     inputs:
