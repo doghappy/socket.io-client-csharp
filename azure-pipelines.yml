@@ -13,20 +13,7 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-  -
-    task: UseDotNet@2
-    displayName: 'Install .NET Core SDK'
+  - task: DotNetCoreCLI@2
     inputs:
-      version: 6.x
-  -
-    task: NodeTool@0
-    displayName: 'Install Node.js'
-    inputs:
-      versionSpec: '10.x'
-  -
-    script:
-      cd src
-      dotnet test SocketIOClient.UnitTest
-      cd socket.io
-      npm run install
-      npm start & dotnet test ../SocketIOClient.SocketIOClient.IntegrationTests
+    command: 'test'
+    projects: 'src/SocketIOClient.UnitTest.csproj'
