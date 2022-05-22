@@ -31,12 +31,12 @@ steps:
       packageType: 'sdk'
       version: '6.x'
   - task: DotNetCoreCLI@2
-    displayName: dotnet test SocketIOClient.UnitTest.csproj
+    displayName: dotnet test SocketIOClient.UnitTest
     inputs:
       command: 'test'
-      projects: 'src/SocketIOClient.UnitTest.csproj'
+      projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
   - task: DotNetCoreCLI@2
-    displayName: dotnet test SocketIOClient.IntegrationTests.csproj
+    displayName: dotnet test SocketIOClient.IntegrationTests
     inputs:
       command: 'test'
-      projects: 'src/SocketIOClient.IntegrationTests.csproj'
+      projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
