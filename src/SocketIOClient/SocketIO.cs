@@ -337,6 +337,7 @@ namespace SocketIOClient
                 Logger.LogError(_connectCoreException, _connectCoreException.Message);
                 throw _connectCoreException;
             }
+            int ms = 0;
             while (!Connected)
             {
                 if (_hasError)
@@ -348,6 +349,11 @@ namespace SocketIOClient
                 {
                     Logger.LogWarning($"Reconnect failed, try to use '{nameof(OnReconnectFailed)}' to detect it.");
                     break;
+                }
+                ms += 100;
+                if (ms > Options.ConnectionTimeout.TotalMilliseconds)
+                {
+                    throw new TimeoutException();
                 }
                 await Task.Delay(100);
             }

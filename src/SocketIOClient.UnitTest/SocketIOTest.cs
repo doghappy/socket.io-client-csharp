@@ -64,7 +64,6 @@ namespace SocketIOClient.UnitTest
             //string text3 =await io.HttpClient.GetStringAsync("http://localhost:11002/socket.io/?EIO=3&transport=polling&sid=LgtKYhIy7tUzKHH9AAAB&t=123");
 
             await io.ConnectAsync();
-            await Task.Delay(100);
 
             Assert.IsTrue(io.Connected);
         }
