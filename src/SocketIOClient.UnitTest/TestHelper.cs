@@ -24,9 +24,9 @@ namespace SocketIOClient.UnitTest
         {
             _ = Task.Run(() =>
             {
-                Thread.Sleep(milliseconds);
                 foreach (var item in data)
                 {
+                    Thread.Sleep(milliseconds);
                     subject.OnNext(item);
                 }
             });
