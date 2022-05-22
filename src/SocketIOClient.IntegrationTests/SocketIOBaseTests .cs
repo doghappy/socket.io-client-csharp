@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.IntegrationTests
@@ -53,6 +54,15 @@ namespace SocketIOClient.IntegrationTests
         protected SocketIO CreateTokenSocketIO(SocketIOOptions options)
         {
             return new SocketIO(ServerTokenUrl, options);
+        }
+
+        [ClassInitialize]
+        public void InitailizeCheck()
+        {
+            var uri = new Uri(ServerUrl);
+            using var tcp = new TcpClient();
+            tcp.Connect(uri.Host, uri.Port);
+            tcp.Close();
         }
 
         #region Id and Connected
@@ -132,6 +142,40 @@ namespace SocketIOClient.IntegrationTests
                 ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]"),
                 ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]"),
                 ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]"),
+            };
+        }
+
+        [TestMethod]
+        [DataRow("2:emit", true, false, "[true,false]")]
+        [DataRow("2:emit", -1234567890, 1234567890, "[-1234567890,1234567890]")]
+        [DataRow("2:emit", -1.234567890, 1.234567890, "[-1.23456789,1.23456789]")]
+        [DataRow("2:emit", "hello", "世界", "[\"hello\",\"世界\"]")]
+        [DynamicData(nameof(Emit2ParameterCases), DynamicDataSourceType.Method)]
+        public async Task Should_Be_Able_To_Emit_2_Parameters_And_Emit_Back(string eventName, object data1, object data2, string excepted)
+        {
+            using var io = CreateSocketIO();
+            string json = null;
+            io.On(eventName, res => json = res.ToString());
+
+            await io.ConnectAsync();
+            await io.EmitAsync(eventName, data1, data2);
+            await Task.Delay(100);
+
+            json.Should().Be(excepted);
+        }
+
+        public static IEnumerable<object[]> Emit2ParameterCases()
+        {
+            return PrivateEmit2PrameterCase().Select(x => new[] { x.EventName, x.Data1, x.Data2, x.Expected });
+        }
+
+        private static IEnumerable<(string EventName, object Data1, object Data2, string Expected)> PrivateEmit2PrameterCase()
+        {
+            return new (string EventName, object Data1, object Data2, string Expected)[]
+            {
+                ("2:emit", new { User = "abc", Password = "123" }, "ok", "[{\"User\":\"abc\",\"Password\":\"123\"},\"ok\"]"),
+                ("2:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, 789, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}},789]"),
+                ("2:emit", new { Result = true, Data = new[] { "a", "b" } }, new[] { 1, 2 }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]},[1,2]]"),
             };
         }
 

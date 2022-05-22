@@ -126,6 +126,7 @@ namespace SocketIOClient
         CancellationTokenSource _connectionTokenSource;
         double _reconnectionDelay;
         bool _hasError;
+        bool _isFaild;
         readonly static object _connectionLock = new object();
 
         #region Socket.IO event
@@ -235,8 +236,8 @@ namespace SocketIOClient
             {
                 while (true)
                 {
-                    _clientWebsocket?.Dispose();
-                    _transport?.Dispose();
+                    _clientWebsocket.TryDispose();
+                    _transport.TryDispose();
                     CreateTransportAsync().Wait();
                     _realServerUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket, ServerUri, Options.EIO, Options.Path, Options.Query);
                     try
@@ -244,7 +245,7 @@ namespace SocketIOClient
                         if (cct.IsCancellationRequested)
                             break;
                         if (_attempts > 0)
-                            OnReconnectAttempt?.Invoke(this, _attempts);
+                            OnReconnectAttempt.TryInvoke(this, _attempts);
                         var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
                         _transport.Subscribe(OnMessageReceived, OnErrorReceived);
                         await _transport.ConnectAsync(_realServerUri, timeoutCts.Token).ConfigureAwait(false);
@@ -261,7 +262,7 @@ namespace SocketIOClient
                             }
                             if (_attempts > 0)
                             {
-                                OnReconnectError?.Invoke(this, e);
+                                OnReconnectError.TryInvoke(this, e);
                             }
                             _attempts++;
                             if (_attempts <= Options.ReconnectionAttempts)
@@ -278,7 +279,8 @@ namespace SocketIOClient
                             }
                             else
                             {
-                                OnReconnectFailed?.Invoke(this, EventArgs.Empty);
+                                _isFaild = true;
+                                OnReconnectFailed.TryInvoke(this, EventArgs.Empty);
                                 break;
                             }
                         }
@@ -306,7 +308,10 @@ namespace SocketIOClient
                         return TransportProtocol.WebSocket;
                     }
                 }
-                catch { }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, e.Message);
+                }
             }
             return Options.Transport;
         }
@@ -337,6 +342,11 @@ namespace SocketIOClient
                 if (_hasError)
                 {
                     Logger.LogWarning($"Got a connection error, try to use '{nameof(OnError)}' to detect it.");
+                    break;
+                }
+                if (_isFaild)
+                {
+                    Logger.LogWarning($"Reconnect failed, try to use '{nameof(OnReconnectFailed)}' to detect it.");
                     break;
                 }
                 await Task.Delay(100);
@@ -729,6 +739,8 @@ namespace SocketIOClient
 
         private void DisposeForReconnect()
         {
+            _hasError = false;
+            _isFaild = false;
             _packetId = -1;
             _ackHandlers.Clear();
             _connectCoreException = null;

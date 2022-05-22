@@ -91,9 +91,12 @@ namespace SocketIOClient.UnitTest
             mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
             io.ClientWebSocketProvider = () => mockWs.Object;
 
+            textSubject.OnNextLater(new[]
+            {
+                "0{\"sid\":\"CTWaM0_v5bx3C0S3AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                "40"
+            });
             await io.ConnectAsync();
-            textSubject.OnNext("0{\"sid\":\"CTWaM0_v5bx3C0S3AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}");
-            textSubject.OnNext("40");
 
             mockWs.Verify(w => w.ConnectAsync(new Uri("ws://localhost:11002/socket.io/?EIO=3&transport=websocket"), It.IsAny<CancellationToken>()), Times.Once());
             Assert.AreEqual(TransportProtocol.WebSocket, io.Options.Transport);
@@ -223,8 +226,8 @@ namespace SocketIOClient.UnitTest
             mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
             io.ClientWebSocketProvider = () => mockWs.Object;
 
+            textSubject.OnNextLater("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             await io.ConnectAsync();
-            textSubject.OnNext("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             Assert.IsTrue(io.Connected);
             textSubject.OnError(new Exception(nameof(Reconnection_Should_Works_After_First_Connection_Established)));
             Assert.IsFalse(io.Connected);
@@ -246,9 +249,8 @@ namespace SocketIOClient.UnitTest
             mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
             io.ClientWebSocketProvider = () => mockWs.Object;
 
-
+            textSubject.OnNextLater("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             await io.ConnectAsync();
-            textSubject.OnNext("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             Assert.IsTrue(io.Connected);
 
             await io.DisconnectAsync();
@@ -300,8 +302,8 @@ namespace SocketIOClient.UnitTest
             mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
             io.ClientWebSocketProvider = () => mockWs.Object;
 
+            textSubject.OnNextLater("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             await io.ConnectAsync();
-            textSubject.OnNext("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
 
             var item1 = Encoding.UTF8.GetBytes("hello world 你好世界 hello world");
             await io.EmitAsync("1 param", item1);
@@ -331,6 +333,7 @@ namespace SocketIOClient.UnitTest
             mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
             io.ClientWebSocketProvider = () => mockWs.Object;
 
+            textSubject.OnNextLater("40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             await io.ConnectAsync();
 
             mockWs.Verify(w => w.ConnectAsync(new Uri("ws://localhost:11003/socket.io/?EIO=4&transport=websocket"), It.IsAny<CancellationToken>()), Times.Once());

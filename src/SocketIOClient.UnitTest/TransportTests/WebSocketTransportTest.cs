@@ -23,7 +23,7 @@ namespace SocketIOClient.UnitTest.TransportTests
             mockWs.SetupGet(e => e.TextObservable).Returns(textSubject);
             mockWs.SetupGet(e => e.BytesObservable).Returns(bytesSubject);
 
-            var transport = new WebSocketTransport(mockWs.Object, null, null);
+            var transport = new WebSocketTransport(mockWs.Object, null, null, TestHelper.Logger);
             var payload = new Payload
             {
                 Text = "hello"
@@ -43,7 +43,7 @@ namespace SocketIOClient.UnitTest.TransportTests
             mockWs.SetupGet(e => e.TextObservable).Returns(textSubject);
             mockWs.SetupGet(e => e.BytesObservable).Returns(bytesSubject);
             
-            var transport = new WebSocketTransport(mockWs.Object, null, null);
+            var transport = new WebSocketTransport(mockWs.Object, null, null, TestHelper.Logger);
             var payload = new Payload
             {
                 Text = new string('a', 10 * 1024)
@@ -65,7 +65,7 @@ namespace SocketIOClient.UnitTest.TransportTests
             mockWs.SetupGet(e => e.TextObservable).Returns(textSubject);
             mockWs.SetupGet(e => e.BytesObservable).Returns(bytesSubject);
             var options = new SocketIOOptions { EIO = 3 };
-            var transport = new WebSocketTransport(mockWs.Object, options, null);
+            var transport = new WebSocketTransport(mockWs.Object, options, null, TestHelper.Logger);
             var payload = new Payload
             {
                 Text = "hello"
@@ -99,7 +99,7 @@ namespace SocketIOClient.UnitTest.TransportTests
             mockWs.SetupGet(e => e.TextObservable).Returns(textSubject);
             mockWs.SetupGet(e => e.BytesObservable).Returns(bytesSubject);
             var options = new SocketIOOptions { EIO = 4 };
-            var transport = new WebSocketTransport(mockWs.Object, options, null);
+            var transport = new WebSocketTransport(mockWs.Object, options, null, TestHelper.Logger);
             var payload = new Payload
             {
                 Text = "hello"
@@ -133,7 +133,7 @@ namespace SocketIOClient.UnitTest.TransportTests
                 EIO = 3,
                 Transport = TransportProtocol.Polling
             };
-            var transport = new WebSocketTransport(mockWs.Object, options, null);
+            var transport = new WebSocketTransport(mockWs.Object, options, null, TestHelper.Logger);
             transport.Subscribe(msg => msgs.Add(msg));
 
             await transport.ConnectAsync(new Uri("http://localhost"), CancellationToken.None);

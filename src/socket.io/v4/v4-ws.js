@@ -12,6 +12,9 @@ io.on('connection', socket => {
     socket.on('1:emit', data => {
         socket.emit('1:emit', data);
     });
+    socket.on('2:emit', (d1, d2) => {
+        socket.emit('2:emit', d1, d2);
+    });
     socket.on('1:ack', (data, cb) => {
         cb(data);
     });
@@ -35,6 +38,9 @@ const nsp = io.of("/nsp");
 nsp.on("connection", socket => {
     socket.on('1:emit', data => {
         socket.emit('1:emit', data);
+    });
+    socket.on('2:emit', (d1, d2) => {
+        socket.emit('2:emit', d1, d2);
     });
     socket.on('1:ack', (data, cb) => {
         cb(data);
