@@ -13,6 +13,10 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+  - task: NodeTool@0
+    displayName: install nodejs
+    inputs:
+      versionSpec: '16.x'
   - task: CmdLine@2
     inputs:
       script: |
@@ -21,10 +25,12 @@ steps:
         npm run install
         nohup npm start &
   - task: DotNetCoreCLI@2
+    displayName: dotnet test SocketIOClient.UnitTest.csproj
     inputs:
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest.csproj'
   - task: DotNetCoreCLI@2
+    displayName: dotnet test SocketIOClient.IntegrationTests.csproj
     inputs:
       command: 'test'
       projects: 'src/SocketIOClient.IntegrationTests.csproj'
