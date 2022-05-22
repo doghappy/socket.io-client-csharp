@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Test", "SocketIOClient.Test\SocketIOClient.Test.csproj", "{CD4458DA-B220-4B01-8E40-F75869387985}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
@@ -21,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CD4458DA-B220-4B01-8E40-F75869387985}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD4458DA-B220-4B01-8E40-F75869387985}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD4458DA-B220-4B01-8E40-F75869387985}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD4458DA-B220-4B01-8E40-F75869387985}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}.Release|Any CPU.ActiveCfg = Release|Any CPU
