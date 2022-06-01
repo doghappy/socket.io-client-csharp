@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,6 +93,11 @@ namespace SocketIOClient.Transport
         public override void AddHeader(string key, string val)
         {
             _http.DefaultRequestHeaders.Add(key, val);
+        }
+
+        public override void SetProxy(IWebProxy proxy)
+        {
+            throw new NotImplementedException();
         }
 
         public override void Dispose()

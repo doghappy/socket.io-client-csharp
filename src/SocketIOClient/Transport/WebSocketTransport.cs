@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
@@ -19,7 +20,6 @@ namespace SocketIOClient.Transport
             _ws.BytesObservable.Subscribe(this);
         }
 
-        const int ReceiveChunkSize = 1024 * 8;
         const int SendChunkSize = 1024 * 8;
 
         readonly IClientWebSocket _ws;
@@ -82,6 +82,7 @@ namespace SocketIOClient.Transport
         }
 
         public override void AddHeader(string key, string val) => _ws.AddHeader(key, val);
+        public override void SetProxy(IWebProxy proxy) => _ws.SetProxy(proxy);
 
         public override void Dispose()
         {

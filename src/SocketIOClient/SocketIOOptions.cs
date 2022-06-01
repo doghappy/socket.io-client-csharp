@@ -1,6 +1,7 @@
 ﻿using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
+using System.Net;
 
 namespace SocketIOClient
 {
@@ -61,5 +62,6 @@ namespace SocketIOClient
         public bool AutoUpgrade { get; set; }
 
         public object Auth { get; set; }
+        public IWebProxy Proxy { get; set; }
     }
 }

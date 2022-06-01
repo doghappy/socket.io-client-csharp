@@ -1,7 +1,11 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Net;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System;
+using System.Net.WebSockets;
+using System.Net.Sockets;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -24,6 +28,53 @@ namespace SocketIOClient.IntegrationTests
             await Task.Delay(100);
 
             results.Should().Equal(6);
+        }
+
+        [TestMethod]
+        public void Should_Throw_WebSocketException_If_Proxy_Server_Not_Start()
+        {
+            using var io = CreateSocketIO(new SocketIOOptions
+            {
+                Proxy = new WebProxy("localhost", 6138),
+                Reconnection = false,
+                ConnectionTimeout = TimeSpan.FromSeconds(1)
+            });
+            Action action = () => io.ConnectAsync().Wait();
+            action.Should().Throw<WebSocketException>();
+        }
+
+        [TestMethod]
+        public async Task Should_Able_To_Connect_To_Proxy()
+        {
+            var msgs = new List<string>();
+            _ = Task.Run(StartProxyServer);
+            await Task.Delay(200);
+            using var io = CreateSocketIO(new SocketIOOptions
+            {
+                Proxy = new WebProxy("localhost", 6138),
+                Reconnection = false,
+                ConnectionTimeout = TimeSpan.FromSeconds(2)
+            });
+            Action action = () => io.ConnectAsync().Wait();
+            action.Should().Throw<TaskCanceledException>();
+            msgs.Should().BeEquivalentTo(new[] { $"CONNECT localhost:11400 HTTP/1.1{Environment.NewLine}Host: localhost:11400{Environment.NewLine + Environment.NewLine}" });
+
+            void StartProxyServer()
+            {
+                var proxy = new TcpListener(IPAddress.Parse("127.0.0.1"), 6138);
+                proxy.Start();
+                byte[] bytes = new byte[256];
+                while (true)
+                {
+                    var client = proxy.AcceptTcpClient();
+                    NetworkStream stream = client.GetStream();
+                    int i;
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    {
+                        msgs.Add(System.Text.Encoding.UTF8.GetString(bytes, 0, i));
+                    }
+                }
+            }
         }
     }
 }

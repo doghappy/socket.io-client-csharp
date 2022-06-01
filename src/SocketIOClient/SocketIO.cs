@@ -207,6 +207,7 @@ namespace SocketIOClient
             }
             _transport.Namespace = _namespace;
             SetHeaders();
+            _transport.SetProxy(Options.Proxy);
         }
 
         private void SetHeaders()

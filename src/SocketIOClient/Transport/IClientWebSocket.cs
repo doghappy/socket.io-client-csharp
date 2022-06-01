@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,5 +13,6 @@ namespace SocketIOClient.Transport
         Task DisconnectAsync(CancellationToken cancellationToken);
         Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
         void AddHeader(string key, string val);
+        void SetProxy(IWebProxy proxy);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Net.WebSockets;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -36,7 +37,7 @@ namespace SocketIOClient.Transport
 
         private void Listen()
         {
-            Task.Factory.StartNew(async() =>
+            Task.Factory.StartNew(async () =>
             {
                 while (true)
                 {
@@ -132,6 +133,8 @@ namespace SocketIOClient.Transport
         {
             _ws.Options.SetRequestHeader(key, val);
         }
+
+        public void SetProxy(IWebProxy proxy) => _ws.Options.Proxy = proxy;
 
         public void Dispose()
         {

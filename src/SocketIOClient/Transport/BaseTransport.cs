@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.UriConverters;
+using System.Net;
 
 namespace SocketIOClient.Transport
 {
@@ -130,6 +131,7 @@ namespace SocketIOClient.Transport
         public abstract Task DisconnectAsync(CancellationToken cancellationToken);
 
         public abstract void AddHeader(string key, string val);
+        public abstract void SetProxy(IWebProxy proxy);
 
         public virtual void Dispose()
         {
