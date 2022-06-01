@@ -132,6 +132,7 @@ namespace SocketIOClient.Transport
         public void AddHeader(string key, string val)
         {
             _ws.Options.SetRequestHeader(key, val);
+            _ws.Options.
         }
 
         public void SetProxy(IWebProxy proxy) => _ws.Options.Proxy = proxy;
