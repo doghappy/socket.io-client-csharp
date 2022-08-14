@@ -20,7 +20,7 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; }
 
-        public int Eio { get; set; }
+        public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
 
@@ -29,7 +29,7 @@ namespace SocketIOClient.Messages
 
         public void Read(string msg)
         {
-            if (Eio == 3)
+            if (EIO == EngineIO.V3)
             {
                 Eio3Read(msg);
             }
@@ -41,7 +41,7 @@ namespace SocketIOClient.Messages
 
         public string Write()
         {
-            if (Eio == 3)
+            if (EIO == EngineIO.V3)
             {
                 return Eio3Write();
             }

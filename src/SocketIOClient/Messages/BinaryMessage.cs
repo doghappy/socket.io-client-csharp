@@ -21,7 +21,7 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; set; }
 
-        public int Eio { get; set; }
+        public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
 

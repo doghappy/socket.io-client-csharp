@@ -17,7 +17,7 @@ namespace SocketIOClient
             ConnectionTimeout = TimeSpan.FromSeconds(20);
             Reconnection = true;
             Transport = TransportProtocol.Polling;
-            EIO = 4;
+            EIO = EngineIO.V4;
             AutoUpgrade = true;
         }
 
@@ -57,7 +57,7 @@ namespace SocketIOClient
 
         public TransportProtocol Transport { get; set; }
 
-        public int EIO { get; set; }
+        public EngineIO EIO { get; set; }
 
         public bool AutoUpgrade { get; set; }
 

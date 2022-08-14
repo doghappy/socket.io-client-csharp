@@ -13,5 +13,10 @@ namespace SocketIOClient.Extensions
         {
             handler?.Invoke(sender, args);
         }
+
+        public static void TryInvoke<T>(this Action<T> action, T arg1)
+        {
+            action?.Invoke(arg1);
+        }
     }
 }

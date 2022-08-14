@@ -14,67 +14,57 @@ namespace SocketIOClient.UnitTest
         [TestMethod]
         public void GetHandshakeUriWithHttp()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("http://localhost");
             var kvs = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
+            var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
         [TestMethod]
         public void GetHandshakeUriWithHttp80()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("http://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
+            var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
         [TestMethod]
         public void GetHandshakeUriWithHttps443()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("https://localhost:443");
             var kvs = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetServerUri(false, serverUri, 4, "/sio", kvs);
+            var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, "/sio", kvs);
             Assert.AreEqual("https://localhost/sio/?EIO=4&transport=polling&token=test", result.ToString());
         }
 
         [TestMethod]
         public void GetHandshakeUriWithWs80()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("ws://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>();
-            var result = cvt.GetServerUri(true, serverUri, 4, string.Empty, kvs);
+            var result = UriConverter.GetServerUri(true, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("ws://localhost/socket.io/?EIO=4&transport=websocket", result.ToString());
         }
 
         [TestMethod]
         public void GetHandshakeUriWithWss443()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("wss://localhost:443");
             var kvs = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetServerUri(true, serverUri, 4, string.Empty, kvs);
+            var result = UriConverter.GetServerUri(true, serverUri, EngineIO.V4, string.Empty, kvs);
 
             Assert.AreEqual("wss://localhost/socket.io/?EIO=4&transport=websocket&token=test", result.ToString());
         }
@@ -82,14 +72,12 @@ namespace SocketIOClient.UnitTest
         [TestMethod]
         public void GetHandshakeUriWithHttps80()
         {
-            var cvt = new UriConverter();
-
             var serverUri = new Uri("https://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("token", "test")
             };
-            var result = cvt.GetServerUri(false, serverUri, 4, string.Empty, kvs);
+            var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("https://localhost:80/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
         }
     }

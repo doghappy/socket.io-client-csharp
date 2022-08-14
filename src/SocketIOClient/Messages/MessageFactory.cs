@@ -34,7 +34,7 @@ namespace SocketIOClient.Messages
             return null;
         }
 
-        public static IMessage CreateMessage(int eio, string msg)
+        public static IMessage CreateMessage(EngineIO eio, string msg)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType item in enums)
@@ -45,7 +45,7 @@ namespace SocketIOClient.Messages
                     IMessage result = CreateMessage(item);
                     if (result != null)
                     {
-                        result.Eio = eio;
+                        result.EIO = eio;
                         result.Read(msg.Substring(prefix.Length));
                         return result;
                     }
@@ -59,12 +59,12 @@ namespace SocketIOClient.Messages
             var openedMessage = new OpenedMessage();
             if (msg[0] == '0')
             {
-                openedMessage.Eio = 4;
+                openedMessage.EIO = EngineIO.V4;
                 openedMessage.Read(msg.Substring(1));
             }
             else
             {
-                openedMessage.Eio = 3;
+                openedMessage.EIO = EngineIO.V3;
                 int index = msg.IndexOf(':');
                 openedMessage.Read(msg.Substring(index + 2));
             }

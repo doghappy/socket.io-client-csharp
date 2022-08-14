@@ -14,16 +14,10 @@ namespace SocketIOClient.IntegrationTests
 
         protected override SocketIO CreateSocketIO()
         {
-            var io = CreateSocketIO(new SocketIOOptions
+            return CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false
             });
-            io.LoggerFactory = LoggerFactory.Create(options =>
-            {
-                options.AddConsole();
-                options.AddFilter(nameof(SocketIO), LogLevel.Debug);
-            });
-            return io;
         }
     }
 }

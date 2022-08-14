@@ -1,12 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using RichardSzalay.MockHttp;
-using SocketIOClient.Transport;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using RichardSzalay.MockHttp;
+using SocketIOClient.Transport;
+using SocketIOClient.Transport.Http;
 
 namespace SocketIOClient.UnitTest.TransportTests
 {
@@ -24,7 +25,7 @@ namespace SocketIOClient.UnitTest.TransportTests
 
             var msgs = new List<string>();
             var handler = new Eio4HttpPollingHandler(httpClient);
-            handler.TextObservable.Subscribe(msg => msgs.Add(msg));
+            handler.OnTextReceived += msg => msgs.Add(msg);
 
             await handler.GetAsync(uri, CancellationToken.None);
 
@@ -50,8 +51,8 @@ namespace SocketIOClient.UnitTest.TransportTests
             var texts = new List<string>();
             var bytes = new List<byte[]>();
             var handler = new Eio4HttpPollingHandler(httpClient);
-            handler.TextObservable.Subscribe(msg => texts.Add(msg));
-            handler.BytesObservable.Subscribe(b => bytes.Add(b));
+            handler.OnTextReceived += msg => texts.Add(msg);
+            handler.OnBytesReceived += b => bytes.Add(b);
 
             await handler.GetAsync(uri, CancellationToken.None);
 

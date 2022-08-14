@@ -1,23 +1,21 @@
-﻿using SocketIOClient.Transport;
-using SocketIOClient.Transport.WebSockets;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Windows7
+namespace SocketIOClient.Transport.WebSockets
 {
     public class SystemNetWebSocketsClientWebSocket : IClientWebSocket
     {
         public SystemNetWebSocketsClientWebSocket()
         {
-            _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
+            _ws = new ClientWebSocket();
         }
 
-        readonly System.Net.WebSockets.Managed.ClientWebSocket _ws;
+        readonly ClientWebSocket _ws;
 
-        public SocketIOClient.Transport.WebSockets.WebSocketState State => (SocketIOClient.Transport.WebSockets.WebSocketState)_ws.State;
+        public WebSocketState State => (WebSocketState)_ws.State;
 
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
@@ -39,10 +37,10 @@ namespace SocketIOClient.Windows7
             await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<SocketIOClient.Transport.WebSockets.WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
+        public async Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
         {
             var result = await _ws.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
-            return new SocketIOClient.Transport.WebSockets.WebSocketReceiveResult
+            return new WebSocketReceiveResult
             {
                 Count = result.Count,
                 MessageType = (TransportMessageType)result.MessageType,

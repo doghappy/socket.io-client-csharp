@@ -4,12 +4,10 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Transport
+namespace SocketIOClient.Transport.Http
 {
-    public interface IHttpPollingHandler : IDisposable
+    public interface IHttpPollingHandler
     {
-        IObservable<string> TextObservable { get; }
-        IObservable<byte[]> BytesObservable { get; }
         Task GetAsync(string uri, CancellationToken cancellationToken);
         Task SendAsync(HttpRequestMessage req, CancellationToken cancellationToken);
         Task PostAsync(string uri, string content, CancellationToken cancellationToken);

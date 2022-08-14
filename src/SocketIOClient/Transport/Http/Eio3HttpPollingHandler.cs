@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Http.Headers;
 
-namespace SocketIOClient.Transport
+namespace SocketIOClient.Transport.Http
 {
     public class Eio3HttpPollingHandler : HttpPollingHandler
     {
@@ -53,7 +53,7 @@ namespace SocketIOClient.Transport
                 if (int.TryParse(text.Substring(p, index - p), out int length))
                 {
                     string msg = text.Substring(index + 1, length);
-                    TextSubject.OnNext(msg);
+                    OnText(msg);
                 }
                 else
                 {

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.Transport
+namespace SocketIOClient.Transport.Http
 {
     public class Eio4HttpPollingHandler : HttpPollingHandler
     {
@@ -36,11 +36,11 @@ namespace SocketIOClient.Transport
                 if (item[0] == 'b')
                 {
                     byte[] bytes = Convert.FromBase64String(item.Substring(1));
-                    BytesSubject.OnNext(bytes);
+                    OnBytes(bytes);
                 }
                 else
                 {
-                    TextSubject.OnNext(item);
+                    OnText(item);
                 }
             }
         }

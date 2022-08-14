@@ -1,46 +1,39 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using System.Reactive.Subjects;
-using Microsoft.Extensions.Logging;
-using SocketIOClient.JsonSerializer;
+using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
 using SocketIOClient.UriConverters;
-using System.Net;
 
 namespace SocketIOClient.Transport
 {
-    public abstract class BaseTransport : IObserver<string>, IObserver<byte[]>, IObservable<IMessage>, IDisposable
+    public abstract class BaseTransport : IDisposable
     {
-        public BaseTransport(SocketIOOptions options, IJsonSerializer jsonSerializer, ILogger logger)
+        public BaseTransport(TransportOptions options)
         {
             Options = options;
-            MessageSubject = new Subject<IMessage>();
-            JsonSerializer = jsonSerializer;
-            UriConverter = new UriConverter();
             _messageQueue = new Queue<IMessage>();
-            _logger = logger;
         }
 
         DateTime _pingTime;
         readonly Queue<IMessage> _messageQueue;
-        readonly ILogger _logger;
+        protected TransportOptions Options { get; }
 
-        protected SocketIOOptions Options { get; }
-        protected Subject<IMessage> MessageSubject { get; }
+        public Action<IMessage> OnReceived { get; set; }
 
-        protected IJsonSerializer JsonSerializer { get; }
+        protected abstract TransportProtocol Protocol { get; }
         protected CancellationTokenSource PingTokenSource { get; private set; }
         protected OpenedMessage OpenedMessage { get; private set; }
 
         public string Namespace { get; set; }
-        public IUriConverter UriConverter { get; set; }
+        public Action<Exception> OnError { get; set; }
 
         public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
         {
-            msg.Eio = Options.EIO;
-            msg.Protocol = Options.Transport;
+            msg.EIO = Options.EIO;
+            msg.Protocol = Protocol;
             var payload = new Payload
             {
                 Text = msg.Write()
@@ -55,22 +48,19 @@ namespace SocketIOClient.Transport
         protected virtual async Task OpenAsync(OpenedMessage msg)
         {
             OpenedMessage = msg;
-            if (Options.EIO == 3 && string.IsNullOrEmpty(Namespace))
+            if (Options.EIO ==  EngineIO.V3 && string.IsNullOrEmpty(Namespace))
             {
                 return;
             }
             var connectMsg = new ConnectedMessage
             {
                 Namespace = Namespace,
-                Eio = Options.EIO,
+                EIO = Options.EIO,
                 Query = Options.Query,
             };
-            if (Options.EIO == 4)
+            if (Options.EIO == EngineIO.V4)
             {
-                if (Options.Auth != null)
-                {
-                    connectMsg.AuthJsonStr = JsonSerializer.Serialize(new[] { Options.Auth }).Json.TrimStart('[').TrimEnd(']');
-                }
+                connectMsg.AuthJsonStr = Options.Auth;
             }
 
             for (int i = 1; i <= 3; i++)
@@ -83,7 +73,7 @@ namespace SocketIOClient.Transport
                 catch (Exception e)
                 {
                     if (i == 3)
-                        OnError(e);
+                        OnError.TryInvoke(e);
                     else
                         await Task.Delay(TimeSpan.FromMilliseconds(Math.Pow(2, i) * 100));
                 }
@@ -97,7 +87,7 @@ namespace SocketIOClient.Transport
         /// <param name="cancellationToken"></param>
         private void StartPing(CancellationToken cancellationToken)
         {
-            _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
+            // _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
             Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -110,16 +100,16 @@ namespace SocketIOClient.Transport
                     try
                     {
                         var ping = new PingMessage();
-                        _logger.LogDebug($"[Ping] Sending");
+                        // _logger.LogDebug($"[Ping] Sending");
                         await SendAsync(ping, CancellationToken.None).ConfigureAwait(false);
-                        _logger.LogDebug($"[Ping] Has been sent");
+                        // _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
-                        MessageSubject.OnNext(ping);
+                        OnReceived.TryInvoke(ping);
                     }
                     catch (Exception e)
                     {
-                        _logger.LogDebug($"[Ping] Failed to send, {e.Message}");
-                        MessageSubject.OnError(e);
+                        // _logger.LogDebug($"[Ping] Failed to send, {e.Message}");
+                        OnError.TryInvoke(e);
                         break;
                     }
                 }
@@ -135,7 +125,6 @@ namespace SocketIOClient.Transport
 
         public virtual void Dispose()
         {
-            MessageSubject.Dispose();
             _messageQueue.Clear();
             if (PingTokenSource != null)
             {
@@ -146,19 +135,11 @@ namespace SocketIOClient.Transport
 
         public abstract Task SendAsync(Payload payload, CancellationToken cancellationToken);
 
-        public void OnCompleted()
+        protected void OnTextReceived(string text)
         {
-            throw new NotImplementedException();
-        }
-
-        public void OnError(Exception error)
-        {
-            MessageSubject.OnError(error);
-        }
-
-        public void OnNext(string text)
-        {
-            _logger.LogDebug($"[Receive] {text}");
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[Receive] {text}");
+#endif
             var msg = MessageFactory.CreateMessage(Options.EIO, text);
             if (msg == null)
             {
@@ -175,7 +156,7 @@ namespace SocketIOClient.Transport
                 OpenAsync(msg as OpenedMessage).ConfigureAwait(false);
             }
 
-            if (Options.EIO == 3)
+            if (Options.EIO == EngineIO.V3)
             {
                 if (msg.Type == MessageType.Connected)
                 {
@@ -202,7 +183,7 @@ namespace SocketIOClient.Transport
                 }
             }
 
-            MessageSubject.OnNext(msg);
+            OnReceived.TryInvoke(msg);
 
             if (msg.Type == MessageType.Ping)
             {
@@ -210,38 +191,33 @@ namespace SocketIOClient.Transport
                 try
                 {
                     SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                    MessageSubject.OnNext(new PongMessage
+                    OnReceived.TryInvoke(new PongMessage
                     {
-                        Eio = Options.EIO,
-                        Protocol = Options.Transport,
+                        EIO = Options.EIO,
+                        Protocol = Protocol,
                         Duration = DateTime.Now - _pingTime
                     });
                 }
                 catch (Exception e)
                 {
-                    OnError(e);
+                    OnError.TryInvoke(e);
                 }
             }
         }
 
-        public void OnNext(byte[] bytes)
+        protected void OnBinaryReceived(byte[] bytes)
         {
-            _logger.LogDebug($"[Receive] binary message");
+            // _logger.LogDebug($"[Receive] binary message");
             if (_messageQueue.Count > 0)
             {
                 var msg = _messageQueue.Peek();
                 msg.IncomingBytes.Add(bytes);
                 if (msg.IncomingBytes.Count == msg.BinaryCount)
                 {
-                    MessageSubject.OnNext(msg);
+                    OnReceived.TryInvoke(msg);
                     _messageQueue.Dequeue();
                 }
             }
-        }
-
-        public IDisposable Subscribe(IObserver<IMessage> observer)
-        {
-            return MessageSubject.Subscribe(observer);
         }
     }
 }

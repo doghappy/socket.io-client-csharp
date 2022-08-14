@@ -3,37 +3,47 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using SocketIOClient.JsonSerializer;
+using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
 
-namespace SocketIOClient.Transport
+namespace SocketIOClient.Transport.Http
 {
     public class HttpTransport : BaseTransport
     {
-        public HttpTransport(HttpClient http,
-            IHttpPollingHandler pollingHandler,
-            SocketIOOptions options,
-            IJsonSerializer jsonSerializer,
-            ILogger logger) : base(options, jsonSerializer, logger)
+        public HttpTransport(TransportOptions options) : base(options)
         {
-            _http = http;
-            _httpPollingHandler = pollingHandler;
-            _httpPollingHandler.TextObservable.Subscribe(this);
-            _httpPollingHandler.BytesObservable.Subscribe(this);
+            _httpClientHandler = new HttpClientHandler();
+            _httpClient = new HttpClient(_httpClientHandler);
+            _pollingHandler = CreateHttpPollingHandler(_httpClient);
+            _sendLock = new SemaphoreSlim(1);
         }
 
+        bool _dirty;
         string _httpUri;
         CancellationTokenSource _pollingTokenSource;
 
-        readonly HttpClient _http;
-        readonly IHttpPollingHandler _httpPollingHandler;
+        readonly HttpClient _httpClient;
+        readonly HttpClientHandler _httpClientHandler;
+        readonly IHttpPollingHandler _pollingHandler;
+        readonly SemaphoreSlim _sendLock;
+
+        protected override TransportProtocol Protocol => TransportProtocol.Polling;
+
+        private IHttpPollingHandler CreateHttpPollingHandler(HttpClient httpClient)
+        {
+            switch (Options.EIO)
+            {
+                case EngineIO.V3:
+                    return new Eio3HttpPollingHandler(httpClient);
+                default:
+                    return new Eio4HttpPollingHandler(httpClient);
+            }
+        }
 
         private void StartPolling(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
-                int retry = 0;
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     if (!_httpUri.Contains("&sid="))
@@ -43,17 +53,12 @@ namespace SocketIOClient.Transport
                     }
                     try
                     {
-                        await _httpPollingHandler.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
+                        await _pollingHandler.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
                     }
                     catch (Exception e)
                     {
-                        retry++;
-                        if (retry >= 3)
-                        {
-                            MessageSubject.OnError(e);
-                            break;
-                        }
-                        await Task.Delay(100 * (int)Math.Pow(2, retry));
+                        OnError.TryInvoke(e);
+                        break;
                     }
                 }
             }, TaskCreationOptions.LongRunning);
@@ -61,21 +66,11 @@ namespace SocketIOClient.Transport
 
         public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
+            if (_dirty) throw new ObjectNotCleanException();
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
-            // if (_options.ExtraHeaders != null)
-            // {
-            //     foreach (var item in _options.ExtraHeaders)
-            //     {
-            //         req.Headers.Add(item.Key, item.Value);
-            //     }
-            // }
-
             _httpUri = uri.ToString();
-            await _httpPollingHandler.SendAsync(req, new CancellationTokenSource(Options.ConnectionTimeout).Token).ConfigureAwait(false);
-            if (_pollingTokenSource != null)
-            {
-                _pollingTokenSource.Cancel();
-            }
+            await _pollingHandler.SendAsync(req, new CancellationTokenSource(Options.ConnectionTimeout).Token).ConfigureAwait(false);
+            _dirty = true;
             _pollingTokenSource = new CancellationTokenSource();
             StartPolling(_pollingTokenSource.Token);
         }
@@ -92,34 +87,36 @@ namespace SocketIOClient.Transport
 
         public override void AddHeader(string key, string val)
         {
-            _http.DefaultRequestHeaders.Add(key, val);
+            _httpClient.DefaultRequestHeaders.Add(key, val);
         }
 
         public override void SetProxy(IWebProxy proxy)
         {
-            throw new NotImplementedException();
+            if (_dirty)
+            {
+                throw new InvalidOperationException("Unable to set proxy after connecting");
+            }
+            _httpClientHandler.Proxy = proxy;
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            _httpPollingHandler.Dispose();
+            _pollingTokenSource.TryCancel();
+            _pollingTokenSource.TryDispose();
         }
 
         public override async Task SendAsync(Payload payload, CancellationToken cancellationToken)
         {
-            await _httpPollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
+            await _pollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
             if (payload.Bytes != null && payload.Bytes.Count > 0)
             {
-                await _httpPollingHandler.PostAsync(_httpUri, payload.Bytes, cancellationToken);
+                await _pollingHandler.PostAsync(_httpUri, payload.Bytes, cancellationToken);
             }
         }
 
         protected override async Task OpenAsync(OpenedMessage msg)
         {
-            //if (!_httpUri.Contains("&sid="))
-            //{
-            //}
             _httpUri += "&sid=" + msg.Sid;
             await base.OpenAsync(msg);
         }

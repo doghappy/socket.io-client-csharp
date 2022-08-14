@@ -1,6 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Text.Json;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Messages;
-using System.Text.Json;
 
 namespace SocketIOClient.UnitTest.MessageTests
 {
@@ -10,21 +10,21 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Ping()
         {
-            var msg = MessageFactory.CreateMessage(4, "2");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "2");
             Assert.AreEqual(MessageType.Ping, msg.Type);
         }
 
         [TestMethod]
         public void Pong()
         {
-            var msg = MessageFactory.CreateMessage(4, "3");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "3");
             Assert.AreEqual(MessageType.Pong, msg.Type);
         }
 
         [TestMethod]
         public void Eio4Connected()
         {
-            var msg = MessageFactory.CreateMessage(4, "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -36,7 +36,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio4NamespaceConnected()
         {
-            var msg = MessageFactory.CreateMessage(4, "40/nsp,{\"sid\":\"xO_jp2_xrGtXUveLAc4y\"}");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "40/nsp,{\"sid\":\"xO_jp2_xrGtXUveLAc4y\"}");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -48,7 +48,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio3Connected()
         {
-            var msg = MessageFactory.CreateMessage(3, "40");
+            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -60,7 +60,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected1()
         {
-            var msg = MessageFactory.CreateMessage(3, "40/nsp,");
+            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp,");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -72,7 +72,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected2()
         {
-            var msg = MessageFactory.CreateMessage(3, "40/nsp");
+            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -84,7 +84,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected3()
         {
-            var msg = MessageFactory.CreateMessage(3, "40/nsp?token=V2,");
+            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp?token=V2,");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -96,7 +96,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected4()
         {
-            var msg = MessageFactory.CreateMessage(3, "40/nsp?token=V2");
+            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp?token=V2");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
             var connectedMsg = msg as ConnectedMessage;
@@ -108,7 +108,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Disconnected()
         {
-            var msg = MessageFactory.CreateMessage(4, "41");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "41");
             Assert.AreEqual(MessageType.Disconnected, msg.Type);
 
             var realMsg = msg as DisconnectedMessage;
@@ -119,7 +119,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceDisconnected()
         {
-            var msg = MessageFactory.CreateMessage(4, "41/github,");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "41/github,");
             Assert.AreEqual(MessageType.Disconnected, msg.Type);
 
             var realMsg = msg as DisconnectedMessage;
@@ -130,7 +130,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Event0Param()
         {
-            var msg = MessageFactory.CreateMessage(4, "42[\"hi\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42[\"hi\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
@@ -144,7 +144,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Event1Param()
         {
-            var msg = MessageFactory.CreateMessage(4, "42[\"hi\",\"V3: onAny\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42[\"hi\",\"V3: onAny\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
@@ -159,7 +159,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceEvent0Param()
         {
-            var msg = MessageFactory.CreateMessage(4, "42/nsp,[\"234\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,[\"234\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
@@ -173,7 +173,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceEvent1Param()
         {
-            var msg = MessageFactory.CreateMessage(4, "42/nsp,[\"qww\",true]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,[\"qww\",true]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
@@ -188,7 +188,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void EventMessageWithId()
         {
-            var msg = MessageFactory.CreateMessage(4, "42/nsp,17[\"client calls the server's callback 0\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,17[\"client calls the server's callback 0\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
             var realMsg = msg as EventMessage;
@@ -203,7 +203,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Ack()
         {
-            var msg = MessageFactory.CreateMessage(4, "431[\"doghappy\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "431[\"doghappy\"]");
             Assert.AreEqual(MessageType.AckMessage, msg.Type);
 
             var realMsg = msg as ClientAckMessage;
@@ -218,7 +218,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceAck()
         {
-            var msg = MessageFactory.CreateMessage(4, "43/google,15[\"doghappy\"]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "43/google,15[\"doghappy\"]");
             Assert.AreEqual(MessageType.AckMessage, msg.Type);
 
             var realMsg = msg as ClientAckMessage;
@@ -233,7 +233,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Error()
         {
-            var msg = MessageFactory.CreateMessage(4, "44{\"message\":\"Authentication error2\"}");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "44{\"message\":\"Authentication error2\"}");
             Assert.AreEqual(MessageType.ErrorMessage, msg.Type);
 
             var result = msg as ErrorMessage;
@@ -245,7 +245,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceError()
         {
-            var msg = MessageFactory.CreateMessage(4, "44/message,{\"message\":\"Authentication error\"}");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "44/message,{\"message\":\"Authentication error\"}");
             Assert.AreEqual(MessageType.ErrorMessage, msg.Type);
 
             var result = msg as ErrorMessage;
@@ -257,7 +257,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void Binary()
         {
-            var msg = MessageFactory.CreateMessage(4, "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
             var realMsg = msg as BinaryMessage;
@@ -273,7 +273,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceBinary()
         {
-            var msg = MessageFactory.CreateMessage(4, "451-/why-ve,[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-/why-ve,[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
             var realMsg = msg as BinaryMessage;
@@ -289,7 +289,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceBinaryWithId()
         {
-            var msg = MessageFactory.CreateMessage(4, "451-/why-ve,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-/why-ve,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
             var realMsg = msg as BinaryMessage;
@@ -306,7 +306,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void BinaryAck()
         {
-            var msg = MessageFactory.CreateMessage(4, "461-6[{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "461-6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
             var realMsg = msg as ClientBinaryAckMessage;
@@ -322,7 +322,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         [TestMethod]
         public void NamespaceBinaryAck()
         {
-            var msg = MessageFactory.CreateMessage(4, "461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory.CreateMessage(EngineIO.V4, "461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
             var realMsg = msg as ClientBinaryAckMessage;

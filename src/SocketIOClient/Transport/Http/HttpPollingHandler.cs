@@ -1,31 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient.Extensions;
 
-namespace SocketIOClient.Transport
+namespace SocketIOClient.Transport.Http
 {
     public abstract class HttpPollingHandler : IHttpPollingHandler
     {
         public HttpPollingHandler(HttpClient httpClient)
         {
             HttpClient = httpClient;
-            TextSubject = new Subject<string>();
-            BytesSubject = new Subject<byte[]>();
-            TextObservable = TextSubject.AsObservable();
-            BytesObservable = BytesSubject.AsObservable();
         }
 
-        protected HttpClient HttpClient { get; }
-        protected Subject<string> TextSubject{get;}
-        protected Subject<byte[]> BytesSubject{get;}
-
-        public IObservable<string> TextObservable { get; }
-        public IObservable<byte[]> BytesObservable { get; }
+        protected HttpClient HttpClient { get; set; }
+        public Action<string> OnTextReceived { get; set; }
+        public Action<byte[]> OnBytesReceived { get; set; }
 
         protected string AppendRandom(string uri)
         {
@@ -78,6 +70,16 @@ namespace SocketIOClient.Transport
 
         protected abstract void ProduceText(string text);
 
+        protected void OnText(string text)
+        {
+            OnTextReceived.TryInvoke(text);
+        }
+
+        protected void OnBytes(byte[] bytes)
+        {
+            OnBytesReceived.TryInvoke(bytes);
+        }
+
         private void ProduceBytes(byte[] bytes)
         {
             int i = 0;
@@ -97,22 +99,16 @@ namespace SocketIOClient.Transport
                 {
                     var buffer = new byte[length];
                     Buffer.BlockCopy(bytes, i, buffer, 0, buffer.Length);
-                    TextSubject.OnNext(Encoding.UTF8.GetString(buffer));
+                    OnText(Encoding.UTF8.GetString(buffer));
                 }
                 else if (type == 1)
                 {
                     var buffer = new byte[length - 1];
                     Buffer.BlockCopy(bytes, i + 1, buffer, 0, buffer.Length);
-                    BytesSubject.OnNext(buffer);
+                    OnBytes(buffer);
                 }
                 i += length;
             }
-        }
-
-        public void Dispose()
-        {
-            TextSubject.Dispose();
-            BytesSubject.Dispose();
         }
     }
 }
