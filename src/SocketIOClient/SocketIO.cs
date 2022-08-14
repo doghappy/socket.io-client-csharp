@@ -173,6 +173,7 @@ namespace SocketIOClient
 
         private void CreateTransport()
         {
+            Options.Transport = GetProtocolAsync().GetAwaiter().GetResult();
             var transportOptions = new TransportOptions
             {
                 EIO = Options.EIO,
@@ -488,7 +489,7 @@ namespace SocketIOClient
             catch (Exception e)
             {
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine(e);
+                System.Diagnostics.Debug.WriteLine(e);
 #endif
             }
         }

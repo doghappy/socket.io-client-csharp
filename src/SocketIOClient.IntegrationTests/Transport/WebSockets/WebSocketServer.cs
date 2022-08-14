@@ -16,6 +16,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
         {
             _cts = new CancellationTokenSource();
             _token = _cts.Token;
+            _connections = new List<WebSocket>();
         }
 
         const int ReceiveChunkSize = ChunkSize.Size8K;

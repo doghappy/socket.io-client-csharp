@@ -27,7 +27,7 @@ namespace SocketIOClient.UnitTest.TransportTests
 
             var msgs = new List<string>();
             var handler = new Eio3HttpPollingHandler(httpClient);
-            handler.OnTextReceived += msg => msgs.Add(msg);
+            handler.OnTextReceived = msg => msgs.Add(msg);
 
             await handler.GetAsync(uri, CancellationToken.None);
 
@@ -46,7 +46,7 @@ namespace SocketIOClient.UnitTest.TransportTests
 
             var msgs = new List<string>();
             var handler = new Eio3HttpPollingHandler(httpClient);
-            handler.OnTextReceived += msg => msgs.Add(msg);
+            handler.OnTextReceived = msg => msgs.Add(msg);
 
             await handler.GetAsync(uri, CancellationToken.None);
 
@@ -76,8 +76,8 @@ namespace SocketIOClient.UnitTest.TransportTests
             var texts = new List<string>();
             var bytes = new List<byte[]>();
             var handler = new Eio3HttpPollingHandler(httpClient);
-            handler.OnTextReceived += msg => texts.Add(msg);
-            handler.OnBytesReceived +=  b => bytes.Add(b);
+            handler.OnTextReceived = msg => texts.Add(msg);
+            handler.OnBytesReceived =  b => bytes.Add(b);
 
             await handler.GetAsync(uri, CancellationToken.None);
 

@@ -29,7 +29,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
                 var result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                 result.Should().BeEquivalentTo(new WebSocketReceiveResult
                 {
-                    Count = buffer.Length,
+                    Count = bytes.Length,
                     EndOfMessage = result.EndOfMessage,
                     MessageType = TransportMessageType.Text,
                 });

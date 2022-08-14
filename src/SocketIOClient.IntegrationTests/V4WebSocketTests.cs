@@ -31,7 +31,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
-        public void Should_Throw_WebSocketException_If_Proxy_Server_Not_Start()
+        public void Should_Throw_Exception_If_Proxy_Server_Not_Start()
         {
             using var io = CreateSocketIO(new SocketIOOptions
             {
@@ -39,8 +39,8 @@ namespace SocketIOClient.IntegrationTests
                 Reconnection = false,
                 ConnectionTimeout = TimeSpan.FromSeconds(1)
             });
-            Action action = () => io.ConnectAsync().Wait();
-            action.Should().Throw<WebSocketException>();
+            Action action = () => io.ConnectAsync().GetAwaiter().GetResult();
+            action.Should().Throw<TaskCanceledException>();
         }
 
         [TestMethod]

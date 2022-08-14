@@ -15,6 +15,8 @@ namespace SocketIOClient.Transport.Http
             _httpClientHandler = new HttpClientHandler();
             _httpClient = new HttpClient(_httpClientHandler);
             _pollingHandler = CreateHttpPollingHandler(_httpClient);
+            _pollingHandler.OnTextReceived = OnTextReceived;
+            _pollingHandler.OnBytesReceived = OnBinaryReceived;
             _sendLock = new SemaphoreSlim(1);
         }
 
@@ -69,6 +71,7 @@ namespace SocketIOClient.Transport.Http
             if (_dirty) throw new ObjectNotCleanException();
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             _httpUri = uri.ToString();
+
             await _pollingHandler.SendAsync(req, new CancellationTokenSource(Options.ConnectionTimeout).Token).ConfigureAwait(false);
             _dirty = true;
             _pollingTokenSource = new CancellationTokenSource();
