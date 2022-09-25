@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,9 +8,9 @@ namespace SocketIOClient.Transport.Http
 {
     public class Eio4HttpPollingHandler : HttpPollingHandler
     {
-        public Eio4HttpPollingHandler(HttpClient httpClient) : base(httpClient) { }
+        public Eio4HttpPollingHandler(IHttpClientAdapter adapter) : base(adapter) { }
 
-        const char Separator = '\u001E'; //1E 
+        const char Separator = '\u001E';
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {

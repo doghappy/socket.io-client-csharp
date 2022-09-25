@@ -10,37 +10,20 @@ namespace SocketIOClient.Transport.Http
 {
     public class HttpTransport : BaseTransport
     {
-        public HttpTransport(TransportOptions options) : base(options)
+        public HttpTransport(TransportOptions options, IHttpPollingHandler pollingHandler) : base(options)
         {
-            _httpClientHandler = new HttpClientHandler();
-            _httpClient = new HttpClient(_httpClientHandler);
-            _pollingHandler = CreateHttpPollingHandler(_httpClient);
+            _pollingHandler = pollingHandler ?? throw new ArgumentNullException(nameof(pollingHandler));
             _pollingHandler.OnTextReceived = OnTextReceived;
             _pollingHandler.OnBytesReceived = OnBinaryReceived;
-            _sendLock = new SemaphoreSlim(1);
         }
 
         bool _dirty;
         string _httpUri;
         CancellationTokenSource _pollingTokenSource;
 
-        readonly HttpClient _httpClient;
-        readonly HttpClientHandler _httpClientHandler;
-        readonly IHttpPollingHandler _pollingHandler;
-        readonly SemaphoreSlim _sendLock;
+        public IHttpPollingHandler _pollingHandler;
 
         protected override TransportProtocol Protocol => TransportProtocol.Polling;
-
-        private IHttpPollingHandler CreateHttpPollingHandler(HttpClient httpClient)
-        {
-            switch (Options.EIO)
-            {
-                case EngineIO.V3:
-                    return new Eio3HttpPollingHandler(httpClient);
-                default:
-                    return new Eio4HttpPollingHandler(httpClient);
-            }
-        }
 
         private void StartPolling(CancellationToken cancellationToken)
         {
@@ -59,7 +42,7 @@ namespace SocketIOClient.Transport.Http
                     }
                     catch (Exception e)
                     {
-                        OnError.TryInvoke(e);
+                        OnError(e);
                         break;
                     }
                 }
@@ -73,6 +56,7 @@ namespace SocketIOClient.Transport.Http
             _httpUri = uri.ToString();
 
             await _pollingHandler.SendAsync(req, new CancellationTokenSource(Options.ConnectionTimeout).Token).ConfigureAwait(false);
+
             _dirty = true;
             _pollingTokenSource = new CancellationTokenSource();
             StartPolling(_pollingTokenSource.Token);
@@ -90,7 +74,7 @@ namespace SocketIOClient.Transport.Http
 
         public override void AddHeader(string key, string val)
         {
-            _httpClient.DefaultRequestHeaders.Add(key, val);
+            _pollingHandler.AddHeader(key, val);
         }
 
         public override void SetProxy(IWebProxy proxy)
@@ -99,7 +83,7 @@ namespace SocketIOClient.Transport.Http
             {
                 throw new InvalidOperationException("Unable to set proxy after connecting");
             }
-            _httpClientHandler.Proxy = proxy;
+            _pollingHandler.SetProxy(proxy);
         }
 
         public override void Dispose()

@@ -22,6 +22,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
         const int ReceiveChunkSize = ChunkSize.Size8K;
 
         readonly CancellationTokenSource _cts;
+        HttpListener _listener;
         CancellationToken _token;
         bool _disposed;
         List<WebSocket> _connections;
@@ -46,14 +47,34 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             }
         }
 
-        public async Task StartAsync()
+        public void Start()
         {
-            var listener = new HttpListener();
-            Start();
+            Console.WriteLine("Requesting a port for WebSocket Server...");
+            // IANA suggests the range 49152 to 65535 for dynamic or private ports.
+            for (int i = 49152; i < 65536; i++)
+            {
+                _listener = new HttpListener();
+                _listener.Prefixes.Add($"http://localhost:{i}/");
+                try
+                {
+                    _listener.Start();
+                    ServerUrl = new Uri($"ws://localhost:{i}/");
+                    return;
+                }
+                catch
+                {
+                    Console.WriteLine($"Port {i} ");
+                    continue;
+                }
+            }
+            throw new InvalidProgramException("Unable to start server, ports 49152-65535 are used.");
+        }
 
+        public async Task ListenAsync()
+        {
             while (!_token.IsCancellationRequested)
             {
-                HttpListenerContext context = await listener.GetContextAsync();
+                HttpListenerContext context = await _listener.GetContextAsync();
                 if (context.Request.IsWebSocketRequest)
                 {
                     HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(null);
@@ -61,12 +82,12 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
                     _connections.Add(webSocket);
                     while (webSocket.State == System.Net.WebSockets.WebSocketState.Open && !_token.IsCancellationRequested)
                     {
-                        await ListenAsync(webSocket);
+                        await ReadRequestMessage(webSocket);
                     }
                 }
             }
 
-            async Task ListenAsync(WebSocket ws)
+            async Task ReadRequestMessage(WebSocket ws)
             {
                 var binary = new byte[ReceiveChunkSize];
                 int count = 0;
@@ -111,26 +132,6 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
                 byte[] bytes = new byte[result.Count];
                 Buffer.BlockCopy(buffer, 0, bytes, 0, bytes.Length);
                 await ws.SendAsync(new ArraySegment<byte>(bytes), result.MessageType, result.EndOfMessage, CancellationToken.None);
-            }
-
-            void Start()
-            {
-                // // IANA suggests the range 49152 to 65535 for dynamic or private ports.
-                for (int i = 49152; i < 65536; i++)
-                {
-                    listener.Prefixes.Add($"http://localhost:{i}/");
-                    try
-                    {
-                        listener.Start();
-                        ServerUrl = new Uri($"ws://localhost:{i}/");
-                        return;
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-                }
-                throw new InvalidProgramException("Unable to start server, ports 49152-65535 are used.");
             }
 
             void OnError(TransportException exception)

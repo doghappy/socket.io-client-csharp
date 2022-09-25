@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -10,19 +11,31 @@ namespace SocketIOClient.Transport.Http
 {
     public abstract class HttpPollingHandler : IHttpPollingHandler
     {
-        public HttpPollingHandler(HttpClient httpClient)
+        protected HttpPollingHandler(IHttpClientAdapter adapter)
         {
-            HttpClient = httpClient;
+            _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
         }
 
-        protected HttpClient HttpClient { get; set; }
+        readonly IHttpClientAdapter _adapter;
+        protected HttpClient HttpClient => _adapter.HttpClient;
         public Action<string> OnTextReceived { get; set; }
         public Action<byte[]> OnBytesReceived { get; set; }
+
+        public void AddHeader(string key, string val)
+        {
+            _adapter.AddHeader(key, val);
+        }
+
+        public void SetProxy(IWebProxy proxy)
+        {
+            _adapter.SetProxy(proxy);
+        }
 
         protected string AppendRandom(string uri)
         {
             return uri + "&t=" + DateTimeOffset.Now.ToUnixTimeSeconds();
         }
+
 
         public async Task GetAsync(string uri, CancellationToken cancellationToken)
         {
@@ -109,6 +122,13 @@ namespace SocketIOClient.Transport.Http
                 }
                 i += length;
             }
+        }
+
+        public static IHttpPollingHandler CreateHandler(EngineIO eio, IHttpClientAdapter adapter)
+        {
+            if (eio == EngineIO.V3)
+                return new Eio3HttpPollingHandler(adapter);
+            return new Eio4HttpPollingHandler(adapter);
         }
     }
 }

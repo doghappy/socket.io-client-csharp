@@ -10,35 +10,35 @@ namespace SocketIOClient.IntegrationTests
 {
     public abstract class SocketIOBaseTests
     {
-        public const string V4_WS = "http://localhost:11400";
-        public const string V4_NSP_WS = "http://localhost:11400/nsp";
-        public const string V4_WS_TOKEN = "http://localhost:11410";
-        public const string V4_NSP_WS_TOKEN = "http://localhost:11410/nsp";
+        public readonly string V4_WS = Startup.Configuration["server:v4:ws"];
+        public readonly string V4_NSP_WS = Startup.Configuration["server:v4:nsp_ws"];
+        public readonly string V4_WS_TOKEN = Startup.Configuration["server:v4:ws_token"];
+        public readonly string V4_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
 
-        public const string V4_HTTP = "http://localhost:11401";
-        public const string V4_NSP_HTTP = "http://localhost:11401/nsp";
-        public const string V4_HTTP_TOKEN = "http://localhost:11411";
-        public const string V4_NSP_HTTP_TOKEN = "http://localhost:11411/nsp";
+        public readonly string V4_HTTP = Startup.Configuration["server:v4:http"];
+        public readonly string V4_NSP_HTTP = Startup.Configuration["server:v4:nsp_http"];
+        public readonly string V4_HTTP_TOKEN = Startup.Configuration["server:v4:http_token"];
+        public readonly string V4_NSP_HTTP_TOKEN = Startup.Configuration["server:v4:nsp_http_token"];
 
-        public const string V3_WS = "http://localhost:11300";
-        public const string V3_NSP_WS = "http://localhost:11300/nsp";
-        public const string V3_WS_TOKEN = "http://localhost:11310";
-        public const string V3_NSP_WS_TOKEN = "http://localhost:11310/nsp";
+        public readonly string V3_WS = Startup.Configuration["server:v3:ws"];
+        public readonly string V3_NSP_WS = Startup.Configuration["server:v3:nsp_ws"];
+        public readonly string V3_WS_TOKEN = Startup.Configuration["server:v3:ws_token"];
+        public readonly string V3_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
 
-        public const string V3_HTTP = "http://localhost:11301";
-        public const string V3_NSP_HTTP = "http://localhost:11301/nsp";
-        public const string V3_HTTP_TOKEN = "http://localhost:11311";
-        public const string V3_NSP_HTTP_TOKEN = "http://localhost:11311/nsp";
+        public readonly string V3_HTTP = Startup.Configuration["server:v3:http"];
+        public readonly string V3_NSP_HTTP = Startup.Configuration["server:v3:nsp_ws"];
+        public readonly string V3_HTTP_TOKEN = Startup.Configuration["server:v3:ws_token"];
+        public readonly string V3_NSP_HTTP_TOKEN = Startup.Configuration["server:v3:nsp_ws_token"];
 
-        public const string V2_WS = "http://localhost:11200";
-        public const string V2_NSP_WS = "http://localhost:11200/nsp";
-        public const string V2_WS_TOKEN = "http://localhost:11210";
-        public const string V2_NSP_WS_TOKEN = "http://localhost:11410/nsp";
+        public readonly string V2_WS = Startup.Configuration["server:v2:ws"];
+        public readonly string V2_NSP_WS = Startup.Configuration["server:v2:nsp_ws"];
+        public readonly string V2_WS_TOKEN = Startup.Configuration["server:v2:ws_token"];
+        public readonly string V2_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
 
-        public const string V2_HTTP = "http://localhost:11201";
-        public const string V2_NSP_HTTP = "http://localhost:11201/nsp";
-        public const string V2_HTTP_TOKEN = "http://localhost:11211";
-        public const string V2_NSP_HTTP_TOKEN = "http://localhost:11211/nsp";
+        public readonly string V2_HTTP = Startup.Configuration["server:v2:http"];
+        public readonly string V2_NSP_HTTP = Startup.Configuration["server:v2:nsp_ws"];
+        public readonly string V2_HTTP_TOKEN = Startup.Configuration["server:v2:ws_token"];
+        public readonly string V2_NSP_HTTP_TOKEN = Startup.Configuration["server:v2:nsp_ws_token"];
 
         protected abstract string ServerUrl { get; }
         protected abstract string ServerTokenUrl { get; }

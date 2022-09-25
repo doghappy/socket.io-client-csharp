@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -95,7 +96,9 @@ namespace SocketIOClient
         public HttpClient HttpClient { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
-        private IClientWebSocket _clientWebsocket;
+        public Func<IHttpClientAdapter> HttpClientAdapterProvider { get; set; }
+
+        List<IDisposable> _resources = new List<IDisposable>();
 
         BaseTransport _transport;
 
@@ -161,6 +164,7 @@ namespace SocketIOClient
 
             HttpClient = new HttpClient();
             ClientWebSocketProvider = () => new SystemNetWebSocketsClientWebSocket();
+            HttpClientAdapterProvider = () => new DefaultHttpClientAdapter();
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),
@@ -183,16 +187,29 @@ namespace SocketIOClient
             };
             if (Options.Transport == TransportProtocol.Polling)
             {
-                _transport = new HttpTransport(transportOptions);
+                var adapter = HttpClientAdapterProvider();
+                if (adapter is null)
+                {
+                    throw new ArgumentNullException(nameof(HttpClientAdapterProvider), $"{HttpClientAdapterProvider} returns a null");
+                }
+                _resources.Add(adapter);
+                var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, adapter);
+                _transport = new HttpTransport(transportOptions, handler);
             }
             else
             {
-                _clientWebsocket = ClientWebSocketProvider();
-                _transport = new WebSocketTransport(transportOptions, _clientWebsocket);
+                var ws = ClientWebSocketProvider();
+                if (ws is null)
+                {
+                    throw new ArgumentNullException(nameof(ClientWebSocketProvider), $"{ClientWebSocketProvider} returns a null");
+                }
+                _resources.Add(ws);
+                _transport = new WebSocketTransport(transportOptions, ws);
             }
             _transport.Namespace = _namespace;
             SetHeaders();
             _transport.SetProxy(Options.Proxy);
+            _resources.Add(_transport);
         }
 
         private string GetAuth(object auth)
@@ -220,6 +237,20 @@ namespace SocketIOClient
             _isConnectCoreRunning = false;
         }
 
+        private string GetExceptionMessage()
+        {
+            return $"Cannot connect to server '{ServerUri}'";
+        }
+
+        private void DisposeResources()
+        {
+            foreach (var item in _resources)
+            {
+                item.TryDispose();
+            }
+            _resources.Clear();
+        }
+
         private void ConnectCore()
         {
             DisposeForReconnect();
@@ -230,8 +261,7 @@ namespace SocketIOClient
             {
                 while (true)
                 {
-                    _clientWebsocket.TryDispose();
-                    _transport.TryDispose();
+                    DisposeResources();
                     CreateTransport();
                     _realServerUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket, ServerUri, Options.EIO, Options.Path, Options.Query);
                     try
@@ -332,7 +362,7 @@ namespace SocketIOClient
             if (_connectCoreException != null)
             {
                 //Logger.LogError(_connectCoreException, _connectCoreException.Message);
-                throw _connectCoreException;
+                throw new ConnectionException(GetExceptionMessage(), _connectCoreException);
             }
             int ms = 0;
             while (!Connected)
@@ -350,7 +380,7 @@ namespace SocketIOClient
                 ms += 100;
                 if (ms > Options.ConnectionTimeout.TotalMilliseconds)
                 {
-                    throw new TimeoutException();
+                    throw new ConnectionException(GetExceptionMessage(), new TimeoutException());
                 }
                 await Task.Delay(100);
             }

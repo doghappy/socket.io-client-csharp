@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 using RichardSzalay.MockHttp;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
@@ -23,10 +24,12 @@ namespace SocketIOClient.UnitTest.TransportTests
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(uri)
                 .Respond("text/plain", "2:40");
+            var mockAdapter = new Mock<IHttpClientAdapter>();
             var httpClient = mockHttp.ToHttpClient();
+            mockAdapter.SetupGet(m => m.HttpClient).Returns(httpClient);
 
             var msgs = new List<string>();
-            var handler = new Eio3HttpPollingHandler(httpClient);
+            var handler = new Eio3HttpPollingHandler(mockAdapter.Object);
             handler.OnTextReceived = msg => msgs.Add(msg);
 
             await handler.GetAsync(uri, CancellationToken.None);
@@ -42,10 +45,13 @@ namespace SocketIOClient.UnitTest.TransportTests
             var mockHttp = new MockHttpMessageHandler();
             mockHttp.When(uri)
                 .Respond("text/plain", "2:4024:42[\"hi\",\"doghappy:test\"]");
+            
+            var mockAdapter = new Mock<IHttpClientAdapter>();
             var httpClient = mockHttp.ToHttpClient();
+            mockAdapter.SetupGet(m => m.HttpClient).Returns(httpClient);
 
             var msgs = new List<string>();
-            var handler = new Eio3HttpPollingHandler(httpClient);
+            var handler = new Eio3HttpPollingHandler(mockAdapter.Object);
             handler.OnTextReceived = msg => msgs.Add(msg);
 
             await handler.GetAsync(uri, CancellationToken.None);
@@ -71,11 +77,13 @@ namespace SocketIOClient.UnitTest.TransportTests
                         Content = content
                     };
                 });
+            var mockAdapter = new Mock<IHttpClientAdapter>();
             var httpClient = mockHttp.ToHttpClient();
+            mockAdapter.SetupGet(m => m.HttpClient).Returns(httpClient);
 
             var texts = new List<string>();
             var bytes = new List<byte[]>();
-            var handler = new Eio3HttpPollingHandler(httpClient);
+            var handler = new Eio3HttpPollingHandler(mockAdapter.Object);
             handler.OnTextReceived = msg => texts.Add(msg);
             handler.OnBytesReceived =  b => bytes.Add(b);
 
@@ -102,8 +110,10 @@ namespace SocketIOClient.UnitTest.TransportTests
                     outgoing = req.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
                     return new StringContent(string.Empty, Encoding.UTF8, "text/plain");
                 });
+            var mockAdapter = new Mock<IHttpClientAdapter>();
             var httpClient = mockHttp.ToHttpClient();
-            var handler = new Eio3HttpPollingHandler(httpClient);
+            mockAdapter.SetupGet(m => m.HttpClient).Returns(httpClient);
+            var handler = new Eio3HttpPollingHandler(mockAdapter.Object);
 
             var bytes = new List<byte[]>();
             var item0 = Encoding.UTF8.GetBytes("hello world 你好世界 hello world");
@@ -132,8 +142,10 @@ namespace SocketIOClient.UnitTest.TransportTests
                     reqContent = req.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                     return new StringContent(string.Empty, Encoding.UTF8, "text/plain");
                 });
+            var mockAdapter = new Mock<IHttpClientAdapter>();
             var httpClient = mockHttp.ToHttpClient();
-            var handler = new Eio3HttpPollingHandler(httpClient);
+            mockAdapter.SetupGet(m => m.HttpClient).Returns(httpClient);
+            var handler = new Eio3HttpPollingHandler(mockAdapter.Object);
 
             string content = "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]";
             await handler.PostAsync(uri, content, CancellationToken.None);

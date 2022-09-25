@@ -4,7 +4,6 @@ using System.Net;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
-using System.Net.WebSockets;
 using System.Net.Sockets;
 
 namespace SocketIOClient.IntegrationTests
@@ -40,7 +39,7 @@ namespace SocketIOClient.IntegrationTests
                 ConnectionTimeout = TimeSpan.FromSeconds(1)
             });
             Action action = () => io.ConnectAsync().GetAwaiter().GetResult();
-            action.Should().Throw<TaskCanceledException>();
+            action.Should().Throw<ConnectionException>();
         }
 
         [TestMethod]
@@ -55,9 +54,12 @@ namespace SocketIOClient.IntegrationTests
                 Reconnection = false,
                 ConnectionTimeout = TimeSpan.FromSeconds(2)
             });
-            Action action = () => io.ConnectAsync().Wait();
-            action.Should().Throw<TaskCanceledException>();
-            msgs.Should().BeEquivalentTo(new[] { $"CONNECT localhost:11400 HTTP/1.1{Environment.NewLine}Host: localhost:11400{Environment.NewLine + Environment.NewLine}" });
+            Action action = () => io.ConnectAsync().GetAwaiter().GetResult();
+            action.Should().Throw<ConnectionException>();
+
+            var uri = new Uri(V4_NSP_WS);
+            var uriStr = $"{uri.Host}:{uri.Port}";
+            msgs.Should().BeEquivalentTo(new[] { $"CONNECT {uriStr} HTTP/1.1\r\nHost: {uriStr}\r\n\r\n" });
 
             void StartProxyServer()
             {

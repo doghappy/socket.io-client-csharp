@@ -11,9 +11,9 @@ namespace SocketIOClient.Transport
 {
     public abstract class BaseTransport : IDisposable
     {
-        public BaseTransport(TransportOptions options)
+        protected BaseTransport(TransportOptions options)
         {
-            Options = options;
+            Options = options ?? throw new ArgumentNullException(nameof(options));
             _messageQueue = new Queue<IMessage>();
         }
 

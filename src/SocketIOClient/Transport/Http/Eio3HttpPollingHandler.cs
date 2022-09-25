@@ -9,7 +9,7 @@ namespace SocketIOClient.Transport.Http
 {
     public class Eio3HttpPollingHandler : HttpPollingHandler
     {
-        public Eio3HttpPollingHandler(HttpClient httpClient) : base(httpClient) { }
+        public Eio3HttpPollingHandler(IHttpClientAdapter adapter) : base(adapter) { }
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
