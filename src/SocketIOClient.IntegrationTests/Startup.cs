@@ -11,9 +11,9 @@ namespace SocketIOClient.IntegrationTests
         [AssemblyInitialize]
         public static void Initialize(TestContext testContext)
         {
-            Configuration = new ConfigurationBuilder()
+            var builder = Configuration = new ConfigurationBuilder()
                 .AddYamlFile("appsettings.yml")
-                .AddYamlFile("appsettings.user.yml")
+                .AddYamlFile("appsettings.user.yml", true)
                 .AddEnvironmentVariables()
                 // .AddCommandLine(args)
                 .Build();
