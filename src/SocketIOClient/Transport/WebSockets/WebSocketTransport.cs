@@ -160,7 +160,7 @@ namespace SocketIOClient.Transport.WebSockets
             }
             finally
             {
-                _sendLock.Release();
+               _sendLock.Release();
             }
         }
 
