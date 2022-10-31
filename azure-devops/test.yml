@@ -17,16 +17,15 @@ steps:
 
   - task: CmdLine@2
     displayName: Run socket.io server
-    workingDirectory: src/socket.io
     inputs:
       script: |
+        workingDirectory: src/socket.io
         npm install
         npm run install
         nohup npm start
 
   - task: UseDotNet@2
     displayName: Install .NET 6 SDK
-    workingDirectory: $(Agent.BuildDirectory)
     inputs:
       packageType: 'sdk'
       version: '6.x'
@@ -34,6 +33,7 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
+      workingDirectory: $(Agent.BuildDirectory)
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
 
