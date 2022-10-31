@@ -7,7 +7,7 @@ function Test-SocketIOConnection($Port) {
             return true
         }
         else {
-            Write-Host "$port not open, will retry after 3 s..."
+            Write-Host "$Port not open, will retry($(i)) after 3 s..."
             Start-Sleep -Seconds 3
         }
     }

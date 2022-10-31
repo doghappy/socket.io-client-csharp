@@ -21,6 +21,7 @@ jobs:
 - job: net6
   displayName: Install .NET 6 SDK
   steps:
+  - checkout: none
   - task: UseDotNet@2
     displayName: Install .NET 6 SDK
     inputs:
