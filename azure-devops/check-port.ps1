@@ -4,7 +4,7 @@ function Test-SocketIOConnection($Port) {
         $result = Test-Connection -TargetName localhost -TcpPort $Port
         if ($result) {
             Write-Host "$Port opened"
-            return true
+            return $true
         }
         else {
             Write-Host "$Port not open, will retry($(i)) after 3 s..."
@@ -12,7 +12,7 @@ function Test-SocketIOConnection($Port) {
         }
     }
     Write-Host "$port is not open after 3 retries."
-    return false
+    return $false
 }
 
 foreach ($port in $ports) {
