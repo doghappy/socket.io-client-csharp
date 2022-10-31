@@ -39,6 +39,7 @@ jobs:
         echo "==="
 - job:
   dependsOn: nodejs
+  condition: succeeded()
   displayName: Run socket.io server
   steps:
   - checkout: none
@@ -52,6 +53,7 @@ jobs:
         npm start &
 - job:
   dependsOn: net6
+  condition: succeeded()
   displayName: Run unit tests
   steps:
   - checkout: none
@@ -62,10 +64,11 @@ jobs:
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
 - job:
-  displayName: Run unit tests
+  displayName: Run integration tests
   dependsOn: 
   - nodejs
   - net6
+  condition: succeeded()
   steps:
   - checkout: none
   - task: PowerShell@2
