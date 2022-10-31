@@ -27,23 +27,17 @@ jobs:
       packageType: 'sdk'
       version: '6.x'
 - job:
-  dependsOn: net6
-  displayName: Run unit tests
+  displayName: Run tests
+  dependsOn: 
+  - nodejs
+  - net6
   steps:
-  - checkout: none
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
       workingDirectory: $(Agent.BuildDirectory)/s
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
-- job:
-  displayName: Run integration tests
-  dependsOn: 
-  - nodejs
-  - net6
-  steps:
-  - checkout: none
   - task: CmdLine@2
     displayName: Run socket.io server
     inputs:
