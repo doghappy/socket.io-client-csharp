@@ -45,9 +45,10 @@ jobs:
     - net6
     condition: failed()
     steps:
-      - pwsh:
-        displayName: Test whether ports of socket.io servers are opened
-        filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
+      - task: PowerShell@2
+        inputs:
+          displayName: Test whether ports of socket.io servers are opened
+          filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
 
   - job: integration_tests
     dependsOn: server_status
@@ -58,4 +59,3 @@ jobs:
       inputs:
         command: 'test'
         projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
-        
