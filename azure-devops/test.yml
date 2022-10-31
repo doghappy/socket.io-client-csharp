@@ -18,8 +18,8 @@ steps:
   - task: CmdLine@2
     displayName: Run socket.io server
     inputs:
+      workingDirectory: src/socket.io
       script: |
-        workingDirectory: src/socket.io
         npm install
         npm run install
         nohup npm start
