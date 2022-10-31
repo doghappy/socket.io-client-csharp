@@ -1,4 +1,4 @@
-name: Run unit tests and integration tests
+name: Unit Tests and Integration Tests
 
 trigger:
 - master
@@ -26,6 +26,7 @@ jobs:
             npm start &
 
   - job: net6
+    displayName:
     steps:
       - task: UseDotNet@2
         displayName: Install .NET 6 SDK
@@ -41,8 +42,8 @@ jobs:
 
   - job: server_status
     dependsOn: 
-    - nodejs
-    - net6
+      - nodejs
+      - net6
     condition: failed()
     steps:
       - task: PowerShell@2
