@@ -9,36 +9,53 @@ pool:
 variables:
   buildConfiguration: 'Release'
 
-steps:
-  - task: NodeTool@0
-    displayName: Install nodejs
-    inputs:
-      versionSpec: '16.x'
+jobs:
+  - job: nodejs
+    steps:
+      - task: NodeTool@0
+        displayName: Install nodejs
+        inputs:
+          versionSpec: '16.x'
+      - task: CmdLine@2
+        displayName: Run socket.io server
+        inputs:
+          workingDirectory: $(Agent.BuildDirectory)/src/socket.io
+          script: |
+            npm install
+            npm run install
+            npm start &
 
-  - task: CmdLine@2
-    displayName: Run socket.io server
-    inputs:
-      workingDirectory: src/socket.io
-      script: |
-        npm install
-        npm run install
-        nohup npm start
+  - job: net6
+    steps:
+      - task: UseDotNet@2
+        displayName: Install .NET 6 SDK
+        inputs:
+          packageType: 'sdk'
+          version: '6.x'
+      - task: DotNetCoreCLI@2
+        displayName: Run unit tests
+        inputs:
+          workingDirectory: $(Agent.BuildDirectory)
+          command: 'test'
+          projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
 
-  - task: UseDotNet@2
-    displayName: Install .NET 6 SDK
-    inputs:
-      packageType: 'sdk'
-      version: '6.x'
+  - job: server_status
+    dependsOn: 
+    - nodejs
+    - net6
+    condition: failed()
+    steps:
+      - pwsh:
+        displayName: Test whether ports of socket.io servers are opened
+        filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
 
-  - task: DotNetCoreCLI@2
-    displayName: Run unit tests
-    inputs:
-      workingDirectory: $(Agent.BuildDirectory)
-      command: 'test'
-      projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
-
-  - task: DotNetCoreCLI@2
-    displayName: Run integration tests
-    inputs:
-      command: 'test'
-      projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
+  - job: integration_tests
+    dependsOn: server_status
+    condition: failed()
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Run integration tests
+      inputs:
+        command: 'test'
+        projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
+        
