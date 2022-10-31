@@ -1,7 +1,4 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+name: Run unit tests and integration tests
 
 trigger:
 - master
@@ -14,29 +11,34 @@ variables:
 
 steps:
   - task: NodeTool@0
-    displayName: install nodejs
+    displayName: Install nodejs
     inputs:
       versionSpec: '16.x'
+
   - task: CmdLine@2
+    displayName: Run socket.io server
+    workingDirectory: src/socket.io
     inputs:
       script: |
-        cd src/socket.io
         npm install
         npm run install
-        nohup npm start &
-        cd ../../
+        nohup npm start
+
   - task: UseDotNet@2
-    displayName: install .NET SDK
+    displayName: Install .NET 6 SDK
+    workingDirectory: $(Agent.BuildDirectory)
     inputs:
       packageType: 'sdk'
       version: '6.x'
+
   - task: DotNetCoreCLI@2
-    displayName: dotnet test SocketIOClient.UnitTest
+    displayName: Run unit tests
     inputs:
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
+
   - task: DotNetCoreCLI@2
-    displayName: dotnet test SocketIOClient.IntegrationTests
+    displayName: Run integration tests
     inputs:
       command: 'test'
       projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
