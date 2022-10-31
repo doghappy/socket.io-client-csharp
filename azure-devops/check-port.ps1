@@ -1,6 +1,6 @@
 $ports = 11400, 11410, 11401, 11411, 11300, 11310, 11301, 11311, 11200, 11210, 11201, 11211
 function Test-SocketIOConnection($Port) {
-    for ($i = 0; $i -lt 10; $i++) {
+    for ($i = 0; $i -lt 3; $i++) {
         $result = Test-Connection -TargetName localhost -TcpPort $Port
         if ($result) {
             Write-Host "$Port opened"
@@ -8,7 +8,7 @@ function Test-SocketIOConnection($Port) {
         }
         else {
             Write-Host "$Port not open, will retry($(i)) after 3 s..."
-            Start-Sleep -Seconds 10
+            Start-Sleep -Seconds 3
         }
     }
     Write-Host "$port is not open after 3 retries."
