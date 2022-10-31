@@ -10,74 +10,70 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-  - job: nodejs
+- job: nodejs
+  displayName: Install nodejs
+  steps:
+  - checkout: none
+  - task: NodeTool@0
     displayName: Install nodejs
-    steps:
-      - task: NodeTool@0
-        displayName: Install nodejs
-        inputs:
-          versionSpec: '16.x'
-      - task: CmdLine@2
-        displayName: test
-        inputs:
-          script: |
-            pwd
-            ls
-            echo "==="
-            echo "$(Agent.BuildDirectory)"
-            echo "==="
-            ls $(Agent.BuildDirectory)
-            echo "==="
-
-  - job: net6
+    inputs:
+      versionSpec: '16.x'
+- job: net6
+  displayName: Install .NET 6 SDK
+  steps:
+  - task: UseDotNet@2
     displayName: Install .NET 6 SDK
-    steps:
-      - task: UseDotNet@2
-        displayName: Install .NET 6 SDK
-        inputs:
-          packageType: 'sdk'
-          version: '6.x'
-
-  - job:
-    dependsOn: nodejs
+    inputs:
+      packageType: 'sdk'
+      version: '6.x'
+  - task: CmdLine@2
+    displayName: test
+    inputs:
+      script: |
+        pwd
+        ls
+        echo "==="
+        echo "$(Agent.BuildDirectory)"
+        echo "==="
+        ls $(Agent.BuildDirectory)
+        echo "==="
+- job:
+  dependsOn: nodejs
+  displayName: Run socket.io server
+  steps:
+  - checkout: none
+  - task: CmdLine@2
     displayName: Run socket.io server
-    steps:
-      - task: CmdLine@2
-        displayName: Run socket.io server
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)/src/socket.io
-          script: |
-            npm install
-            npm run install
-            npm start &
-
-  - job:
-    dependsOn: net6
+    inputs:
+      workingDirectory: $(Agent.BuildDirectory)/src/socket.io
+      script: |
+        npm install
+        npm run install
+        npm start &
+- job:
+  dependsOn: net6
+  displayName: Run unit tests
+  steps:
+  - checkout: none
+  - task: DotNetCoreCLI@2
     displayName: Run unit tests
-    steps:
-      - task: DotNetCoreCLI@2
-        displayName: Run unit tests
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)
-          command: 'test'
-          projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
-
-  - job: server_status
-    dependsOn: 
-      - nodejs
-      - net6
-    steps:
-      - task: PowerShell@2
-        inputs:
-          displayName: Test whether ports of socket.io servers are opened
-          filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
-
-  - job:
+    inputs:
+      workingDirectory: $(Agent.BuildDirectory)
+      command: 'test'
+      projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
+- job:
+  displayName: Run unit tests
+  dependsOn: 
+  - nodejs
+  - net6
+  steps:
+  - checkout: none
+  - task: PowerShell@2
+    inputs:
+      displayName: Test whether ports of socket.io servers are opened
+      filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
+  - task: DotNetCoreCLI@2
     displayName: Run integration tests
-    dependsOn: server_status
-    steps:
-    - task: DotNetCoreCLI@2
-      displayName: Run integration tests
-      inputs:
-        command: 'test'
-        projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
+    inputs:
+      command: 'test'
+      projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
