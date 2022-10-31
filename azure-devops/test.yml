@@ -26,41 +26,28 @@ jobs:
     inputs:
       packageType: 'sdk'
       version: '6.x'
-  - task: CmdLine@2
-    displayName: test
-    inputs:
-      script: |
-        pwd
-        ls
-        echo "==="
-        echo "$(Agent.BuildDirectory)"
-        echo "==="
-        ls $(Agent.BuildDirectory)
-        echo "==="
 - job:
   dependsOn: nodejs
-  condition: succeeded()
   displayName: Run socket.io server
   steps:
   - checkout: none
   - task: CmdLine@2
     displayName: Run socket.io server
     inputs:
-      workingDirectory: $(Agent.BuildDirectory)/src/socket.io
+      workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
       script: |
         npm install
         npm run install
         npm start &
 - job:
   dependsOn: net6
-  condition: succeeded()
   displayName: Run unit tests
   steps:
   - checkout: none
   - task: DotNetCoreCLI@2
     displayName: Run unit tests
     inputs:
-      workingDirectory: $(Agent.BuildDirectory)
+      workingDirectory: $(Agent.BuildDirectory)/s
       command: 'test'
       projects: 'src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj'
 - job:
@@ -68,15 +55,15 @@ jobs:
   dependsOn: 
   - nodejs
   - net6
-  condition: succeeded()
   steps:
   - checkout: none
   - task: PowerShell@2
     inputs:
       displayName: Test whether ports of socket.io servers are opened
-      filePath: $(Agent.BuildDirectory)/azure-devops/check-port.ps1
+      filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
   - task: DotNetCoreCLI@2
     displayName: Run integration tests
     inputs:
+      workingDirectory: $(Agent.BuildDirectory)/s
       command: 'test'
       projects: 'src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj'
