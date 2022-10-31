@@ -48,8 +48,8 @@ jobs:
         npm run install
         npm start &
   - task: PowerShell@2
+    displayName: Check ports of socket.io servers
     inputs:
-      displayName: Test whether ports of socket.io servers are opened
       filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
   - task: DotNetCoreCLI@2
     displayName: Run integration tests
