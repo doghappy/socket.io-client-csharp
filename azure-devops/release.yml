@@ -21,6 +21,7 @@ jobs:
           inputs:
             # workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
             command: pack
+            project: SocketIOClient.csproj
             outputDir: $(Build.ArtifactStagingDirectory)
         - task: DotNetCoreCLI@2
           displayName: Push SocketIOClient to nuget.org
