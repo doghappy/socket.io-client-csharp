@@ -35,6 +35,4 @@ jobs:
           workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
           command: push
           nuGetFeedType: external
-          externalEndpoint: nuget.org
-          publishFeedCredentials: $(NuGetApiKey)
-          
+          externalEndpoint: NuGetApiKey
