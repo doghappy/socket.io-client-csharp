@@ -22,6 +22,8 @@ jobs:
           $packageName = Get-ChildItem $(Build.ArtifactStagingDirectory)/SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
           Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
           # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
+        displayName: dotnet pack
+        workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
       # - task: PowerShell@2
       #   displayName: dotnet pack
       #   inputs:
