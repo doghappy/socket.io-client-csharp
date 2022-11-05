@@ -4,35 +4,28 @@ trigger: none
 pool:
   vmImage: ubuntu-latest
 
-# parameters:
-#   - name: configuration
-#     displayName: Configuration
-#     type: string
-#     default: Release
-#     values:
-#       - Release
-#   - name: version_suffix
-#     displayName: Version Suffix
-#     type: string
-#   - name: package_version
-#     displayName: Package Version
-#     type: string
+parameters:
+  - name: SocketIOClient
+    displayName: SocketIOClient
+    type: boolean
+    default: false
 
 jobs:
   - job:
     displayName: Pack and Push
     steps:
       - template: templates/net-sdk.yml
-      - task: DotNetCoreCLI@2
-        displayName: Pack to Artifact
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-          command: pack
-          outputDir: $(Build.ArtifactStagingDirectory)
-      - task: DotNetCoreCLI@2
-        displayName: Push to nuget.org
-        inputs:
-          workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
-          command: push
-          nuGetFeedType: external
-          externalEndpoint: NuGetApiKey
+      - ${{ if parameters.SocketIOClient }}:
+        - task: DotNetCoreCLI@2
+          displayName: Pack to Artifact
+          inputs:
+            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+            command: pack
+            outputDir: $(Build.ArtifactStagingDirectory)
+        - task: DotNetCoreCLI@2
+          displayName: Push to nuget.org
+          inputs:
+            workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
+            command: push
+            nuGetFeedType: external
+            externalEndpoint: NuGetApiKey
