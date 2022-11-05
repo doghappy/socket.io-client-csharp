@@ -1,0 +1,9 @@
+parameters:
+  version: 6.x
+
+steps:
+- task: UseDotNet@2
+  displayName: Install .NET ${{parameters.version}} SDK
+  inputs:
+    packageType: sdk
+    version: ${{parameters.version}}
