@@ -34,9 +34,8 @@ jobs:
         - task: DotNetCoreCLI@2
           displayName: Restore SocketIOClient
           inputs:
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
             command: restore
-            projects: SocketIOClient.csproj
+            projects: $(Agent.BuildDirectory)/s/src/SocketIOClient/SocketIOClient.csproj
         - task: DotNetCoreCLI@2
           displayName: Build SocketIOClient
           inputs:
