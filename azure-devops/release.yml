@@ -17,13 +17,13 @@ jobs:
       - template: templates/net-sdk.yml
       - ${{ if parameters.SocketIOClient }}:
         - task: DotNetCoreCLI@2
-          displayName: Pack to Artifact
+          displayName: Pack SocketIOClient
           inputs:
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+            # workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
             command: pack
             outputDir: $(Build.ArtifactStagingDirectory)
         - task: DotNetCoreCLI@2
-          displayName: Push to nuget.org
+          displayName: Push SocketIOClient to nuget.org
           inputs:
             workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
             command: push
