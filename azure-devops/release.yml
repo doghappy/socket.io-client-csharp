@@ -31,23 +31,22 @@ jobs:
         # make sure to add two copies of this step:
         # one with the restore command and one with the build command.
         # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops
-        - task: DotNetCoreCLI@2
-          displayName: Restore SocketIOClient
-          inputs:
-            command: restore
-            projects: $(Agent.BuildDirectory)/s/src/SocketIOClient/SocketIOClient.csproj
-        - task: DotNetCoreCLI@2
-          displayName: Build SocketIOClient
-          inputs:
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-            command: build
+        # - task: DotNetCoreCLI@2
+        #   displayName: Restore SocketIOClient
+        #   inputs:
+        #     command: restore
+        #     projects: $(Agent.BuildDirectory)/s/src/SocketIOClient/SocketIOClient.csproj
+        # - task: DotNetCoreCLI@2
+        #   displayName: Build SocketIOClient
+        #   inputs:
+        #     workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+        #     command: build
         ################
         - task: DotNetCoreCLI@2
           displayName: Pack SocketIOClient
           inputs:
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
             command: pack
-            # project: SocketIOClient.csproj
+            projects: $(Agent.BuildDirectory)/s/src/SocketIOClient/SocketIOClient.csproj
             outputDir: $(Build.ArtifactStagingDirectory)
         - task: DotNetCoreCLI@2
           displayName: Push SocketIOClient to nuget.org
