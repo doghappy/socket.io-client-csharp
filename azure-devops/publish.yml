@@ -7,7 +7,7 @@ pool:
 parameters:
   - name: package
     displayName: Package
-    type: string
+    type: boolean
     values:
       - SocketIOClient
       - SocketIOClient.Windows7
@@ -17,13 +17,13 @@ jobs:
   - job:
     displayName: Publish
     steps:
-      - task: PowerShell@2
+      - pwsh:
         displayName: dotnet pack
         inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
+          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
           script: |
             dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
-            $packageName = Get-ChildItem ${{ parameters.package }}.*.nupkg | Select-Object -First 1 -ExpandProperty Name
+            $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
             Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
             # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
       - task: CmdLine@2
