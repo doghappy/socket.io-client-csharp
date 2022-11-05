@@ -21,8 +21,8 @@ jobs:
             command: pack
             configurationToPack: Release
             workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-            verbosityRestore: normal
-            # projects: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient/SocketIOClient.csproj
+            verbosityRestore: minimal
+            projects: SocketIOClient.csproj
             outputDir: $(Build.ArtifactStagingDirectory)
         # - task: CmdLine@2
         #   displayName: Pack SocketIOClient
