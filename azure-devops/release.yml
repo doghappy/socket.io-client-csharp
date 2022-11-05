@@ -19,19 +19,18 @@ jobs:
         inputs:
           script: |
             dotnet --version
-      - task:
-        - ${{ if parameters.SocketIOClient }}:
-          - task: DotNetCoreCLI@2
-            displayName: Pack SocketIOClient
-            inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-              command: pack
-              # project: SocketIOClient.csproj
-              outputDir: $(Build.ArtifactStagingDirectory)
-          - task: DotNetCoreCLI@2
-            displayName: Push SocketIOClient to nuget.org
-            inputs:
-              workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
-              command: push
-              nuGetFeedType: external
-              externalEndpoint: NuGetApiKey
+      - ${{ if parameters.SocketIOClient }}:
+        - task: DotNetCoreCLI@2
+          displayName: Pack SocketIOClient
+          inputs:
+            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+            command: pack
+            # project: SocketIOClient.csproj
+            outputDir: $(Build.ArtifactStagingDirectory)
+        - task: DotNetCoreCLI@2
+          displayName: Push SocketIOClient to nuget.org
+          inputs:
+            workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
+            command: push
+            nuGetFeedType: external
+            externalEndpoint: NuGetApiKey
