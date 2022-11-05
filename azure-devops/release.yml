@@ -33,10 +33,10 @@ jobs:
           inputs:
             script: |
               ls $(Build.ArtifactStagingDirectory)
-        # - task: DotNetCoreCLI@2
-        #   displayName: Push SocketIOClient to nuget.org
-        #   inputs:
-        #     packagesToPush: $(Build.ArtifactStagingDirectory)/SocketIOClient.*.nupkg
-        #     command: push
-        #     nuGetFeedType: external
-        #     externalEndpoint: NuGetApiKey
+        - task: DotNetCoreCLI@2
+          displayName: Push SocketIOClient to nuget.org
+          inputs:
+            packagesToPush: $(Build.ArtifactStagingDirectory)/SocketIOClient.*.nupkg
+            command: push
+            nuGetFeedType: external
+            externalEndpoint: NuGetApiKey
