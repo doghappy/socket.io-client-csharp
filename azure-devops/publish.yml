@@ -37,6 +37,6 @@ jobs:
       - task: CmdLine@2
         displayName: Publish to nuget.org
         inputs:
-          workingDirectory: $(Agent.ArtifactStagingDirectory)
+          workingDirectory: $(Build.ArtifactStagingDirectory)
           script: |
             echo $(packageName)
