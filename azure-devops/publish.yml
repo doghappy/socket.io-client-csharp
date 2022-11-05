@@ -5,21 +5,28 @@ pool:
   vmImage: ubuntu-latest
 
 parameters:
-  - name: SocketIOClient
-    displayName: SocketIOClient
-    type: boolean
-    default: false
+  - name: package
+    displayName: Package
+    type: string
+    values:
+      - SocketIOClient
 
 jobs:
   - job:
     displayName: Publish
     steps:
-      - ${{ if parameters.SocketIOClient }}:
-        - task: CmdLine@2
-          displayName: Publish to nuget.org
-          inputs:
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-            script: |
-              dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
-              $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
-              dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
+      - task: CmdLine@2
+        displayName: dotnet pack
+        inputs:
+          workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
+          script: |
+            dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
+            $packageName = Get-ChildItem ${{ parameters.package }}.*.nupkg | Select-Object -First 1 -ExpandProperty Name
+            Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
+            # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
+      - task: CmdLine@2
+        displayName: Publish to nuget.org
+        inputs:
+          workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
+          script: |
+            echo $(packageName)
