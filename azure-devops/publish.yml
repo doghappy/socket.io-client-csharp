@@ -17,9 +17,10 @@ jobs:
   - job:
     displayName: Publish
     steps:
-      - pwsh:
+      - task: PowerShell@2
         displayName: dotnet pack
         inputs:
+          pwsh: true
           workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
           script: |
             dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
