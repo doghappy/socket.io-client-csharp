@@ -17,16 +17,21 @@ jobs:
   - job:
     displayName: Publish
     steps:
-      - task: PowerShell@2
-        displayName: dotnet pack
-        inputs:
-          pwsh: true
-          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-          script: |
-            dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
-            $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
-            Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
-            # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
+      - pwsh: |
+          dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
+          $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
+          Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
+          # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
+      # - task: PowerShell@2
+      #   displayName: dotnet pack
+      #   inputs:
+      #     pwsh: true
+      #     workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+      #     script: |
+      #       dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
+      #       $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
+      #       Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
+      #       # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
       - task: CmdLine@2
         displayName: Publish to nuget.org
         inputs:
