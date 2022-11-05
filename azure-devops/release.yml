@@ -24,7 +24,7 @@ jobs:
         - task: CmdLine@2
           inputs:
             script: |
-              dotnet --list-sdks
+              ls $(Build.ArtifactStagingDirectory)
         - task: DotNetCoreCLI@2
           displayName: Push SocketIOClient to nuget.org
           inputs:
