@@ -10,12 +10,14 @@ parameters:
     type: string
     values:
       - SocketIOClient
+      - SocketIOClient.Windows7
+      - SocketIOClient.Newtonsoft.Json
 
 jobs:
   - job:
     displayName: Publish
     steps:
-      - task: CmdLine@2
+      - task: PowerShell@2
         displayName: dotnet pack
         inputs:
           workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
