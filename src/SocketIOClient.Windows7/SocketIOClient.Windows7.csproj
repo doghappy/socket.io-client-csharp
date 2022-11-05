@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<Version>3.0.6</Version>
 		<Description>socket.io-client implemention for .NET</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>

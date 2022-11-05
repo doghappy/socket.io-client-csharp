@@ -11,7 +11,6 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>socket.io-client</PackageTags>
     <RepositoryType>github</RepositoryType>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile></PackageLicenseFile>
     <Version>3.0.7-alpha.1</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
