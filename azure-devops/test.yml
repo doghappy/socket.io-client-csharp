@@ -15,27 +15,20 @@ jobs:
         displayName: Install nodejs
         inputs:
           versionSpec: 16.x
-  - job: net6
-    displayName: Install .NET 6 SDK
-    steps:
-      - checkout: none
-      - task: UseDotNet@2
-        displayName: Install .NET 6 SDK
-        inputs:
-          packageType: sdk
-          version: 6.x
-  - job:
-    displayName: Run tests
-    dependsOn:
-      - nodejs
-      - net6
+  - job: ut
+    displayName: Run unit tests
     steps:
       - task: DotNetCoreCLI@2
         displayName: Run unit tests
         inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s
+          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
           command: test
-          projects: src/SocketIOClient.UnitTest/SocketIOClient.UnitTest.csproj
+  - job:
+    displayName: Run tests
+    dependsOn:
+      - nodejs
+      - ut
+    steps:
       - task: CmdLine@2
         displayName: Run socket.io server
         inputs:
@@ -51,6 +44,5 @@ jobs:
       - task: DotNetCoreCLI@2
         displayName: Run integration tests
         inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s
+          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
           command: test
-          projects: src/SocketIOClient.IntegrationTests/SocketIOClient.IntegrationTests.csproj
