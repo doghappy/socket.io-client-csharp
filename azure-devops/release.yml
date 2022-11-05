@@ -15,20 +15,20 @@ jobs:
     displayName: Pack and Push
     steps:
       - ${{ if parameters.SocketIOClient }}:
-        - task: DotNetCoreCLI@2
-          displayName: Pack SocketIOClient
-          inputs:
-            command: pack
-            configurationToPack: Release
-            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-            verbosityRestore: minimal
-            projects: SocketIOClient.csproj
-            outputDir: $(Build.ArtifactStagingDirectory)
-        # - task: CmdLine@2
+        # - task: DotNetCoreCLI@2
         #   displayName: Pack SocketIOClient
         #   inputs:
-        #     workingDirectory: $(Build.ArtifactStagingDirectory)/s/src/SocketIOClient
-        #     script: dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
+        #     command: pack
+        #     configurationToPack: Release
+        #     workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+        #     verbosityRestore: minimal
+        #     projects: SocketIOClient.csproj
+        #     outputDir: $(Build.ArtifactStagingDirectory)
+        - task: CmdLine@2
+          displayName: Pack SocketIOClient
+          inputs:
+            workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
+            script: dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
         - task: CmdLine@2
           inputs:
             script: |
