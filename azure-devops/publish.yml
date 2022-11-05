@@ -19,7 +19,7 @@ jobs:
     steps:
       - pwsh: |
           dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
-          $packageName = Get-ChildItem SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
+          $packageName = Get-ChildItem $(Build.ArtifactStagingDirectory)/SocketIOClient.*.nupkg | Select-Object -First 1 -ExpandProperty Name
           Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
           # dotnet nuget push $packageName --api-key AzureArtifacts --source nuget.org
       # - task: PowerShell@2
