@@ -24,6 +24,8 @@ jobs:
         displayName: dotnet pack
         workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
       - pwsh: |
-          dotnet nuget push $(packageName) --api-key $NUGET_APIKEY
-        displayName: Publish $(packageName)
+          echo $(packageName)
+          echo ${packageName}
+          dotnet nuget push $(packageName) --api-key ${env:NUGET_APIKEY}
+        displayName: Publish SocketIOClient
         workingDirectory: $(Build.ArtifactStagingDirectory)
