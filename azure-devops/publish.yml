@@ -23,10 +23,7 @@ jobs:
           Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
         displayName: dotnet pack
         workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient
-      - task: NuGetAuthenticate@1
-        inputs:
-          nuGetServiceConnections: NuGet
       - pwsh: |
-          dotnet nuget push $(packageName) --api-key AzureArtifacts --source nuget.org
+          dotnet nuget push $(packageName) --api-key ${env:NUGET_APIKEY} --source nuget.org
         displayName: Publish to nuget.org
         workingDirectory: $(Build.ArtifactStagingDirectory)
