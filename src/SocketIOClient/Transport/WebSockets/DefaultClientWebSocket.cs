@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.Transport.WebSockets
 {
-    public class SystemNetWebSocketsClientWebSocket : IClientWebSocket
+    public class DefaultClientWebSocket : IClientWebSocket
     {
-        public SystemNetWebSocketsClientWebSocket()
+        public DefaultClientWebSocket()
         {
             _ws = new ClientWebSocket();
         }

@@ -8,7 +8,7 @@ namespace SocketIOClient.Transport.Http
 {
     public class Eio4HttpPollingHandler : HttpPollingHandler
     {
-        public Eio4HttpPollingHandler(IHttpClientAdapter adapter) : base(adapter) { }
+        public Eio4HttpPollingHandler(IHttpClient adapter) : base(adapter) { }
 
         const char Separator = '\u001E';
 

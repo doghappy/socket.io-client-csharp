@@ -9,7 +9,7 @@ namespace SocketIOClient.Transport.Http
 {
     public class Eio3HttpPollingHandler : HttpPollingHandler
     {
-        public Eio3HttpPollingHandler(IHttpClientAdapter adapter) : base(adapter) { }
+        public Eio3HttpPollingHandler(IHttpClient adapter) : base(adapter) { }
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
@@ -28,7 +28,7 @@ namespace SocketIOClient.Transport.Http
             await HttpClient.PostAsync(AppendRandom(uri), content, cancellationToken).ConfigureAwait(false);
         }
 
-        private List<int> SplitInt(int number)
+        private static List<int> SplitInt(int number)
         {
             List<int> list = new List<int>();
             while (number > 0)

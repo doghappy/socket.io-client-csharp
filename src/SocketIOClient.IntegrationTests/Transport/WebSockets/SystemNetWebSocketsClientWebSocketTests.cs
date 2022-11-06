@@ -18,7 +18,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             using var server = new WebSocketServer();
             _ = server.ListenAsync();
 
-            using var client = new SystemNetWebSocketsClientWebSocket();
+            using var client = new DefaultClientWebSocket();
             await client.ConnectAsync(server.ServerUrl, CancellationToken.None);
 
             foreach (var item in TestHelper.TestMessages)
@@ -47,7 +47,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             
             Console.WriteLine($"URL:{server.ServerUrl}");
 
-            using var ws = new SystemNetWebSocketsClientWebSocket();
+            using var ws = new DefaultClientWebSocket();
             ws.State.Should().Be(WebSocketState.None);
 
             await ws.ConnectAsync(server.ServerUrl, CancellationToken.None);

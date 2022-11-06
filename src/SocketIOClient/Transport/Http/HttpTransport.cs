@@ -95,6 +95,7 @@ namespace SocketIOClient.Transport.Http
 
         public override async Task SendAsync(Payload payload, CancellationToken cancellationToken)
         {
+            // TODO: lock
             await _pollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
             if (payload.Bytes != null && payload.Bytes.Count > 0)
             {

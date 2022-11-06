@@ -96,7 +96,7 @@ namespace SocketIOClient
         public HttpClient HttpClient { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
-        public Func<IHttpClientAdapter> HttpClientAdapterProvider { get; set; }
+        public Func<IHttpClient> HttpClientAdapterProvider { get; set; }
 
         List<IDisposable> _resources = new List<IDisposable>();
 
@@ -163,8 +163,8 @@ namespace SocketIOClient
             JsonSerializer = new SystemTextJsonSerializer();
 
             HttpClient = new HttpClient();
-            ClientWebSocketProvider = () => new SystemNetWebSocketsClientWebSocket();
-            HttpClientAdapterProvider = () => new DefaultHttpClientAdapter();
+            ClientWebSocketProvider = () => new DefaultClientWebSocket();
+            HttpClientAdapterProvider = () => new DefaultHttpClient();
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),

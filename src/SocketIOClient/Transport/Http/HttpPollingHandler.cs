@@ -11,27 +11,26 @@ namespace SocketIOClient.Transport.Http
 {
     public abstract class HttpPollingHandler : IHttpPollingHandler
     {
-        protected HttpPollingHandler(IHttpClientAdapter adapter)
+        protected HttpPollingHandler(IHttpClient adapter)
         {
-            _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
+            HttpClient = adapter ?? throw new ArgumentNullException(nameof(adapter));
         }
 
-        readonly IHttpClientAdapter _adapter;
-        protected HttpClient HttpClient => _adapter.HttpClient;
+        protected IHttpClient HttpClient { get; }
         public Action<string> OnTextReceived { get; set; }
         public Action<byte[]> OnBytesReceived { get; set; }
 
         public void AddHeader(string key, string val)
         {
-            _adapter.AddHeader(key, val);
+            HttpClient.AddHeader(key, val);
         }
 
         public void SetProxy(IWebProxy proxy)
         {
-            _adapter.SetProxy(proxy);
+            HttpClient.SetProxy(proxy);
         }
 
-        protected string AppendRandom(string uri)
+        protected static string AppendRandom(string uri)
         {
             return uri + "&t=" + DateTimeOffset.Now.ToUnixTimeSeconds();
         }
@@ -58,7 +57,7 @@ namespace SocketIOClient.Transport.Http
             await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
-        public async virtual Task PostAsync(string uri, string content, CancellationToken cancellationToken)
+        public virtual async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             var httpContent = new StringContent(content);
             var resMsg = await HttpClient.PostAsync(AppendRandom(uri), httpContent, cancellationToken).ConfigureAwait(false);
@@ -124,7 +123,7 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        public static IHttpPollingHandler CreateHandler(EngineIO eio, IHttpClientAdapter adapter)
+        public static IHttpPollingHandler CreateHandler(EngineIO eio, IHttpClient adapter)
         {
             if (eio == EngineIO.V3)
                 return new Eio3HttpPollingHandler(adapter);

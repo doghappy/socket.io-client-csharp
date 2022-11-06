@@ -23,7 +23,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             using var server = new WebSocketServer();
             _ = server.ListenAsync();
 
-            using var ws = new SystemNetWebSocketsClientWebSocket();
+            using var ws = new DefaultClientWebSocket();
             using var transport = new WebSocketTransport(new TransportOptions
             {
                 EIO = EngineIO.V3,
@@ -58,7 +58,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             using var server = new WebSocketServer();
             _ = server.ListenAsync();
 
-            using var ws = new SystemNetWebSocketsClientWebSocket();
+            using var ws = new DefaultClientWebSocket();
             using var transport = new WebSocketTransport(new TransportOptions
             {
                 EIO = EngineIO.V3,
