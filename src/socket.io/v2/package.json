@@ -12,7 +12,6 @@
   "author": "https://github.com/doghappy",
   "license": "Apache",
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "2.5.0"
+      "socket.io": "2.5.0"
   }
 }

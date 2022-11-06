@@ -42,6 +42,7 @@ namespace SocketIOClient.IntegrationTests
 
         protected abstract string ServerUrl { get; }
         protected abstract string ServerTokenUrl { get; }
+        protected abstract EngineIO EIO { get; }
 
         protected abstract SocketIOOptions CreateOptions();
         protected abstract SocketIO CreateSocketIO();
@@ -91,7 +92,8 @@ namespace SocketIOClient.IntegrationTests
         {
             using var io = CreateSocketIO(new SocketIOOptions
             {
-                Reconnection = false
+                Reconnection = false,
+                EIO = EIO,
             });
             int times = 0;
             io.OnConnected += (s, e) => times++;
@@ -223,6 +225,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "abc" }
@@ -244,6 +247,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "abc123" }
@@ -264,11 +268,16 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_Be_Able_To_Get_Auth()
         {
+            if (EIO == EngineIO.V3)
+            {
+                return;
+            }
             UserDTO auth = null;
             string guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Auth = new UserDTO
                 {
                     Name = "test",
@@ -368,6 +377,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 ExtraHeaders = new Dictionary<string, string>
                 {
                     { "CustomHeader", "CustomHeader-Value" }

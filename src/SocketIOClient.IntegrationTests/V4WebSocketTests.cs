@@ -13,6 +13,7 @@ namespace SocketIOClient.IntegrationTests
     {
         protected override string ServerUrl => V4_WS;
         protected override string ServerTokenUrl => V4_WS_TOKEN;
+        protected override EngineIO EIO => EngineIO.V4;
 
         [TestMethod]
         public async Task Should_Be_Work_Even_An_Exception_Thrown_From_Handler()

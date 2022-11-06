@@ -8,7 +8,8 @@ namespace SocketIOClient.IntegrationTests
         {
             return new SocketIOOptions
             {
-                AutoUpgrade = false
+                EIO = EIO,
+                AutoUpgrade = false,
             };
         }
 
@@ -16,6 +17,7 @@ namespace SocketIOClient.IntegrationTests
         {
             var options = CreateOptions();
             options.Reconnection = false;
+            options.EIO = EIO;
             return CreateSocketIO(options);
         }
     }
