@@ -24,7 +24,7 @@ jobs:
           workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
           command: test
   - job:
-    displayName: Run tests
+    displayName: Run integration tests
     dependsOn:
       - nodejs
       - ut

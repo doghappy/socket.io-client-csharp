@@ -250,31 +250,31 @@ namespace SocketIOClient.UnitTest
         //     mockWs.Verify(w => w.SendAsync(It.Is<byte[]>(p => Enumerable.SequenceEqual(p, p1)), TransportMessageType.Text, true, CancellationToken.None), Times.Once());
         // }
 
-        [TestMethod]
-        public async Task AddExpectedException_Should_Work()
-        {
-            using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
-            {
-                Transport = TransportProtocol.WebSocket,
-                ReconnectionAttempts = 2
-            });
+        // [TestMethod]
+        // public async Task AddExpectedException_Should_Work()
+        // {
+        //     using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
+        //     {
+        //         Transport = TransportProtocol.WebSocket,
+        //         ReconnectionAttempts = 2
+        //     });
 
-            io.AddExpectedException(typeof(NotImplementedException));
+        //     io.AddExpectedException(typeof(NotImplementedException));
 
-            var mockWs = new Mock<IClientWebSocket>();
-            mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>())).Throws<NotImplementedException>();
-            // var textSubject = new Subject<string>();
-            // var bytesSubject = new Subject<byte[]>();
-            // mockWs.SetupGet(w => w.TextObservable).Returns(textSubject);
-            // mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
-            io.ClientWebSocketProvider = () => mockWs.Object;
+        //     var mockWs = new Mock<IClientWebSocket>();
+        //     mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>())).Throws<NotImplementedException>();
+        //     // var textSubject = new Subject<string>();
+        //     // var bytesSubject = new Subject<byte[]>();
+        //     // mockWs.SetupGet(w => w.TextObservable).Returns(textSubject);
+        //     // mockWs.SetupGet(w => w.BytesObservable).Returns(bytesSubject);
+        //     io.ClientWebSocketProvider = () => mockWs.Object;
 
-            int failed = 0;
-            io.OnReconnectFailed += (s, e) => failed++;
-            await io.ConnectAsync();
+        //     int failed = 0;
+        //     io.OnReconnectFailed += (s, e) => failed++;
+        //     await io.ConnectAsync();
 
-            Assert.AreEqual(1, failed);
-        }
+        //     Assert.AreEqual(1, failed);
+        // }
 
         // [TestMethod]
         // public async Task Eio4_WebSocket_Emit_Single_Bytes_Message()
