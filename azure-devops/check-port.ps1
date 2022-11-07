@@ -1,4 +1,4 @@
-$ports = 11400, 11410, 11401, 11411, 11300, 11310, 11301, 11311, 11200, 11210, 11201, 11211
+$ports = 11400, 11410, 11401, 11411, 11200, 11210, 11201, 11211
 function Test-SocketIOConnection($Port) {
     for ($i = 0; $i -lt 3; $i++) {
         $result = Test-Connection -TargetName localhost -TcpPort $Port
