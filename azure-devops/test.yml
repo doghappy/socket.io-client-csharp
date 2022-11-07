@@ -29,7 +29,6 @@ jobs:
       - nodejs
       - ut
     steps:
-      - checkout: none
       - task: CmdLine@2
         displayName: Run socket.io server
         inputs:
