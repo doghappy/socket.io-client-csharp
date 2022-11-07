@@ -25,20 +25,26 @@ namespace SocketIOClient
         /// Create SocketIO object with default options
         /// </summary>
         /// <param name="uri"></param>
-        public SocketIO(string uri) : this(new Uri(uri)) { }
+        public SocketIO(string uri) : this(new Uri(uri))
+        {
+        }
 
         /// <summary>
         /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
-        public SocketIO(Uri uri) : this(uri, new SocketIOOptions()) { }
+        public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
+        {
+        }
 
         /// <summary>
         /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
         /// <param name="options"></param>
-        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options) { }
+        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
+        {
+        }
 
         /// <summary>
         /// Create SocketIO object with options
@@ -53,6 +59,7 @@ namespace SocketIOClient
         }
 
         Uri _serverUri;
+
         private Uri ServerUri
         {
             get => _serverUri;
@@ -105,20 +112,16 @@ namespace SocketIOClient
         List<Type> _expectedExceptions;
 
         int _packetId;
-        bool _isConnectCoreRunning;
-        Uri _realServerUri;
-        Exception _connectCoreException;
+        Exception _backgroundException;
         Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
-        CancellationTokenSource _connectionTokenSource;
         double _reconnectionDelay;
-        bool _hasError;
-        bool _isFaild;
-        readonly static object _connectionLock = new object();
 
         #region Socket.IO event
+
         public event EventHandler OnConnected;
+
         //public event EventHandler<string> OnConnectError;
         //public event EventHandler<string> OnConnectTimeout;
         public event EventHandler<string> OnError;
@@ -143,14 +146,17 @@ namespace SocketIOClient
         /// Fired when couldn’t reconnect within reconnectionAttempts
         /// </summary>
         public event EventHandler OnReconnectFailed;
+
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
 
         #endregion
 
         #region Observable Event
+
         //Subject<Unit> _onConnected;
         //public IObservable<Unit> ConnectedObservable { get; private set; }
+
         #endregion
 
         private void Initialize()
@@ -175,9 +181,9 @@ namespace SocketIOClient
             };
         }
 
-        private void CreateTransport()
+        private async Task InitTransportAsync()
         {
-            Options.Transport = GetProtocolAsync().GetAwaiter().GetResult();
+            Options.Transport = await GetProtocolAsync();
             var transportOptions = new TransportOptions
             {
                 EIO = Options.EIO,
@@ -206,10 +212,12 @@ namespace SocketIOClient
                 _resources.Add(ws);
                 _transport = new WebSocketTransport(transportOptions, ws);
             }
+            _resources.Add(_transport);
             _transport.Namespace = _namespace;
             SetHeaders();
             _transport.SetProxy(Options.Proxy);
-            _resources.Add(_transport);
+            _transport.OnReceived = OnMessageReceived;
+            _transport.OnError = OnErrorReceived;
         }
 
         private string GetAuth(object auth)
@@ -231,17 +239,6 @@ namespace SocketIOClient
             }
         }
 
-        private void SyncExceptionToMain(Exception e)
-        {
-            _connectCoreException = e;
-            _isConnectCoreRunning = false;
-        }
-
-        private string GetExceptionMessage()
-        {
-            return $"Cannot connect to server '{ServerUri}'";
-        }
-
         private void DisposeResources()
         {
             foreach (var item in _resources)
@@ -251,73 +248,82 @@ namespace SocketIOClient
             _resources.Clear();
         }
 
-        private void ConnectCore()
+        private void ConnectInBackground(CancellationToken cancellationToken)
         {
-            DisposeForReconnect();
-            _reconnectionDelay = Options.ReconnectionDelay;
-            _connectionTokenSource = new CancellationTokenSource();
-            var cct = _connectionTokenSource.Token;
             Task.Factory.StartNew(async () =>
             {
                 while (true)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
                     DisposeResources();
-                    CreateTransport();
-                    _realServerUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket, ServerUri, Options.EIO, Options.Path, Options.Query);
+                    await InitTransportAsync().ConfigureAwait(false);
+                    var serverUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket, ServerUri, Options.EIO, Options.Path, Options.Query);
+                    if (_attempts > 0)
+                        OnReconnectAttempt.TryInvoke(this, _attempts);
                     try
                     {
-                        if (cct.IsCancellationRequested)
+                        using (var cts = new CancellationTokenSource(Options.ConnectionTimeout))
+                        {
+                            await _transport.ConnectAsync(serverUri, cts.Token).ConfigureAwait(false);
                             break;
-                        if (_attempts > 0)
-                            OnReconnectAttempt.TryInvoke(this, _attempts);
-                        var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
-                        _transport.OnReceived = OnMessageReceived;
-                        _transport.OnError = OnErrorReceived;
-                        await _transport.ConnectAsync(_realServerUri, timeoutCts.Token).ConfigureAwait(false);
-                        break;
+                        }
                     }
                     catch (Exception e)
                     {
-                        if (_expectedExceptions.Contains(e.GetType()))
-                        {
-                            if (!Options.Reconnection)
-                            {
-                                SyncExceptionToMain(e);
-                                throw;
-                            }
-                            if (_attempts > 0)
-                            {
-                                OnReconnectError.TryInvoke(this, e);
-                            }
-                            _attempts++;
-                            if (_attempts <= Options.ReconnectionAttempts)
-                            {
-                                if (_reconnectionDelay < Options.ReconnectionDelayMax)
-                                {
-                                    _reconnectionDelay += 2 * Options.RandomizationFactor;
-                                }
-                                if (_reconnectionDelay > Options.ReconnectionDelayMax)
-                                {
-                                    _reconnectionDelay = Options.ReconnectionDelayMax;
-                                }
-                                Thread.Sleep((int)_reconnectionDelay);
-                            }
-                            else
-                            {
-                                _isFaild = true;
-                                OnReconnectFailed.TryInvoke(this, EventArgs.Empty);
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            SyncExceptionToMain(e);
-                            throw;
-                        }
+                        var needBreak = await AttemptAsync(e);
+                        if (needBreak) break;
+
+                        var canHandle = CanHandleException(e);
+                        if (!canHandle) throw e;
                     }
                 }
-                _isConnectCoreRunning = false;
-            });
+            }, cancellationToken);
+        }
+
+        private async Task<bool> AttemptAsync(Exception e)
+        {
+            if (_attempts > 0)
+            {
+                OnReconnectError.TryInvoke(this, e);
+            }
+            _attempts++;
+            if (_attempts <= Options.ReconnectionAttempts)
+            {
+                if (_reconnectionDelay < Options.ReconnectionDelayMax)
+                {
+                    _reconnectionDelay += 2 * Options.RandomizationFactor;
+                }
+                if (_reconnectionDelay > Options.ReconnectionDelayMax)
+                {
+                    _reconnectionDelay = Options.ReconnectionDelayMax;
+                }
+                await Task.Delay((int)_reconnectionDelay);
+            }
+            else
+            {
+                OnReconnectFailed.TryInvoke(this, EventArgs.Empty);
+                return true;
+            }
+            return false;
+        }
+
+        private bool CanHandleException(Exception e)
+        {
+            if (_expectedExceptions.Contains(e.GetType()))
+            {
+                if (!Options.Reconnection)
+                {
+                    _backgroundException = e;
+                    return false;
+                }
+            }
+            else
+            {
+                _backgroundException = e;
+                return false;
+            }
+            return true;
         }
 
         private async Task<TransportProtocol> GetProtocolAsync()
@@ -343,46 +349,50 @@ namespace SocketIOClient
             return Options.Transport;
         }
 
+        private readonly SemaphoreSlim _connectingLock = new SemaphoreSlim(1, 1);
+        private CancellationTokenSource _connCts;
+
+        private void ConnectInBackground()
+        {
+            _connCts.TryCancel();
+            _connCts.TryDispose();
+            _connCts = new CancellationTokenSource();
+            ConnectInBackground(_connCts.Token);
+        }
+
         public async Task ConnectAsync()
         {
-            if (Connected || _isConnectCoreRunning)
-                return;
+            await _connectingLock.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                if (Connected) return;
+                
+                ConnectInBackground();
 
-            lock (_connectionLock)
-            {
-                if (_isConnectCoreRunning)
-                    return;
-                _isConnectCoreRunning = true;
-            }
-            ConnectCore();
-            while (_isConnectCoreRunning)
-            {
-                await Task.Delay(100);
-            }
-            if (_connectCoreException != null)
-            {
-                //Logger.LogError(_connectCoreException, _connectCoreException.Message);
-                throw new ConnectionException(GetExceptionMessage(), _connectCoreException);
-            }
-            int ms = 0;
-            while (!Connected)
-            {
-                if (_hasError)
+                var ms = 0;
+                while (true)
                 {
-                    //Logger.LogWarning($"Got a connection error, try to use '{nameof(OnError)}' to detect it.");
-                    break;
+                    if (_connCts.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (_backgroundException != null)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", _backgroundException);
+                    }
+
+                    ms += 100;
+                    if (ms > Options.ConnectionTimeout.TotalMilliseconds)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", new TimeoutException());
+                    }
+                    await Task.Delay(100);
                 }
-                if (_isFaild)
-                {
-                    //Logger.LogWarning($"Reconnect failed, try to use '{nameof(OnReconnectFailed)}' to detect it.");
-                    break;
-                }
-                ms += 100;
-                if (ms > Options.ConnectionTimeout.TotalMilliseconds)
-                {
-                    throw new ConnectionException(GetExceptionMessage(), new TimeoutException());
-                }
-                await Task.Delay(100);
+            }
+            finally
+            {
+                _connectingLock.Release();
             }
         }
 
@@ -400,6 +410,7 @@ namespace SocketIOClient
         {
             Id = msg.Sid;
             Connected = true;
+            _connCts.Cancel();
             OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
@@ -441,7 +452,6 @@ namespace SocketIOClient
 
         private void ErrorMessageHandler(ErrorMessage msg)
         {
-            _hasError = true;
             OnError.TryInvoke(this, msg.Message);
         }
 
@@ -559,7 +569,6 @@ namespace SocketIOClient
             }
             _eventHandlers.Add(eventName, callback);
         }
-
 
 
         /// <summary>
@@ -762,7 +771,7 @@ namespace SocketIOClient
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        ConnectCore();
+                        ConnectInBackground();
                     }
                 }
             }
@@ -776,18 +785,6 @@ namespace SocketIOClient
             }
         }
 
-        private void DisposeForReconnect()
-        {
-            _hasError = false;
-            _isFaild = false;
-            _packetId = -1;
-            _ackHandlers.Clear();
-            _connectCoreException = null;
-            _hasError = false;
-            _connectionTokenSource.TryCancel();
-            _connectionTokenSource.TryDispose();
-        }
-
         public void Dispose()
         {
             HttpClient.Dispose();
@@ -795,8 +792,6 @@ namespace SocketIOClient
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
             _eventHandlers.Clear();
-            _connectionTokenSource.TryCancel();
-            _connectionTokenSource.TryDispose();
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace SocketIOClient.IntegrationTests
 {
-    [TestClass]
+    // [TestClass]
     public class V3WebSocketTests : WebSocketBaseTests
     {
         protected override string ServerUrl => V3_WS;

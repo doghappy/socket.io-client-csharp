@@ -13,7 +13,7 @@ namespace SocketIOClient.Transport.WebSockets
         public WebSocketTransport(TransportOptions options, IClientWebSocket ws) : base(options)
         {
             _ws = ws;
-            _sendLock = new SemaphoreSlim(1);
+            _sendLock = new SemaphoreSlim(1, 1);
             _listenCancellation = new CancellationTokenSource();
         }
 
@@ -145,7 +145,7 @@ namespace SocketIOClient.Transport.WebSockets
                 byte[] bytes = Encoding.UTF8.GetBytes(payload.Text);
                 await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[Send] {payload.Text}");
+                System.Diagnostics.Debug.WriteLine($"[WebSocket Send] {payload.Text}");
 #endif
                 if (payload.Bytes != null)
                 {
@@ -153,7 +153,7 @@ namespace SocketIOClient.Transport.WebSockets
                     {
                         await SendAsync(TransportMessageType.Binary, item, cancellationToken).ConfigureAwait(false);
 #if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[Send] {Convert.ToBase64String(item)}");
+                        System.Diagnostics.Debug.WriteLine($"[WebSocket Send] {Convert.ToBase64String(item)}");
 #endif
                     }
                 }

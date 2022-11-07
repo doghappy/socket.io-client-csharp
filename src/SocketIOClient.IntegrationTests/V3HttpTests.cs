@@ -2,7 +2,7 @@
 
 namespace SocketIOClient.IntegrationTests
 {
-    [TestClass]
+    // [TestClass]
     public class V3HttpTests : HttpBaseTests
     {
         protected override string ServerUrl => V3_HTTP;

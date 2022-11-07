@@ -138,7 +138,7 @@ namespace SocketIOClient.Transport
         protected void OnTextReceived(string text)
         {
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[Receive] {text}");
+            System.Diagnostics.Debug.WriteLine($"[{Protocol} Receive] {text}");
 #endif
             var msg = MessageFactory.CreateMessage(Options.EIO, text);
             if (msg == null)
@@ -207,7 +207,9 @@ namespace SocketIOClient.Transport
 
         protected void OnBinaryReceived(byte[] bytes)
         {
-            // _logger.LogDebug($"[Receive] binary message");
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine($"[{Protocol} Receive] bytes");
+#endif
             if (_messageQueue.Count > 0)
             {
                 var msg = _messageQueue.Peek();
