@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.IntegrationTests
@@ -24,7 +25,7 @@ namespace SocketIOClient.IntegrationTests
         protected readonly string V3_NSP_WS = Startup.Configuration["server:v3:nsp_ws"];
         protected readonly string V3_WS_TOKEN = Startup.Configuration["server:v3:ws_token"];
         protected readonly string V3_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
-        
+
         protected readonly string V3_HTTP = Startup.Configuration["server:v3:http"];
         protected readonly string V3_NSP_HTTP = Startup.Configuration["server:v3:nsp_ws"];
         protected readonly string V3_HTTP_TOKEN = Startup.Configuration["server:v3:ws_token"];
@@ -83,7 +84,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateSocketIO();
 
             await io.ConnectAsync();
-            
+
             io.Connected.Should().BeTrue();
             io.Id.Should().NotBeNull();
         }
@@ -113,40 +114,53 @@ namespace SocketIOClient.IntegrationTests
         #region Emit
 
         [TestMethod]
-        [DataRow("1:emit", null, "[null]")]
-        [DataRow("1:emit", true, "[true]")]
-        [DataRow("1:emit", false, "[false]")]
-        [DataRow("1:emit", -1234567890, "[-1234567890]")]
-        [DataRow("1:emit", 1234567890, "[1234567890]")]
-        [DataRow("1:emit", -1.234567890, "[-1.23456789]")]
-        [DataRow("1:emit", 1.234567890, "[1.23456789]")]
-        [DataRow("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]")]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Emit_Back(string eventName, object data, string excepted)
+        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Emit_Back(string eventName,
+            object data,
+            string expectedJson,
+            IEnumerable<byte[]> expectedBytes)
         {
             using var io = CreateSocketIO();
-            string json = null;
-            io.On(eventName, res => json = res.ToString());
+            SocketIOResponse response = null;
+            io.On(eventName, res => response = res);
 
             await io.ConnectAsync();
             await io.EmitAsync(eventName, data);
             await Task.Delay(100);
 
-            json.Should().Be(excepted);
+            response.Should().NotBeNull();
+            response.ToString().Should().Be(expectedJson);
+            response.InComingBytes.Should().BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
         }
 
         public static IEnumerable<object[]> Emit1ParameterCases()
         {
-            return PrivateEmit1PrameterCase().Select(x => new[] { x.EventName, x.Data, x.Expected });
+            return PrivateEmit1PrameterCase().Select(x => new[] { x.EventName, x.Data, x.ExpectedJson, x.ExpectedBytes });
         }
 
-        private static IEnumerable<(string EventName, object Data, string Expected)> PrivateEmit1PrameterCase()
+        private static IEnumerable<(string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)> PrivateEmit1PrameterCase()
         {
-            return new (string EventName, object Data, string Expected)[]
+            return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)[]
             {
-                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]"),
-                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]"),
-                ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]"),
+                ("1:emit", null, "[null]", Array.Empty<byte[]>()),
+                ("1:emit", true, "[true]", Array.Empty<byte[]>()),
+                ("1:emit", false, "[false]", Array.Empty<byte[]>()),
+                ("1:emit", -1234567890, "[-1234567890]", Array.Empty<byte[]>()),
+                ("1:emit", 1234567890, "[1234567890]", Array.Empty<byte[]>()),
+                ("1:emit", -1.234567890, "[-1.23456789]", Array.Empty<byte[]>()),
+                ("1:emit", 1.234567890, "[1.23456789]", Array.Empty<byte[]>()),
+                ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]", Array.Empty<byte[]>()),
+                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]", Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]", Array.Empty<byte[]>()),
+                ("1:emit",
+                    new { Result = true, Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
+                    new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
+                ("1:emit",
+                    new { Result = Encoding.UTF8.GetBytes("test"), Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
+                    new[] { new byte[] { 0x74, 0x65, 0x73, 0x74 }, new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
             };
         }
 
@@ -373,7 +387,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateSocketIO();
             io.OnConnected += (s, e) => connectTimes++;
             io.OnDisconnected += (s, e) => disconnectTimes++;
-            
+
             for (int i = 0; i < times; i++)
             {
                 await io.ConnectAsync();
