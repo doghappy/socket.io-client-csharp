@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using RichardSzalay.MockHttp;
-using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 
 namespace SocketIOClient.UnitTest.Transport.Http
@@ -143,6 +140,40 @@ namespace SocketIOClient.UnitTest.Transport.Http
                         },
                         new[] { "2", "🦊🐶🐱" },
                         new[] { new byte[] { 0x32 }, new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
+                };
+            }
+        }
+
+        [TestMethod]
+        [DynamicData(nameof(PostAsyncCases))]
+        public async Task PostBytes_FormatBytes(IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)
+        {
+            HttpContent actualContent = null;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), CancellationToken.None))
+                .Callback<string, HttpContent, CancellationToken>((u, c, t) => actualContent = c);
+            var handler = new Eio3HttpPollingHandler(mockHttp.Object);
+
+            await handler.PostAsync(It.IsAny<string>(), bytes, CancellationToken.None);
+
+            actualContent.Should().NotBeNull();
+            var actualBytes = await actualContent.ReadAsByteArrayAsync();
+            actualBytes.Should().Equal(expectedBytes);
+        }
+
+        private static IEnumerable<object[]> PostAsyncCases => PostAsyncTupleCases.Select(x => new object[] { x.bytes, x.expectedBytes });
+
+        private static IEnumerable<(IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)> PostAsyncTupleCases
+        {
+            get
+            {
+                return new (IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)[]
+                {
+                    (new[] { new byte[] { 1 } }, new byte[] { 1, 2, 255, 4, 1 }),
+                    (new[] { new byte[] { 255, 1 } }, new byte[] { 1, 3, 255, 4, 255, 1 }),
+                    (new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }, new byte[] { 255, 1 } }, 
+                        new byte[] { 1, 1, 3, 255, 4, 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1, 1, 3, 255, 4, 255, 1 }),
                 };
             }
         }
