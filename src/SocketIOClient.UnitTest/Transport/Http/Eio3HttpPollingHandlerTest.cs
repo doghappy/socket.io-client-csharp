@@ -145,7 +145,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
         }
 
         [TestMethod]
-        [DynamicData(nameof(PostAsyncCases))]
+        [DynamicData(nameof(PostBytesAsyncCases))]
         public async Task PostBytes_FormatBytes(IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)
         {
             HttpContent actualContent = null;
@@ -162,9 +162,9 @@ namespace SocketIOClient.UnitTest.Transport.Http
             actualBytes.Should().Equal(expectedBytes);
         }
 
-        private static IEnumerable<object[]> PostAsyncCases => PostAsyncTupleCases.Select(x => new object[] { x.bytes, x.expectedBytes });
+        private static IEnumerable<object[]> PostBytesAsyncCases => PostBytesAsyncTupleCases.Select(x => new object[] { x.bytes, x.expectedBytes });
 
-        private static IEnumerable<(IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)> PostAsyncTupleCases
+        private static IEnumerable<(IEnumerable<byte[]> bytes, IEnumerable<byte> expectedBytes)> PostBytesAsyncTupleCases
         {
             get
             {
@@ -172,10 +172,30 @@ namespace SocketIOClient.UnitTest.Transport.Http
                 {
                     (new[] { new byte[] { 1 } }, new byte[] { 1, 2, 255, 4, 1 }),
                     (new[] { new byte[] { 255, 1 } }, new byte[] { 1, 3, 255, 4, 255, 1 }),
-                    (new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }, new byte[] { 255, 1 } }, 
+                    (new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }, new byte[] { 255, 1 } },
                         new byte[] { 1, 1, 3, 255, 4, 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1, 1, 3, 255, 4, 255, 1 }),
                 };
             }
+        }
+
+        [TestMethod]
+        [DataRow(null,null)]
+        [DataRow("",null)]
+        [DataRow("2", "1:2")]
+        [DataRow("55c0ddeacd70418ab34de965de54a417", "32:55c0ddeacd70418ab34de965de54a417")]
+        public async Task PostText_FormatText(string text, string expected)
+        {
+            string actual = null;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), CancellationToken.None))
+                .ReturnsAsync(new HttpResponseMessage { Content = new StringContent("ok") })
+                .Callback<string, HttpContent, CancellationToken>(async (u, c, t) => actual = await c.ReadAsStringAsync(t));
+            var handler = new Eio3HttpPollingHandler(mockHttp.Object);
+
+            await handler.PostAsync(It.IsAny<string>(), text, CancellationToken.None);
+
+            actual.Should().Be(expected);
         }
     }
 }

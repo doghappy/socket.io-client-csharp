@@ -9,7 +9,9 @@ namespace SocketIOClient.Transport.Http
 {
     public class Eio3HttpPollingHandler : HttpPollingHandler
     {
-        public Eio3HttpPollingHandler(IHttpClient adapter) : base(adapter) { }
+        public Eio3HttpPollingHandler(IHttpClient adapter) : base(adapter)
+        {
+        }
 
         public override async Task PostAsync(string uri, IEnumerable<byte[]> bytes, CancellationToken cancellationToken)
         {
@@ -67,10 +69,14 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        public override Task PostAsync(string uri, string content, CancellationToken cancellationToken)
+        public override async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(content))
+            {
+                return;
+            }
             content = content.Length + ":" + content;
-            return base.PostAsync(uri, content, cancellationToken);
+            await base.PostAsync(uri, content, cancellationToken);
         }
     }
 }
