@@ -17,11 +17,13 @@ namespace SocketIOClient.Transport.Http
             _pollingHandler.OnBytesReceived = OnBinaryReceived;
         }
 
+        private const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
+
         bool _dirty;
         string _httpUri;
         CancellationTokenSource _pollingTokenSource;
 
-        public IHttpPollingHandler _pollingHandler;
+        private readonly IHttpPollingHandler _pollingHandler;
 
         protected override TransportProtocol Protocol => TransportProtocol.Polling;
 
@@ -49,13 +51,27 @@ namespace SocketIOClient.Transport.Http
             }, TaskCreationOptions.LongRunning);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="cancellationToken"></param>
+        /// <exception cref="InvalidOperationException"></exception>
         public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            if (_dirty) throw new ObjectNotCleanException();
+            if (_dirty) 
+                throw new InvalidOperationException(DirtyMessage);
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             _httpUri = uri.ToString();
 
-            await _pollingHandler.SendAsync(req, new CancellationTokenSource(Options.ConnectionTimeout).Token).ConfigureAwait(false);
+            try
+            {
+                await _pollingHandler.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                throw new TransportException($"Could not connect to '{uri}'", e);
+            }
 
             _dirty = true;
             _pollingTokenSource = new CancellationTokenSource();

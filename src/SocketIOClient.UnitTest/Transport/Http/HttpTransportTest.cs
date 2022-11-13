@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Reactive.Subjects;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using RichardSzalay.MockHttp;
@@ -12,13 +13,57 @@ using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 
-namespace SocketIOClient.UnitTest.TransportTests
+namespace SocketIOClient.UnitTest.Transport.Http
 {
     [TestClass]
     public class HttpTransportTest
     {
         [TestMethod]
-        public async Task Polling_Should_Work()
+        public async Task Connect_ThrowException_IfDirty()
+        {
+            Uri uri = new("http://localhost:11002/socket.io/?EIO=3&transport=polling");
+            var options = new TransportOptions();
+            var mockedHandler = new Mock<IHttpPollingHandler>();
+            using var transport = new HttpTransport(options, mockedHandler.Object);
+
+            await transport.ConnectAsync(uri, CancellationToken.None);
+
+            await transport
+                .Invoking(async x => await x.ConnectAsync(uri, CancellationToken.None))
+                .Should()
+                .ThrowAsync<InvalidOperationException>()
+                .WithMessage("Invalid object's current state, may need to create a new object.");
+        }
+
+        [TestMethod]
+        public async Task Connect_ThrowTransportException()
+        {
+            Uri uri = new("http://localhost:11002/socket.io/?EIO=3&transport=polling");
+            var options = new TransportOptions();
+            var mockedHandler = new Mock<IHttpPollingHandler>();
+            mockedHandler
+                .Setup(m => m.SendAsync(
+                    It.Is<HttpRequestMessage>(req => Uri.Compare(
+                        req.RequestUri,
+                        uri,
+                        UriComponents.AbsoluteUri,
+                        UriFormat.SafeUnescaped,
+                        StringComparison.OrdinalIgnoreCase) == 0),
+                    It.IsAny<CancellationToken>()))
+                .Throws<Exception>();
+
+            using var transport = new HttpTransport(options, mockedHandler.Object);
+
+            using var cts = new CancellationTokenSource(100);
+            await transport
+                .Invoking(async x => await x.ConnectAsync(uri, cts.Token))
+                .Should()
+                .ThrowAsync<TransportException>()
+                .WithMessage("Could not connect to '*'");
+        }
+
+        [TestMethod]
+        public async Task Polling_Eio4()
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.Setup(h => h.GetAsync(It.IsAny<string>(), CancellationToken.None))
@@ -216,7 +261,7 @@ namespace SocketIOClient.UnitTest.TransportTests
             {
                 EIO = EngineIO.V4,
             }, mockHttpPollingHandler.Object);
-            transport.OnReceived=(msg => msgs.Add(msg));
+            transport.OnReceived = (msg => msgs.Add(msg));
             mockHttpPollingHandler.Object.OnTextReceived("2");
 
             mockHttpPollingHandler.Verify(h => h.PostAsync(null, "3", CancellationToken.None), Times.Once());
