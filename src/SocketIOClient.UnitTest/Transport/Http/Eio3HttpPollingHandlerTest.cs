@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SocketIOClient.Messages;
+using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 
 namespace SocketIOClient.UnitTest.Transport.Http
@@ -179,8 +181,8 @@ namespace SocketIOClient.UnitTest.Transport.Http
         }
 
         [TestMethod]
-        [DataRow(null,null)]
-        [DataRow("",null)]
+        [DataRow(null, null)]
+        [DataRow("", null)]
         [DataRow("2", "1:2")]
         [DataRow("55c0ddeacd70418ab34de965de54a417", "32:55c0ddeacd70418ab34de965de54a417")]
         public async Task PostText_FormatText(string text, string expected)

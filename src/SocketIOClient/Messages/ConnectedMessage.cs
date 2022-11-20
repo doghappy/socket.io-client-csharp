@@ -48,7 +48,7 @@ namespace SocketIOClient.Messages
             return Eio4Write();
         }
 
-        public void Eio4Read(string msg)
+        private void Eio4Read(string msg)
         {
             int index = msg.IndexOf('{');
             if (index > 0)
@@ -63,7 +63,7 @@ namespace SocketIOClient.Messages
             Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
         }
 
-        public string Eio4Write()
+        private string Eio4Write()
         {
             var builder = new StringBuilder("40");
             if (!string.IsNullOrEmpty(Namespace))
@@ -74,7 +74,7 @@ namespace SocketIOClient.Messages
             return builder.ToString();
         }
 
-        public void Eio3Read(string msg)
+        private void Eio3Read(string msg)
         {
             if (msg.Length >= 2)
             {
@@ -96,7 +96,7 @@ namespace SocketIOClient.Messages
             }
         }
 
-        public string Eio3Write()
+        private string Eio3Write()
         {
             if (string.IsNullOrEmpty(Namespace))
             {

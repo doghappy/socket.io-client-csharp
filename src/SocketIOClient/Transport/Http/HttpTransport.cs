@@ -33,11 +33,11 @@ namespace SocketIOClient.Transport.Http
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (!_httpUri.Contains("&sid="))
-                    {
-                        await Task.Delay(20);
-                        continue;
-                    }
+                    // if (!_httpUri.Contains("&sid="))
+                    // {
+                    //     await Task.Delay(20);
+                    //     continue;
+                    // }
                     try
                     {
                         await _pollingHandler.GetAsync(_httpUri, CancellationToken.None).ConfigureAwait(false);
