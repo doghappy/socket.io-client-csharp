@@ -10,6 +10,7 @@ using Moq;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
+using Range = Moq.Range;
 
 namespace SocketIOClient.UnitTest.Transport.Http
 {
@@ -41,12 +42,13 @@ namespace SocketIOClient.UnitTest.Transport.Http
             var mockedHandler = new Mock<IHttpPollingHandler>();
             mockedHandler
                 .Setup(m => m.SendAsync(
-                    It.Is<HttpRequestMessage>(req => Uri.Compare(
-                        req.RequestUri,
-                        uri,
-                        UriComponents.AbsoluteUri,
-                        UriFormat.SafeUnescaped,
-                        StringComparison.OrdinalIgnoreCase) == 0),
+                    It.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Get
+                                                     && Uri.Compare(
+                                                         req.RequestUri,
+                                                         uri,
+                                                         UriComponents.AbsoluteUri,
+                                                         UriFormat.SafeUnescaped,
+                                                         StringComparison.OrdinalIgnoreCase) == 0),
                     It.IsAny<CancellationToken>()))
                 .Throws<Exception>();
 
@@ -65,28 +67,22 @@ namespace SocketIOClient.UnitTest.Transport.Http
         [DataRow(EngineIO.V3, 1000, 9, 10)]
         public async Task Polling_ShouldWork(EngineIO eio, int delay, int min, int max)
         {
-            const string url = "http://localhost:11002/socket.io/?EIO=3&transport=polling";
-            const string pollingUrl = $"{url}&sid=LgtKYhIy7tUzKHH9AAAB";
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.Setup(h => h.GetAsync(It.IsAny<string>(), CancellationToken.None))
                 .Returns(async () => await Task.Delay(100));
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            var transport = new HttpTransport(new TransportOptions
+            _ = new HttpTransport(new TransportOptions
             {
                 EIO = eio,
             }, mockHttpPollingHandler.Object);
-            await transport.ConnectAsync(new Uri(url), CancellationToken.None);
             mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
             await Task.Delay(delay);
 
-            mockHttpPollingHandler.Verify(e => e.GetAsync(url, CancellationToken.None), Times.Once());
-            mockHttpPollingHandler.Verify(
-                e => e.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()), Times.Once());
-            mockHttpPollingHandler.Verify(e => e.GetAsync(pollingUrl, CancellationToken.None),
-                Times.Between(min, max, Moq.Range.Inclusive));
+            mockHttpPollingHandler.Verify(e => e.GetAsync("&sid=LgtKYhIy7tUzKHH9AAAB", CancellationToken.None),
+                Times.Between(min, max, Range.Inclusive));
         }
 
         [TestMethod]
@@ -107,7 +103,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
         }
 
         private static IEnumerable<object[]> OnTextReceivedCases => OnTextReceivedTupleCases.Select(x => new object[] { x.eio, x.text, x.expected });
-        
+
         private static IEnumerable<(EngineIO eio, string text, object expected)> OnTextReceivedTupleCases
         {
             get
@@ -115,14 +111,14 @@ namespace SocketIOClient.UnitTest.Transport.Http
                 return new (EngineIO eio, string text, object expected)[]
                 {
                     (
-                        EngineIO.V3, 
+                        EngineIO.V3,
                         "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                         new
                         {
                             Type = MessageType.Opened,
                             EIO = EngineIO.V3,
                             Sid = "LgtKYhIy7tUzKHH9AAAB",
-                            Upgrades = new [] { "websocket" },
+                            Upgrades = new[] { "websocket" },
                             PingInterval = 10000,
                             PingTimeout = 5000,
                         }),
@@ -130,30 +126,51 @@ namespace SocketIOClient.UnitTest.Transport.Http
             }
         }
 
-        // TODO: these tests should be transport
-        // [TestMethod]
-        // public void Should_Receive_Opened_With_Auth_Message()
-        // {
-        //     var msgs = new List<IMessage>();
-        //     var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
-        //     mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-        //
-        //     var transport = new HttpTransport(new TransportOptions
-        //     {
-        //         EIO = EngineIO.V4,
-        //         Auth = "{\"name\":\"admin\"}"
-        //     }, mockHttpPollingHandler.Object);
-        //     transport.OnReceived = (msg => msgs.Add(msg));
-        //     mockHttpPollingHandler.Object.OnTextReceived(
-        //         "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
-        //
-        //     mockHttpPollingHandler.Verify(
-        //         h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "40{\"name\":\"admin\"}", CancellationToken.None),
-        //         Times.Once());
-        //     Assert.AreEqual(1, msgs.Count);
-        //     Assert.AreEqual(MessageType.Opened, msgs[0].Type);
-        // }
+        [TestMethod]
+        [DataRow("{\"name\":\"admin\"}", null, "40{\"name\":\"admin\"}")]
+        [DataRow("{\"token\":\"123\"}", "/test", "40/test,{\"token\":\"123\"}")]
+        public void ShouldSendAuth_WhenConnecting(string auth, string ns, string expected)
+        {
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
+            _ = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V4,
+                Auth = auth,
+            }, mockHttpPollingHandler.Object)
+            {
+                Namespace = ns,
+            };
+            mockHttpPollingHandler.Object.OnTextReceived(
+                "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
+
+            mockHttpPollingHandler.Verify(
+                h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", expected, CancellationToken.None),
+                Times.Once());
+        }
+
+        [TestMethod]
+        [DataRow(100, 100, 1, 1)]
+        [DataRow(1000, 100, 9, 10)]
+        public async Task Eio3_Ping_ShouldWork(int delay, int pingInterval, int min, int max)
+        {
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+
+            _ = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V3,
+            }, mockHttpPollingHandler.Object);
+            mockHttpPollingHandler.Object.OnTextReceived($"0{{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":{pingInterval},\"pingTimeout\":5000}}");
+            mockHttpPollingHandler.Object.OnTextReceived("40");
+            await Task.Delay(delay);
+
+            using var cts = new CancellationTokenSource(5000);
+            mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", It.IsNotIn(CancellationToken.None)),
+                Times.Between(min, max, Range.Inclusive));
+        }
+        
         // [TestMethod]
         // public async Task Eio3_Connected_Without_Namespace_Logic_Should_Work()
         // {

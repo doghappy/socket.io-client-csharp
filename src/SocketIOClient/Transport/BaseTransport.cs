@@ -48,7 +48,7 @@ namespace SocketIOClient.Transport
         protected virtual async Task OpenAsync(OpenedMessage msg)
         {
             OpenedMessage = msg;
-            if (Options.EIO ==  EngineIO.V3 && string.IsNullOrEmpty(Namespace))
+            if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Namespace))
             {
                 return;
             }
@@ -80,11 +80,6 @@ namespace SocketIOClient.Transport
             }
         }
 
-        /// <summary>
-        /// <para>Eio3 ping is sent by the client</para>
-        /// <para>Eio4 ping is sent by the server</para>
-        /// </summary>
-        /// <param name="cancellationToken"></param>
         private void StartPing(CancellationToken cancellationToken)
         {
             // _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
@@ -92,16 +87,15 @@ namespace SocketIOClient.Transport
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(OpenedMessage.PingInterval);
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
+                    await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
                     try
                     {
                         var ping = new PingMessage();
                         // _logger.LogDebug($"[Ping] Sending");
-                        await SendAsync(ping, CancellationToken.None).ConfigureAwait(false);
+                        using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout))
+                        {
+                            await SendAsync(ping, cts.Token).ConfigureAwait(false);
+                        }
                         // _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
                         OnReceived.TryInvoke(ping);
@@ -135,7 +129,7 @@ namespace SocketIOClient.Transport
 
         public abstract Task SendAsync(Payload payload, CancellationToken cancellationToken);
 
-        protected void OnTextReceived(string text)
+        protected async Task OnTextReceived(string text)
         {
 #if DEBUG
             System.Diagnostics.Debug.WriteLine($"[{Protocol} Receive] {text}");
@@ -153,7 +147,7 @@ namespace SocketIOClient.Transport
             }
             if (msg.Type == MessageType.Opened)
             {
-                OpenAsync(msg as OpenedMessage).ConfigureAwait(false);
+                await OpenAsync(msg as OpenedMessage).ConfigureAwait(false);
             }
 
             if (Options.EIO == EngineIO.V3)
@@ -190,7 +184,7 @@ namespace SocketIOClient.Transport
                 _pingTime = DateTime.Now;
                 try
                 {
-                    SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
+                    await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
                     OnReceived.TryInvoke(new PongMessage
                     {
                         EIO = Options.EIO,

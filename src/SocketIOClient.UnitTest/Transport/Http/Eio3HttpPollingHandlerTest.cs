@@ -29,7 +29,11 @@ namespace SocketIOClient.UnitTest.Transport.Http
             var bytes = new List<byte[]>();
             var handler = new Eio3HttpPollingHandler(mockHttp.Object)
             {
-                OnTextReceived = data => texts.Add(data),
+                OnTextReceived = data =>
+                {
+                    texts.Add(data);
+                    return Task.CompletedTask;
+                },
                 OnBytesReceived = data => bytes.Add(data),
             };
 

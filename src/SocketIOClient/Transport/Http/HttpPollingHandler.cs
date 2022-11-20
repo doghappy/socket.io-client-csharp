@@ -17,7 +17,7 @@ namespace SocketIOClient.Transport.Http
         }
 
         protected IHttpClient HttpClient { get; }
-        public Action<string> OnTextReceived { get; set; }
+        public Func<string, Task> OnTextReceived { get; set; }
         public Action<byte[]> OnBytesReceived { get; set; }
 
         public void AddHeader(string key, string val)
@@ -71,28 +71,23 @@ namespace SocketIOClient.Transport.Http
             if (resMsg.Content.Headers.ContentType.MediaType == "application/octet-stream")
             {
                 byte[] bytes = await resMsg.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                ProduceBytes(bytes);
+                await ProduceBytes(bytes);
             }
             else
             {
                 string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-                ProduceText(text);
+                await ProduceText(text);
             }
         }
 
-        protected abstract void ProduceText(string text);
-
-        protected void OnText(string text)
-        {
-            OnTextReceived.TryInvoke(text);
-        }
+        protected abstract Task ProduceText(string text);
 
         protected void OnBytes(byte[] bytes)
         {
             OnBytesReceived.TryInvoke(bytes);
         }
 
-        private void ProduceBytes(byte[] bytes)
+        private async Task ProduceBytes(byte[] bytes)
         {
             int i = 0;
             while (bytes.Length > i + 4)
@@ -111,7 +106,7 @@ namespace SocketIOClient.Transport.Http
                 {
                     var buffer = new byte[length];
                     Buffer.BlockCopy(bytes, i, buffer, 0, buffer.Length);
-                    OnText(Encoding.UTF8.GetString(buffer));
+                    await OnTextReceived.TryInvokeAsync(Encoding.UTF8.GetString(buffer));
                 }
                 else if (type == 1)
                 {

@@ -35,7 +35,7 @@ namespace SocketIOClient.Transport.Http
                 {
                     // if (!_httpUri.Contains("&sid="))
                     // {
-                    //     await Task.Delay(20);
+                    //     await Task.Delay(20, cancellationToken);
                     //     continue;
                     // }
                     try
@@ -74,8 +74,8 @@ namespace SocketIOClient.Transport.Http
             }
 
             _dirty = true;
-            _pollingTokenSource = new CancellationTokenSource();
-            StartPolling(_pollingTokenSource.Token);
+            // _pollingTokenSource = new CancellationTokenSource();
+            // StartPolling(_pollingTokenSource.Token);
         }
 
         public override Task DisconnectAsync(CancellationToken cancellationToken)
@@ -128,6 +128,8 @@ namespace SocketIOClient.Transport.Http
         protected override async Task OpenAsync(OpenedMessage msg)
         {
             _httpUri += "&sid=" + msg.Sid;
+            _pollingTokenSource = new CancellationTokenSource();
+            StartPolling(_pollingTokenSource.Token);
             await base.OpenAsync(msg);
         }
     }

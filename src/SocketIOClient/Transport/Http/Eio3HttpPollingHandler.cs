@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Http.Headers;
+using SocketIOClient.Extensions;
 
 namespace SocketIOClient.Transport.Http
 {
@@ -42,7 +43,7 @@ namespace SocketIOClient.Transport.Http
             return list;
         }
 
-        protected override void ProduceText(string text)
+        protected override async Task ProduceText(string text)
         {
             int p = 0;
             while (true)
@@ -55,7 +56,7 @@ namespace SocketIOClient.Transport.Http
                 if (int.TryParse(text.Substring(p, index - p), out int length))
                 {
                     string msg = text.Substring(index + 1, length);
-                    OnText(msg);
+                    await OnTextReceived.TryInvokeAsync(msg);
                 }
                 else
                 {
