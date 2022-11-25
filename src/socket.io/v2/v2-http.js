@@ -2,8 +2,13 @@
 
 const http = require('http');
 const socket = require('socket.io');
+// const express = require('express')
+// const app = express()
+// const server = http.createServer(app);
 const server = http.createServer();
 const port = 11201;
+
+// app.use('/static', express.static('static'))
 
 var io = socket(server, {
     transports: ["polling"]

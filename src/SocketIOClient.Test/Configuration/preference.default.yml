@@ -1,9 +1,0 @@
-﻿# NOTE:
-# 'preference.default.yml' is the default configuration file.
-# If you want to keep git clean, you can copy and rename it to 'preference.user.yml', and put it in the output directory.
-# When the test program is running, it will use 'preference.user.yml'.
-
-# Automatically run socket.io-server before test run
-RunServers: false
-# Automatically stop socket.io-server after test run
-StopServersAfterRun: false

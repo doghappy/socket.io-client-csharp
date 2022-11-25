@@ -30,7 +30,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 4
+                EIO = EngineIO.V4
             };
             string text = msg.Write();
             Assert.AreEqual("40", text);
@@ -41,7 +41,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 4,
+                EIO = EngineIO.V4,
                 Namespace = "/microsoft"
             };
             string text = msg.Write();
@@ -53,7 +53,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
                 Namespace = "/admin"
             };
@@ -66,7 +66,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
                 Namespace = "/apple",
                 Query = new Dictionary<string,string>
@@ -83,7 +83,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
                 Namespace = "/razer",
                 Query = new Dictionary<string, string>
@@ -101,7 +101,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
                 Namespace = "/admin"
             };
@@ -114,7 +114,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
                 Namespace = "/apple",
                 Query = new Dictionary<string, string>
@@ -131,7 +131,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         {
             var msg = new ConnectedMessage
             {
-                Eio = 3,
+                EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
                 Namespace = "/razer",
                 Query = new Dictionary<string, string>
@@ -148,7 +148,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         public void Eio4_Auth_Query_Namespace_Should_Include_Auth_Namespace(){
             var msg = new ConnectedMessage
             {
-                Eio = 4,
+                EIO = EngineIO.V4,
                 Protocol = TransportProtocol.Polling,
                 Namespace = "/razer",
                 Query = new Dictionary<string, string>
@@ -166,7 +166,7 @@ namespace SocketIOClient.UnitTest.MessageTests
         public void Eio4_Auth_Should_Include_Auth(){
             var msg = new ConnectedMessage
             {
-                Eio = 4,
+                EIO = EngineIO.V4,
                 Protocol = TransportProtocol.Polling,
                 AuthJsonStr = "{\"test\":\"vvs\"}"
             };

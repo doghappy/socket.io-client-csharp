@@ -343,5 +343,5 @@ healthchecksdb
 
 # Ignore user config file
 /src/SocketIOClient.Test/user.json
-
-.vscode/
+appsettings.user.yml
+*.DS_Store

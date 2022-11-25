@@ -4,9 +4,9 @@ using System.Text;
 
 namespace SocketIOClient.UriConverters
 {
-    public class UriConverter : IUriConverter
+    public static class UriConverter
     {
-        public Uri GetServerUri(bool ws, Uri serverUri, int eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
+        public static Uri GetServerUri(bool ws, Uri serverUri, EngineIO eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
         {
             var builder = new StringBuilder();
             if (serverUri.Scheme == "https" || serverUri.Scheme == "wss")
@@ -36,7 +36,7 @@ namespace SocketIOClient.UriConverters
             }
             builder
                 .Append("/?EIO=")
-                .Append(eio)
+                .Append((int)eio)
                 .Append("&transport=")
                 .Append(ws ? "websocket" : "polling");
 

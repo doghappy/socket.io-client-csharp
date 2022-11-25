@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SocketIOClient.Extensions
 {
@@ -12,6 +13,20 @@ namespace SocketIOClient.Extensions
         public static void TryInvoke(this EventHandler handler, object sender, EventArgs args)
         {
             handler?.Invoke(sender, args);
+        }
+
+        public static void TryInvoke<T>(this Action<T> action, T arg1)
+        {
+            action?.Invoke(arg1);
+        }
+
+        public static async Task TryInvokeAsync<T>(this Func<T, Task> func, T arg1)
+        {
+            if (func is null)
+            {
+                return;
+            }
+            await func(arg1);
         }
     }
 }

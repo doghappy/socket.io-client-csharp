@@ -7,5 +7,6 @@ namespace SocketIOClient.IntegrationTests
     {
         protected override string ServerUrl => V4_NSP_HTTP;
         protected override string ServerTokenUrl => V4_NSP_HTTP_TOKEN;
+        protected override EngineIO EIO => EngineIO.V4;
     }
 }

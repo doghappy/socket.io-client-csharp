@@ -8,22 +8,18 @@ namespace SocketIOClient.IntegrationTests
         {
             return new SocketIOOptions
             {
-                AutoUpgrade = false
+                AutoUpgrade = false,
+                EIO = EIO,
             };
         }
 
         protected override SocketIO CreateSocketIO()
         {
-            var io = CreateSocketIO(new SocketIOOptions
+            return CreateSocketIO(new SocketIOOptions
             {
-                Reconnection = false
+                Reconnection = false,
+                EIO = EIO,
             });
-            io.LoggerFactory = LoggerFactory.Create(options =>
-            {
-                options.AddConsole();
-                options.AddFilter(nameof(SocketIO), LogLevel.Debug);
-            });
-            return io;
         }
     }
 }

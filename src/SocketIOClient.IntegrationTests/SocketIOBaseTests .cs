@@ -4,44 +4,46 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.IntegrationTests
 {
     public abstract class SocketIOBaseTests
     {
-        public const string V4_WS = "http://localhost:11400";
-        public const string V4_NSP_WS = "http://localhost:11400/nsp";
-        public const string V4_WS_TOKEN = "http://localhost:11410";
-        public const string V4_NSP_WS_TOKEN = "http://localhost:11410/nsp";
+        protected readonly string V4_WS = Startup.Configuration["server:v4:ws"];
+        protected readonly string V4_NSP_WS = Startup.Configuration["server:v4:nsp_ws"];
+        protected readonly string V4_WS_TOKEN = Startup.Configuration["server:v4:ws_token"];
+        protected readonly string V4_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
 
-        public const string V4_HTTP = "http://localhost:11401";
-        public const string V4_NSP_HTTP = "http://localhost:11401/nsp";
-        public const string V4_HTTP_TOKEN = "http://localhost:11411";
-        public const string V4_NSP_HTTP_TOKEN = "http://localhost:11411/nsp";
+        protected readonly string V4_HTTP = Startup.Configuration["server:v4:http"];
+        protected readonly string V4_NSP_HTTP = Startup.Configuration["server:v4:nsp_http"];
+        protected readonly string V4_HTTP_TOKEN = Startup.Configuration["server:v4:http_token"];
+        protected readonly string V4_NSP_HTTP_TOKEN = Startup.Configuration["server:v4:nsp_http_token"];
 
-        public const string V3_WS = "http://localhost:11300";
-        public const string V3_NSP_WS = "http://localhost:11300/nsp";
-        public const string V3_WS_TOKEN = "http://localhost:11310";
-        public const string V3_NSP_WS_TOKEN = "http://localhost:11310/nsp";
+        protected readonly string V3_WS = Startup.Configuration["server:v3:ws"];
+        protected readonly string V3_NSP_WS = Startup.Configuration["server:v3:nsp_ws"];
+        protected readonly string V3_WS_TOKEN = Startup.Configuration["server:v3:ws_token"];
+        protected readonly string V3_NSP_WS_TOKEN = Startup.Configuration["server:v4:nsp_ws_token"];
 
-        public const string V3_HTTP = "http://localhost:11301";
-        public const string V3_NSP_HTTP = "http://localhost:11301/nsp";
-        public const string V3_HTTP_TOKEN = "http://localhost:11311";
-        public const string V3_NSP_HTTP_TOKEN = "http://localhost:11311/nsp";
+        protected readonly string V3_HTTP = Startup.Configuration["server:v3:http"];
+        protected readonly string V3_NSP_HTTP = Startup.Configuration["server:v3:nsp_ws"];
+        protected readonly string V3_HTTP_TOKEN = Startup.Configuration["server:v3:ws_token"];
+        protected readonly string V3_NSP_HTTP_TOKEN = Startup.Configuration["server:v3:nsp_ws_token"];
 
-        public const string V2_WS = "http://localhost:11200";
-        public const string V2_NSP_WS = "http://localhost:11200/nsp";
-        public const string V2_WS_TOKEN = "http://localhost:11210";
-        public const string V2_NSP_WS_TOKEN = "http://localhost:11410/nsp";
+        protected readonly string V2_WS = Startup.Configuration["server:v2:ws"];
+        protected readonly string V2_NSP_WS = Startup.Configuration["server:v2:nsp_ws"];
+        protected readonly string V2_WS_TOKEN = Startup.Configuration["server:v2:ws_token"];
+        protected readonly string V2_NSP_WS_TOKEN = Startup.Configuration["server:v2:nsp_ws_token"];
 
-        public const string V2_HTTP = "http://localhost:11201";
-        public const string V2_NSP_HTTP = "http://localhost:11201/nsp";
-        public const string V2_HTTP_TOKEN = "http://localhost:11211";
-        public const string V2_NSP_HTTP_TOKEN = "http://localhost:11211/nsp";
+        protected readonly string V2_HTTP = Startup.Configuration["server:v2:http"];
+        protected readonly string V2_NSP_HTTP = Startup.Configuration["server:v2:nsp_ws"];
+        protected readonly string V2_HTTP_TOKEN = Startup.Configuration["server:v2:ws_token"];
+        protected readonly string V2_NSP_HTTP_TOKEN = Startup.Configuration["server:v2:nsp_ws_token"];
 
         protected abstract string ServerUrl { get; }
         protected abstract string ServerTokenUrl { get; }
+        protected abstract EngineIO EIO { get; }
 
         protected abstract SocketIOOptions CreateOptions();
         protected abstract SocketIO CreateSocketIO();
@@ -66,6 +68,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         #region Id and Connected
+
         [TestMethod]
         public void Properties_Value_Should_Be_Correct_Before_Connected()
         {
@@ -91,7 +94,8 @@ namespace SocketIOClient.IntegrationTests
         {
             using var io = CreateSocketIO(new SocketIOOptions
             {
-                Reconnection = false
+                Reconnection = false,
+                EIO = EIO,
             });
             int times = 0;
             io.OnConnected += (s, e) => times++;
@@ -104,44 +108,59 @@ namespace SocketIOClient.IntegrationTests
 
             times.Should().Be(2);
         }
+
         #endregion
 
         #region Emit
+
         [TestMethod]
-        [DataRow("1:emit", null, "[null]")]
-        [DataRow("1:emit", true, "[true]")]
-        [DataRow("1:emit", false, "[false]")]
-        [DataRow("1:emit", -1234567890, "[-1234567890]")]
-        [DataRow("1:emit", 1234567890, "[1234567890]")]
-        [DataRow("1:emit", -1.234567890, "[-1.23456789]")]
-        [DataRow("1:emit", 1.234567890, "[1.23456789]")]
-        [DataRow("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]")]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Emit_Back(string eventName, object data, string excepted)
+        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Emit_Back(string eventName,
+            object data,
+            string expectedJson,
+            IEnumerable<byte[]> expectedBytes)
         {
             using var io = CreateSocketIO();
-            string json = null;
-            io.On(eventName, res => json = res.ToString());
+            SocketIOResponse response = null;
+            io.On(eventName, res => response = res);
 
             await io.ConnectAsync();
             await io.EmitAsync(eventName, data);
             await Task.Delay(100);
 
-            json.Should().Be(excepted);
+            response.Should().NotBeNull();
+            response.ToString().Should().Be(expectedJson);
+            response.InComingBytes.Should().BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
         }
 
         public static IEnumerable<object[]> Emit1ParameterCases()
         {
-            return PrivateEmit1PrameterCase().Select(x => new[] { x.EventName, x.Data, x.Expected });
+            return PrivateEmit1PrameterCase().Select(x => new[] { x.EventName, x.Data, x.ExpectedJson, x.ExpectedBytes });
         }
 
-        private static IEnumerable<(string EventName, object Data, string Expected)> PrivateEmit1PrameterCase()
+        private static IEnumerable<(string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)> PrivateEmit1PrameterCase()
         {
-            return new (string EventName, object Data, string Expected)[]
+            return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)[]
             {
-                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]"),
-                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]"),
-                ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]"),
+                ("1:emit", null, "[null]", Array.Empty<byte[]>()),
+                ("1:emit", true, "[true]", Array.Empty<byte[]>()),
+                ("1:emit", false, "[false]", Array.Empty<byte[]>()),
+                ("1:emit", -1234567890, "[-1234567890]", Array.Empty<byte[]>()),
+                ("1:emit", 1234567890, "[1234567890]", Array.Empty<byte[]>()),
+                ("1:emit", -1.234567890, "[-1.23456789]", Array.Empty<byte[]>()),
+                ("1:emit", 1.234567890, "[1.23456789]", Array.Empty<byte[]>()),
+                ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]", Array.Empty<byte[]>()),
+                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]", Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]", Array.Empty<byte[]>()),
+                ("1:emit",
+                    new { Result = true, Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
+                    new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
+                ("1:emit",
+                    new { Result = Encoding.UTF8.GetBytes("test"), Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
+                    new[] { new byte[] { 0x74, 0x65, 0x73, 0x74 }, new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
             };
         }
 
@@ -192,9 +211,11 @@ namespace SocketIOClient.IntegrationTests
 
             json.Should().Be(excepted);
         }
+
         #endregion
 
         #region Callback
+
         [TestMethod]
         public async Task Callback_Should_Be_Work()
         {
@@ -205,17 +226,16 @@ namespace SocketIOClient.IntegrationTests
             io.On("callback_step3", res => resText = res.GetValue<string>());
 
             await io.ConnectAsync();
-            await io.EmitAsync("callback_step1", async res =>
-            {
-                await res.CallbackAsync(guid);
-            });
+            await io.EmitAsync("callback_step1", async res => { await res.CallbackAsync(guid); });
             await Task.Delay(100);
 
             resText.Should().Be(guid + "-server");
         }
+
         #endregion
 
         #region Query
+
         [TestMethod]
         public async Task Should_Connect_Successfully_If_Token_Is_Correct()
         {
@@ -223,6 +243,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "abc" }
@@ -244,6 +265,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Query = new Dictionary<string, string>
                 {
                     { "token", "abc123" }
@@ -252,23 +274,31 @@ namespace SocketIOClient.IntegrationTests
             io.OnConnected += (s, e) => times++;
             io.OnError += (s, e) => error = e;
 
-            await io.ConnectAsync();
-            await Task.Delay(100);
+            await io.Invoking(i => i.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>();
 
             times.Should().Be(0);
             error.Should().Be("Authentication error");
         }
+
         #endregion
 
         #region Auth
+
         [TestMethod]
         public async Task Should_Be_Able_To_Get_Auth()
         {
+            if (EIO == EngineIO.V3)
+            {
+                return;
+            }
             UserDTO auth = null;
             string guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 Auth = new UserDTO
                 {
                     Name = "test",
@@ -289,9 +319,11 @@ namespace SocketIOClient.IntegrationTests
             public string Name { get; set; }
             public string Password { get; set; }
         }
+
         #endregion
 
         #region Disconnect
+
         [TestMethod]
         public async Task Disconnect_Should_Be_Work_Even_If_Not_Connected()
         {
@@ -339,28 +371,37 @@ namespace SocketIOClient.IntegrationTests
             io.Id.Should().BeNull();
             io.Connected.Should().BeFalse();
         }
+
         #endregion
 
         #region Reconnect
+
         [TestMethod]
-        public async Task Manually_Reconnect_Should_Be_Work()
+        [DataRow(1)]
+        [DataRow(2)]
+        [DataRow(3)]
+        public async Task Manually_Reconnect_Should_Be_Work(int times)
         {
             int connectTimes = 0;
             int disconnectTimes = 0;
             using var io = CreateSocketIO();
             io.OnConnected += (s, e) => connectTimes++;
             io.OnDisconnected += (s, e) => disconnectTimes++;
-            await io.ConnectAsync();
-            await io.DisconnectAsync();
-            await io.ConnectAsync();
-            await io.DisconnectAsync();
 
-            connectTimes.Should().Be(2);
-            disconnectTimes.Should().Be(2);
+            for (int i = 0; i < times; i++)
+            {
+                await io.ConnectAsync();
+                await io.DisconnectAsync();
+            }
+
+            connectTimes.Should().Be(times);
+            disconnectTimes.Should().Be(times);
         }
+
         #endregion
 
         #region Header
+
         [TestMethod]
         public async Task Should_Can_Get_Headers()
         {
@@ -368,6 +409,7 @@ namespace SocketIOClient.IntegrationTests
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
+                EIO = EIO,
                 ExtraHeaders = new Dictionary<string, string>
                 {
                     { "CustomHeader", "CustomHeader-Value" }
@@ -380,9 +422,11 @@ namespace SocketIOClient.IntegrationTests
 
             response.Should().Be("CustomHeader-Value");
         }
+
         #endregion
 
         #region OnAny OffAny Off
+
         [TestMethod]
         public async Task OnAny_Should_Be_Work()
         {
@@ -438,6 +482,7 @@ namespace SocketIOClient.IntegrationTests
             onAnyCalled.Should().BeTrue();
             onCalled.Should().BeFalse();
         }
+
         #endregion
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 
 namespace SocketIOClient.Extensions
 {
@@ -12,7 +11,10 @@ namespace SocketIOClient.Extensions
 
         public static void TryCancel(this CancellationTokenSource cts)
         {
-            cts?.Cancel();
+            if (cts != null && !cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+            }
         }
     }
 }

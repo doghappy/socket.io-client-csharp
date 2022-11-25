@@ -19,13 +19,13 @@ namespace SocketIOClient.Messages
 
         public int BinaryCount { get; }
 
-        public int Eio { get; set; }
+        public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
 
         public void Read(string msg)
         {
-            if (Eio == 3)
+            if (EIO == EngineIO.V3)
             {
                 Message = msg.Trim('"');
             }
