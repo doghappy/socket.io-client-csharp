@@ -132,7 +132,7 @@ namespace SocketIOClient.Transport
         protected async Task OnTextReceived(string text)
         {
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[{Protocol} Receive] {text}");
+            System.Diagnostics.Debug.WriteLine($"[{Protocol}⬇] {text}");
 #endif
             var msg = MessageFactory.CreateMessage(Options.EIO, text);
             if (msg == null)
@@ -202,7 +202,7 @@ namespace SocketIOClient.Transport
         protected void OnBinaryReceived(byte[] bytes)
         {
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[{Protocol} Receive] bytes");
+            System.Diagnostics.Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
 #endif
             if (_messageQueue.Count > 0)
             {

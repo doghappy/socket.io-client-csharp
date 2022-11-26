@@ -114,13 +114,13 @@ namespace SocketIOClient.Transport.Http
             // TODO: lock
             await _pollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[Http Send] {payload.Text}");
+            System.Diagnostics.Debug.WriteLine($"[Polling⬆] {payload.Text}");
 #endif
             if (payload.Bytes != null && payload.Bytes.Count > 0)
             {
                 await _pollingHandler.PostAsync(_httpUri, payload.Bytes, cancellationToken);
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[Http Send] bytes");
+                System.Diagnostics.Debug.WriteLine("[Polling⬆]0️⃣1️⃣0️⃣1️⃣");
 #endif
             }
         }

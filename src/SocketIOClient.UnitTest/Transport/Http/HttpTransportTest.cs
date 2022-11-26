@@ -76,7 +76,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
             {
                 EIO = eio,
             }, mockHttpPollingHandler.Object);
-            mockHttpPollingHandler.Object.OnTextReceived(
+            await mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
             await Task.Delay(delay);
@@ -162,116 +162,289 @@ namespace SocketIOClient.UnitTest.Transport.Http
             {
                 EIO = EngineIO.V3,
             }, mockHttpPollingHandler.Object);
-            mockHttpPollingHandler.Object.OnTextReceived($"0{{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":{pingInterval},\"pingTimeout\":5000}}");
-            mockHttpPollingHandler.Object.OnTextReceived("40");
+            await mockHttpPollingHandler.Object.OnTextReceived($"0{{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":{pingInterval},\"pingTimeout\":5000}}");
+            await mockHttpPollingHandler.Object.OnTextReceived("40");
             await Task.Delay(delay);
 
             using var cts = new CancellationTokenSource(5000);
             mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", It.IsNotIn(CancellationToken.None)),
                 Times.Between(min, max, Range.Inclusive));
         }
-        
-        // [TestMethod]
-        // public async Task Eio3_Connected_Without_Namespace_Logic_Should_Work()
-        // {
-        //     var msgs = new List<IMessage>();
-        //     var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
-        //     mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-        //
-        //     var transport = new HttpTransport(new TransportOptions
-        //     {
-        //         EIO = EngineIO.V3,
-        //     }, mockHttpPollingHandler.Object);
-        //     transport.OnReceived = (msg => msgs.Add(msg));
-        //     mockHttpPollingHandler.Object.OnTextReceived(
-        //         "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":100,\"pingTimeout\":5000}");
-        //     mockHttpPollingHandler.Object.OnTextReceived("40");
-        //     await Task.Delay(120);
-        //
-        //     mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", CancellationToken.None),
-        //         Times.Once());
-        //     Assert.AreEqual(3, msgs.Count);
-        //     Assert.AreEqual(MessageType.Opened, msgs[0].Type);
-        //     Assert.AreEqual(MessageType.Connected, msgs[1].Type);
-        //     Assert.AreEqual(MessageType.Ping, msgs[2].Type);
-        // }
-        //
-        // [TestMethod]
-        // public async Task Eio3_Connected_With_Namespace_Logic_Should_Work()
-        // {
-        //     var msgs = new List<IMessage>();
-        //     var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
-        //     mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-        //
-        //     var transport = new HttpTransport(new TransportOptions
-        //     {
-        //         EIO = EngineIO.V3,
-        //         Auth = "{\"token\":\"abc\"}",
-        //         Query = new List<KeyValuePair<string, string>>
-        //         {
-        //             new KeyValuePair<string, string>("token", "V2")
-        //         }
-        //     }, mockHttpPollingHandler.Object);
-        //     transport.Namespace = "/nsp";
-        //     transport.OnReceived = (msg => msgs.Add(msg));
-        //     mockHttpPollingHandler.Object.OnTextReceived(
-        //         "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":100,\"pingTimeout\":5000}");
-        //     mockHttpPollingHandler.Object.OnTextReceived("40/nsp,");
-        //     await Task.Delay(120);
-        //
-        //     mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", CancellationToken.None),
-        //         Times.Once());
-        //     mockHttpPollingHandler.Verify(
-        //         h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "40/nsp?token=V2,", CancellationToken.None),
-        //         Times.Once());
-        //     Assert.AreEqual(3, msgs.Count);
-        //     Assert.AreEqual(MessageType.Opened, msgs[0].Type);
-        //     Assert.AreEqual(MessageType.Connected, msgs[1].Type);
-        //     Assert.AreEqual(MessageType.Ping, msgs[2].Type);
-        // }
-        //
-        // [TestMethod]
-        // public void Should_Receive_Eio3_Pong_Message()
-        // {
-        //     var msgs = new List<IMessage>();
-        //     var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
-        //     mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-        //
-        //     var transport = new HttpTransport(new TransportOptions
-        //     {
-        //         EIO = EngineIO.V3,
-        //     }, mockHttpPollingHandler.Object);
-        //     transport.OnReceived = (msg => msgs.Add(msg));
-        //     mockHttpPollingHandler.Object.OnTextReceived("3");
-        //
-        //     Assert.AreEqual(1, msgs.Count);
-        //     Assert.AreEqual(MessageType.Pong, msgs[0].Type);
-        //     var msg0 = msgs[0] as PongMessage;
-        //
-        //     Assert.AreEqual((DateTime.Now - DateTime.MinValue).TotalSeconds, msg0.Duration.TotalSeconds, 1);
-        // }
-        //
-        // [TestMethod]
-        // public void Should_Receive_Eio4_Ping_Message()
-        // {
-        //     var msgs = new List<IMessage>();
-        //     var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
-        //     mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-        //
-        //     var transport = new HttpTransport(new TransportOptions
-        //     {
-        //         EIO = EngineIO.V4,
-        //     }, mockHttpPollingHandler.Object);
-        //     transport.OnReceived = (msg => msgs.Add(msg));
-        //     mockHttpPollingHandler.Object.OnTextReceived("2");
-        //
-        //     mockHttpPollingHandler.Verify(h => h.PostAsync(null, "3", CancellationToken.None), Times.Once());
-        //     Assert.AreEqual(2, msgs.Count);
-        //     Assert.AreEqual(MessageType.Ping, msgs[0].Type);
-        //     Assert.AreEqual(MessageType.Pong, msgs[1].Type);
-        //     var msg1 = msgs[1] as PongMessage;
-        //
-        //     Assert.IsTrue(msg1.Duration.TotalMilliseconds is > 0 and < 10);
-        // }
+
+        [TestMethod]
+        [DynamicData(nameof(Eio3NamespaceQueryCases))]
+        public async Task Eio3_NamespaceQuery(string ns, IEnumerable<KeyValuePair<string, string>> query, string expected)
+        {
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+
+            var transport = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V3,
+                Query = query,
+            }, mockHttpPollingHandler.Object);
+            transport.Namespace = ns;
+            await mockHttpPollingHandler.Object.OnTextReceived(
+                "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":1000,\"pingTimeout\":5000}");
+            mockHttpPollingHandler.Verify(
+                h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", expected, CancellationToken.None),
+                Times.Once());
+        }
+
+        private static IEnumerable<object[]> Eio3NamespaceQueryCases => Eio3NamespaceQueryTupleCases.Select(x => new object[] { x.ns, x.query, x.expected });
+
+        private static IEnumerable<(string ns, IEnumerable<KeyValuePair<string, string>> query, string expected)> Eio3NamespaceQueryTupleCases
+        {
+            get
+            {
+                return new (string ns, IEnumerable<KeyValuePair<string, string>> query, string expected)[]
+                {
+                    (
+                        "/nsp",
+                        null,
+                        "40/nsp,"),
+                    (
+                        "/hello",
+                        new[]
+                        {
+                            new KeyValuePair<string, string>("hello", "world"),
+                        },
+                        "40/hello?hello=world,"),
+                    (
+                        "/nsp",
+                        new[]
+                        {
+                            new KeyValuePair<string, string>("user", "tom"),
+                            new KeyValuePair<string, string>("token", "123"),
+                        },
+                        "40/nsp?user=tom&token=123,"),
+                };
+            }
+        }
+
+        [TestMethod]
+        [DataRow(null, null, "40")]
+        [DataRow("", null, "40")]
+        [DataRow(null, "", "40")]
+        [DataRow("/nsp", "", "40/nsp,")]
+        [DataRow("/hello", "{\"hello\":\"world\"}", "40/hello,{\"hello\":\"world\"}")]
+        [DataRow("/nsp", "{\"user\":\"tom\",\"token\":\"123\"}", "40/nsp,{\"user\":\"tom\",\"token\":\"123\"}")]
+        public async Task Eio4_NamespaceAuth(string ns, string auth, string expected)
+        {
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+
+            var transport = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V4,
+                Auth = auth,
+            }, mockHttpPollingHandler.Object);
+            transport.Namespace = ns;
+            await mockHttpPollingHandler.Object.OnTextReceived(
+                "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":1000,\"pingTimeout\":5000}");
+            mockHttpPollingHandler.Verify(
+                h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", expected, CancellationToken.None),
+                Times.Once());
+        }
+
+        [TestMethod]
+        [DynamicData(nameof(OnBinaryMessagesReceivedCases))]
+        public void OnBinaryMessagesReceived(EngineIO eio, IEnumerable<(bool IsText, object Data)> input, IEnumerable<object> output)
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+            mockHttpPollingHandler.SetupProperty(h => h.OnBytesReceived);
+
+            var transport = new HttpTransport(new TransportOptions
+            {
+                EIO = eio,
+            }, mockHttpPollingHandler.Object);
+            transport.OnReceived = (msg => msgs.Add(msg));
+
+            foreach (var item in input)
+            {
+                if (item.IsText)
+                {
+                    mockHttpPollingHandler.Object.OnTextReceived((string)item.Data);
+                }
+                else
+                {
+                    mockHttpPollingHandler.Object.OnBytesReceived((byte[])item.Data);
+                }
+            }
+
+            msgs.Should().BeEquivalentTo(output);
+        }
+
+        private static IEnumerable<object[]> OnBinaryMessagesReceivedCases => OnBinaryMessagesReceivedTupleCases.Select(x => new object[] { x.eio, x.input, x.output });
+
+        private static IEnumerable<(EngineIO eio, IEnumerable<(bool IsText, object Data)> input, IEnumerable<object> output)> OnBinaryMessagesReceivedTupleCases
+        {
+            get
+            {
+                return new (EngineIO eio, IEnumerable<(bool IsText, object Data)> input, IEnumerable<object> output)[]
+                {
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, null),
+                        },
+                        Array.Empty<object>()),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "test"),
+                        },
+                        Array.Empty<object>()),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "451-[\"test\"]"),
+                        },
+                        Array.Empty<object>()),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "451-[\"test\"]"),
+                            (true, "451-[\"test\"]"),
+                        },
+                        Array.Empty<object>()),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "451-[\"test\"]"),
+                            (false, new byte[] { }),
+                        },
+                        new object[]
+                        {
+                            new
+                            {
+                                Type = MessageType.BinaryMessage,
+                                BinaryCount = 1,
+                                EIO = EngineIO.V3,
+                                Event = "test",
+                            },
+                        }),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "452-[\"test\"]"),
+                            (false, new byte[] { }),
+                        },
+                        Array.Empty<object>()),
+                    (
+                        EngineIO.V3,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "452-[\"test\"]"),
+                            (false, new byte[] { }),
+                            (false, new byte[] { }),
+                        },
+                        new object[]
+                        {
+                            new
+                            {
+                                Type = MessageType.BinaryMessage,
+                                BinaryCount = 2,
+                                EIO = EngineIO.V3,
+                                Event = "test",
+                            },
+                        }),
+                    (
+                        EngineIO.V4,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "452-[\"test2\"]"),
+                            (true, "451-[\"test1\"]"),
+                            (false, new byte[] { }),
+                            (false, new byte[] { }),
+                        },
+                        new object[]
+                        {
+                            new
+                            {
+                                Type = MessageType.BinaryMessage,
+                                BinaryCount = 2,
+                                EIO = EngineIO.V4,
+                                Event = "test2",
+                            },
+                        }),
+                    (
+                        EngineIO.V4,
+                        new (bool IsText, object Data)[]
+                        {
+                            (true, "452-[\"test2\"]"),
+                            (true, "451-[\"test1\"]"),
+                            (false, new byte[] { }),
+                            (false, new byte[] { }),
+                            (false, new byte[] { }),
+                        },
+                        new object[]
+                        {
+                            new
+                            {
+                                Type = MessageType.BinaryMessage,
+                                BinaryCount = 2,
+                                EIO = EngineIO.V4,
+                                Event = "test2",
+                            },
+                            new
+                            {
+                                Type = MessageType.BinaryMessage,
+                                BinaryCount = 1,
+                                EIO = EngineIO.V4,
+                                Event = "test1",
+                            },
+                        }),
+                };
+            }
+        }
+
+        [TestMethod]
+        public void PingPongTest()
+        {
+            var msgs = new List<IMessage>();
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+
+            var transport = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V4,
+            }, mockHttpPollingHandler.Object);
+            transport.OnReceived = m => msgs.Add(m);
+
+            mockHttpPollingHandler.Object.OnTextReceived("2");
+            
+            mockHttpPollingHandler.Verify(
+                h => h.PostAsync(null, "3", CancellationToken.None),
+                Times.Once());
+            msgs.Should().BeEquivalentTo(new object[]
+            {
+                new
+                {
+                    Type = MessageType.Ping,
+                    Protocol = TransportProtocol.Polling,
+                    EIO = EngineIO.V4,
+                },
+                new
+                {
+                    Type = MessageType.Pong,
+                    Protocol = TransportProtocol.Polling,
+                    EIO = EngineIO.V4,
+                },
+            });
+
+            var pong = msgs[1] as PongMessage;
+            pong.Duration.Should()
+                .BeGreaterThan(TimeSpan.Zero)
+                .And.BeLessThan(TimeSpan.FromMilliseconds(10));
+        }
     }
 }
