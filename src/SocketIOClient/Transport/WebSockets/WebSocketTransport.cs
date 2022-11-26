@@ -141,7 +141,7 @@ namespace SocketIOClient.Transport.WebSockets
         {
             try
             {
-                await _sendLock.WaitAsync().ConfigureAwait(false);
+                await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
                 byte[] bytes = Encoding.UTF8.GetBytes(payload.Text);
                 await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
 #if DEBUG
