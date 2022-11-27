@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-
-namespace SocketIOClient.IntegrationTests
+﻿namespace SocketIOClient.IntegrationTests
 {
     public abstract class HttpBaseTests : SocketIOBaseTests
     {

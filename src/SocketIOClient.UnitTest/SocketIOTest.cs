@@ -1,23 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.UriConverters;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient.Transport;
 using RichardSzalay.MockHttp;
-using SocketIOClient.JsonSerializer;
 using Moq;
-using System.Reactive.Subjects;
 using System.Threading;
 using System.Net.WebSockets;
-using SocketIOClient.Messages;
-using System.Reactive.Linq;
-using System.Reactive.Disposables;
 using System.Net.Http;
-using System.Linq.Expressions;
-using System.Diagnostics.CodeAnalysis;
 using SocketIOClient.Transport.WebSockets;
 
 namespace SocketIOClient.UnitTest
