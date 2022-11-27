@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
-using SocketIOClient.UriConverters;
 
 namespace SocketIOClient.Transport
 {
