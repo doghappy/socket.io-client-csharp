@@ -26,7 +26,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
                 var bytes = Encoding.UTF8.GetBytes(item);
                 await client.SendAsync(bytes, TransportMessageType.Text, true, CancellationToken.None);
                 var buffer = new byte[1024];
-                var result = await client.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                var result = await client.ReceiveAsync(ChunkSize.Size8K, CancellationToken.None);
                 result.Should().BeEquivalentTo(new WebSocketReceiveResult
                 {
                     Count = bytes.Length,
