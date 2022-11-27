@@ -400,30 +400,31 @@ namespace SocketIOClient.IntegrationTests
 
         #endregion
 
-        #region Header
-
         [TestMethod]
-        public async Task Should_Can_Get_Headers()
+        [DataRow("CustomHeader", "CustomHeader-Value")]
+        [DataRow("User-Agent", "dotnet-socketio[client]/socket")]
+        public async Task ExtraHeaders(string key, string value)
         {
-            string response = null;
+            string actual = null;
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EIO,
+                // ExtraHeaders = headers,
                 ExtraHeaders = new Dictionary<string, string>
                 {
-                    { "CustomHeader", "CustomHeader-Value" }
-                }
+                    { key, value },
+                },
             });
 
             await io.ConnectAsync();
-            await io.EmitAsync("get_headers", res => response = res.GetValue<string>());
+            await io.EmitAsync("get_header", 
+                res => actual = res.GetValue<string>(), 
+                key.ToLower());
             await Task.Delay(100);
 
-            response.Should().Be("CustomHeader-Value");
+            actual.Should().Be(value);
         }
-
-        #endregion
 
         #region OnAny OffAny Off
 

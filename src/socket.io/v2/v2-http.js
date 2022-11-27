@@ -27,8 +27,8 @@ io.on('connection', socket => {
     socket.on('get_auth', cb => {
         cb(socket.handshake.auth);
     });
-    socket.on('get_headers', cb => {
-        cb(socket.handshake.headers.customheader);
+    socket.on('get_header', (key, cb) => {
+        cb(socket.handshake.headers[key]);
     });
     socket.on('disconnect', close => {
         socket.disconnect(close);
@@ -54,8 +54,8 @@ nsp.on("connection", socket => {
     socket.on('get_auth', cb => {
         cb(socket.handshake.auth);
     });
-    socket.on('get_headers', cb => {
-        cb(socket.handshake.headers.customheader);
+    socket.on('get_header', (key, cb) => {
+        cb(socket.handshake.headers[key]);
     });
     socket.on('disconnect', close => {
         socket.disconnect(close);

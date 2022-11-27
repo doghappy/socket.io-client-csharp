@@ -152,7 +152,7 @@ public class WebSocketTransportTest
                         Protocol = TransportProtocol.WebSocket,
                         BinaryCount = 0,
                     },
-                    new []
+                    new[]
                     {
                         "\"world\"",
                     },
@@ -198,7 +198,7 @@ public class WebSocketTransportTest
                     new List<byte[]>
                     {
                         Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                    }), 
+                    }),
                 (
                     EngineIO.V4,
                     new List<(TransportMessageType type, byte[] data)>
@@ -274,7 +274,7 @@ public class WebSocketTransportTest
                     new List<byte[]>
                     {
                         Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 2).ToArray(),
-                    }), 
+                    }),
                 (
                     EngineIO.V3,
                     new List<(TransportMessageType type, byte[] data)>
@@ -297,7 +297,7 @@ public class WebSocketTransportTest
                     new List<byte[]>
                     {
                         Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 1).ToArray(),
-                    }), 
+                    }),
                 (
                     EngineIO.V3,
                     new List<(TransportMessageType type, byte[] data)>
@@ -320,7 +320,7 @@ public class WebSocketTransportTest
                     new List<byte[]>
                     {
                         Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                    }), 
+                    }),
                 (
                     EngineIO.V3,
                     new List<(TransportMessageType type, byte[] data)>
