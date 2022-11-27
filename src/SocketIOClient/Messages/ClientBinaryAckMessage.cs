@@ -9,7 +9,7 @@ namespace SocketIOClient.Messages
     /// <summary>
     /// The server calls the client's callback with binary
     /// </summary>
-    public class ClientBinaryAckMessage : IMessage
+    public class ClientBinaryAckMessage : IJsonMessage, IBytesMessage
     {
         public MessageType Type => MessageType.BinaryAckMessage;
 

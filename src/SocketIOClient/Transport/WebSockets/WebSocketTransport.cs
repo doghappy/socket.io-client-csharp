@@ -51,33 +51,28 @@ namespace SocketIOClient.Transport.WebSockets
             }
         }
 
-        private void Listen()
+        private void Listen(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
-                while (true)
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (_listenCancellation.IsCancellationRequested)
-                    {
-                        break;
-                    }
                     var binary = new byte[_receiveChunkSize];
                     int count = 0;
                     WebSocketReceiveResult result = null;
 
                     while (_ws.State == WebSocketState.Open)
                     {
-                        var buffer = new byte[_receiveChunkSize];
                         try
                         {
-                            result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None).ConfigureAwait(false);
+                            result = await _ws.ReceiveAsync(_receiveChunkSize, cancellationToken).ConfigureAwait(false);
 
                             // resize
                             if (binary.Length - count < result.Count)
                             {
                                 Array.Resize(ref binary, binary.Length + result.Count);
                             }
-                            Buffer.BlockCopy(buffer, 0, binary, count, result.Count);
+                            Buffer.BlockCopy(result.Buffer, 0, binary, count, result.Count);
                             count += result.Count;
                             if (result.EndOfMessage)
                             {
@@ -121,15 +116,23 @@ namespace SocketIOClient.Transport.WebSockets
                             break;
                     }
                 }
-            });
+            }, cancellationToken);
         }
 
         public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
-            if (_dirty) throw new ObjectNotCleanException();
+            if (_dirty)
+                throw new InvalidOperationException(DirtyMessage);
             _dirty = true;
-            await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-            Listen();
+            try
+            {
+                await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                throw new TransportException($"Could not connect to '{uri}'", e);
+            }
+            Listen(_listenCancellation.Token);
         }
 
         public override async Task DisconnectAsync(CancellationToken cancellationToken)
@@ -142,11 +145,14 @@ namespace SocketIOClient.Transport.WebSockets
             try
             {
                 await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                byte[] bytes = Encoding.UTF8.GetBytes(payload.Text);
-                await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
+                if (!string.IsNullOrEmpty(payload.Text))
+                {
+                    byte[] bytes = Encoding.UTF8.GetBytes(payload.Text);
+                    await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"[WebSocket Send] {payload.Text}");
+                    System.Diagnostics.Debug.WriteLine($"[WebSocket Send] {payload.Text}");
 #endif
+                }
                 if (payload.Bytes != null)
                 {
                     foreach (var item in payload.Bytes)

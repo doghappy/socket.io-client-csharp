@@ -37,14 +37,16 @@ namespace SocketIOClient.Transport.WebSockets
             await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken)
+        public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
-            var result = await _ws.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+            var buffer = new byte[bufferSize];
+            var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
             return new WebSocketReceiveResult
             {
                 Count = result.Count,
                 MessageType = (TransportMessageType)result.MessageType,
-                EndOfMessage = result.EndOfMessage
+                EndOfMessage = result.EndOfMessage,
+                Buffer = buffer,
             };
         }
 

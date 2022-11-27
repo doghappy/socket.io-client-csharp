@@ -12,7 +12,7 @@ namespace SocketIOClient.Transport.WebSockets
         Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
         Task DisconnectAsync(CancellationToken cancellationToken);
         Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken);
-        Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
+        Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken);
         void AddHeader(string key, string val);
         void SetProxy(IWebProxy proxy);
     }

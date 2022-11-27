@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -480,7 +479,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
                 return new (EngineIO eio, Payload payload, int textTimes, int byteTimes)[]
                 {
                     (EngineIO.V3, new Payload(), 0, 0),
-                    (EngineIO.V3, new Payload { Text = string.Empty }, 1, 0),
+                    (EngineIO.V3, new Payload { Text = string.Empty }, 0, 0),
                     (EngineIO.V4, new Payload { Text = "hello word" }, 1, 0),
                     (EngineIO.V4, new Payload { Bytes = new List<byte[]>() }, 0, 0),
                     (EngineIO.V4, new Payload { Bytes = new List<byte[]> { new byte[] { } } }, 0, 1),
@@ -510,13 +509,13 @@ namespace SocketIOClient.UnitTest.Transport.Http
             var payload = new Payload
             {
                 Text = new string('a', ChunkSize.Size8K + 1),
+                Bytes = new List<byte[]>
+                {
+                    new byte[ChunkSize.Size8K + 1],
+                },
             };
-            payload.Bytes = new List<byte[]>();
-            var bytes = Encoding.UTF8.GetBytes(payload.Text);
-            payload.Bytes.Add(bytes);
-            await transport.SendAsync(payload, CancellationToken.None);
 
-            Parallel.For(1, times, _ => transport.SendAsync(payload, CancellationToken.None).GetAwaiter().GetResult());
+            Parallel.For(0, times, _ => transport.SendAsync(payload, CancellationToken.None).GetAwaiter().GetResult());
             
             mockHttpPollingHandler.Verify(
                 h => h.PostAsync(null, It.IsAny<string>(), CancellationToken.None),

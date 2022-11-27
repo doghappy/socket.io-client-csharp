@@ -17,6 +17,8 @@ namespace SocketIOClient.Transport
             _messageQueue = new Queue<IMessage>();
         }
 
+        protected const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
+
         DateTime _pingTime;
         readonly Queue<IMessage> _messageQueue;
         protected TransportOptions Options { get; }
@@ -139,6 +141,7 @@ namespace SocketIOClient.Transport
             {
                 return;
             }
+            msg.Protocol = Protocol;
             if (msg.BinaryCount > 0)
             {
                 msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);

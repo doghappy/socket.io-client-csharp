@@ -19,8 +19,6 @@ namespace SocketIOClient.Transport.Http
             _sendLock = new SemaphoreSlim(1, 1);
         }
 
-        private const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
-
         bool _dirty;
         string _httpUri;
         readonly SemaphoreSlim _sendLock;
@@ -77,8 +75,6 @@ namespace SocketIOClient.Transport.Http
             }
 
             _dirty = true;
-            // _pollingTokenSource = new CancellationTokenSource();
-            // StartPolling(_pollingTokenSource.Token);
         }
 
         public override Task DisconnectAsync(CancellationToken cancellationToken)
@@ -117,7 +113,7 @@ namespace SocketIOClient.Transport.Http
             try
             {
                 await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                if (payload.Text != null)
+                if (!string.IsNullOrEmpty(payload.Text))
                 {
                     await _pollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
 #if DEBUG
