@@ -90,29 +90,37 @@ namespace SocketIOClient.Transport.WebSockets
                         break;
                     }
 
-                    switch (result.MessageType)
+                    try
                     {
-                        case TransportMessageType.Text:
-                            string text = Encoding.UTF8.GetString(binary, 0, count);
-                            OnTextReceived(text);
-                            break;
-                        case TransportMessageType.Binary:
-                            byte[] bytes;
-                            if (Options.EIO == EngineIO.V3)
-                            {
-                                bytes = new byte[count - 1];
-                                Buffer.BlockCopy(binary, 1, bytes, 0, bytes.Length);
-                            }
-                            else
-                            {
-                                bytes = new byte[count];
-                                Buffer.BlockCopy(binary, 0, bytes, 0, bytes.Length);
-                            }
-                            OnBinaryReceived(bytes);
-                            break;
-                        case TransportMessageType.Close:
-                            OnError.TryInvoke(new TransportException("Received a Close message"));
-                            break;
+                        switch (result.MessageType)
+                        {
+                            case TransportMessageType.Text:
+                                string text = Encoding.UTF8.GetString(binary, 0, count);
+                                await OnTextReceived(text);
+                                break;
+                            case TransportMessageType.Binary:
+                                byte[] bytes;
+                                if (Options.EIO == EngineIO.V3)
+                                {
+                                    bytes = new byte[count - 1];
+                                    Buffer.BlockCopy(binary, 1, bytes, 0, bytes.Length);
+                                }
+                                else
+                                {
+                                    bytes = new byte[count];
+                                    Buffer.BlockCopy(binary, 0, bytes, 0, bytes.Length);
+                                }
+                                OnBinaryReceived(bytes);
+                                break;
+                            case TransportMessageType.Close:
+                                OnError.TryInvoke(new TransportException("Received a Close message"));
+                                break;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        OnError.TryInvoke(e);
+                        break;
                     }
                 }
             }, cancellationToken);

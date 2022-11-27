@@ -9,7 +9,7 @@ namespace SocketIOClient.Messages
     /// <summary>
     /// The server calls the client's callback
     /// </summary>
-    public class ClientAckMessage : IJsonMessage, IBytesMessage
+    public class ClientAckMessage : IJsonMessage
     {
         public MessageType Type => MessageType.AckMessage;
 

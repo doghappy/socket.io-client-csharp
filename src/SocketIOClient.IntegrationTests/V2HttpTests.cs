@@ -6,7 +6,7 @@ namespace SocketIOClient.IntegrationTests
     public class V2HttpTests : HttpBaseTests
     {
         protected override EngineIO EIO => EngineIO.V3;
-        protected override string ServerUrl => V2_HTTP;
-        protected override string ServerTokenUrl => V2_HTTP_TOKEN;
+        protected override string ServerUrl => Common.Startup.V2_HTTP;
+        protected override string ServerTokenUrl => Common.Startup.V2_HTTP_TOKEN;
     }
 }

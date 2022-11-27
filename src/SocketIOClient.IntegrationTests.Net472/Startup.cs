@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace SocketIOClient.IntegrationTests
+namespace SocketIOClient.IntegrationTests.Net472
 {
     [TestClass]
     internal class Startup
@@ -8,7 +8,7 @@ namespace SocketIOClient.IntegrationTests
         [AssemblyInitialize]
         public static void Initialize(TestContext testContext)
         {
-            Common.Startup.Initialize();
+           Common.Startup.Initialize();
         }
     }
 }

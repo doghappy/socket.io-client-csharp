@@ -1,32 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2</TargetFramework>
-    <AssemblyName>SocketIOClient</AssemblyName>
-    <RootNamespace>SocketIOClient</RootNamespace>
-    <Authors>HeroWong</Authors>
-    <Description>socket.io-client implemention for .NET</Description>
-    <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageTags>socket.io-client</PackageTags>
-    <RepositoryType>github</RepositoryType>
-    <PackageLicenseFile></PackageLicenseFile>
-    <Version>3.0.7-alpha.1</Version>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2;net472</TargetFrameworks>
+		<AssemblyName>SocketIOClient</AssemblyName>
+		<RootNamespace>SocketIOClient</RootNamespace>
+		<Authors>HeroWong</Authors>
+		<Description>socket.io-client implemention for .NET</Description>
+		<PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageTags>socket.io-client</PackageTags>
+		<RepositoryType>github</RepositoryType>
+		<PackageLicenseFile></PackageLicenseFile>
+		<Version>3.0.7-alpha.1</Version>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\SocketIOClient.xml</DocumentationFile>
-    <OutputPath>bin\Release\</OutputPath>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DocumentationFile>bin\Release\SocketIOClient.xml</DocumentationFile>
+		<OutputPath>bin\Release\</OutputPath>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.Collections" Version="4.3.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.Collections" Version="4.3.0" />
+		<PackageReference Include="System.Text.Json" Version="7.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
+		<Reference Include="System.Net.Http" />
+	</ItemGroup>
 
 </Project>

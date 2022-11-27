@@ -11,8 +11,8 @@ namespace SocketIOClient.IntegrationTests
     [TestClass]
     public class V4WebSocketTests : WebSocketBaseTests
     {
-        protected override string ServerUrl => V4_WS;
-        protected override string ServerTokenUrl => V4_WS_TOKEN;
+        protected override string ServerUrl => Common.Startup.V4_WS;
+        protected override string ServerTokenUrl => Common.Startup.V4_WS_TOKEN;
         protected override EngineIO EIO => EngineIO.V4;
 
         [TestMethod]
@@ -31,7 +31,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
-        public void Should_Throw_Exception_If_Proxy_Server_Not_Start()
+        public async Task Should_Throw_Exception_If_Proxy_Server_Not_Start()
         {
             using var io = CreateSocketIO(new SocketIOOptions
             {
@@ -39,8 +39,9 @@ namespace SocketIOClient.IntegrationTests
                 Reconnection = false,
                 ConnectionTimeout = TimeSpan.FromSeconds(1)
             });
-            Action action = () => io.ConnectAsync().GetAwaiter().GetResult();
-            action.Should().Throw<ConnectionException>();
+            await io.Invoking(async x => await x.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>();
         }
 
         [TestMethod]
@@ -55,10 +56,11 @@ namespace SocketIOClient.IntegrationTests
                 Reconnection = false,
                 ConnectionTimeout = TimeSpan.FromSeconds(2)
             });
-            Action action = () => io.ConnectAsync().GetAwaiter().GetResult();
-            action.Should().Throw<ConnectionException>();
+            await io.Invoking(async x => await x.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>();
 
-            var uri = new Uri(V4_NSP_WS);
+            var uri = new Uri(Common.Startup.V4_NSP_WS);
             var uriStr = $"{uri.Host}:{uri.Port}";
             msgs.Should().BeEquivalentTo(new[] { $"CONNECT {uriStr} HTTP/1.1\r\nHost: {uriStr}\r\n\r\n" });
 

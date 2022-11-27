@@ -105,12 +105,9 @@ public class WebSocketTransportTest
                 .Should()
                 .Equal(expectedElements);
         }
-        if (msg is IBytesMessage byteMsg)
-        {
-            byteMsg.IncomingBytes
-                .Should()
-                .BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
-        }
+        msg.IncomingBytes
+            .Should()
+            .BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
     }
 
     private static IEnumerable<object[]> OnReceivedCases => OnReceivedTupleCases.Select(x => new object[] { x.eio, x.items, x.expectedMsg, x.expectedElements, x.expectedBytes });

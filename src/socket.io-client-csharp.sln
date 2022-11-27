@@ -13,6 +13,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTest", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Net472", "SocketIOClient.IntegrationTests.Net472\SocketIOClient.IntegrationTests.Net472.csproj", "{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Common", "SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj", "{8C62BD1E-9F14-4170-8E19-29A39996AAA2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{3987863F-026D-4B74-AD7F-E29470DA16A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3987863F-026D-4B74-AD7F-E29470DA16A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3987863F-026D-4B74-AD7F-E29470DA16A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
