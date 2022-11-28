@@ -40,3 +40,4 @@ stages:
           - task: MSBuild@1
             inputs:
               solution: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests.Net472/SocketIOClient.IntegrationTests.Net472.csproj
+              restoreNugetPackages: true
