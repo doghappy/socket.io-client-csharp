@@ -64,8 +64,8 @@ namespace SocketIOClient.UnitTest.Transport.Http
         }
 
         [TestMethod]
-        [DataRow(EngineIO.V4, 1000, 9, 10)]
-        [DataRow(EngineIO.V3, 1000, 9, 10)]
+        [DataRow(EngineIO.V4, 1000, 8, 12)]
+        [DataRow(EngineIO.V3, 1000, 8, 12)]
         public async Task Polling_ShouldWork(EngineIO eio, int delay, int min, int max)
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
@@ -446,7 +446,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
             var pong = msgs[1] as PongMessage;
             pong.Duration.Should()
                 .BeGreaterThan(TimeSpan.Zero)
-                .And.BeLessThan(TimeSpan.FromMilliseconds(10));
+                .And.BeLessThan(TimeSpan.FromMilliseconds(50));
         }
 
         [TestMethod]
