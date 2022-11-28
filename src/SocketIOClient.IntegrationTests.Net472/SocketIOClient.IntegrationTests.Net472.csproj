@@ -155,10 +155,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\SocketIOClient.IntegrationTests\appsettings.user.yml">
-      <Link>appsettings.user.yml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="..\SocketIOClient.IntegrationTests\appsettings.yml">
       <Link>appsettings.yml</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
