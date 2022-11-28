@@ -38,7 +38,7 @@ stages:
       # - template: templates/nodejs-tpl.yml
       - job:
         displayName: Run integration tests for .Net Framework
-        dependsOn: nodejs
+        # dependsOn: nodejs
         steps:
           - template: templates/socket.io-tpl.yml
           - task: MSBuild@1
