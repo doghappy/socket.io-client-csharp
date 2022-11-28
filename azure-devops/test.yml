@@ -9,7 +9,7 @@ pool:
 stages:
   - stage: NET_Tests
     jobs:
-      - template: templates/nodejs-tpl.yml
+      # - template: templates/nodejs-tpl.yml
       - job: ut
         displayName: Run unit tests
         steps:
@@ -21,7 +21,7 @@ stages:
       - job:
         displayName: Run integration tests
         dependsOn:
-          - nodejs
+          # - nodejs
           - ut
         steps:
           - template: templates/socket.io-tpl.yml
@@ -35,7 +35,7 @@ stages:
     pool: 
       vmImage: windows-latest
     jobs:
-      - template: templates/nodejs-tpl.yml
+      # - template: templates/nodejs-tpl.yml
       - job:
         displayName: Run integration tests for .Net Framework
         dependsOn: nodejs
