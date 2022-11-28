@@ -3,7 +3,8 @@ steps:
       npm install
       npm run install
       $job = npm start &
-      Start-Sleep -Seconds 10
+      $job
+      Start-Sleep -Seconds 30
       Receive-Job $job
     displayName: Run socket.io server
     workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
