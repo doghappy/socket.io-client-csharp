@@ -1,0 +1,9 @@
+jobs:
+  - job: nodejs
+    displayName: Install nodejs
+    steps:
+      - checkout: none
+      - task: NodeTool@0
+        displayName: Install nodejs
+        inputs:
+          versionSpec: 16.x
