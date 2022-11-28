@@ -4,6 +4,9 @@ steps:
       npm run install
       $job = npm start &
       $job
+      Start-Sleep -Seconds 30
+      Test-Connection -TargetName 127.0.0.1 -TcpPort 11400
+      hostname
     displayName: Run socket.io server
     workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
   - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1

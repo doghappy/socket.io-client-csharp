@@ -1,11 +1,11 @@
-Get-Job Job1
+hostname
 
 $ports = 11400, 11410, 11401, 11411, 11200, 11210, 11201, 11211
 $retry = 10
 $delay = 3
 function Test-SocketIOConnection($Port) {
     for ($i = 1; $i -le $retry; $i++) {
-        $result = Test-Connection -TargetName localhost -TcpPort $Port
+        $result = Test-Connection -TargetName 127.0.0.1 -TcpPort $Port
         if ($result) {
             Write-Host "$Port opened"
             return $true
