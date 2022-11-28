@@ -7,7 +7,7 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-  - stage: .NET Tests
+  - stage: NET_Tests
     jobs:
       - template: templates/nodejs-tpl.yml
       - job: ut
@@ -30,7 +30,7 @@ stages:
             inputs:
               workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
               command: test
-  - stage: .NET Framework Tests
+  - stage: NET_Framework_Tests
     pool: windows-latest
     jobs:
       - template: templates/nodejs-tpl.yml
