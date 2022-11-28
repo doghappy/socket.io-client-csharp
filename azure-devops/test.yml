@@ -10,21 +10,21 @@ stages:
   - stage: NET_Tests
     jobs:
       - job: ut
-        displayName: Run unit tests
+        displayName: Unit tests
         steps:
           - task: DotNetCoreCLI@2
-            displayName: Run unit tests
+            displayName: Unit tests
             inputs:
               workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
               command: test
       - job:
-        displayName: Run integration tests
+        displayName: Integration tests
         dependsOn:
           - ut
         steps:
           - template: templates/socket.io-tpl.yml
           - task: DotNetCoreCLI@2
-            displayName: Run integration tests
+            displayName: Integration tests
             inputs:
               workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
               command: test
@@ -34,10 +34,14 @@ stages:
       vmImage: windows-latest
     jobs:
       - job:
-        displayName: Run integration tests for .Net Framework
+        displayName: Integration tests for .Net Framework
         steps:
           - template: templates/socket.io-tpl.yml
+          - task: NuGetCommand@2
+            inputs:
+              command: 'restore'
+              restoreSolution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
           - task: MSBuild@1
             inputs:
               solution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
-              restoreNugetPackages: true
+              # restoreNugetPackages: true
