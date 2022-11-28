@@ -9,9 +9,10 @@ steps:
       hostname
     displayName: Run socket.io server
     workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
-  - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
-    displayName: Check ports of socket.io servers
-    failOnStderr: true
+  # - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
+  #   displayName: Check ports of socket.io servers
+  #   failOnStderr: true
+  
   # - task: PowerShell@2
   #   displayName: Check ports of socket.io servers
   #   inputs:
