@@ -39,5 +39,5 @@ stages:
           - template: templates/socket.io-tpl.yml
           - task: MSBuild@1
             inputs:
-              solution: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests.Net472/SocketIOClient.IntegrationTests.Net472.csproj
+              solution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
               restoreNugetPackages: true
