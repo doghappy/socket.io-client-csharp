@@ -16,7 +16,7 @@
     "v2-ws-token": "cd v2 && npm run v2-ws-token",
     "v2-http": "cd v2 && npm run v2-http",
     "v2-http-token": "cd v2 && npm run v2-http-token",
-    "install":"cd v4 && npm install && cd ../v3 && npm install && cd ../v2 && npm install",
+    "install":"cd v4 && npm install && cd ../v2 && npm install",
     "start": "concurrently \"npm run v4-ws\" \"npm run v4-ws-token\" \"npm run v4-http\" \"npm run v4-http-token\" \"npm run v2-ws\" \"npm run v2-ws-token\" \"npm run v2-http\" \"npm run v2-http-token\""
   },
   "author": "https://github.com/doghappy",
