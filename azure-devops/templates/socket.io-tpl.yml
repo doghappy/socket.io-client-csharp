@@ -1,6 +1,7 @@
 steps:
   - pwsh: |
       npm install pm2 -g
+      npm install
       pm2 --name socket.io start npm -- start
     displayName: Run socket.io server
     workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
