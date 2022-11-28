@@ -9,7 +9,7 @@ pool:
 stages:
   - stage: NET_Tests
     jobs:
-      - job: ut
+      - job:
         displayName: Unit tests
         steps:
           - task: DotNetCoreCLI@2
@@ -19,8 +19,6 @@ stages:
               command: test
       - job:
         displayName: Integration tests
-        dependsOn:
-          - ut
         steps:
           - template: templates/socket.io-tpl.yml
           - task: DotNetCoreCLI@2
