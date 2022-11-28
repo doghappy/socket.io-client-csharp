@@ -9,5 +9,7 @@ steps:
         npm start &
   - task: PowerShell@2
     displayName: Check ports of socket.io servers
+    pwsh: true
+    failOnStderr: true
     inputs:
       filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
