@@ -1,15 +1,16 @@
 steps:
-  - task: CmdLine@2
+  - pwsh: |
+      npm install
+      npm run install
+      npm start &
     displayName: Run socket.io server
-    inputs:
-      workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
-      script: |
-        npm install
-        npm run install
-        npm start &
-  - task: PowerShell@2
+    workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
+  - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
     displayName: Check ports of socket.io servers
-    inputs:
-      filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
-      pwsh: true
-      failOnStderr: true
+    failOnStderr: true
+  # - task: PowerShell@2
+  #   displayName: Check ports of socket.io servers
+  #   inputs:
+  #     filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
+  #     pwsh: true
+  #     failOnStderr: true
