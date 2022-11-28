@@ -1,6 +1,6 @@
 $ports = 11400, 11410, 11401, 11411, 11200, 11210, 11201, 11211
 function Test-SocketIOConnection($Port) {
-    for ($i = 0; $i -lt 3; $i++) {
+    for ($i = 0; $i -lt 10; $i++) {
         $result = Test-Connection -TargetName localhost -TcpPort $Port
         if ($result) {
             Write-Host "$Port opened"
