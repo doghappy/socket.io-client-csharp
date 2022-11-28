@@ -31,7 +31,8 @@ stages:
               workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
               command: test
   - stage: NET_Framework_Tests
-    pool: windows-latest
+    pool: 
+      vmImage: windows-latest
     jobs:
       - template: templates/nodejs-tpl.yml
       - job:
