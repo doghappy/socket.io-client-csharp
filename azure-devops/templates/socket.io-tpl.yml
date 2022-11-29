@@ -1,0 +1,17 @@
+steps:
+  - pwsh: |
+      npm install pm2 -g
+      npm install
+      pm2 start v4/v4-ws.js
+      pm2 start v4/v4-ws-token.js
+      pm2 start v4/v4-http.js
+      pm2 start v4/v4-http-token.js
+      pm2 start v2/v2-ws.js
+      pm2 start v2/v2-ws-token.js
+      pm2 start v2/v2-http.js
+      pm2 start v2/v2-http-token.js
+    displayName: Run socket.io server
+    workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
+  - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
+    displayName: Check ports of socket.io servers
+    failOnStderr: true

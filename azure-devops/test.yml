@@ -6,43 +6,43 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-jobs:
-  - job: nodejs
-    displayName: Install nodejs
-    steps:
-      - checkout: none
-      - task: NodeTool@0
-        displayName: Install nodejs
-        inputs:
-          versionSpec: 16.x
-  - job: ut
-    displayName: Run unit tests
-    steps:
-      - task: DotNetCoreCLI@2
-        displayName: Run unit tests
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
-          command: test
-  - job:
-    displayName: Run integration tests
-    dependsOn:
-      - nodejs
-      - ut
-    steps:
-      - task: CmdLine@2
-        displayName: Run socket.io server
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
-          script: |
-            npm install
-            npm run install
-            npm start &
-      - task: PowerShell@2
-        displayName: Check ports of socket.io servers
-        inputs:
-          filePath: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
-      - task: DotNetCoreCLI@2
-        displayName: Run integration tests
-        inputs:
-          workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
-          command: test
+stages:
+  - stage: NET_Tests
+    jobs:
+      - job:
+        displayName: Unit tests
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: Unit tests
+            inputs:
+              workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
+              command: test
+      - job:
+        displayName: Integration tests
+        steps:
+          - template: templates/socket.io-tpl.yml
+          - task: DotNetCoreCLI@2
+            displayName: Integration tests
+            inputs:
+              workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
+              command: test
+  - stage: NET_Framework_Tests
+    dependsOn: [ ]
+    pool: 
+      vmImage: windows-latest
+    jobs:
+      - job:
+        displayName: Integration tests for .Net Framework
+        steps:
+          - template: templates/socket.io-tpl.yml
+          - pwsh: dotnet restore
+            displayName: dotnet restore
+            workingDirectory: $(Agent.BuildDirectory)/s/src
+          - task: MSBuild@1
+            inputs:
+              solution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
+              restoreNugetPackages: true
+          - task: VSTest@2
+            inputs:
+              testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
+              searchFolder: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests.Net472/bin/Debug
