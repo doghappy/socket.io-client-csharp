@@ -12,7 +12,7 @@
 		<PackageTags>socket.io-client</PackageTags>
 		<RepositoryType>github</RepositoryType>
 		<PackageLicenseFile></PackageLicenseFile>
-		<Version>3.0.7-alpha.1</Version>
+		<Version>3.0.7-alpha.2</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<SignAssembly>true</SignAssembly>

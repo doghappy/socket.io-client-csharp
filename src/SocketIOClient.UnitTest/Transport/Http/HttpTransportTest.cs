@@ -446,7 +446,7 @@ namespace SocketIOClient.UnitTest.Transport.Http
             var pong = msgs[1] as PongMessage;
             pong.Duration.Should()
                 .BeGreaterThan(TimeSpan.Zero)
-                .And.BeLessThan(TimeSpan.FromMilliseconds(50));
+                .And.BeLessThan(TimeSpan.FromMilliseconds(100));
         }
 
         [TestMethod]
