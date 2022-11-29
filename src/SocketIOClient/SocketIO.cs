@@ -234,7 +234,14 @@ namespace SocketIOClient
             {
                 foreach (var item in Options.ExtraHeaders)
                 {
-                    _transport.AddHeader(item.Key, item.Value);
+                    try
+                    {
+                        _transport.AddHeader(item.Key, item.Value);
+                    }
+                    catch (Exception e)
+                    {
+                        OnErrorReceived(e);
+                    }
                 }
             }
         }

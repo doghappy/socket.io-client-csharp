@@ -373,6 +373,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         [DataRow("CustomHeader", "CustomHeader-Value")]
         [DataRow("User-Agent", "dotnet-socketio[client]/socket")]
+        [DataRow("user-agent", "dotnet-socketio[client]/socket")]
         public async Task ExtraHeaders(string key, string value)
         {
             string actual = null;
@@ -380,7 +381,6 @@ namespace SocketIOClient.IntegrationTests
             {
                 Reconnection = false,
                 EIO = EIO,
-                // ExtraHeaders = headers,
                 ExtraHeaders = new Dictionary<string, string>
                 {
                     { key, value },

@@ -22,7 +22,7 @@ namespace SocketIOClient.Transport.WebSockets
         }
 
 #if NET461_OR_GREATER
-        private readonly static HashSet<string> allowHeaders = new HashSet<string>
+        private static readonly HashSet<string> allowedHeaders = new HashSet<string>
         {
             "User-Agent"
         };
@@ -40,7 +40,7 @@ namespace SocketIOClient.Transport.WebSockets
 
             foreach (string key in hashTable.Keys)
             {
-                if (!allowHeaders.Contains(key))
+                if (!allowedHeaders.Contains(key))
                 {
                     continue;
                 }

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,10 +16,23 @@ namespace SocketIOClient.Transport.Http
 
         readonly HttpClientHandler _handler;
         private readonly HttpClient _httpClient;
+        
+        private static readonly HashSet<string> allowedHeaders = new HashSet<string>
+        {
+            "user-agent",
+        };
 
         public void AddHeader(string name, string value)
         {
-            _httpClient.DefaultRequestHeaders.Add(name, value);
+            if (allowedHeaders.Contains(name.ToLower()))
+            {
+                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+            }
+            else
+            {
+                // _httpClient.DefaultRequestHeaders.UserAgent.
+                _httpClient.DefaultRequestHeaders.Add(name, value);
+            }
         }
 
         public void SetProxy(IWebProxy proxy)

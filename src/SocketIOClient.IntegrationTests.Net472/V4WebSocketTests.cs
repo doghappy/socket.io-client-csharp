@@ -12,6 +12,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         [TestMethod]
         [DataRow("CustomHeader", "CustomHeader-Value")]
         [DataRow("User-Agent", "dotnet-socketio[client]/socket")]
+        [DataRow("user-agent", "dotnet-socketio[client]/socket")]
         public async Task ExtraHeaders(string key, string value)
         {
             string actual = null;
