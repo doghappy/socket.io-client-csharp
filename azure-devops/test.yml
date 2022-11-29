@@ -34,12 +34,7 @@ stages:
       - job:
         displayName: Integration tests for .Net Framework
         steps:
-          # - template: templates/socket.io-tpl.yml
-          # - task: NuGetCommand@2
-          #   displayName: NuGet Restore
-          #   inputs:
-          #     command: 'restore'
-          #     restoreSolution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
+          - template: templates/socket.io-tpl.yml
           - pwsh: dotnet restore
             displayName: dotnet restore
             workingDirectory: $(Agent.BuildDirectory)/s/src
