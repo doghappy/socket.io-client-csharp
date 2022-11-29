@@ -47,3 +47,7 @@ stages:
             inputs:
               solution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
               restoreNugetPackages: true
+          - task: VSTest@2
+            inputs:
+              testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
+              searchFolder: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests.Net472/bin/Debug
