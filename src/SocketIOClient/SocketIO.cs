@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading;
@@ -13,6 +11,10 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using SocketIOClient.UriConverters;
+
+#if DEBUG
+using System.Diagnostics;
+#endif
 
 namespace SocketIOClient
 {
@@ -349,7 +351,7 @@ namespace SocketIOClient
                 catch (Exception e)
                 {
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine(e);
+                    Debug.WriteLine(e);
 #endif
                 }
             }
@@ -494,7 +496,9 @@ namespace SocketIOClient
 
         private void OnErrorReceived(Exception ex)
         {
-            //Logger.LogError(ex, ex.Message);
+#if DEBUG
+            Debug.WriteLine(ex);
+#endif
             _ = InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
@@ -536,7 +540,7 @@ namespace SocketIOClient
             catch (Exception e)
             {
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine(e);
+                Debug.WriteLine(e);
 #endif
             }
         }
@@ -556,7 +560,7 @@ namespace SocketIOClient
                 catch (Exception e)
                 {
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine(e);
+                    Debug.WriteLine(e);
 #endif
                 }
                 await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
@@ -770,7 +774,7 @@ namespace SocketIOClient
                 catch (Exception e)
                 {
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine(e);
+                    Debug.WriteLine(e);
 #endif
                 }
                 if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOClientDisconnect)

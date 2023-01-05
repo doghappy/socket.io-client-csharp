@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
 
+#if DEBUG
+using System.Diagnostics;
+#endif
+
 namespace SocketIOClient.Transport
 {
     public abstract class BaseTransport : IDisposable
@@ -133,7 +137,7 @@ namespace SocketIOClient.Transport
         protected async Task OnTextReceived(string text)
         {
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[{Protocol}⬇] {text}");
+            Debug.WriteLine($"[{Protocol}⬇] {text}");
 #endif
             var msg = MessageFactory.CreateMessage(Options.EIO, text);
             if (msg == null)
@@ -204,7 +208,7 @@ namespace SocketIOClient.Transport
         protected void OnBinaryReceived(byte[] bytes)
         {
 #if DEBUG
-            System.Diagnostics.Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
+            Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
 #endif
             if (_messageQueue.Count > 0)
             {

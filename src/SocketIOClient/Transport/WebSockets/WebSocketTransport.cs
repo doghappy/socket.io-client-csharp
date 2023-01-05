@@ -5,6 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Extensions;
 
+#if DEBUG
+using System.Diagnostics;
+#endif
+
 namespace SocketIOClient.Transport.WebSockets
 {
     public class WebSocketTransport : BaseTransport
@@ -120,6 +124,9 @@ namespace SocketIOClient.Transport.WebSockets
                     catch (Exception e)
                     {
                         OnError.TryInvoke(e);
+#if DEBUG
+                        Debug.WriteLine($"[{Protocol}❌] {e}");
+#endif
                         break;
                     }
                 }
@@ -157,7 +164,7 @@ namespace SocketIOClient.Transport.WebSockets
                     byte[] bytes = Encoding.UTF8.GetBytes(payload.Text);
                     await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
 #if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"[WebSocket⬆] {payload.Text}");
+                    Debug.WriteLine($"[WebSocket⬆] {payload.Text}");
 #endif
                 }
                 if (payload.Bytes != null)
@@ -166,7 +173,7 @@ namespace SocketIOClient.Transport.WebSockets
                     {
                         await SendAsync(TransportMessageType.Binary, item, cancellationToken).ConfigureAwait(false);
 #if DEBUG
-                        System.Diagnostics.Debug.WriteLine($"[WebSocket⬆] {Convert.ToBase64String(item)}");
+                        Debug.WriteLine($"[WebSocket⬆] {Convert.ToBase64String(item)}");
 #endif
                     }
                 }

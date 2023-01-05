@@ -3,19 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "src\SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.Json", "src\SocketIOClient.Newtonsoft.Json\SocketIOClient.Newtonsoft.Json.csproj", "{BAA4FB87-51B4-415F-AB05-315ED1132F78}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "src\SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTest", "SocketIOClient.UnitTest\SocketIOClient.UnitTest.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTest", "tests\SocketIOClient.UnitTest\SocketIOClient.UnitTest.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "tests\SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Net472", "SocketIOClient.IntegrationTests.Net472\SocketIOClient.IntegrationTests.Net472.csproj", "{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Net472", "tests\SocketIOClient.IntegrationTests.Net472\SocketIOClient.IntegrationTests.Net472.csproj", "{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Common", "SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj", "{8C62BD1E-9F14-4170-8E19-29A39996AAA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Common", "tests\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj", "{8C62BD1E-9F14-4170-8E19-29A39996AAA2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{335237B5-C6F5-4D4D-BD0C-006558A6F1B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,5 +61,14 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E5CDE829-A11F-4384-BFA3-7F7140E83D99}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{BAA4FB87-51B4-415F-AB05-315ED1132F78} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{8EA5705A-16D6-4477-9682-26E819402149} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{3987863F-026D-4B74-AD7F-E29470DA16A8} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{8C62BD1E-9F14-4170-8E19-29A39996AAA2} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal
