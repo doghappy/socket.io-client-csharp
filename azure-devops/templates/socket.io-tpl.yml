@@ -11,7 +11,7 @@ steps:
       pm2 start v2/v2-http.js
       pm2 start v2/v2-http-token.js
     displayName: Run socket.io server
-    workingDirectory: $(Agent.BuildDirectory)/s/src/socket.io
+    workingDirectory: $(Agent.BuildDirectory)/s/tests/socket.io
   - pwsh: $(Agent.BuildDirectory)/s/azure-devops/check-port.ps1
     displayName: Check ports of socket.io servers
     failOnStderr: true

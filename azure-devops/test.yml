@@ -15,7 +15,7 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: Unit tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.UnitTest
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTest
               command: test
       - job:
         displayName: Integration tests
@@ -24,7 +24,7 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: Integration tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests
               command: test
   - stage: NET_Framework_Tests
     dependsOn: [ ]
@@ -37,12 +37,12 @@ stages:
           - template: templates/socket.io-tpl.yml
           - pwsh: dotnet restore
             displayName: dotnet restore
-            workingDirectory: $(Agent.BuildDirectory)/s/src
+            workingDirectory: $(Agent.BuildDirectory)/s
           - task: MSBuild@1
             inputs:
-              solution: $(Agent.BuildDirectory)/s/src/socket.io-client-csharp.sln
+              solution: $(Agent.BuildDirectory)/s/socket.io-client-csharp.sln
               restoreNugetPackages: true
           - task: VSTest@2
             inputs:
               testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
-              searchFolder: $(Agent.BuildDirectory)/s/src/SocketIOClient.IntegrationTests.Net472/bin/Debug
+              searchFolder: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
