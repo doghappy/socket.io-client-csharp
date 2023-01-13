@@ -22,41 +22,22 @@ namespace SocketIOClient.UnitTest
     {
         [TestMethod]
         [DynamicData(nameof(ConnectCases))]
-        public async Task Should_be_able_to_connect(SocketIOOptions options, string[] res)
+        public async Task Should_be_able_to_connect(SocketIOOptions options, string[] messages)
         {
             int i = -1;
             var mockHttp = new Mock<IHttpClient>();
             mockHttp
                 .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(() =>
-                {
-                    var text = GetResponseText(ref i, res);
-                    return new HttpResponseMessage
-                    {
-                        StatusCode = HttpStatusCode.OK,
-                        Content = new StringContent(text, new MediaTypeHeaderValue("text/pain")),
-                    };
-                });
+                .ReturnsAsync(() => GetResponseMessage(ref i, messages));
             var mockWs = new Mock<IClientWebSocket>();
             mockWs
                 .Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
                 .Callback(() => mockWs.SetupGet(w => w.State).Returns(WebSocketState.Open));
             mockWs
                 .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
-                .ReturnsAsync(() =>
-                {
-                    var text = GetResponseText(ref i, res);
-                    var bytes = Encoding.UTF8.GetBytes(text);
-                    return new WebSocketReceiveResult
-                    {
-                        MessageType = TransportMessageType.Text,
-                        Buffer = bytes,
-                        EndOfMessage = true,
-                        Count = bytes.Length,
-                    };
-                });
+                .ReturnsAsync(() => GetWebSocketResult(ref i, messages));
             using var io = new SocketIO("http://localhost:11002", options);
-            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.HttpClientProvider = () => mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io.ConnectAsync();
@@ -125,6 +106,29 @@ namespace SocketIOClient.UnitTest
             return string.Empty;
         }
 
+        private static HttpResponseMessage GetResponseMessage(ref int i, string[] messages)
+        {
+            string text = GetResponseText(ref i, messages);
+            return new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(text, new MediaTypeHeaderValue("text/pain")),
+            };
+        }
+
+        private static WebSocketReceiveResult GetWebSocketResult(ref int i, string[] messages)
+        {
+            var text = GetResponseText(ref i, messages);
+            var bytes = Encoding.UTF8.GetBytes(text);
+            return new WebSocketReceiveResult
+            {
+                MessageType = TransportMessageType.Text,
+                Buffer = bytes,
+                EndOfMessage = true,
+                Count = bytes.Length,
+            };
+        }
+
         [TestMethod]
         [DynamicData(nameof(UpgradeToWebSocketCases))]
         public async Task Should_upgrade_transport(EngineIO eio, string handshake, string[] messages)
@@ -140,25 +144,14 @@ namespace SocketIOClient.UnitTest
                 .Callback(() => mockWs.SetupGet(w => w.State).Returns(WebSocketState.Open));
             mockWs
                 .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
-                .ReturnsAsync(() =>
-                {
-                    var text = GetResponseText(ref i, messages);
-                    var bytes = Encoding.UTF8.GetBytes(text);
-                    return new WebSocketReceiveResult
-                    {
-                        MessageType = TransportMessageType.Text,
-                        Buffer = bytes,
-                        EndOfMessage = true,
-                        Count = bytes.Length,
-                    };
-                });
+                .ReturnsAsync(() => GetWebSocketResult(ref i, messages));
             using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
             {
                 AutoUpgrade = true,
                 Transport = TransportProtocol.Polling,
                 EIO = eio,
             });
-            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.HttpClientProvider = () => mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io.ConnectAsync();
@@ -169,7 +162,7 @@ namespace SocketIOClient.UnitTest
 
         private static IEnumerable<object[]> UpgradeToWebSocketCases =>
             UpgradeToWebSocketTupleCases.Select(x => new object[] { x.eio, x.handshake, x.messages });
-        
+
         private static IEnumerable<(EngineIO eio, string handshake, string[] messages)> UpgradeToWebSocketTupleCases
         {
             get
@@ -223,28 +216,21 @@ namespace SocketIOClient.UnitTest
                 .ReturnsAsync(handshake);
             mockHttp
                 .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(() =>
-                {
-                    var text = GetResponseText(ref i, messages);
-                    return new HttpResponseMessage
-                    {
-                        StatusCode = HttpStatusCode.OK,
-                        Content = new StringContent(text, new MediaTypeHeaderValue("text/pain")),
-                    };
-                });
+                .ReturnsAsync(() => GetResponseMessage(ref i, messages));
             using var io = new SocketIO("http://localhost:11002", options);
-            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.HttpClientProvider = () => mockHttp.Object;
 
             await io.ConnectAsync();
 
             io.Connected.Should().BeTrue();
             io.Options.Transport.Should().Be(TransportProtocol.Polling);
         }
-        
-         private static IEnumerable<object[]> NotUpgradeToWebSocketCases =>
+
+        private static IEnumerable<object[]> NotUpgradeToWebSocketCases =>
             NotUpgradeToWebSocketTupleCases.Select(x => new object[] { x.options, x.handshake, x.messages });
-        
-        private static IEnumerable<(SocketIOOptions options, string handshake, string[] messages)> NotUpgradeToWebSocketTupleCases
+
+        private static IEnumerable<(SocketIOOptions options, string handshake, string[] messages)>
+            NotUpgradeToWebSocketTupleCases
         {
             get
             {
@@ -323,11 +309,11 @@ namespace SocketIOClient.UnitTest
                 Transport = TransportProtocol.Polling,
                 Reconnection = false
             });
-            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.HttpClientProvider = () => mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io
-                .Invoking(async x=>await x.ConnectAsync())
+                .Invoking(async x => await x.ConnectAsync())
                 .Should()
                 .ThrowAsync<ConnectionException>()
                 .WithMessage("Cannot connect to server '*'");

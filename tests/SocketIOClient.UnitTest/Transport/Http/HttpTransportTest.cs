@@ -524,5 +524,41 @@ namespace SocketIOClient.UnitTest.Transport.Http
                 h => h.PostAsync(null, It.IsAny<IEnumerable<byte[]>>(), CancellationToken.None),
                 Times.Exactly(times));
         }
+
+        [TestMethod]
+        public async Task OpenedMessage_should_be_in_front_of_ConnectedMessage()
+        {
+            var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
+            mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
+            var transport = new HttpTransport(new TransportOptions
+            {
+                EIO = EngineIO.V3,
+                ConnectionTimeout = TimeSpan.FromSeconds(1),
+            }, mockHttpPollingHandler.Object);
+            var msgs = new List<IMessage>();
+            transport.OnReceived = m => msgs.Add(m);
+
+            var connectedTask = mockHttpPollingHandler.Object.OnTextReceived("40");
+            await Task.Delay(100);
+            _ = mockHttpPollingHandler.Object.OnTextReceived(
+                "0{\"sid\":\"test\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
+            await connectedTask;
+
+            msgs.Should().BeEquivalentTo(new object[]
+            {
+                new
+                {
+                    Type = MessageType.Opened,
+                    Sid = "test",
+                    Upgrades = new[] { "websocket" },
+                    PingInterval = 10000,
+                    PingTimeout = 5000,
+                },
+                new
+                {
+                    Type = MessageType.Connected,
+                },
+            }, options => options.WithStrictOrdering());
+        }
     }
 }
