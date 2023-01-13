@@ -121,7 +121,7 @@ namespace SocketIOClient.UnitTest
                 return messages[i];
             }
 
-            Task.Delay(1000).GetAwaiter().GetResult();
+            Task.Delay(1000).Wait();
             return string.Empty;
         }
 
