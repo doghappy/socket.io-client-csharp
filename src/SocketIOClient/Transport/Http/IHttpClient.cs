@@ -12,5 +12,6 @@ namespace SocketIOClient.Transport.Http
         void SetProxy(IWebProxy proxy);
         Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken);
         Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content, CancellationToken cancellationToken);
+        Task<string> GetStringAsync(Uri requestUri);
     }
 }

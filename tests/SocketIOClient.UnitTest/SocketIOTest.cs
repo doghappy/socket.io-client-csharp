@@ -1,13 +1,18 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Text;
-using System.Threading.Tasks;
-using SocketIOClient.Transport;
-using RichardSzalay.MockHttp;
-using Moq;
-using System.Threading;
-using System.Net.WebSockets;
+﻿using System;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using FluentAssertions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
+using RichardSzalay.MockHttp;
+using SocketIOClient.Transport;
+using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 
 namespace SocketIOClient.UnitTest
@@ -15,144 +20,317 @@ namespace SocketIOClient.UnitTest
     [TestClass]
     public class SocketIOTest
     {
-        //[TestMethod]
-        public async Task Eio3_Polling_Should_Connect_Successful()
+        [TestMethod]
+        [DynamicData(nameof(ConnectCases))]
+        public async Task Should_be_able_to_connect(SocketIOOptions options, string[] res)
         {
-            using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
-            {
-                EIO = EngineIO.V3,
-                Transport = TransportProtocol.Polling
-            });
-            int times = 0;
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When("http://localhost:11002/socket.io/")
-                .WithQueryString("EIO", "3")
-                .WithQueryString("transport", "polling")
-                .Respond(reqMsg =>
+            int i = -1;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() =>
                 {
-                    try
+                    var text = GetResponseText(ref i, res);
+                    return new HttpResponseMessage
                     {
-                        switch (times)
-                        {
-                            case 0:
-                            case 1:
-                                return new StringContent("85:0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}", Encoding.UTF8, "text/plain");
-                            case 2:
-                                return new StringContent("2:40", Encoding.UTF8, "text/plain");
-                            default:
-                                Task.Delay(10000).Wait();
-                                return new StringContent("1:2", Encoding.UTF8, "text/plain");
-                        }
-                    }
-                    finally
-                    {
-                        times++;
-                    }
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent(text, new MediaTypeHeaderValue("text/pain")),
+                    };
                 });
-            io.HttpClient = mockHttp.ToHttpClient();
-            //string text1 =await io.HttpClient.GetStringAsync("http://localhost:11002/socket.io/?EIO=3&transport=polling");
-            //string text2 =await io.HttpClient.GetStringAsync("http://localhost:11002/socket.io/?EIO=3&transport=polling&sid=LgtKYhIy7tUzKHH9AAAB&t=123");
-            //string text3 =await io.HttpClient.GetStringAsync("http://localhost:11002/socket.io/?EIO=3&transport=polling&sid=LgtKYhIy7tUzKHH9AAAB&t=123");
+            var mockWs = new Mock<IClientWebSocket>();
+            mockWs
+                .Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Callback(() => mockWs.SetupGet(w => w.State).Returns(WebSocketState.Open));
+            mockWs
+                .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
+                .ReturnsAsync(() =>
+                {
+                    var text = GetResponseText(ref i, res);
+                    var bytes = Encoding.UTF8.GetBytes(text);
+                    return new WebSocketReceiveResult
+                    {
+                        MessageType = TransportMessageType.Text,
+                        Buffer = bytes,
+                        EndOfMessage = true,
+                        Count = bytes.Length,
+                    };
+                });
+            using var io = new SocketIO("http://localhost:11002", options);
+            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io.ConnectAsync();
 
-            Assert.IsTrue(io.Connected);
+            io.Connected.Should().BeTrue();
         }
 
-        // [TestMethod]
-        // public async Task Eio3_Polling_Should_Upgrade_To_WebSocket_Successful()
-        // {
-        //     using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
-        //     {
-        //         EIO = EngineIO.V3,
-        //         Transport = TransportProtocol.Polling
-        //     });
-        //     var mockHttp = new MockHttpMessageHandler();
-        //     mockHttp.When("http://localhost:11002/socket.io/")
-        //         .WithQueryString("EIO", "3")
-        //         .WithQueryString("transport", "polling")
-        //         .Respond("text/plain", "96:0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
-        //     io.HttpClient = mockHttp.ToHttpClient();
+        private static IEnumerable<object[]> ConnectCases =>
+            ConnectTupleCases.Select(x => new object[] { x.options, x.res });
 
-        //     var mockWs = new Mock<IClientWebSocket>();
-        //     io.ClientWebSocketProvider = () => mockWs.Object;
-
-        //     textSubject.OnNextLater(new[]
-        //     {
-        //         "0{\"sid\":\"CTWaM0_v5bx3C0S3AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
-        //         "40"
-        //     }, 2000);
-        //     await io.ConnectAsync();
-
-        //     mockWs.Verify(w => w.ConnectAsync(new Uri("ws://localhost:11002/socket.io/?EIO=3&transport=websocket"), It.IsAny<CancellationToken>()), Times.Once());
-        //     Assert.AreEqual(TransportProtocol.WebSocket, io.Options.Transport);
-        //     Assert.IsTrue(io.Connected);
-        //     Assert.AreEqual(io.Id, "CTWaM0_v5bx3C0S3AAAB");
-        // }
-
-        //[TestMethod]
-        public async Task Should_Not_Upgrade_To_WebSocket()
+        private static IEnumerable<(SocketIOOptions options, string[] res)> ConnectTupleCases
         {
-            using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
+            get
             {
-                EIO = EngineIO.V3,
-                AutoUpgrade = false,
-                Transport = TransportProtocol.Polling
-            });
-            int times = 0;
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When("http://localhost:11002/socket.io/")
-                .WithQueryString("EIO", "3")
-                .WithQueryString("transport", "polling")
-                .Respond(reqMsg =>
+                return new (SocketIOOptions options, string[] res)[]
                 {
-                    try
+                    (new SocketIOOptions
                     {
-                        if (times == 0)
-                            return new StringContent("85:0{\"sid\":\"LgtKYhIy7tUzKHH9AAAA\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}", Encoding.UTF8, "text/plain");
-                        else if (times == 1)
-                            return new StringContent("2:40", Encoding.UTF8, "text/plain");
-                        else
-                        {
-                            Task.Delay(1000).Wait();
-                            return new StringContent(string.Empty, Encoding.UTF8, "text/plain");
-                        }
-                    }
-                    finally
+                        EIO = EngineIO.V3,
+                        Transport = TransportProtocol.Polling,
+                    }, new[]
                     {
-                        times++;
-                    }
-                });
-            io.HttpClient = mockHttp.ToHttpClient();
+                        "85:0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "2:40"
+                    }),
+                    (new SocketIOOptions
+                    {
+                        EIO = EngineIO.V3,
+                        Transport = TransportProtocol.WebSocket,
+                    }, new[]
+                    {
+                        "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}"
+                    }),
+                    (new SocketIOOptions
+                    {
+                        EIO = EngineIO.V4,
+                        Transport = TransportProtocol.Polling,
+                    }, new[]
+                    {
+                        "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}"
+                    }),
+                    (new SocketIOOptions
+                    {
+                        EIO = EngineIO.V4,
+                        Transport = TransportProtocol.WebSocket,
+                    }, new[]
+                    {
+                        "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}"
+                    }),
+                };
+            }
+        }
 
-            await io.ConnectAsync();
+        private static string GetResponseText(ref int i, string[] messages)
+        {
+            i++;
+            if (i < messages.Length)
+            {
+                return messages[i];
+            }
 
-            Assert.AreEqual(TransportProtocol.Polling, io.Options.Transport);
-            Assert.IsTrue(io.Connected);
+            Task.Delay(1000).GetAwaiter().GetResult();
+            return string.Empty;
         }
 
         [TestMethod]
-        [ExpectedException(typeof(ConnectionException))]
-        public async Task Should_Throw_An_Exception_If_Reconnection_Is_False_And_Server_Unavailable()
+        [DynamicData(nameof(UpgradeToWebSocketCases))]
+        public async Task Should_upgrade_transport(EngineIO eio, string handshake, string[] messages)
         {
+            int i = -1;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.GetStringAsync(It.IsAny<Uri>()))
+                .ReturnsAsync(handshake);
+            var mockWs = new Mock<IClientWebSocket>();
+            mockWs
+                .Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Callback(() => mockWs.SetupGet(w => w.State).Returns(WebSocketState.Open));
+            mockWs
+                .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
+                .ReturnsAsync(() =>
+                {
+                    var text = GetResponseText(ref i, messages);
+                    var bytes = Encoding.UTF8.GetBytes(text);
+                    return new WebSocketReceiveResult
+                    {
+                        MessageType = TransportMessageType.Text,
+                        Buffer = bytes,
+                        EndOfMessage = true,
+                        Count = bytes.Length,
+                    };
+                });
+            using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
+            {
+                AutoUpgrade = true,
+                Transport = TransportProtocol.Polling,
+                EIO = eio,
+            });
+            io.HttpClientProvider = ()=> mockHttp.Object;
+            io.ClientWebSocketProvider = () => mockWs.Object;
+
+            await io.ConnectAsync();
+
+            io.Connected.Should().BeTrue();
+            io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
+        }
+
+        private static IEnumerable<object[]> UpgradeToWebSocketCases =>
+            UpgradeToWebSocketTupleCases.Select(x => new object[] { x.eio, x.handshake, x.messages });
+        
+        private static IEnumerable<(EngineIO eio, string handshake, string[] messages)> UpgradeToWebSocketTupleCases
+        {
+            get
+            {
+                return new (EngineIO eio, string handshake, string[] messages)[]
+                {
+                    (
+                        EngineIO.V3,
+                        "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        new[]
+                        {
+                            "0{\"sid\":\"test\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40",
+                        }),
+                    (
+                        EngineIO.V3,
+                        "test_websocket_1",
+                        new[]
+                        {
+                            "0{\"sid\":\"test\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40",
+                        }),
+                    (
+                        EngineIO.V4,
+                        "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        new[]
+                        {
+                            "0{\"sid\":\"test\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40{\"sid\":\"hello\"}"
+                        }),
+                    (
+                        EngineIO.V4,
+                        "test_websocket_1",
+                        new[]
+                        {
+                            "0{\"sid\":\"test\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40{\"sid\":\"hello\"}"
+                        }),
+                };
+            }
+        }
+
+        [TestMethod]
+        [DynamicData(nameof(NotUpgradeToWebSocketCases))]
+        public async Task Should_not_upgrade_transport(SocketIOOptions options, string handshake, string[] messages)
+        {
+            int i = -1;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.GetStringAsync(It.IsAny<Uri>()))
+                .ReturnsAsync(handshake);
+            mockHttp
+                .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() =>
+                {
+                    var text = GetResponseText(ref i, messages);
+                    return new HttpResponseMessage
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        Content = new StringContent(text, new MediaTypeHeaderValue("text/pain")),
+                    };
+                });
+            using var io = new SocketIO("http://localhost:11002", options);
+            io.HttpClientProvider = ()=> mockHttp.Object;
+
+            await io.ConnectAsync();
+
+            io.Connected.Should().BeTrue();
+            io.Options.Transport.Should().Be(TransportProtocol.Polling);
+        }
+        
+         private static IEnumerable<object[]> NotUpgradeToWebSocketCases =>
+            NotUpgradeToWebSocketTupleCases.Select(x => new object[] { x.options, x.handshake, x.messages });
+        
+        private static IEnumerable<(SocketIOOptions options, string handshake, string[] messages)> NotUpgradeToWebSocketTupleCases
+        {
+            get
+            {
+                return new (SocketIOOptions options, string handshake, string[] messages)[]
+                {
+                    (
+                        new SocketIOOptions
+                        {
+                            EIO = EngineIO.V3,
+                            AutoUpgrade = false,
+                            Transport = TransportProtocol.Polling,
+                        },
+                        "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        new[]
+                        {
+                            "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "2:40",
+                        }),
+                    (
+                        new SocketIOOptions
+                        {
+                            EIO = EngineIO.V3,
+                            AutoUpgrade = true,
+                            Transport = TransportProtocol.Polling,
+                        },
+                        "test",
+                        new[]
+                        {
+                            "74:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "2:40",
+                        }),
+                    (
+                        new SocketIOOptions
+                        {
+                            EIO = EngineIO.V4,
+                            AutoUpgrade = false,
+                            Transport = TransportProtocol.Polling,
+                        },
+                        "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        new[]
+                        {
+                            "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40{\"sid\":\"test\"}",
+                        }),
+                    (
+                        new SocketIOOptions
+                        {
+                            EIO = EngineIO.V4,
+                            AutoUpgrade = true,
+                            Transport = TransportProtocol.Polling,
+                        },
+                        "test",
+                        new[]
+                        {
+                            "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "40{\"sid\":\"test\"}",
+                        }),
+                };
+            }
+        }
+
+        [TestMethod]
+        public async Task Should_throw_an_exception_when_server_is_unavailable_and_reconnection_is_false()
+        {
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.GetStringAsync(It.IsAny<Uri>()))
+                .ReturnsAsync("websocket");
+            var mockWs = new Mock<IClientWebSocket>();
+            mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Throws<System.Net.WebSockets.WebSocketException>();
+
             using var io = new SocketIO("http://localhost:11002", new SocketIOOptions
             {
                 EIO = EngineIO.V3,
                 Transport = TransportProtocol.Polling,
                 Reconnection = false
             });
-            var mockHttp = new MockHttpMessageHandler();
-            mockHttp.When("http://localhost:11002/socket.io/")
-                .WithQueryString("EIO", "3")
-                .WithQueryString("transport", "polling")
-                .Respond("text/plain", "96:0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
-            io.HttpClient = mockHttp.ToHttpClient();
-
-            var mockWs = new Mock<IClientWebSocket>();
-            mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>())).Throws<WebSocketException>();
+            io.HttpClientProvider = ()=> mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
-            await io.ConnectAsync();
+            await io
+                .Invoking(async x=>await x.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>()
+                .WithMessage("Cannot connect to server '*'");
         }
 
         //[TestMethod]
@@ -166,11 +344,13 @@ namespace SocketIOClient.UnitTest
             mockHttp.When("http://localhost:11002/socket.io/")
                 .WithQueryString("EIO", "4")
                 .WithQueryString("transport", "polling")
-                .Respond("text/plain", "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
-            io.HttpClient = mockHttp.ToHttpClient();
+                .Respond("text/plain",
+                    "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
+            // io.HttpClient = mockHttp.ToHttpClient();
 
             var mockWs = new Mock<IClientWebSocket>();
-            mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>())).Throws<WebSocketException>();
+            mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Throws<System.Net.WebSockets.WebSocketException>();
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             int attempts = 0;
@@ -181,7 +361,9 @@ namespace SocketIOClient.UnitTest
             io.OnReconnectError += (s, e) => errorTimes++;
             await io.ConnectAsync();
 
-            mockWs.Verify(w => w.ConnectAsync(new Uri("ws://localhost:11002/socket.io/?EIO=4&transport=websocket"), It.IsAny<CancellationToken>()), Times.Exactly(4));
+            mockWs.Verify(
+                w => w.ConnectAsync(new Uri("ws://localhost:11002/socket.io/?EIO=4&transport=websocket"),
+                    It.IsAny<CancellationToken>()), Times.Exactly(4));
             Assert.AreEqual(3, attempts);
             Assert.AreEqual(1, failed);
             Assert.AreEqual(3, errorTimes);

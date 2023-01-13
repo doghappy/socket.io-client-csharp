@@ -64,7 +64,7 @@ public class WebSocketTransportTest
     {
         IMessage msg = null;
         int i = 0;
-        var faker = new ReceiveAsyncFaker(eio);
+        var faker = new ReceiveAsyncFaker();
         var mockWs = new Mock<IClientWebSocket>();
         mockWs
             .Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))

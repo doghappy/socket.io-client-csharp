@@ -102,10 +102,9 @@ namespace SocketIOClient
 
         public IJsonSerializer JsonSerializer { get; set; }
 
-        public HttpClient HttpClient { get; set; }
+        public Func<IHttpClient> HttpClientProvider { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
-        public Func<IHttpClient> HttpClientAdapterProvider { get; set; }
 
         List<IDisposable> _resources = new List<IDisposable>();
 
@@ -170,9 +169,8 @@ namespace SocketIOClient
 
             JsonSerializer = new SystemTextJsonSerializer();
 
-            HttpClient = new HttpClient();
+            HttpClientProvider = () => new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
-            HttpClientAdapterProvider = () => new DefaultHttpClient();
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),
@@ -181,6 +179,17 @@ namespace SocketIOClient
                 typeof(OperationCanceledException),
                 typeof(TaskCanceledException)
             };
+        }
+
+        private IHttpClient GetHttpClient()
+        {
+            var http = HttpClientProvider();
+            if (http is null)
+            {
+                throw new ArgumentNullException(nameof(HttpClientProvider), $"{HttpClientProvider} returns a null");
+            }
+
+            return http;
         }
 
         private async Task InitTransportAsync()
@@ -195,13 +204,7 @@ namespace SocketIOClient
             };
             if (Options.Transport == TransportProtocol.Polling)
             {
-                var adapter = HttpClientAdapterProvider();
-                if (adapter is null)
-                {
-                    throw new ArgumentNullException(nameof(HttpClientAdapterProvider), $"{HttpClientAdapterProvider} returns a null");
-                }
-                _resources.Add(adapter);
-                var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, adapter);
+                var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, GetHttpClient());
                 _transport = new HttpTransport(transportOptions, handler);
             }
             else
@@ -342,10 +345,13 @@ namespace SocketIOClient
                 Uri uri = UriConverter.GetServerUri(false, ServerUri, Options.EIO, Options.Path, Options.Query);
                 try
                 {
-                    string text = await HttpClient.GetStringAsync(uri);
-                    if (text.Contains("websocket"))
+                    using (var http = GetHttpClient())
                     {
-                        return TransportProtocol.WebSocket;
+                        string text = await http.GetStringAsync(uri);
+                        if (text.Contains("websocket"))
+                        {
+                            return TransportProtocol.WebSocket;
+                        }
                     }
                 }
                 catch (Exception e)
@@ -798,7 +804,6 @@ namespace SocketIOClient
 
         public void Dispose()
         {
-            HttpClient.Dispose();
             _transport.TryDispose();
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
