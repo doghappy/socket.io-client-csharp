@@ -260,7 +260,7 @@ namespace SocketIOClient.UnitTest
                         "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                         new[]
                         {
-                            "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "85:0{\"sid\":\"LgtKYhIy1\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                             "2:40",
                         }),
                     (
@@ -273,7 +273,7 @@ namespace SocketIOClient.UnitTest
                         "test",
                         new[]
                         {
-                            "74:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "74:0{\"sid\":\"LgtKYhIy2\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
                             "2:40",
                         }),
                     (
@@ -286,7 +286,7 @@ namespace SocketIOClient.UnitTest
                         "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                         new[]
                         {
-                            "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "0{\"sid\":\"LgtKYhIy3\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                             "40{\"sid\":\"test\"}",
                         }),
                     (
@@ -299,7 +299,7 @@ namespace SocketIOClient.UnitTest
                         "test",
                         new[]
                         {
-                            "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                            "0{\"sid\":\"LgtKYhIy4\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
                             "40{\"sid\":\"test\"}",
                         }),
                 };
