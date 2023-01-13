@@ -257,7 +257,7 @@ namespace SocketIOClient.UnitTest
                             AutoUpgrade = false,
                             Transport = TransportProtocol.Polling,
                         },
-                        "85:0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "85:0{\"sid\":\"LgtKYhIy1\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                         new[]
                         {
                             "85:0{\"sid\":\"LgtKYhIy1\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
@@ -270,7 +270,7 @@ namespace SocketIOClient.UnitTest
                             AutoUpgrade = true,
                             Transport = TransportProtocol.Polling,
                         },
-                        "test",
+                        "test2",
                         new[]
                         {
                             "74:0{\"sid\":\"LgtKYhIy2\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
@@ -283,7 +283,7 @@ namespace SocketIOClient.UnitTest
                             AutoUpgrade = false,
                             Transport = TransportProtocol.Polling,
                         },
-                        "0{\"sid\":\"LgtKYhIy7\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                        "0{\"sid\":\"LgtKYhIy3\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
                         new[]
                         {
                             "0{\"sid\":\"LgtKYhIy3\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
@@ -296,7 +296,7 @@ namespace SocketIOClient.UnitTest
                             AutoUpgrade = true,
                             Transport = TransportProtocol.Polling,
                         },
-                        "test",
+                        "test4",
                         new[]
                         {
                             "0{\"sid\":\"LgtKYhIy4\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
