@@ -60,7 +60,11 @@ public class WebSocketTransportTest
 
     [TestMethod]
     [DynamicData(nameof(OnReceivedCases))]
-    public async Task OnReceived(EngineIO eio, List<(TransportMessageType type, byte[] data)> items, object expectedMsg, IEnumerable<string> expectedElements, IEnumerable<byte[]> expectedBytes)
+    public async Task OnReceived(EngineIO eio,
+        List<(TransportMessageType type, byte[] data)> items,
+        object expectedMsg,
+        IEnumerable<string> expectedElements,
+        IEnumerable<byte[]> expectedBytes)
     {
         IMessage msg = null;
         int i = 0;
@@ -80,6 +84,7 @@ public class WebSocketTransportTest
                     {
                         i++;
                     }
+
                     return wrr;
                 }
                 else
@@ -105,272 +110,302 @@ public class WebSocketTransportTest
                 .Should()
                 .Equal(expectedElements);
         }
+
         msg.IncomingBytes
             .Should()
             .BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
     }
 
-    private static IEnumerable<object[]> OnReceivedCases => OnReceivedTupleCases.Select(x => new object[] { x.eio, x.items, x.expectedMsg, x.expectedElements, x.expectedBytes });
+    private static IEnumerable<object[]> OnReceivedCases => OnReceivedTupleCases.Select(x =>
+        new object[] { x.eio, x.items, x.expectedMsg, x.expectedElements, x.expectedBytes });
 
-    private static IEnumerable<(EngineIO eio, List<(TransportMessageType type, byte[] data)> items, object expectedMsg, IEnumerable<string> expectedElements, IEnumerable<byte[]> expectedBytes)> OnReceivedTupleCases
+    private static
+        IEnumerable<(EngineIO eio, List<(TransportMessageType type, byte[] data)> items, object expectedMsg,
+            IEnumerable<string> expectedElements, IEnumerable<byte[]> expectedBytes)> OnReceivedTupleCases
     {
         get
         {
-            return new (EngineIO eio, List<(TransportMessageType type, byte[] data)> items, object expectedMsg, IEnumerable<string> expectedElements, IEnumerable<byte[]> expectedBytes)[]
-            {
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}")),
-                    },
-                    new
-                    {
-                        Type = MessageType.Opened,
-                        EIO = EngineIO.V3,
-                        Sid = "LgtKYhIy7tUzKHH9AAAB",
-                        Upgrades = new[] { "websocket" },
-                        PingInterval = 10000,
-                        PingTimeout = 5000,
-                    },
-                    null,
-                    null),
-                (
-                    EngineIO.V4,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("42[\"hello\",\"world\"]")),
-                    },
-                    new
-                    {
-                        Type = MessageType.EventMessage,
-                        EIO = EngineIO.V4,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 0,
-                    },
-                    new[]
-                    {
-                        "\"world\"",
-                    },
-                    null),
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes($"42[\"hello\",\"{new string('a', ChunkSize.Size8K)}\"]")),
-                    },
-                    new
-                    {
-                        Type = MessageType.EventMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 0,
-                    },
-                    new[]
-                    {
-                        $"\"{new string('a', ChunkSize.Size8K)}\"",
-                    },
-                    null),
-                (
-                    EngineIO.V4,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V4,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                    }),
-                (
-                    EngineIO.V4,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes($"451-[\"hello\",{{\"_placeholder\":true,\"num\":0}},\"{new string('a', ChunkSize.Size8K)}\"]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V4,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                        $"\"{new string('a', ChunkSize.Size8K)}\"",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray(),
-                    }),
-                (
-                    EngineIO.V4,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes($"452-[\"hello\",{{\"_placeholder\":true,\"num\":0}},{{\"_placeholder\":true,\"num\":1}},\"{new string('a', ChunkSize.Size8K)}\"]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V4,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 2,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                        "{\"_placeholder\":true,\"num\":1}",
-                        $"\"{new string('a', ChunkSize.Size8K)}\"",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray(),
-                        Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray(),
-                    }),
+            return new (EngineIO eio, List<(TransportMessageType type, byte[] data)> items, object expectedMsg,
+                IEnumerable<string> expectedElements, IEnumerable<byte[]> expectedBytes)[]
+                {
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes(
+                                    "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}")),
+                        },
+                        new
+                        {
+                            Type = MessageType.Opened,
+                            EIO = EngineIO.V3,
+                            Sid = "LgtKYhIy7tUzKHH9AAAB",
+                            Upgrades = new[] { "websocket" },
+                            PingInterval = 10000,
+                            PingTimeout = 5000,
+                        },
+                        null,
+                        null),
+                    (
+                        EngineIO.V4,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text, Encoding.UTF8.GetBytes("42[\"hello\",\"world\"]")),
+                        },
+                        new
+                        {
+                            Type = MessageType.EventMessage,
+                            EIO = EngineIO.V4,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 0,
+                        },
+                        new[]
+                        {
+                            "\"world\"",
+                        },
+                        null),
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes($"42[\"hello\",\"{new string('a', ChunkSize.Size8K)}\"]")),
+                        },
+                        new
+                        {
+                            Type = MessageType.EventMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 0,
+                        },
+                        new[]
+                        {
+                            $"\"{new string('a', ChunkSize.Size8K)}\"",
+                        },
+                        null),
+                    (
+                        EngineIO.V4,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
+                            (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V4,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
+                        }),
+                    (
+                        EngineIO.V4,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes(
+                                    $"451-[\"hello\",{{\"_placeholder\":true,\"num\":0}},\"{new string('a', ChunkSize.Size8K)}\"]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V4,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                            $"\"{new string('a', ChunkSize.Size8K)}\"",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray(),
+                        }),
+                    (
+                        EngineIO.V4,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes(
+                                    $"452-[\"hello\",{{\"_placeholder\":true,\"num\":0}},{{\"_placeholder\":true,\"num\":1}},\"{new string('a', ChunkSize.Size8K)}\"]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V4,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 2,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                            "{\"_placeholder\":true,\"num\":1}",
+                            $"\"{new string('a', ChunkSize.Size8K)}\"",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray(),
+                            Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray(),
+                        }),
 
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 2).ToArray(),
-                    }),
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 1).ToArray(),
-                    }),
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                    }),
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes($"451-[\"hello\",{{\"_placeholder\":true,\"num\":0}},\"{new string('a', ChunkSize.Size8K)}\"]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 1,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                        $"\"{new string('a', ChunkSize.Size8K)}\"",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                    }),
-                (
-                    EngineIO.V3,
-                    new List<(TransportMessageType type, byte[] data)>
-                    {
-                        (TransportMessageType.Text, Encoding.UTF8.GetBytes($"452-[\"hello\",{{\"_placeholder\":true,\"num\":0}},{{\"_placeholder\":true,\"num\":1}},\"{new string('a', ChunkSize.Size8K)}\"]")),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
-                        (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
-                    },
-                    new
-                    {
-                        Type = MessageType.BinaryMessage,
-                        EIO = EngineIO.V3,
-                        Event = "hello",
-                        Protocol = TransportProtocol.WebSocket,
-                        BinaryCount = 2,
-                    },
-                    new[]
-                    {
-                        "{\"_placeholder\":true,\"num\":0}",
-                        "{\"_placeholder\":true,\"num\":1}",
-                        $"\"{new string('a', ChunkSize.Size8K)}\"",
-                    },
-                    new List<byte[]>
-                    {
-                        Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
-                        Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K).ToArray(),
-                    }),
-            };
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 2).ToArray(),
+                        }),
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
+                            (TransportMessageType.Binary, Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K - 1).ToArray(),
+                        }),
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes("451-[\"hello\",{\"_placeholder\":true,\"num\":0}]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
+                        }),
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes(
+                                    $"451-[\"hello\",{{\"_placeholder\":true,\"num\":0}},\"{new string('a', ChunkSize.Size8K)}\"]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 1,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                            $"\"{new string('a', ChunkSize.Size8K)}\"",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
+                        }),
+                    (
+                        EngineIO.V3,
+                        new List<(TransportMessageType type, byte[] data)>
+                        {
+                            (TransportMessageType.Text,
+                                Encoding.UTF8.GetBytes(
+                                    $"452-[\"hello\",{{\"_placeholder\":true,\"num\":0}},{{\"_placeholder\":true,\"num\":1}},\"{new string('a', ChunkSize.Size8K)}\"]")),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K + 1).ToArray()),
+                            (TransportMessageType.Binary,
+                                Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K + 1).ToArray()),
+                        },
+                        new
+                        {
+                            Type = MessageType.BinaryMessage,
+                            EIO = EngineIO.V3,
+                            Event = "hello",
+                            Protocol = TransportProtocol.WebSocket,
+                            BinaryCount = 2,
+                        },
+                        new[]
+                        {
+                            "{\"_placeholder\":true,\"num\":0}",
+                            "{\"_placeholder\":true,\"num\":1}",
+                            $"\"{new string('a', ChunkSize.Size8K)}\"",
+                        },
+                        new List<byte[]>
+                        {
+                            Enumerable.Repeat<byte>(0xff, ChunkSize.Size8K).ToArray(),
+                            Enumerable.Repeat<byte>(0xee, ChunkSize.Size8K).ToArray(),
+                        }),
+                };
         }
     }
 
@@ -386,11 +421,16 @@ public class WebSocketTransportTest
         }, mockWs.Object);
         await transport.SendAsync(payload, CancellationToken.None);
 
-        mockWs.Verify(e => e.SendAsync(It.IsAny<byte[]>(), TransportMessageType.Text, It.IsAny<bool>(), CancellationToken.None), Times.Exactly(textTimes));
-        mockWs.Verify(e => e.SendAsync(It.IsAny<byte[]>(), TransportMessageType.Binary, It.IsAny<bool>(), CancellationToken.None), Times.Exactly(byteTimes));
+        mockWs.Verify(
+            e => e.SendAsync(It.IsAny<byte[]>(), TransportMessageType.Text, It.IsAny<bool>(), CancellationToken.None),
+            Times.Exactly(textTimes));
+        mockWs.Verify(
+            e => e.SendAsync(It.IsAny<byte[]>(), TransportMessageType.Binary, It.IsAny<bool>(), CancellationToken.None),
+            Times.Exactly(byteTimes));
     }
 
-    private static IEnumerable<object[]> SendCases => SendTupleCases.Select(x => new object[] { x.eio, x.payload, x.textTimes, x.byteTimes });
+    private static IEnumerable<object[]> SendCases =>
+        SendTupleCases.Select(x => new object[] { x.eio, x.payload, x.textTimes, x.byteTimes });
 
     private static IEnumerable<(EngineIO eio, Payload payload, int textTimes, int byteTimes)> SendTupleCases
     {
@@ -488,16 +528,20 @@ public class WebSocketTransportTest
         var mockWs = new Mock<IClientWebSocket>();
         int order = 0;
         mockWs
-            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Text, false, CancellationToken.None))
+            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Text, false,
+                CancellationToken.None))
             .Callback(() => (++order % 4).Should().Be(1));
         mockWs
-            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == 1), TransportMessageType.Text, true, CancellationToken.None))
+            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == 1), TransportMessageType.Text, true,
+                CancellationToken.None))
             .Callback(() => (++order % 4).Should().Be(2));
         mockWs
-            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Binary, false, CancellationToken.None))
+            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Binary,
+                false, CancellationToken.None))
             .Callback(() => (++order % 4).Should().Be(3));
         mockWs
-            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == extraLength), TransportMessageType.Binary, true, CancellationToken.None))
+            .Setup(x => x.SendAsync(It.Is<byte[]>(b => b.Length == extraLength), TransportMessageType.Binary, true,
+                CancellationToken.None))
             .Callback(() => (++order % 4).Should().Be(0));
 
         var transport = new WebSocketTransport(new TransportOptions
@@ -515,9 +559,17 @@ public class WebSocketTransportTest
 
         Parallel.For(0, times, _ => transport.SendAsync(payload, CancellationToken.None).GetAwaiter().GetResult());
 
-        mockWs.Verify(e => e.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Text, false, CancellationToken.None), Times.Exactly(times));
-        mockWs.Verify(e => e.SendAsync(It.Is<byte[]>(b => b.Length == 1), TransportMessageType.Text, true, CancellationToken.None), Times.Exactly(times));
-        mockWs.Verify(e => e.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Binary, false, CancellationToken.None), Times.Exactly(times));
-        mockWs.Verify(e => e.SendAsync(It.Is<byte[]>(b => b.Length == extraLength), TransportMessageType.Binary, true, CancellationToken.None), Times.Exactly(times));
+        mockWs.Verify(
+            e => e.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Text, false,
+                CancellationToken.None), Times.Exactly(times));
+        mockWs.Verify(
+            e => e.SendAsync(It.Is<byte[]>(b => b.Length == 1), TransportMessageType.Text, true,
+                CancellationToken.None), Times.Exactly(times));
+        mockWs.Verify(
+            e => e.SendAsync(It.Is<byte[]>(b => b.Length == ChunkSize.Size8K), TransportMessageType.Binary, false,
+                CancellationToken.None), Times.Exactly(times));
+        mockWs.Verify(
+            e => e.SendAsync(It.Is<byte[]>(b => b.Length == extraLength), TransportMessageType.Binary, true,
+                CancellationToken.None), Times.Exactly(times));
     }
 }

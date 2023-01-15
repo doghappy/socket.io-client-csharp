@@ -85,13 +85,16 @@ namespace SocketIOClient.Transport.WebSockets
                         catch (Exception e)
                         {
                             OnError.TryInvoke(e);
-                            break;
+#if DEBUG
+                            Debug.WriteLine($"[{Protocol}❌] {e}");
+#endif
+                            return;
                         }
                     }
 
                     if (result == null)
                     {
-                        break;
+                        return;
                     }
 
                     try

@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace SocketIOClient.Transport
 {
-    public abstract class BaseTransport : IDisposable
+    public abstract class BaseTransport : ITransport
     {
         protected BaseTransport(TransportOptions options)
         {
