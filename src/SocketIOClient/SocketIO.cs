@@ -546,24 +546,23 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            if (Connected)
+            _connCts.TryCancel();
+            _connCts.TryDispose();
+            var msg = new DisconnectedMessage
             {
-                var msg = new DisconnectedMessage
-                {
-                    Namespace = _namespace
-                };
-                try
-                {
-                    await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-#if DEBUG
-                    Debug.WriteLine(e);
-#endif
-                }
-                await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
+                Namespace = _namespace
+            };
+            try
+            {
+                await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
             }
+            catch (Exception e)
+            {
+#if DEBUG
+                Debug.WriteLine(e);
+#endif
+            }
+            await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
         }
 
         /// <summary>
@@ -797,6 +796,8 @@ namespace SocketIOClient
 
         public void Dispose()
         {
+            _connCts.TryCancel();
+            _connCts.TryDispose();
             Transport.TryDispose();
             _ackHandlers.Clear();
             _onAnyHandlers.Clear();
