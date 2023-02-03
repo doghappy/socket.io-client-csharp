@@ -620,5 +620,16 @@ namespace SocketIOClient.UnitTest
         {
             await Should_be_able_to_cancel_reconnecting(async io => await io.DisconnectAsync());
         }
+        
+        [TestMethod]
+        [DataRow("http://localhost:11002", null)]
+        [DataRow("http://localhost:11002/", null)]
+        [DataRow("http://localhost:11002/namespace", "/namespace")]
+        [DataRow("http://localhost:11002/namespace/test", "/namespace/test")]
+        public void Should_set_namespace(string url, string ns)
+        {
+            using var io = new SocketIO(url);
+            io.Namespace.Should().Be(ns);
+        }
     }
 }

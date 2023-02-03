@@ -72,7 +72,7 @@ namespace SocketIOClient
                     _serverUri = value;
                     if (value != null && value.AbsolutePath != "/")
                     {
-                        _namespace = value.AbsolutePath;
+                        Namespace = value.AbsolutePath;
                     }
                 }
             }
@@ -83,7 +83,7 @@ namespace SocketIOClient
         /// </summary>
         public string Id { get; private set; }
 
-        string _namespace;
+        public string Namespace { get; private set; }
 
         /// <summary>
         /// Whether or not the socket is connected to the server.
@@ -211,7 +211,7 @@ namespace SocketIOClient
                 Transport = new WebSocketTransport(transportOptions, ws);
             }
             _resources.Add(Transport);
-            Transport.Namespace = _namespace;
+            Transport.Namespace = Namespace;
             SetHeaders();
             Transport.SetProxy(Options.Proxy);
             Transport.OnReceived = OnMessageReceived;
@@ -550,7 +550,7 @@ namespace SocketIOClient
             _connCts.TryDispose();
             var msg = new DisconnectedMessage
             {
-                Namespace = _namespace
+                Namespace = Namespace
             };
             try
             {
@@ -629,7 +629,7 @@ namespace SocketIOClient
                     msg = new ServerBinaryAckMessage
                     {
                         Id = packetId,
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         Json = result.Json
                     };
                     msg.OutgoingBytes = new List<byte[]>(result.Bytes);
@@ -638,7 +638,7 @@ namespace SocketIOClient
                 {
                     msg = new ServerAckMessage
                     {
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         Id = packetId,
                         Json = result.Json
                     };
@@ -648,7 +648,7 @@ namespace SocketIOClient
             {
                 msg = new ServerAckMessage
                 {
-                    Namespace = _namespace,
+                    Namespace = Namespace,
                     Id = packetId
                 };
             }
@@ -675,7 +675,7 @@ namespace SocketIOClient
                 {
                     var msg = new BinaryMessage
                     {
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         OutgoingBytes = new List<byte[]>(result.Bytes),
                         Event = eventName,
                         Json = result.Json
@@ -686,7 +686,7 @@ namespace SocketIOClient
                 {
                     var msg = new EventMessage
                     {
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         Event = eventName,
                         Json = result.Json
                     };
@@ -697,7 +697,7 @@ namespace SocketIOClient
             {
                 var msg = new EventMessage
                 {
-                    Namespace = _namespace,
+                    Namespace = Namespace,
                     Event = eventName
                 };
                 await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
@@ -727,7 +727,7 @@ namespace SocketIOClient
                     var msg = new ClientBinaryAckMessage
                     {
                         Event = eventName,
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         Json = result.Json,
                         Id = _packetId,
                         OutgoingBytes = new List<byte[]>(result.Bytes)
@@ -739,7 +739,7 @@ namespace SocketIOClient
                     var msg = new ClientAckMessage
                     {
                         Event = eventName,
-                        Namespace = _namespace,
+                        Namespace = Namespace,
                         Id = _packetId,
                         Json = result.Json
                     };
@@ -751,7 +751,7 @@ namespace SocketIOClient
                 var msg = new ClientAckMessage
                 {
                     Event = eventName,
-                    Namespace = _namespace,
+                    Namespace = Namespace,
                     Id = _packetId
                 };
                 await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
