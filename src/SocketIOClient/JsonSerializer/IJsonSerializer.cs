@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace SocketIOClient.JsonSerializer
 {
@@ -6,6 +7,8 @@ namespace SocketIOClient.JsonSerializer
     {
         JsonSerializeResult Serialize(object[] data);
         T Deserialize<T>(string json);
+        object Deserialize(string json, Type type);
         T Deserialize<T>(string json, IList<byte[]> incomingBytes);
+        object Deserialize(string json, Type type, IList<byte[]> incomingBytes);
     }
 }

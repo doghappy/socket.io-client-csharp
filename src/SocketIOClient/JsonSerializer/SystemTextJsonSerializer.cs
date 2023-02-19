@@ -1,16 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace SocketIOClient.JsonSerializer
 {
     public class SystemTextJsonSerializer : IJsonSerializer
     {
+        public SystemTextJsonSerializer() : this(new JsonSerializerOptions())
+        {
+        }
+
+        public SystemTextJsonSerializer(JsonSerializerOptions options)
+        {
+            _options = options;
+        }
+
+        private readonly JsonSerializerOptions _options;
+
+        private JsonSerializerOptions NewOptions(ByteArrayConverter converter)
+        {
+            var options = new JsonSerializerOptions(_options);
+            options.Converters.Add(converter);
+            return options;
+        }
+
         public JsonSerializeResult Serialize(object[] data)
         {
             var converter = new ByteArrayConverter();
-            var options = GetOptions();
-            options.Converters.Add(converter);
+            var options = NewOptions(converter);
             string json = System.Text.Json.JsonSerializer.Serialize(data, options);
             return new JsonSerializeResult
             {
@@ -21,33 +39,28 @@ namespace SocketIOClient.JsonSerializer
 
         public T Deserialize<T>(string json)
         {
-            var options = GetOptions();
-            return System.Text.Json.JsonSerializer.Deserialize<T>(json, options);
+            return System.Text.Json.JsonSerializer.Deserialize<T>(json, _options);
+        }
+
+        public object Deserialize(string json, Type type)
+        {
+            return System.Text.Json.JsonSerializer.Deserialize(json, type, _options);
         }
 
         public T Deserialize<T>(string json, IList<byte[]> bytes)
         {
-            var options = GetOptions();
             var converter = new ByteArrayConverter();
-            options.Converters.Add(converter);
             converter.Bytes.AddRange(bytes);
+            var options = NewOptions(converter);
             return System.Text.Json.JsonSerializer.Deserialize<T>(json, options);
         }
 
-        private JsonSerializerOptions GetOptions()
+        public object Deserialize(string json, Type type, IList<byte[]> bytes)
         {
-            JsonSerializerOptions options = null;
-            if (OptionsProvider != null)
-            {
-                options = OptionsProvider();
-            }
-            if (options == null)
-            {
-                options = new JsonSerializerOptions();
-            }
-            return options;
+            var converter = new ByteArrayConverter();
+            converter.Bytes.AddRange(bytes);
+            var options = NewOptions(converter);
+            return System.Text.Json.JsonSerializer.Deserialize(json, type, options);
         }
-
-        public Func<JsonSerializerOptions> OptionsProvider { get; set; }
     }
 }

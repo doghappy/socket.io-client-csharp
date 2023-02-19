@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.JsonSerializer;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FluentAssertions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+using SocketIOClient.JsonSerializer;
 
-namespace SocketIOClient.UnitTest;
+namespace SocketIOClient.Newtonsoft.Json.UnitTests;
 
 [TestClass]
-public class SystemTextJsonSerializerTest
+public class NewtonsoftJsonSerializerTest
 {
-    const string LongString = @"
+const string LongString = @"
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222
@@ -34,7 +32,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
     [DynamicData(nameof(SerializeCases))]
     public void Should_serialize_object_even_contains_bytes(object[] data, JsonSerializeResult expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Serialize(data)
             .Should().BeEquivalentTo(expected);
     }
@@ -111,21 +109,21 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
 
     [TestMethod]
     [DynamicData(nameof(OptionsCases))]
-    public void Should_use_options_to_serialize(object[] data, JsonSerializerOptions options, string expectedJson)
+    public void Should_use_options_to_serialize(object[] data, JsonSerializerSettings settings, string expectedJson)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(settings);
         serializer.Serialize(data).Json
             .Should().Be(expectedJson);
     }
 
     private static IEnumerable<object[]> OptionsCases =>
-        OptionsTupleCases.Select(x => new object[] { x.data, x.options, x.expectedJson });
+        OptionsTupleCases.Select(x => new object[] { x.data, x.settings, x.expectedJson });
 
-    private static IEnumerable<(object[] data, JsonSerializerOptions options, string expectedJson)> OptionsTupleCases
+    private static IEnumerable<(object[] data, JsonSerializerSettings settings, string expectedJson)> OptionsTupleCases
     {
         get
         {
-            return new (object[] data, JsonSerializerOptions options, string expectedJson)[]
+            return new (object[] data, JsonSerializerSettings settings, string expectedJson)[]
             {
                 (
                     new object[]
@@ -136,12 +134,15 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
                             Message = "hello world!",
                         }
                     },
-                    new JsonSerializerOptions
+                    new JsonSerializerSettings
                     {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        ContractResolver = new DefaultContractResolver()
+                        {
+                            NamingStrategy = new CamelCaseNamingStrategy(),
+                        },
                         Converters =
                         {
-                            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                            new StringEnumConverter(new CamelCaseNamingStrategy()),
                         }
                     },
                     "[{\"code\":\"internalServerError\",\"message\":\"hello world!\"}]"),
@@ -163,7 +164,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         Type type,
         object expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Deserialize(json, type, bytes)
             .Should().BeEquivalentTo(expected);
     }
@@ -202,7 +203,7 @@ AmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmericanAmerican
         {
             new byte[] { 4, 3, 2, 1, }
         };
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Deserialize<Person>(json, bytes)
             .Should().BeEquivalentTo(new Person
             {

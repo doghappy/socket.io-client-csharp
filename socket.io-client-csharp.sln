@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7FFBC536-6E4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{335237B5-C6F5-4D4D-BD0C-006558A6F1B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Newtonsoft.Json.UnitTests", "tests\SocketIOClient.Newtonsoft.Json.UnitTests\SocketIOClient.Newtonsoft.Json.UnitTests.csproj", "{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C62BD1E-9F14-4170-8E19-29A39996AAA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,5 +76,6 @@ Global
 		{8C62BD1E-9F14-4170-8E19-29A39996AAA2} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{A12339F8-B60D-4296-A61E-A6FFFA4C4A73} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{1FA6E494-5D3E-42AC-BABF-BC0D9F5DD5C1} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal

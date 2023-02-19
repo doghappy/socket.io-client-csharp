@@ -7,13 +7,28 @@ namespace SocketIOClient.Newtonsoft.Json
 {
     public class NewtonsoftJsonSerializer : IJsonSerializer
     {
-        public Func<JsonSerializerSettings> JsonSerializerOptions { get; }
+        public NewtonsoftJsonSerializer() : this(new JsonSerializerSettings())
+        {
+        }
+
+        public NewtonsoftJsonSerializer(JsonSerializerSettings settings)
+        {
+            _settings = settings;
+        }
+
+        private readonly JsonSerializerSettings _settings;
+
+        private JsonSerializerSettings NewSettings(ByteArrayConverter converter)
+        {
+            var settings = new JsonSerializerSettings(_settings);
+            settings.Converters.Add(converter);
+            return settings;
+        }
 
         public JsonSerializeResult Serialize(object[] data)
         {
             var converter = new ByteArrayConverter();
-            var settings = GetOptions();
-            settings.Converters.Add(converter);
+            var settings = NewSettings(converter);
             string json = JsonConvert.SerializeObject(data, settings);
             return new JsonSerializeResult
             {
@@ -24,33 +39,28 @@ namespace SocketIOClient.Newtonsoft.Json
 
         public T Deserialize<T>(string json)
         {
-            var settings = GetOptions();
-            return JsonConvert.DeserializeObject<T>(json, settings);
+            return JsonConvert.DeserializeObject<T>(json, _settings);
+        }
+
+        public object Deserialize(string json, Type type)
+        {
+            return JsonConvert.DeserializeObject(json, type, _settings);
         }
 
         public T Deserialize<T>(string json, IList<byte[]> bytes)
         {
             var converter = new ByteArrayConverter();
             converter.Bytes.AddRange(bytes);
-            var settings = GetOptions();
-            settings.Converters.Add(converter);
+            var settings = NewSettings(converter);
             return JsonConvert.DeserializeObject<T>(json, settings);
         }
 
-        private JsonSerializerSettings GetOptions()
+        public object Deserialize(string json, Type type, IList<byte[]> bytes)
         {
-            JsonSerializerSettings options = null;
-            if (OptionsProvider != null)
-            {
-                options = OptionsProvider();
-            }
-            if (options == null)
-            {
-                options = new JsonSerializerSettings();
-            }
-            return options;
+            var converter = new ByteArrayConverter();
+            converter.Bytes.AddRange(bytes);
+            var settings = NewSettings(converter);
+            return JsonConvert.DeserializeObject(json, type, settings);
         }
-
-        public Func<JsonSerializerSettings> OptionsProvider { get; set; }
     }
 }
