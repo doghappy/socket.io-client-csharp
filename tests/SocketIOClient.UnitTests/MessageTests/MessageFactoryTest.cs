@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Messages;
 
-namespace SocketIOClient.UnitTest.MessageTests
+namespace SocketIOClient.UnitTests.MessageTests
 {
     [TestClass]
     public class MessageFactoryTest

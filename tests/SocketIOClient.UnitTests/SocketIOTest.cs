@@ -16,7 +16,7 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 
-namespace SocketIOClient.UnitTest
+namespace SocketIOClient.UnitTests
 {
     [TestClass]
     public class SocketIOTest

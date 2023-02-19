@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.Json;
 
-namespace SocketIOClient.UnitTest
+namespace SocketIOClient.UnitTests
 {
     [TestClass]
     public class SocketIOResponseTest

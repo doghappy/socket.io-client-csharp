@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using SocketIOClient.Transport.Http;
 
-namespace SocketIOClient.UnitTest.Transport.Http
+namespace SocketIOClient.UnitTests.Transport.Http
 {
     [TestClass]
     public class Eio3HttpPollingHandlerTest

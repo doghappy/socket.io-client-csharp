@@ -9,7 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentAssertions;
 
-namespace SocketIOClient.UnitTest;
+namespace SocketIOClient.UnitTests;
 
 [TestClass]
 public class SystemTextJsonSerializerTest

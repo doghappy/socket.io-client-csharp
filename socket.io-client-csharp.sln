@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Newtonsoft.J
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "src\SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTest", "tests\SocketIOClient.UnitTest\SocketIOClient.UnitTest.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTests", "tests\SocketIOClient.UnitTests\SocketIOClient.UnitTests.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "tests\SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
 EndProject

@@ -13,7 +13,7 @@ using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using Range = Moq.Range;
 
-namespace SocketIOClient.UnitTest.Transport.Http
+namespace SocketIOClient.UnitTests.Transport.Http
 {
     [TestClass]
     public class HttpTransportTest

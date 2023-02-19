@@ -4,7 +4,7 @@ using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 
-namespace SocketIOClient.UnitTest.MessageTests
+namespace SocketIOClient.UnitTests.MessageTests
 {
     [TestClass]
     public class MessageWriteTest

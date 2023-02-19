@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.WebSockets;
 
-namespace SocketIOClient.UnitTest.Transport.WebSocket;
+namespace SocketIOClient.UnitTests.Transport.WebSocket;
 
 class ReceiveAsyncFaker
 {

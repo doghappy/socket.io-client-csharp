@@ -15,7 +15,7 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: Unit tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTest
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTests
               command: test
       - job:
         displayName: Integration tests
