@@ -13,9 +13,14 @@ stages:
         displayName: Unit tests
         steps:
           - task: DotNetCoreCLI@2
-            displayName: Unit tests
+            displayName: SocketIOClient.UnitTests
             inputs:
               workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTests
+              command: test
+          - task: DotNetCoreCLI@2
+            displayName: SocketIOClient.Newtonsoft.Json.UnitTests
+            inputs:
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.Newtonsoft.Json.UnitTests
               command: test
       - job:
         displayName: Integration tests
