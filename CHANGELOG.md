@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.8] - 2023-03-04
+
+### Added
+
+- Expose namepsace as a readonly property #304
+
+### Changed
+
+- Update NuGet dependencies
+- Cancel reconnecting when calling Disconnect or Dispose #307
+- Improve proformance
+
+## [3.0.7] - 2022-11-29
+
+### Added
+
+- Support custom User-Agent header
+
+### Changed
+
+- Fixed OnAny does not fire when received binary messages
+- Update NuGet dependencies
+- Fixed http pooling concurrency issues
+- Improve proformance
+
 ## [3.0.6] - 2022-03-17
 
 ### Added

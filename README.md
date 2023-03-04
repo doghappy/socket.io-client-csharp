@@ -94,7 +94,7 @@ var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
 | `RandomizationFactor` | `0.5` | 0 <= RandomizationFactor <= 1 |
 | `ConnectionTimeout` | `20000` | connection timeout |
 | `Query` | `IEnumerable<KeyValuePair<string, string>>` | additional query parameters that are sent when connecting a namespace (then found in `socket.handshake.query` object on the server-side) |
-| `EIO` | `4` | If your server is using socket.io server v2.x, please explicitly set it to 3 |
+| `EIO` | `V4` | If your server is using socket.io server v2.x, please explicitly set it to V3 |
 | `ExtraHeaders` | `null` | Headers that will be passed for each request to the server (via xhr-polling and via websockets). These values then can be used during handshake or for special proxies. |
 | `Transport` | `Polling` | Websocket is used by default, you can change to http polling. |
 | `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
@@ -224,41 +224,6 @@ jsonSerializer.OptionsProvider = () => new JsonSerializerSettings
 client.JsonSerializer = jsonSerializer;
 ```
 
-## ClientWebSocket Options
-
-You can set proxy and add headers for WebSocket client, etc.
-
-```cs
-var client = new SocketIO("http://localhost:11000/");
-client.ClientWebSocketProvider = () =>
-{
-    var clientWebSocket = new DefaultClientWebSocket
-    {
-        ConfigOptions = o =>
-        {
-            var options = o as ClientWebSocketOptions;
-
-            var proxy = new WebProxy("http://example.com");
-            proxy.Credentials = new NetworkCredential("username", "password");
-            options.Proxy = proxy;
-
-            options.SetRequestHeader("key", "value");
-
-            options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
-            {
-                Console.WriteLine("SslPolicyErrors: " + sslPolicyErrors);
-                if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
-                {
-                    return true;
-                }
-                return true;
-            };
-        }
-    };
-    return clientWebSocket;
-};
-```
-
 ## Windows 7 Support
 
 The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIOClient.Windows7` dependency and then change the implementation of ClientWebSocket.
@@ -302,52 +267,50 @@ For Xamarin.Android you should add the following code:
     }
 ```
 
-I don't have a macOS device, and I don't know the specific exceptions of Xamarin.iOS. Welcome to create a pr and update this document. thanks :)
-
-# Breaking changes
-
-## Breaking changes in 3.0.0
-
-> While WebSocket is clearly the best way to establish a bidirectional communication, experience has shown that it is not always possible to establish a WebSocket connection, due to corporate proxies, personal firewall, antivirus software…
-
-https://socket.io/docs/v4/how-it-works/#Transports
-
-- SocketIOClient v3.x supports http polling, but if websocket is available, the library will choose to use websocket. If you want to use http polling and do not want the library to upgrade the transport, please set `Options.AutoUpgrade = false`.
-- Socket.io server v2.x is no longer supported. If a large number of users use this version, please feedback.
-
-### Specific break changes
-
-#### 1. EIO option removed
-
-Since socket.io server v2 is not supported, the EIO option is not required.
-
-#### 2. Removed the 'Socket' object
-
-Use ClientWebSocketProvider instead of Socket object.
-
-## Breaking changes in 2.2.4
-
-Before SocketIOClient v2.2.4, the default EIO is 3, which works with socket.io v2.x, in SocketIOClient v2.2.4, the default EIO is 4, which works with socket.io v3.x and v4.x
-
-## Breaking changes in 2.2.0
-
-SocketIOClient v2.2.0 makes `System.Text.Json` the default JSON serializer. If you'd like to continue to use `Newtonsoft.Json`, add the **SocketIOClient.Newtonsoft.Json** NuGet package and set your **JsonSerializer** to **NewtonsoftJsonSerializer** on your SocketIO instance. System.Text.Json is faster and uses less memory.
+I don't know the specific exceptions of Xamarin.iOS. Welcome to create a pr and update this document. thanks :)
 
 # Change log
 
-[SocketIOClient](./CHANGELOG.md)
+## [3.0.8] - 2023-03-04
 
-# Sponsors
+### Added
 
-- [gcoverd](https://github.com/gcoverd), 250 AUD
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/40455), April 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/41876), May 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/44350), June 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/46822), July 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/49090), August 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/51776), September 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/54770), October 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/57210), November 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/60280), December 2021
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/63314), January 2022
-- [darrachequesne](https://github.com/darrachequesne) ([socket.io team](https://github.com/socketio/socket.io)), [500 USD](https://opencollective.com/socketio/expenses/66147), February 2022
+- Expose namepsace as a readonly property #304
+
+### Changed
+
+- Update NuGet dependencies
+- Cancel reconnecting when calling Disconnect or Dispose #307
+- Improve proformance
+
+## [3.0.7] - 2022-11-29
+
+### Added
+
+- Support custom User-Agent header
+
+### Changed
+
+- Fixed OnAny does not fire when received binary messages
+- Update NuGet dependencies
+- Fixed http pooling concurrency issues
+- Improve proformance
+
+## [3.0.6] - 2022-03-17
+
+### Added
+
+- auth handshake for socket.io server v3
+- support auto upgrade transport protocol
+
+[See more](./CHANGELOG.md)
+
+# Thanks
+
+[<img src="https://socket.io/images/logo.svg" width=100px/>](https://github.com/socketio/socket.io) [<img src="https://github.com/darrachequesne.png" width=100px/>](https://github.com/socketio/socket.io) 
+
+Thank [socket.io](https://socket.io/) and [darrachequesne](https://github.com/darrachequesne) for sponsoring the project on [Open Collective](https://opencollective.com/socketio/expenses/).
+
+[<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/Rider_icon.svg" width=100px/>](https://jb.gg/OpenSourceSupport)
+
+We would like to thank JetBrains for supporting the project with free licenses of their fantastic tools.

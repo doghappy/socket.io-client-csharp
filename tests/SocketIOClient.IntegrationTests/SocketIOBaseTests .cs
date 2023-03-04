@@ -66,6 +66,7 @@ namespace SocketIOClient.IntegrationTests
             {
                 Reconnection = false,
                 EIO = EIO,
+                ConnectionTimeout = TimeSpan.FromSeconds(4),
             });
             int times = 0;
             io.OnConnected += (s, e) => times++;

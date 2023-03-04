@@ -38,7 +38,7 @@ namespace SocketIOClient.UnitTests
                 .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
                 .ReturnsAsync(() => GetWebSocketResult(ref i, messages));
             using var io = new SocketIO("http://localhost:11002", options);
-            io.HttpClientProvider = () => mockHttp.Object;
+            io.HttpClient = mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io.ConnectAsync();
@@ -168,7 +168,7 @@ namespace SocketIOClient.UnitTests
                 Transport = TransportProtocol.Polling,
                 EIO = eio,
             });
-            io.HttpClientProvider = () => mockHttp.Object;
+            io.HttpClient = mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io.ConnectAsync();
@@ -235,7 +235,7 @@ namespace SocketIOClient.UnitTests
                 .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(() => GetResponseMessage(ref i, messages));
             using var io = new SocketIO("http://localhost:11002", options);
-            io.HttpClientProvider = () => mockHttp.Object;
+            io.HttpClient = mockHttp.Object;
 
             await io.ConnectAsync();
 
@@ -326,7 +326,7 @@ namespace SocketIOClient.UnitTests
                 Transport = TransportProtocol.Polling,
                 Reconnection = false
             });
-            io.HttpClientProvider = () => mockHttp.Object;
+            io.HttpClient = mockHttp.Object;
             io.ClientWebSocketProvider = () => mockWs.Object;
 
             await io
@@ -351,7 +351,7 @@ namespace SocketIOClient.UnitTests
             mockHttp
                 .Setup(m => m.GetStringAsync(It.IsAny<Uri>()))
                 .ReturnsAsync("websocket");
-            io.HttpClientProvider = () => mockHttp.Object;
+            io.HttpClient = mockHttp.Object;
 
             var mockWs = new Mock<IClientWebSocket>();
             mockWs.Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
@@ -576,7 +576,7 @@ namespace SocketIOClient.UnitTests
             mockWs.Verify(w => w.AddHeader("h1", "v1"), Times.Once());
         }
 
-        private static async Task Should_be_able_to_cancel_reconnecting(Func<SocketIO,Task> action)
+        private static async Task Should_be_able_to_cancel_reconnecting(Func<SocketIO, Task> action)
         {
             using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
             {
@@ -586,7 +586,7 @@ namespace SocketIOClient.UnitTests
             });
             var mockTransport = new Mock<ITransport>();
             mockTransport
-                .Setup(m=>m.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Setup(m => m.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
                 .Throws<TimeoutException>();
             io.Transport = mockTransport.Object;
 
@@ -604,7 +604,7 @@ namespace SocketIOClient.UnitTests
             r2.Should().Be(attempts);
             task.Status.Should().Be(TaskStatus.Faulted);
         }
-        
+
         [TestMethod]
         public async Task Should_be_able_to_cancel_reconnecting_after_disposed()
         {
@@ -614,13 +614,13 @@ namespace SocketIOClient.UnitTests
                 return Task.CompletedTask;
             });
         }
-        
+
         [TestMethod]
         public async Task Should_be_able_to_cancel_reconnecting_after_disconnected()
         {
             await Should_be_able_to_cancel_reconnecting(async io => await io.DisconnectAsync());
         }
-        
+
         [TestMethod]
         [DataRow("http://localhost:11002", null)]
         [DataRow("http://localhost:11002/", null)]
@@ -630,6 +630,73 @@ namespace SocketIOClient.UnitTests
         {
             using var io = new SocketIO(url);
             io.Namespace.Should().Be(ns);
+        }
+
+        [TestMethod]
+        public async Task Headers_should_be_added_when_handshaking_ws()
+        {
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.GetStringAsync(It.IsAny<Uri>()))
+                .ReturnsAsync("websocket");
+            var messages = new[]
+            {
+                "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}"
+            };
+            var mockWs = new Mock<IClientWebSocket>();
+            int i = -1;
+            mockWs
+                .Setup(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
+                .Callback(() => mockWs.SetupGet(w => w.State).Returns(WebSocketState.Open));
+            mockWs
+                .Setup(w => w.ReceiveAsync(It.IsAny<int>(), It.IsNotIn(CancellationToken.None)))
+                .ReturnsAsync(() => GetWebSocketResult(ref i, messages));
+            using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
+            {
+                ConnectionTimeout = TimeSpan.FromSeconds(1),
+                ExtraHeaders = new Dictionary<string, string>
+                {
+                    ["name"] = "value"
+                }
+            })
+            {
+                HttpClient = mockHttp.Object,
+                ClientWebSocketProvider = () => mockWs.Object,
+            };
+            await io.ConnectAsync();
+            
+            mockHttp.Verify(m=>m.AddHeader("name", "value"), Times.Once());
+        }
+        
+        [TestMethod]
+        public async Task Headers_should_be_added_when_handshaking_http()
+        {
+            var messages = new[]
+            {
+                "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}"
+            };
+            int i = -1;
+            var mockHttp = new Mock<IHttpClient>();
+            mockHttp
+                .Setup(m => m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(() => GetResponseMessage(ref i, messages));
+            using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
+            {
+                AutoUpgrade = false,
+                ConnectionTimeout = TimeSpan.FromSeconds(1),
+                ExtraHeaders = new Dictionary<string, string>
+                {
+                    ["name"] = "value"
+                }
+            })
+            {
+                HttpClient = mockHttp.Object,
+            };
+            await io.ConnectAsync();
+            
+            mockHttp.Verify(m=>m.AddHeader("name", "value"), Times.Once());
         }
     }
 }
