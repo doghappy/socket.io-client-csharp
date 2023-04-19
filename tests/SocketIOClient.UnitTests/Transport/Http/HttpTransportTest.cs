@@ -56,8 +56,9 @@ namespace SocketIOClient.UnitTests.Transport.Http
             using var transport = new HttpTransport(options, mockedHandler.Object);
 
             using var cts = new CancellationTokenSource(100);
+            var token = cts.Token;
             await transport
-                .Invoking(async x => await x.ConnectAsync(uri, cts.Token))
+                .Invoking(async x => await x.ConnectAsync(uri, token))
                 .Should()
                 .ThrowAsync<TransportException>()
                 .WithMessage("Could not connect to '*'");
@@ -103,7 +104,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             msg.Should().BeEquivalentTo(expected);
         }
 
-        private static IEnumerable<object[]> OnTextReceivedCases => OnTextReceivedTupleCases.Select(x => new object[] { x.eio, x.text, x.expected });
+        private static IEnumerable<object[]> OnTextReceivedCases => OnTextReceivedTupleCases.Select(x => new [] { x.eio, x.text, x.expected });
 
         private static IEnumerable<(EngineIO eio, string text, object expected)> OnTextReceivedTupleCases
         {
@@ -490,7 +491,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
         [TestMethod]
         [DataRow(EngineIO.V3, 100)]
         [DataRow(EngineIO.V4, 100)]
-        public async Task ConcurrentlySend(EngineIO eio, int times)
+        public void ConcurrentlySend(EngineIO eio, int times)
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             var i = 0;

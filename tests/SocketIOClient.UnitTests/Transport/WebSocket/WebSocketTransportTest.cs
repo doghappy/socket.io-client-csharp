@@ -522,7 +522,7 @@ public class WebSocketTransportTest
     [TestMethod]
     [DataRow(EngineIO.V3, 100)]
     [DataRow(EngineIO.V4, 100)]
-    public async Task ConcurrentlySend(EngineIO eio, int times)
+    public void ConcurrentlySend(EngineIO eio, int times)
     {
         int extraLength = eio == EngineIO.V3 ? 2 : 1;
         var mockWs = new Mock<IClientWebSocket>();

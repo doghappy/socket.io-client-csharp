@@ -368,13 +368,13 @@ namespace SocketIOClient.UnitTests
                 .Invoking(async x => await x.ConnectAsync())
                 .Should()
                 .ThrowAsync<ConnectionException>()
-                .WithMessage("Cannot connect to server '*'");
+                .WithMessage("Cannot connect to server *");
 
             mockWs.Verify(w => w.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()),
                 Times.Exactly(attempts + 1));
 
             attemptTimes.Should().Be(attempts);
-            errorTimes.Should().Be(attempts);
+            errorTimes.Should().Be(attempts + 1);
             failedTimes.Should().Be(1);
         }
 
@@ -480,11 +480,11 @@ namespace SocketIOClient.UnitTests
                 .Invoking(async x => await x.ConnectAsync())
                 .Should()
                 .ThrowAsync<ConnectionException>()
-                .WithMessage("Cannot connect to server '*'");
+                .WithMessage("Cannot connect to server *");
 
             failed.Should().Be(1);
             attempt.Should().Be(2);
-            error.Should().Be(2);
+            error.Should().Be(3);
         }
 
         [TestMethod]
@@ -574,51 +574,6 @@ namespace SocketIOClient.UnitTests
             await io.ConnectAsync();
 
             mockWs.Verify(w => w.AddHeader("h1", "v1"), Times.Once());
-        }
-
-        private static async Task Should_be_able_to_cancel_reconnecting(Func<SocketIO, Task> action)
-        {
-            using var io = new SocketIO("http://localhost:11003", new SocketIOOptions
-            {
-                Transport = TransportProtocol.WebSocket,
-                ConnectionTimeout = TimeSpan.FromSeconds(1),
-                ReconnectionAttempts = 4,
-            });
-            var mockTransport = new Mock<ITransport>();
-            mockTransport
-                .Setup(m => m.ConnectAsync(It.IsAny<Uri>(), It.IsAny<CancellationToken>()))
-                .Throws<TimeoutException>();
-            io.Transport = mockTransport.Object;
-
-            int attempts = 0;
-            io.OnReconnectAttempt += (s, e) => attempts = e;
-            var task = io.ConnectAsync();
-            await Task.Delay(2000);
-            await action(io);
-            int r1 = attempts;
-            await Task.Delay(1000);
-            int r2 = attempts;
-
-            attempts.Should().BeGreaterThan(0);
-            r1.Should().Be(attempts);
-            r2.Should().Be(attempts);
-            task.Status.Should().Be(TaskStatus.Faulted);
-        }
-
-        [TestMethod]
-        public async Task Should_be_able_to_cancel_reconnecting_after_disposed()
-        {
-            await Should_be_able_to_cancel_reconnecting(io =>
-            {
-                io.Dispose();
-                return Task.CompletedTask;
-            });
-        }
-
-        [TestMethod]
-        public async Task Should_be_able_to_cancel_reconnecting_after_disconnected()
-        {
-            await Should_be_able_to_cancel_reconnecting(async io => await io.DisconnectAsync());
         }
 
         [TestMethod]

@@ -47,6 +47,7 @@ namespace SocketIOClient.Transport
             {
                 payload.Bytes = msg.OutgoingBytes;
             }
+
             await SendAsync(payload, cancellationToken).ConfigureAwait(false);
         }
 
@@ -57,6 +58,7 @@ namespace SocketIOClient.Transport
             {
                 return;
             }
+
             var connectMsg = new ConnectedMessage
             {
                 Namespace = Namespace,
@@ -101,6 +103,7 @@ namespace SocketIOClient.Transport
                         {
                             await SendAsync(ping, cts.Token).ConfigureAwait(false);
                         }
+
                         // _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
                         OnReceived.TryInvoke(ping);
@@ -125,7 +128,7 @@ namespace SocketIOClient.Transport
         public virtual void Dispose()
         {
             _messageQueue.Clear();
-            if (PingTokenSource != null)
+            if (PingTokenSource != null && !PingTokenSource.IsCancellationRequested)
             {
                 PingTokenSource.Cancel();
                 PingTokenSource.Dispose();
@@ -145,6 +148,7 @@ namespace SocketIOClient.Transport
             {
                 return;
             }
+
             msg.Protocol = Protocol;
             if (msg.BinaryCount > 0)
             {
@@ -152,6 +156,7 @@ namespace SocketIOClient.Transport
                 _messageQueue.Enqueue(msg);
                 return;
             }
+
             if (msg.Type == MessageType.Opened)
             {
                 await OpenAsync(msg as OpenedMessage).ConfigureAwait(false);
@@ -175,12 +180,14 @@ namespace SocketIOClient.Transport
 
                     var connectMsg = msg as ConnectedMessage;
                     connectMsg.Sid = OpenedMessage.Sid;
-                    if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(connectMsg.Namespace)) || connectMsg.Namespace == Namespace)
+                    if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(connectMsg.Namespace)) ||
+                        connectMsg.Namespace == Namespace)
                     {
                         if (PingTokenSource != null)
                         {
                             PingTokenSource.Cancel();
                         }
+
                         PingTokenSource = new CancellationTokenSource();
                         StartPing(PingTokenSource.Token);
                     }

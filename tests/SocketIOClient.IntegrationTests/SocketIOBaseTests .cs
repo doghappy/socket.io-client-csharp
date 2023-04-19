@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -29,7 +30,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [ClassInitialize]
-        public void InitailizeCheck()
+        public void InitializeCheck()
         {
             var uri = new Uri(ServerUrl);
             using var tcp = new TcpClient();
@@ -66,16 +67,15 @@ namespace SocketIOClient.IntegrationTests
             {
                 Reconnection = false,
                 EIO = EIO,
-                ConnectionTimeout = TimeSpan.FromSeconds(4),
             });
             int times = 0;
             io.OnConnected += (s, e) => times++;
 
             await io.ConnectAsync();
-            await Task.Delay(200);
+            // await Task.Delay(200);
             await io.DisconnectAsync();
             await io.ConnectAsync();
-            await Task.Delay(200);
+            // await Task.Delay(200);
 
             times.Should().Be(2);
         }
@@ -106,10 +106,13 @@ namespace SocketIOClient.IntegrationTests
 
         public static IEnumerable<object[]> Emit1ParameterCases()
         {
-            return PrivateEmit1PrameterCase().Select(x => new[] { x.EventName, x.Data, x.ExpectedJson, x.ExpectedBytes });
+            return PrivateEmit1PrameterCase()
+                .Select(x => new[] { x.EventName, x.Data, x.ExpectedJson, x.ExpectedBytes });
         }
 
-        private static IEnumerable<(string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)> PrivateEmit1PrameterCase()
+        private static
+            IEnumerable<(string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)>
+            PrivateEmit1PrameterCase()
         {
             return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)[]
             {
@@ -121,9 +124,12 @@ namespace SocketIOClient.IntegrationTests
                 ("1:emit", -1.234567890, "[-1.23456789]", Array.Empty<byte[]>()),
                 ("1:emit", 1.234567890, "[1.23456789]", Array.Empty<byte[]>()),
                 ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]", Array.Empty<byte[]>()),
-                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", Array.Empty<byte[]>()),
-                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]", Array.Empty<byte[]>()),
-                ("1:emit", new { Result = true, Data = new[] { "a", "b" } }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]", Array.Empty<byte[]>()),
+                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]",
+                    Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } },
+                    "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]", Array.Empty<byte[]>()),
+                ("1:emit", new { Result = true, Data = new[] { "a", "b" } },
+                    "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]", Array.Empty<byte[]>()),
                 ("1:emit",
                     new { Result = true, Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
                     "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
@@ -131,7 +137,11 @@ namespace SocketIOClient.IntegrationTests
                 ("1:emit",
                     new { Result = Encoding.UTF8.GetBytes("test"), Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
                     "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
-                    new[] { new byte[] { 0x74, 0x65, 0x73, 0x74 }, new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
+                    new[]
+                    {
+                        new byte[] { 0x74, 0x65, 0x73, 0x74 },
+                        new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }
+                    }),
             };
         }
 
@@ -141,7 +151,10 @@ namespace SocketIOClient.IntegrationTests
         [DataRow("2:emit", -1.234567890, 1.234567890, "[-1.23456789,1.23456789]")]
         [DataRow("2:emit", "hello", "世界", "[\"hello\",\"世界\"]")]
         [DynamicData(nameof(Emit2ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_Be_Able_To_Emit_2_Parameters_And_Emit_Back(string eventName, object data1, object data2, string excepted)
+        public async Task Should_Be_Able_To_Emit_2_Parameters_And_Emit_Back(string eventName,
+            object data1,
+            object data2,
+            string excepted)
         {
             using var io = CreateSocketIO();
             string json = null;
@@ -159,13 +172,17 @@ namespace SocketIOClient.IntegrationTests
             return PrivateEmit2PrameterCase().Select(x => new[] { x.EventName, x.Data1, x.Data2, x.Expected });
         }
 
-        private static IEnumerable<(string EventName, object Data1, object Data2, string Expected)> PrivateEmit2PrameterCase()
+        private static IEnumerable<(string EventName, object Data1, object Data2, string Expected)>
+            PrivateEmit2PrameterCase()
         {
             return new (string EventName, object Data1, object Data2, string Expected)[]
             {
-                ("2:emit", new { User = "abc", Password = "123" }, "ok", "[{\"User\":\"abc\",\"Password\":\"123\"},\"ok\"]"),
-                ("2:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, 789, "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}},789]"),
-                ("2:emit", new { Result = true, Data = new[] { "a", "b" } }, new[] { 1, 2 }, "[{\"Result\":true,\"Data\":[\"a\",\"b\"]},[1,2]]"),
+                ("2:emit", new { User = "abc", Password = "123" }, "ok",
+                    "[{\"User\":\"abc\",\"Password\":\"123\"},\"ok\"]"),
+                ("2:emit", new { Result = true, Data = new { User = "abc", Password = "123" } }, 789,
+                    "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}},789]"),
+                ("2:emit", new { Result = true, Data = new[] { "a", "b" } }, new[] { 1, 2 },
+                    "[{\"Result\":true,\"Data\":[\"a\",\"b\"]},[1,2]]"),
             };
         }
 
@@ -235,6 +252,7 @@ namespace SocketIOClient.IntegrationTests
             string error = null;
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
+                AutoUpgrade = false,
                 Reconnection = false,
                 EIO = EIO,
                 Query = new Dictionary<string, string>
@@ -242,12 +260,10 @@ namespace SocketIOClient.IntegrationTests
                     { "token", "abc123" }
                 }
             });
-            io.OnConnected += (s, e) => times++;
-            io.OnError += (s, e) => error = e;
-
-            await io.Invoking(i => i.ConnectAsync())
-                .Should()
-                .ThrowAsync<ConnectionException>();
+            io.OnConnected += (_, _) => times++;
+            io.OnError += (_, e) => error = e;
+                
+            await io.ConnectAsync();
 
             times.Should().Be(0);
             error.Should().Be("Authentication error");
@@ -264,6 +280,7 @@ namespace SocketIOClient.IntegrationTests
             {
                 return;
             }
+
             UserDTO auth = null;
             string guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
@@ -369,6 +386,56 @@ namespace SocketIOClient.IntegrationTests
             disconnectTimes.Should().Be(times);
         }
 
+        [TestMethod]
+        [DataRow(false, 0, 0, 1)]
+        [DataRow(true, 0, 0, 1)]
+        [DataRow(true, 1, 1, 2)]
+        [DataRow(true, 5, 5, 6)]
+        public async Task Should_trigger_OnReconnectAttempt_and_OnReconnectFailed(
+            bool reconnection,
+            int attempts,
+            int expectedAttempts,
+            int expectedErrors)
+        {
+            using var io = new SocketIO("http://localhost:4404", new SocketIOOptions
+            {
+                Reconnection = reconnection,
+                ReconnectionAttempts = attempts,
+            });
+            var attemptTimes = 0;
+            var failedTimes = 0;
+            var errorTimes = 0;
+            io.OnReconnectAttempt += (_, _) => attemptTimes++;
+            io.OnReconnectFailed += (_, _) => failedTimes++;
+            io.OnReconnectError += (_, _) => errorTimes++;
+            await io.Invoking(async x => await x.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>();
+            attemptTimes.Should().Be(expectedAttempts);
+            errorTimes.Should().Be(expectedErrors);
+            failedTimes.Should().Be(1);
+        }
+
+        [TestMethod]
+        public async Task Should_keep_trying_to_reconnect()
+        {
+            using var io = new SocketIO("http://localhost:4404", new SocketIOOptions
+            {
+                Transport = TransportProtocol.WebSocket,
+                Reconnection = true,
+                ReconnectionDelay = 1000,
+                RandomizationFactor = 0.5,
+                ReconnectionDelayMax = 10000,
+                ReconnectionAttempts = 5,
+            });
+            var times = 0;
+            io.OnReconnectAttempt += (_, _) => times++;
+            await io.Invoking(async x => await x.ConnectAsync())
+                .Should()
+                .ThrowAsync<ConnectionException>();
+            times.Should().Be(5);
+        }
+
         #endregion
 
         [TestMethod]
@@ -389,8 +456,8 @@ namespace SocketIOClient.IntegrationTests
             });
 
             await io.ConnectAsync();
-            await io.EmitAsync("get_header", 
-                res => actual = res.GetValue<string>(), 
+            await io.EmitAsync("get_header",
+                res => actual = res.GetValue<string>(),
                 key.ToLower());
             await Task.Delay(100);
 

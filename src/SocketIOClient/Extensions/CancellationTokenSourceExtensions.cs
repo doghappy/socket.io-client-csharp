@@ -16,5 +16,15 @@ namespace SocketIOClient.Extensions
                 cts.Cancel();
             }
         }
+
+        public static CancellationTokenSourceWrapper Renew(this CancellationTokenSourceWrapper cts)
+        {
+            if (cts != null)
+            {
+                cts.Dispose();
+            }
+
+            return new CancellationTokenSourceWrapper(new CancellationTokenSource());
+        }
     }
 }
