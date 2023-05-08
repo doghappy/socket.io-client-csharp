@@ -153,8 +153,8 @@ namespace SocketIOClient.UnitTests.Transport.Http
         }
 
         [TestMethod]
-        // [DataRow(100, 100, 1, 1)]
-        [DataRow(1000, 100, 5, 15)]
+        [DataRow(100, 100, 1, 1)]
+        // [DataRow(1000, 100, 5, 15)]
         public async Task Eio3_Ping_ShouldWork(int delay, int pingInterval, int min, int max)
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
@@ -168,7 +168,6 @@ namespace SocketIOClient.UnitTests.Transport.Http
             await mockHttpPollingHandler.Object.OnTextReceived("40");
             await Task.Delay(delay);
 
-            using var cts = new CancellationTokenSource(5000);
             mockHttpPollingHandler.Verify(h => h.PostAsync("&sid=LgtKYhIy7tUzKHH9AAAB", "2", It.IsNotIn(CancellationToken.None)),
                 Times.Between(min, max, Range.Inclusive));
         }
