@@ -16,6 +16,8 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 
+[assembly: Parallelize(Workers = 8, Scope = ExecutionScope.ClassLevel)]
+
 namespace SocketIOClient.UnitTests
 {
     [TestClass]
