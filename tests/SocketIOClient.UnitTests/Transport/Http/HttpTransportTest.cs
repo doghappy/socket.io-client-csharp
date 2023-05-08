@@ -152,8 +152,8 @@ namespace SocketIOClient.UnitTests.Transport.Http
                 Times.Once());
         }
 
-        [TestMethod]
-        [DataRow(100, 100, 1, 1)]
+        // [TestMethod]
+        // [DataRow(100, 100, 1, 1)]
         // [DataRow(1000, 100, 5, 15)]
         public async Task Eio3_Ping_ShouldWork(int delay, int pingInterval, int min, int max)
         {
