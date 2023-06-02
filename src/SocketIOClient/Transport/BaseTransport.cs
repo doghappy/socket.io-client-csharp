@@ -1,57 +1,61 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIO.Serializer.Core;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
-
-#if DEBUG
-using System.Diagnostics;
-#endif
+using SocketIO.Core;
 
 namespace SocketIOClient.Transport
 {
     public abstract class BaseTransport : ITransport
     {
-        protected BaseTransport(TransportOptions options)
+        protected BaseTransport(TransportOptions options, ISerializer serializer)
         {
             Options = options ?? throw new ArgumentNullException(nameof(options));
-            _messageQueue = new Queue<IMessage>();
+            Serializer = serializer;
+            _messageQueue = new ConcurrentQueue<Message>();
         }
 
         protected const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
 
         DateTime _pingTime;
-        readonly Queue<IMessage> _messageQueue;
+        readonly ConcurrentQueue<Message> _messageQueue;
         protected TransportOptions Options { get; }
+        protected ISerializer Serializer { get; }
 
-        public Action<IMessage> OnReceived { get; set; }
+        public Action<Message> OnReceived { get; set; }
 
         protected abstract TransportProtocol Protocol { get; }
         protected CancellationTokenSource PingTokenSource { get; private set; }
-        protected OpenedMessage OpenedMessage { get; private set; }
+        protected Message OpenedMessage { get; private set; }
 
         public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
 
-        public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
-        {
-            msg.EIO = Options.EIO;
-            msg.Protocol = Protocol;
-            var payload = new Payload
-            {
-                Text = msg.Write()
-            };
-            if (msg.OutgoingBytes != null)
-            {
-                payload.Bytes = msg.OutgoingBytes;
-            }
+        // public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
+        // {
+        //     msg.EIO = Options.EIO;
+        //     msg.Protocol = Protocol;
+        //     var payload = new Payload
+        //     {
+        //         Text = msg.Write()
+        //     };
+        //     if (msg.OutgoingBytes != null)
+        //     {
+        //         payload.Bytes = msg.OutgoingBytes;
+        //     }
+        //
+        //     await SendAsync(payload, cancellationToken).ConfigureAwait(false);
+        // }
 
-            await SendAsync(payload, cancellationToken).ConfigureAwait(false);
-        }
+        public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
 
-        protected virtual async Task OpenAsync(OpenedMessage msg)
+        protected virtual async Task OpenAsync(Message msg)
         {
             OpenedMessage = msg;
             if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Namespace))
@@ -74,7 +78,7 @@ namespace SocketIOClient.Transport
             {
                 try
                 {
-                    await SendAsync(connectMsg, CancellationToken.None).ConfigureAwait(false);
+                    // await SendAsync(connectMsg, CancellationToken.None).ConfigureAwait(false);
                     break;
                 }
                 catch (Exception e)
@@ -89,7 +93,6 @@ namespace SocketIOClient.Transport
 
         private void StartPing(CancellationToken cancellationToken)
         {
-            // _logger.LogDebug($"[Ping] Interval: {OpenedMessage.PingInterval}");
             Task.Factory.StartNew(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -97,20 +100,18 @@ namespace SocketIOClient.Transport
                     await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
                     try
                     {
-                        var ping = new PingMessage();
-                        // _logger.LogDebug($"[Ping] Sending");
+                        var ping = new Message(MessageType.Ping);
                         using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout))
                         {
-                            await SendAsync(ping, cts.Token).ConfigureAwait(false);
+                            // await SendAsync(ping, cts.Token).ConfigureAwait(false);
+                            Debug.WriteLine("Ping");
                         }
 
-                        // _logger.LogDebug($"[Ping] Has been sent");
                         _pingTime = DateTime.Now;
                         OnReceived.TryInvoke(ping);
                     }
                     catch (Exception e)
                     {
-                        // _logger.LogDebug($"[Ping] Failed to send, {e.Message}");
                         OnError.TryInvoke(e);
                         break;
                     }
@@ -127,7 +128,6 @@ namespace SocketIOClient.Transport
 
         public virtual void Dispose()
         {
-            _messageQueue.Clear();
             if (PingTokenSource != null && !PingTokenSource.IsCancellationRequested)
             {
                 PingTokenSource.Cancel();
@@ -135,21 +135,13 @@ namespace SocketIOClient.Transport
             }
         }
 
-        public abstract Task SendAsync(Payload payload, CancellationToken cancellationToken);
-
         protected async Task OnTextReceived(string text)
         {
-            // TODO: refactor
-#if DEBUG
+            // TODO: refactor by eio
             Debug.WriteLine($"[{Protocol}⬇] {text}");
-#endif
-            var msg = MessageFactory.CreateMessage(Options.EIO, text);
-            if (msg == null)
-            {
-                return;
-            }
+            var msg = Serializer.Deserialize(Options.EIO, text);
+            if (msg == null) return;
 
-            msg.Protocol = Protocol;
             if (msg.BinaryCount > 0)
             {
                 msg.IncomingBytes = new List<byte[]>(msg.BinaryCount);
@@ -159,7 +151,7 @@ namespace SocketIOClient.Transport
 
             if (msg.Type == MessageType.Opened)
             {
-                await OpenAsync(msg as OpenedMessage).ConfigureAwait(false);
+                await OpenAsync(msg).ConfigureAwait(false);
             }
 
             if (Options.EIO == EngineIO.V3)
@@ -178,10 +170,10 @@ namespace SocketIOClient.Transport
                         }
                     }
 
-                    var connectMsg = msg as ConnectedMessage;
-                    connectMsg.Sid = OpenedMessage.Sid;
-                    if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(connectMsg.Namespace)) ||
-                        connectMsg.Namespace == Namespace)
+                    msg.Sid = OpenedMessage.Sid;
+                    // if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(msg.Namespace)) ||
+                    //     msg.Namespace == Namespace)
+                    if (msg.Namespace == Namespace)
                     {
                         if (PingTokenSource != null)
                         {
@@ -198,8 +190,7 @@ namespace SocketIOClient.Transport
                 }
                 else if (msg.Type == MessageType.Pong)
                 {
-                    var pong = msg as PongMessage;
-                    pong.Duration = DateTime.Now - _pingTime;
+                    msg.Duration = DateTime.Now - _pingTime;
                 }
             }
 
@@ -210,11 +201,9 @@ namespace SocketIOClient.Transport
                 _pingTime = DateTime.Now;
                 try
                 {
-                    await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                    OnReceived.TryInvoke(new PongMessage
+                    // await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
+                    OnReceived.TryInvoke(new Message(MessageType.Pong)
                     {
-                        EIO = Options.EIO,
-                        Protocol = Protocol,
                         Duration = DateTime.Now - _pingTime
                     });
                 }
@@ -227,19 +216,20 @@ namespace SocketIOClient.Transport
 
         protected void OnBinaryReceived(byte[] bytes)
         {
-#if DEBUG
             Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
-#endif
-            if (_messageQueue.Count > 0)
-            {
-                var msg = _messageQueue.Peek();
-                msg.IncomingBytes.Add(bytes);
-                if (msg.IncomingBytes.Count == msg.BinaryCount)
-                {
-                    OnReceived.TryInvoke(msg);
-                    _messageQueue.Dequeue();
-                }
-            }
+            
+            if (_messageQueue.Count <= 0) 
+                return;
+            if (!_messageQueue.TryPeek(out var msg)) 
+                return;
+            
+            msg.ReceivedBinary.Add(bytes);
+            
+            if (msg.ReceivedBinary.Count < msg.BinaryCount)
+                return;
+            
+            _messageQueue.TryDequeue(out var result);
+            OnReceived.TryInvoke(result);
         }
     }
 }

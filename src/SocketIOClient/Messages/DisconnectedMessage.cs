@@ -1,5 +1,6 @@
 ﻿using SocketIOClient.Transport;
 using System.Collections.Generic;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {

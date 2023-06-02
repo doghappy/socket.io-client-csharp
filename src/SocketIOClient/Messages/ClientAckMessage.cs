@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
@@ -11,7 +12,7 @@ namespace SocketIOClient.Messages
     /// </summary>
     public class ClientAckMessage : IJsonMessage
     {
-        public MessageType Type => MessageType.AckMessage;
+        public MessageType Type => MessageType.Ack;
 
         public string Namespace { get; set; }
 

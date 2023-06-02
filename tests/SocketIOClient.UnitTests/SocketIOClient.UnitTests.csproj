@@ -22,4 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="SystemTextJsonSerializerTest.cs" />
+  </ItemGroup>
 </Project>

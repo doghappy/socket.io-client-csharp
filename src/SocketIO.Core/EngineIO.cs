@@ -1,4 +1,4 @@
-﻿namespace SocketIOClient
+﻿namespace SocketIO.Core
 {
     public enum EngineIO
     {

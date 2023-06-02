@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Collections.Generic;
 using SocketIOClient.Transport;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {

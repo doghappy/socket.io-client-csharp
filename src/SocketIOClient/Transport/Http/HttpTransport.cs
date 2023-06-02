@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIO.Core;
+using SocketIO.Serializer.Core;
 using SocketIOClient.Extensions;
 using SocketIOClient.Messages;
 
@@ -11,7 +14,8 @@ namespace SocketIOClient.Transport.Http
 {
     public class HttpTransport : BaseTransport
     {
-        public HttpTransport(TransportOptions options, IHttpPollingHandler pollingHandler) : base(options)
+        public HttpTransport(TransportOptions options, IHttpPollingHandler pollingHandler, ISerializer serializer)
+            : base(options, serializer)
         {
             _pollingHandler = pollingHandler ?? throw new ArgumentNullException(nameof(pollingHandler));
             _pollingHandler.OnTextReceived = OnTextReceived;
@@ -84,6 +88,7 @@ namespace SocketIOClient.Transport.Http
             {
                 PingTokenSource.Cancel();
             }
+
             return Task.CompletedTask;
         }
 
@@ -98,6 +103,7 @@ namespace SocketIOClient.Transport.Http
             {
                 throw new InvalidOperationException("Unable to set proxy after connecting");
             }
+
             _pollingHandler.SetProxy(proxy);
         }
 
@@ -108,24 +114,24 @@ namespace SocketIOClient.Transport.Http
             _pollingTokenSource.TryDispose();
         }
 
-        public override async Task SendAsync(Payload payload, CancellationToken cancellationToken)
+        public override async Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken)
         {
+            if (items.Count == 0) return;
             try
             {
                 await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(payload.Text))
+
+                if (items[0].Type == SerializedMessageType.Text)
                 {
-                    await _pollingHandler.PostAsync(_httpUri, payload.Text, cancellationToken);
-#if DEBUG
-                    Debug.WriteLine($"[Polling⬆] {payload.Text}");
-#endif
+                    await _pollingHandler.PostAsync(_httpUri, items[0].Text, cancellationToken);
+                    Debug.WriteLine($"[Polling⬆] {items[0].Text}");
                 }
-                if (payload.Bytes != null && payload.Bytes.Count > 0)
+
+                var binary = items.AllBinary();
+                if (binary.Count > 0)
                 {
-                    await _pollingHandler.PostAsync(_httpUri, payload.Bytes, cancellationToken);
-#if DEBUG
-                    Debug.WriteLine("[Polling⬆]0️⃣1️⃣0️⃣1️⃣");
-#endif
+                    await _pollingHandler.PostAsync(_httpUri, binary, cancellationToken);
+                    Debug.WriteLine($"[Polling⬆]0️⃣1️⃣0️⃣1️⃣ x {binary.Count}");
                 }
             }
             finally
@@ -134,7 +140,7 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        protected override async Task OpenAsync(OpenedMessage msg)
+        protected override async Task OpenAsync(Message msg)
         {
             _httpUri += "&sid=" + msg.Sid;
             _pollingTokenSource = new CancellationTokenSource();

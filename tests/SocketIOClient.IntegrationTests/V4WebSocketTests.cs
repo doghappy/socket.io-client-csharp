@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Net.Sockets;
+using SocketIO.Core;
 
 namespace SocketIOClient.IntegrationTests
 {

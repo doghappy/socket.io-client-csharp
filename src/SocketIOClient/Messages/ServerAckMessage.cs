@@ -1,6 +1,7 @@
 ﻿using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
@@ -9,7 +10,7 @@ namespace SocketIOClient.Messages
     /// </summary>
     public class ServerAckMessage : IMessage
     {
-        public MessageType Type => MessageType.AckMessage;
+        public MessageType Type => MessageType.Ack;
 
         public string Namespace { get; set; }
 

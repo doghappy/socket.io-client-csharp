@@ -12,6 +12,7 @@
   "author": "https://github.com/doghappy",
   "license": "Apache",
   "dependencies": {
-      "socket.io": "4.5.0"
+    "socket.io": "4.5.0",
+    "socket.io-msgpack-parser": "^3.0.2"
   }
 }

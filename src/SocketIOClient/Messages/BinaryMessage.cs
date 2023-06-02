@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
     public class BinaryMessage : IJsonMessage
     {
-        public MessageType Type => MessageType.BinaryMessage;
+        public MessageType Type => MessageType.Binary;
 
         public string Namespace { get; set; }
 

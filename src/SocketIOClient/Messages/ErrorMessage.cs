@@ -2,12 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
     public class ErrorMessage : IMessage
     {
-        public MessageType Type => MessageType.ErrorMessage;
+        public MessageType Type => MessageType.Error;
 
         public string Message { get; set; }
 

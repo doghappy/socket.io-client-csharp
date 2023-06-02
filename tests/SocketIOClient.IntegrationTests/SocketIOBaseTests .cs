@@ -5,8 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using SocketIOClient.Transport;
+using SocketIO.Core;
+using SocketIO.Serializer.SystemTextJson;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -86,13 +91,22 @@ namespace SocketIOClient.IntegrationTests
 
         [TestMethod]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Emit_Back(string eventName,
+        public async Task Should_emit_out_and_emit_back(
+            int caseId,
+            string eventName,
             object data,
             string expectedJson,
-            IEnumerable<byte[]> expectedBytes)
+            IEnumerable<byte[]>? expectedBytes)
         {
             using var io = CreateSocketIO();
-            SocketIOResponse response = null;
+            io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+            {
+                // https://learn.microsoft.com/zh-cn/dotnet/api/system.text.unicode.unicoderanges?view=net-8.0
+                // Currently, the UnicodeRange class supports only named ranges in the Basic Multilingual Plane (BMP)
+                // which extends from U+0000 to U+FFFF.
+                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
+            });
+            SocketIOResponse? response = null;
             io.On(eventName, res => response = res);
 
             await io.ConnectAsync();
@@ -100,38 +114,50 @@ namespace SocketIOClient.IntegrationTests
             await Task.Delay(100);
 
             response.Should().NotBeNull();
-            response.ToString().Should().Be(expectedJson);
+            response!.ToString().Should().Be(expectedJson);
             response.InComingBytes.Should().BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
         }
 
-        public static IEnumerable<object[]> Emit1ParameterCases()
+        public static IEnumerable<object?[]> Emit1ParameterCases()
         {
-            return PrivateEmit1PrameterCase()
-                .Select(x => new[] { x.EventName, x.Data, x.ExpectedJson, x.ExpectedBytes });
+            return Emit1ParameterTupleCase()
+                .Select((x, caseId) => new[]
+                {
+                    caseId,
+                    x.EventName, 
+                    x.Data, 
+                    x.ExpectedJson,
+                    x.ExpectedBytes
+                });
         }
 
-        private static
-            IEnumerable<(string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)>
-            PrivateEmit1PrameterCase()
+        private static IEnumerable<(
+                string EventName,
+                object Data, 
+                string ExpectedJson, 
+                IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
         {
-            return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]> ExpectedBytes)[]
+            return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]>? ExpectedBytes)[]
             {
-                ("1:emit", null, "[null]", Array.Empty<byte[]>()),
-                ("1:emit", true, "[true]", Array.Empty<byte[]>()),
-                ("1:emit", false, "[false]", Array.Empty<byte[]>()),
-                ("1:emit", -1234567890, "[-1234567890]", Array.Empty<byte[]>()),
-                ("1:emit", 1234567890, "[1234567890]", Array.Empty<byte[]>()),
-                ("1:emit", -1.234567890, "[-1.23456789]", Array.Empty<byte[]>()),
-                ("1:emit", 1.234567890, "[1.23456789]", Array.Empty<byte[]>()),
-                ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n🌍🌎🌏\"]", Array.Empty<byte[]>()),
-                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]",
-                    Array.Empty<byte[]>()),
-                ("1:emit", new { Result = true, Data = new { User = "abc", Password = "123" } },
-                    "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]", Array.Empty<byte[]>()),
-                ("1:emit", new { Result = true, Data = new[] { "a", "b" } },
-                    "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]", Array.Empty<byte[]>()),
+                ("1:emit", null!, "[null]", null),
+                ("1:emit", true, "[true]", null),
+                ("1:emit", false, "[false]", null),
+                ("1:emit", -1234567890, "[-1234567890]", null),
+                ("1:emit", 1234567890, "[1234567890]", null),
+                ("1:emit", -1.234567890, "[-1.23456789]", null),
+                ("1:emit", 1.234567890, "[1.23456789]", null),
+                ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n\\uD83C\\uDF0D\\uD83C\\uDF0E\\uD83C\\uDF0F\"]", null),
+                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", null),
                 ("1:emit",
-                    new { Result = true, Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    new { Result = true, Data = new { User = "abc", Password = "123" } },
+                    "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]",
+                    null),
+                ("1:emit",
+                    new { Result = true, Data = new[] { "a", "b" } },
+                    "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]",
+                    null),
+                ("1:emit",
+                    new { Result = true, Data = "🦊🐶🐱"u8.ToArray() },
                     "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
                     new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
                 ("1:emit",

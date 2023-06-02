@@ -6,6 +6,11 @@ const server = http.createServer();
 const port = 11400;
 
 var io = socket(server, {
+    parser: require('socket.io-msgpack-parser'),
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
 io.on('connection', socket => {

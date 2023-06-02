@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Extensions;
+using SocketIO.Core;
 
 namespace SocketIOClient.Transport.Http
 {

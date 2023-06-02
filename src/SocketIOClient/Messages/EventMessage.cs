@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
     public class EventMessage : IJsonMessage
     {
-        public MessageType Type => MessageType.EventMessage;
+        public MessageType Type => MessageType.Event;
 
         public string Namespace { get; set; }
 

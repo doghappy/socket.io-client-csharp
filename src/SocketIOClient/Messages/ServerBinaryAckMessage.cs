@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
@@ -10,7 +11,7 @@ namespace SocketIOClient.Messages
     /// </summary>
     public class ServerBinaryAckMessage : IJsonMessage
     {
-        public MessageType Type => MessageType.BinaryAckMessage;
+        public MessageType Type => MessageType.BinaryAck;
 
         public string Namespace { get; set; }
 

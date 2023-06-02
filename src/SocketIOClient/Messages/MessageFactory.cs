@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using SocketIO.Core;
 
 namespace SocketIOClient.Messages
 {
@@ -20,15 +21,15 @@ namespace SocketIOClient.Messages
                     return new ConnectedMessage();
                 case MessageType.Disconnected:
                     return new DisconnectedMessage();
-                case MessageType.EventMessage:
+                case MessageType.Event:
                     return new EventMessage();
-                case MessageType.AckMessage:
+                case MessageType.Ack:
                     return new ClientAckMessage();
-                case MessageType.ErrorMessage:
+                case MessageType.Error:
                     return new ErrorMessage();
-                case MessageType.BinaryMessage:
+                case MessageType.Binary:
                     return new BinaryMessage();
-                case MessageType.BinaryAckMessage:
+                case MessageType.BinaryAck:
                     return new ClientBinaryAckMessage();
             }
             return null;

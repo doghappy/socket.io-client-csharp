@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIO.Core;
+using SocketIO.Serializer.Core;
+using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient.Extensions;
-using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using SocketIOClient.UriConverters;
-
-#if DEBUG
-using System.Diagnostics;
-#endif
 
 namespace SocketIOClient
 {
@@ -94,7 +93,7 @@ namespace SocketIOClient
 
         public SocketIOOptions Options { get; }
 
-        public IJsonSerializer JsonSerializer { get; set; }
+        public ISerializer Serializer { get; set; }
         public ITransport Transport { get; set; }
         public IHttpClient HttpClient { get; set; }
 
@@ -153,7 +152,7 @@ namespace SocketIOClient
             _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
             _onAnyHandlers = new List<OnAnyHandler>();
 
-            JsonSerializer = new SystemTextJsonSerializer();
+            Serializer = new SystemTextJsonSerializer();
 
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
@@ -175,13 +174,13 @@ namespace SocketIOClient
             {
                 EIO = Options.EIO,
                 Query = Options.Query,
-                Auth = GetAuth(Options.Auth),
+                Auth = Options.Auth == null ? string.Empty : Serializer.Serialize(Options.Auth).FirstText(),
                 ConnectionTimeout = Options.ConnectionTimeout
             };
             if (Options.Transport == TransportProtocol.Polling)
             {
                 var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, HttpClient);
-                Transport = new HttpTransport(transportOptions, handler);
+                Transport = new HttpTransport(transportOptions, handler, Serializer);
             }
             else
             {
@@ -193,7 +192,7 @@ namespace SocketIOClient
                 }
 
                 _resources.Add(ws);
-                Transport = new WebSocketTransport(transportOptions, ws);
+                Transport = new WebSocketTransport(transportOptions, ws, Serializer);
                 SetWebSocketHeaders();
             }
 
@@ -206,14 +205,6 @@ namespace SocketIOClient
 
             Transport.OnReceived = OnMessageReceived;
             Transport.OnError = OnErrorReceived;
-        }
-
-        private string GetAuth(object auth)
-        {
-            if (auth == null)
-                return string.Empty;
-            var result = JsonSerializer.Serialize(new[] { auth });
-            return result.Json.TrimStart('[').TrimEnd(']');
         }
 
         private void SetWebSocketHeaders()
@@ -365,9 +356,7 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
-#if DEBUG
                     Debug.WriteLine(e);
-#endif
                 }
             }
 
@@ -429,12 +418,12 @@ namespace SocketIOClient
             OnPing.TryInvoke(this, EventArgs.Empty);
         }
 
-        private void PongHandler(PongMessage msg)
+        private void PongHandler(Message msg)
         {
             OnPong.TryInvoke(this, msg.Duration);
         }
 
-        private void ConnectedHandler(ConnectedMessage msg)
+        private void ConnectedHandler(Message msg)
         {
             Id = msg.Sid;
             Connected = true;
@@ -453,67 +442,69 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
         }
 
-        private void EventMessageHandler(EventMessage m)
+        private void EventMessageHandler(Message msg)
         {
-            var res = new SocketIOResponse(m.JsonElements, this)
+            var eventName = Serializer.GetEventName(msg);
+            var res = new SocketIOResponse(msg, this)
             {
-                PacketId = m.Id
+                PacketId = msg.Id
             };
             foreach (var item in _onAnyHandlers)
             {
-                item.TryInvoke(m.Event, res);
+                item.TryInvoke(eventName, res);
             }
 
-            if (_eventHandlers.ContainsKey(m.Event))
+            if (_eventHandlers.TryGetValue(eventName, out var handler))
             {
-                _eventHandlers[m.Event].TryInvoke(res);
-            }
-        }
-
-        private void AckMessageHandler(ClientAckMessage m)
-        {
-            if (_ackHandlers.ContainsKey(m.Id))
-            {
-                var res = new SocketIOResponse(m.JsonElements, this);
-                _ackHandlers[m.Id].TryInvoke(res);
-                _ackHandlers.Remove(m.Id);
+                handler.TryInvoke(res);
             }
         }
 
-        private void ErrorMessageHandler(ErrorMessage msg)
-        {
-            _connCts.Dispose();
-            OnError.TryInvoke(this, msg.Message);
-        }
-
-        private void BinaryMessageHandler(BinaryMessage msg)
-        {
-            var response = new SocketIOResponse(msg.JsonElements, this)
-            {
-                PacketId = msg.Id,
-            };
-            response.InComingBytes.AddRange(msg.IncomingBytes);
-            foreach (var item in _onAnyHandlers)
-            {
-                item.TryInvoke(msg.Event, response);
-            }
-
-            if (_eventHandlers.ContainsKey(msg.Event))
-            {
-                _eventHandlers[msg.Event].TryInvoke(response);
-            }
-        }
-
-        private void BinaryAckMessageHandler(ClientBinaryAckMessage msg)
+        private void AckMessageHandler(Message msg)
         {
             if (_ackHandlers.ContainsKey(msg.Id))
             {
-                var response = new SocketIOResponse(msg.JsonElements, this)
+                var res = new SocketIOResponse(msg, this);
+                _ackHandlers[msg.Id].TryInvoke(res);
+                _ackHandlers.Remove(msg.Id);
+            }
+        }
+
+        private void ErrorMessageHandler(Message msg)
+        {
+            _connCts.Dispose();
+            OnError.TryInvoke(this, msg.Error);
+        }
+
+        private void BinaryMessageHandler(Message msg)
+        {
+            var eventName = Serializer.GetEventName(msg);
+            var response = new SocketIOResponse(msg, this)
+            {
+                PacketId = msg.Id,
+            };
+            foreach (var item in _onAnyHandlers)
+            {
+                // TODO: run in background to make sure user logic could not block socket.io's logic
+                item.TryInvoke(eventName, response);
+            }
+
+            if (_eventHandlers.TryGetValue(eventName, out var handler))
+            {
+                handler.TryInvoke(response);
+            }
+        }
+
+        private void BinaryAckMessageHandler(Message msg)
+        {
+            if (_ackHandlers.TryGetValue(msg.Id, out var handler))
+            {
+                var response = new SocketIOResponse(msg, this)
                 {
                     PacketId = msg.Id,
                 };
                 response.InComingBytes.AddRange(msg.IncomingBytes);
-                _ackHandlers[msg.Id].TryInvoke(response);
+                handler.TryInvoke(response);
             }
         }
 
@@ -525,7 +516,7 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
-        private void OnMessageReceived(IMessage msg)
+        private void OnMessageReceived(Message msg)
         {
             try
             {
@@ -535,28 +526,28 @@ namespace SocketIOClient
                         PingHandler();
                         break;
                     case MessageType.Pong:
-                        PongHandler(msg as PongMessage);
+                        PongHandler(msg);
                         break;
                     case MessageType.Connected:
-                        ConnectedHandler(msg as ConnectedMessage);
+                        ConnectedHandler(msg);
                         break;
                     case MessageType.Disconnected:
                         DisconnectedHandler();
                         break;
-                    case MessageType.EventMessage:
-                        EventMessageHandler(msg as EventMessage);
+                    case MessageType.Event:
+                        EventMessageHandler(msg);
                         break;
-                    case MessageType.AckMessage:
-                        AckMessageHandler(msg as ClientAckMessage);
+                    case MessageType.Ack:
+                        AckMessageHandler(msg);
                         break;
-                    case MessageType.ErrorMessage:
-                        ErrorMessageHandler(msg as ErrorMessage);
+                    case MessageType.Error:
+                        ErrorMessageHandler(msg);
                         break;
-                    case MessageType.BinaryMessage:
-                        BinaryMessageHandler(msg as BinaryMessage);
+                    case MessageType.Binary:
+                        BinaryMessageHandler(msg);
                         break;
-                    case MessageType.BinaryAckMessage:
-                        BinaryAckMessageHandler(msg as ClientBinaryAckMessage);
+                    case MessageType.BinaryAck:
+                        BinaryAckMessageHandler(msg);
                         break;
                 }
             }
@@ -577,7 +568,7 @@ namespace SocketIOClient
             };
             try
             {
-                await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
+                // await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
             }
             catch (Exception e)
             {
@@ -645,40 +636,42 @@ namespace SocketIOClient
 
         internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
         {
-            IMessage msg;
-            if (data != null && data.Length > 0)
-            {
-                var result = JsonSerializer.Serialize(data);
-                if (result.Bytes.Count > 0)
-                {
-                    msg = new ServerBinaryAckMessage
-                    {
-                        Id = packetId,
-                        Namespace = Namespace,
-                        Json = result.Json
-                    };
-                    msg.OutgoingBytes = new List<byte[]>(result.Bytes);
-                }
-                else
-                {
-                    msg = new ServerAckMessage
-                    {
-                        Namespace = Namespace,
-                        Id = packetId,
-                        Json = result.Json
-                    };
-                }
-            }
-            else
-            {
-                msg = new ServerAckMessage
-                {
-                    Namespace = Namespace,
-                    Id = packetId
-                };
-            }
-
-            await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            // IMessage msg;
+            // if (data != null && data.Length > 0)
+            // {
+            //     var result = Serializer.Serialize(data);
+            //     if (result.Bytes.Count > 0)
+            //     {
+            //         msg = new ServerBinaryAckMessage
+            //         {
+            //             Id = packetId,
+            //             Namespace = Namespace,
+            //             Json = result.Json
+            //         };
+            //         msg.OutgoingBytes = new List<byte[]>(result.Bytes);
+            //     }
+            //     else
+            //     {
+            //         msg = new ServerAckMessage
+            //         {
+            //             Namespace = Namespace,
+            //             Id = packetId,
+            //             Json = result.Json
+            //         };
+            //     }
+            // }
+            // else
+            // {
+            //     msg = new ServerAckMessage
+            //     {
+            //         Namespace = Namespace,
+            //         Id = packetId
+            //     };
+            // }
+            //
+            // await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            var serializedItems = Serializer.Serialize(data);
+            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -694,40 +687,42 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            if (data != null && data.Length > 0)
-            {
-                var result = JsonSerializer.Serialize(data);
-                if (result.Bytes.Count > 0)
-                {
-                    var msg = new BinaryMessage
-                    {
-                        Namespace = Namespace,
-                        OutgoingBytes = new List<byte[]>(result.Bytes),
-                        Event = eventName,
-                        Json = result.Json
-                    };
-                    await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    var msg = new EventMessage
-                    {
-                        Namespace = Namespace,
-                        Event = eventName,
-                        Json = result.Json
-                    };
-                    await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                var msg = new EventMessage
-                {
-                    Namespace = Namespace,
-                    Event = eventName
-                };
-                await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            }
+            // if (data != null && data.Length > 0)
+            // {
+            //     var result = Serializer.Serialize(data);
+            //     if (result.Bytes.Count > 0)
+            //     {
+            //         var msg = new BinaryMessage
+            //         {
+            //             Namespace = Namespace,
+            //             OutgoingBytes = new List<byte[]>(result.Bytes),
+            //             Event = eventName,
+            //             Json = result.Json
+            //         };
+            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            //     }
+            //     else
+            //     {
+            //         var msg = new EventMessage
+            //         {
+            //             Namespace = Namespace,
+            //             Event = eventName,
+            //             Json = result.Json
+            //         };
+            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            //     }
+            // }
+            // else
+            // {
+            //     var msg = new EventMessage
+            //     {
+            //         Namespace = Namespace,
+            //         Event = eventName
+            //     };
+            //     await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            // }
+            var serializedItems = Serializer.Serialize(eventName, Namespace, data);
+            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -748,43 +743,46 @@ namespace SocketIOClient
             params object[] data)
         {
             _ackHandlers.Add(++_packetId, ack);
-            if (data != null && data.Length > 0)
-            {
-                var result = JsonSerializer.Serialize(data);
-                if (result.Bytes.Count > 0)
-                {
-                    var msg = new ClientBinaryAckMessage
-                    {
-                        Event = eventName,
-                        Namespace = Namespace,
-                        Json = result.Json,
-                        Id = _packetId,
-                        OutgoingBytes = new List<byte[]>(result.Bytes)
-                    };
-                    await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-                }
-                else
-                {
-                    var msg = new ClientAckMessage
-                    {
-                        Event = eventName,
-                        Namespace = Namespace,
-                        Id = _packetId,
-                        Json = result.Json
-                    };
-                    await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                var msg = new ClientAckMessage
-                {
-                    Event = eventName,
-                    Namespace = Namespace,
-                    Id = _packetId
-                };
-                await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            }
+            // if (data != null && data.Length > 0)
+            // {
+            //     var result = Serializer.Serialize(data);
+            //     if (result.Bytes.Count > 0)
+            //     {
+            //         var msg = new ClientBinaryAckMessage
+            //         {
+            //             Event = eventName,
+            //             Namespace = Namespace,
+            //             Json = result.Json,
+            //             Id = _packetId,
+            //             OutgoingBytes = new List<byte[]>(result.Bytes)
+            //         };
+            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            //     }
+            //     else
+            //     {
+            //         var msg = new ClientAckMessage
+            //         {
+            //             Event = eventName,
+            //             Namespace = Namespace,
+            //             Id = _packetId,
+            //             Json = result.Json
+            //         };
+            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            //     }
+            // }
+            // else
+            // {
+            //     var msg = new ClientAckMessage
+            //     {
+            //         Event = eventName,
+            //         Namespace = Namespace,
+            //         Id = _packetId
+            //     };
+            //     await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
+            // }
+
+            var serializedItems = Serializer.Serialize(data);
+            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
 
