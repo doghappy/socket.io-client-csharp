@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace SocketIOClient.Extensions
 {
@@ -15,7 +16,20 @@ namespace SocketIOClient.Extensions
                 // The exception is thrown by the user code, so it can be swallowed
             }
         }
+
         public static void TryInvoke(this Action<SocketIOResponse> handler, SocketIOResponse response)
+        {
+            try
+            {
+                handler(response);
+            }
+            catch
+            {
+                // The exception is thrown by the user code, so it can be swallowed
+            }
+        }
+
+        public static void TryInvoke(this Func<SocketIOResponse, Task> handler, SocketIOResponse response)
         {
             try
             {

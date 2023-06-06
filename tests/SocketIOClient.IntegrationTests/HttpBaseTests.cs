@@ -1,4 +1,6 @@
-﻿namespace SocketIOClient.IntegrationTests
+﻿using System;
+
+namespace SocketIOClient.IntegrationTests
 {
     public abstract class HttpBaseTests : SocketIOBaseTests
     {
@@ -16,6 +18,7 @@
             var options = CreateOptions();
             options.Reconnection = false;
             options.EIO = EIO;
+            options.ConnectionTimeout = TimeSpan.FromSeconds(2);
             return CreateSocketIO(options);
         }
     }

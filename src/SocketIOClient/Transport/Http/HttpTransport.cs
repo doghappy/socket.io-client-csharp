@@ -140,7 +140,7 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        protected override async Task OpenAsync(Message msg)
+        protected override async Task OpenAsync(IMessage2 msg)
         {
             _httpUri += "&sid=" + msg.Sid;
             _pollingTokenSource = new CancellationTokenSource();

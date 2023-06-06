@@ -18,21 +18,21 @@ namespace SocketIOClient.Transport
         {
             Options = options ?? throw new ArgumentNullException(nameof(options));
             Serializer = serializer;
-            _messageQueue = new ConcurrentQueue<Message>();
+            _messageQueue = new ConcurrentQueue<IMessage2>();
         }
 
         protected const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
 
         DateTime _pingTime;
-        readonly ConcurrentQueue<Message> _messageQueue;
+        readonly ConcurrentQueue<IMessage2> _messageQueue;
         protected TransportOptions Options { get; }
         protected ISerializer Serializer { get; }
 
-        public Action<Message> OnReceived { get; set; }
+        public Action<IMessage2> OnReceived { get; set; }
 
         protected abstract TransportProtocol Protocol { get; }
         protected CancellationTokenSource PingTokenSource { get; private set; }
-        protected Message OpenedMessage { get; private set; }
+        protected IMessage2 OpenedMessage2 { get; private set; }
 
         public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
@@ -55,9 +55,9 @@ namespace SocketIOClient.Transport
 
         public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
 
-        protected virtual async Task OpenAsync(Message msg)
+        protected virtual async Task OpenAsync(IMessage2 msg)
         {
-            OpenedMessage = msg;
+            OpenedMessage2 = msg;
             if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Namespace))
             {
                 return;
@@ -97,11 +97,11 @@ namespace SocketIOClient.Transport
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
+                    await Task.Delay(OpenedMessage2.PingInterval, cancellationToken);
                     try
                     {
-                        var ping = new Message(MessageType.Ping);
-                        using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout))
+                        var ping = Serializer.NewMessage(MessageType.Ping);
+                        using (var cts = new CancellationTokenSource(OpenedMessage2.PingTimeout))
                         {
                             // await SendAsync(ping, cts.Token).ConfigureAwait(false);
                             Debug.WriteLine("Ping");
@@ -159,7 +159,7 @@ namespace SocketIOClient.Transport
                 if (msg.Type == MessageType.Connected)
                 {
                     int ms = 0;
-                    while (OpenedMessage is null)
+                    while (OpenedMessage2 is null)
                     {
                         await Task.Delay(10);
                         ms += 10;
@@ -170,7 +170,7 @@ namespace SocketIOClient.Transport
                         }
                     }
 
-                    msg.Sid = OpenedMessage.Sid;
+                    msg.Sid = OpenedMessage2.Sid;
                     // if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(msg.Namespace)) ||
                     //     msg.Namespace == Namespace)
                     if (msg.Namespace == Namespace)
@@ -202,10 +202,9 @@ namespace SocketIOClient.Transport
                 try
                 {
                     // await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
-                    OnReceived.TryInvoke(new Message(MessageType.Pong)
-                    {
-                        Duration = DateTime.Now - _pingTime
-                    });
+                    var pong = Serializer.NewMessage(MessageType.Pong);
+                    pong.Duration = DateTime.Now - _pingTime;
+                    OnReceived.TryInvoke(pong);
                 }
                 catch (Exception e)
                 {

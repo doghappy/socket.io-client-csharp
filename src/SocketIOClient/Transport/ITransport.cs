@@ -11,7 +11,7 @@ namespace SocketIOClient.Transport
 {
     public interface ITransport : IDisposable
     {
-        Action<Message> OnReceived { get; set; }
+        Action<IMessage2> OnReceived { get; set; }
         Action<Exception> OnError { get; set; }
         string Namespace { get; set; }
         Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);

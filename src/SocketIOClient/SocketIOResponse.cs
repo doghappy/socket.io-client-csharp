@@ -11,7 +11,7 @@ namespace SocketIOClient
 {
     public class SocketIOResponse
     {
-        private readonly Message _msg;
+        private readonly IMessage2 _message2;
 
         public SocketIOResponse(IList<JsonElement> array, SocketIO socket)
         {
@@ -19,26 +19,24 @@ namespace SocketIOClient
             _socketIO = socket;
             PacketId = -1;
         }
-        
-        public SocketIOResponse(Message msg, SocketIO socket)
+
+        public SocketIOResponse(IMessage2 message2, SocketIO socket)
         {
-            _msg = msg;
+            _message2 = message2;
             _socketIO = socket;
             PacketId = -1;
         }
 
         readonly IList<JsonElement> _array;
 
-        public List<byte[]> InComingBytes => _msg.ReceivedBinary;
+        public List<byte[]> InComingBytes => _message2.ReceivedBinary;
 
         private readonly SocketIO _socketIO;
         public int PacketId { get; set; }
 
         public T GetValue<T>(int index = 0)
         {
-            var element = GetValue(index);
-            string json = element.GetRawText();
-            return _socketIO.Serializer.Deserialize<T>(json, InComingBytes);
+            return _socketIO.Serializer.Deserialize<T>(_message2, index);
         }
 
         public JsonElement GetValue(int index = 0) => _array[index];
@@ -47,7 +45,7 @@ namespace SocketIOClient
 
         public override string ToString()
         {
-            return _socketIO.Serializer.MessageToJson(_msg);
+            return _socketIO.Serializer.MessageToJson(_message2);
         }
 
         public async Task CallbackAsync(params object[] data)

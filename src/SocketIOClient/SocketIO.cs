@@ -105,9 +105,11 @@ namespace SocketIOClient
 
         int _packetId;
         Exception _backgroundException;
-        Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
+        Dictionary<int, Action<SocketIOResponse>> _ackActionHandlers;
+        Dictionary<int, Func<SocketIOResponse, Task>> _ackFuncHandlers;
         List<OnAnyHandler> _onAnyHandlers;
-        Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
+        private Dictionary<string, Action<SocketIOResponse>> _eventActionHandlers;
+        private Dictionary<string, Func<SocketIOResponse, Task>> _eventFuncHandlers;
         double _reconnectionDelay;
         bool _exitFromBackground;
 
@@ -148,8 +150,10 @@ namespace SocketIOClient
         private void Initialize()
         {
             _packetId = -1;
-            _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
-            _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
+            _ackActionHandlers = new Dictionary<int, Action<SocketIOResponse>>();
+            _ackFuncHandlers = new Dictionary<int, Func<SocketIOResponse, Task>>();
+            _eventActionHandlers = new Dictionary<string, Action<SocketIOResponse>>();
+            _eventFuncHandlers = new Dictionary<string, Func<SocketIOResponse, Task>>();
             _onAnyHandlers = new List<OnAnyHandler>();
 
             Serializer = new SystemTextJsonSerializer();
@@ -261,11 +265,9 @@ namespace SocketIOClient
                         OnReconnectAttempt.TryInvoke(this, _attempts);
                     try
                     {
-                        using (var cts = new CancellationTokenSource(Options.ConnectionTimeout))
-                        {
-                            await Transport.ConnectAsync(serverUri, cts.Token).ConfigureAwait(false);
-                            break;
-                        }
+                        using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+                        await Transport.ConnectAsync(serverUri, cts.Token).ConfigureAwait(false);
+                        break;
                     }
                     catch (Exception e)
                     {
@@ -418,12 +420,12 @@ namespace SocketIOClient
             OnPing.TryInvoke(this, EventArgs.Empty);
         }
 
-        private void PongHandler(Message msg)
+        private void PongHandler(IMessage2 msg)
         {
             OnPong.TryInvoke(this, msg.Duration);
         }
 
-        private void ConnectedHandler(Message msg)
+        private void ConnectedHandler(IMessage2 msg)
         {
             Id = msg.Sid;
             Connected = true;
@@ -442,62 +444,70 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
         }
 
-        private void EventMessageHandler(Message msg)
+        private void EventMessageHandler(IMessage2 message)
         {
-            var eventName = Serializer.GetEventName(msg);
-            var res = new SocketIOResponse(msg, this)
+            // TODO: run actions in background. eg: Task.Run
+            var res = new SocketIOResponse(message, this)
             {
-                PacketId = msg.Id
+                PacketId = message.Id
             };
             foreach (var item in _onAnyHandlers)
             {
-                item.TryInvoke(eventName, res);
+                item.TryInvoke(message.Event, res);
             }
 
-            if (_eventHandlers.TryGetValue(eventName, out var handler))
+            if (_eventActionHandlers.TryGetValue(message.Event, out var actionHandler))
             {
-                handler.TryInvoke(res);
+                actionHandler.TryInvoke(res);
+            }
+            else if (_eventFuncHandlers.TryGetValue(message.Event, out var funcHandler))
+            {
+                funcHandler.TryInvoke(res);
             }
         }
 
-        private void AckMessageHandler(Message msg)
+        private void AckMessageHandler(IMessage2 message)
         {
-            if (_ackHandlers.ContainsKey(msg.Id))
+            var res = new SocketIOResponse(message, this);
+            if (_ackActionHandlers.ContainsKey(message.Id))
             {
-                var res = new SocketIOResponse(msg, this);
-                _ackHandlers[msg.Id].TryInvoke(res);
-                _ackHandlers.Remove(msg.Id);
+                _ackActionHandlers[message.Id].TryInvoke(res);
+                _ackActionHandlers.Remove(message.Id);
+            }
+            else if (_ackFuncHandlers.ContainsKey(message.Id))
+            {
+                _ackFuncHandlers[message.Id].TryInvoke(res);
+                _ackFuncHandlers.Remove(message.Id);
             }
         }
 
-        private void ErrorMessageHandler(Message msg)
+        private void ErrorMessageHandler(IMessage2 msg)
         {
             _connCts.Dispose();
             OnError.TryInvoke(this, msg.Error);
         }
 
-        private void BinaryMessageHandler(Message msg)
+        private void BinaryMessageHandler(IMessage2 message)
         {
-            var eventName = Serializer.GetEventName(msg);
-            var response = new SocketIOResponse(msg, this)
+            var response = new SocketIOResponse(message, this)
             {
-                PacketId = msg.Id,
+                PacketId = message.Id,
             };
             foreach (var item in _onAnyHandlers)
             {
                 // TODO: run in background to make sure user logic could not block socket.io's logic
-                item.TryInvoke(eventName, response);
+                item.TryInvoke(message.Event, response);
             }
 
-            if (_eventHandlers.TryGetValue(eventName, out var handler))
+            if (_eventActionHandlers.TryGetValue(message.Event, out var handler))
             {
                 handler.TryInvoke(response);
             }
         }
 
-        private void BinaryAckMessageHandler(Message msg)
+        private void BinaryAckMessageHandler(IMessage2 msg)
         {
-            if (_ackHandlers.TryGetValue(msg.Id, out var handler))
+            if (_ackActionHandlers.TryGetValue(msg.Id, out var handler))
             {
                 var response = new SocketIOResponse(msg, this)
                 {
@@ -516,7 +526,7 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
-        private void OnMessageReceived(Message msg)
+        private void OnMessageReceived(IMessage2 msg)
         {
             try
             {
@@ -587,12 +597,22 @@ namespace SocketIOClient
         /// <param name="callback"></param>
         public void On(string eventName, Action<SocketIOResponse> callback)
         {
-            if (_eventHandlers.ContainsKey(eventName))
+            if (_eventActionHandlers.ContainsKey(eventName))
             {
-                _eventHandlers.Remove(eventName);
+                _eventActionHandlers.Remove(eventName);
             }
 
-            _eventHandlers.Add(eventName, callback);
+            _eventActionHandlers.Add(eventName, callback);
+        }
+
+        public void On(string eventName, Func<SocketIOResponse, Task> callback)
+        {
+            if (_eventFuncHandlers.ContainsKey(eventName))
+            {
+                _eventFuncHandlers.Remove(eventName);
+            }
+
+            _eventFuncHandlers.Add(eventName, callback);
         }
 
 
@@ -602,9 +622,9 @@ namespace SocketIOClient
         /// <param name="eventName"></param>
         public void Off(string eventName)
         {
-            if (_eventHandlers.ContainsKey(eventName))
+            if (_eventActionHandlers.ContainsKey(eventName))
             {
-                _eventHandlers.Remove(eventName);
+                _eventActionHandlers.Remove(eventName);
             }
         }
 
@@ -636,41 +656,7 @@ namespace SocketIOClient
 
         internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
         {
-            // IMessage msg;
-            // if (data != null && data.Length > 0)
-            // {
-            //     var result = Serializer.Serialize(data);
-            //     if (result.Bytes.Count > 0)
-            //     {
-            //         msg = new ServerBinaryAckMessage
-            //         {
-            //             Id = packetId,
-            //             Namespace = Namespace,
-            //             Json = result.Json
-            //         };
-            //         msg.OutgoingBytes = new List<byte[]>(result.Bytes);
-            //     }
-            //     else
-            //     {
-            //         msg = new ServerAckMessage
-            //         {
-            //             Namespace = Namespace,
-            //             Id = packetId,
-            //             Json = result.Json
-            //         };
-            //     }
-            // }
-            // else
-            // {
-            //     msg = new ServerAckMessage
-            //     {
-            //         Namespace = Namespace,
-            //         Id = packetId
-            //     };
-            // }
-            //
-            // await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            var serializedItems = Serializer.Serialize(data);
+            var serializedItems = Serializer.Serialize(packetId, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
@@ -687,40 +673,6 @@ namespace SocketIOClient
 
         public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            // if (data != null && data.Length > 0)
-            // {
-            //     var result = Serializer.Serialize(data);
-            //     if (result.Bytes.Count > 0)
-            //     {
-            //         var msg = new BinaryMessage
-            //         {
-            //             Namespace = Namespace,
-            //             OutgoingBytes = new List<byte[]>(result.Bytes),
-            //             Event = eventName,
-            //             Json = result.Json
-            //         };
-            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            //     }
-            //     else
-            //     {
-            //         var msg = new EventMessage
-            //         {
-            //             Namespace = Namespace,
-            //             Event = eventName,
-            //             Json = result.Json
-            //         };
-            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            //     }
-            // }
-            // else
-            // {
-            //     var msg = new EventMessage
-            //     {
-            //         Namespace = Namespace,
-            //         Event = eventName
-            //     };
-            //     await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            // }
             var serializedItems = Serializer.Serialize(eventName, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
@@ -737,52 +689,36 @@ namespace SocketIOClient
             await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
         }
 
-        public async Task EmitAsync(string eventName,
+        public async Task EmitAsync(string eventName, Func<SocketIOResponse, Task> ack, params object[] data)
+        {
+            await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
+        }
+
+        private async Task EmitForAck(string eventName, int packetId, CancellationToken cancellationToken,
+            params object[] data)
+        {
+            var serializedItems = Serializer.Serialize(eventName, packetId, Namespace, data);
+            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
+        }
+
+        public async Task EmitAsync(
+            string eventName,
             CancellationToken cancellationToken,
             Action<SocketIOResponse> ack,
             params object[] data)
         {
-            _ackHandlers.Add(++_packetId, ack);
-            // if (data != null && data.Length > 0)
-            // {
-            //     var result = Serializer.Serialize(data);
-            //     if (result.Bytes.Count > 0)
-            //     {
-            //         var msg = new ClientBinaryAckMessage
-            //         {
-            //             Event = eventName,
-            //             Namespace = Namespace,
-            //             Json = result.Json,
-            //             Id = _packetId,
-            //             OutgoingBytes = new List<byte[]>(result.Bytes)
-            //         };
-            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            //     }
-            //     else
-            //     {
-            //         var msg = new ClientAckMessage
-            //         {
-            //             Event = eventName,
-            //             Namespace = Namespace,
-            //             Id = _packetId,
-            //             Json = result.Json
-            //         };
-            //         await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            //     }
-            // }
-            // else
-            // {
-            //     var msg = new ClientAckMessage
-            //     {
-            //         Event = eventName,
-            //         Namespace = Namespace,
-            //         Id = _packetId
-            //     };
-            //     await Transport.SendAsync(msg, cancellationToken).ConfigureAwait(false);
-            // }
+            _ackActionHandlers.Add(++_packetId, ack);
+            await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
+        }
 
-            var serializedItems = Serializer.Serialize(data);
-            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
+        public async Task EmitAsync(
+            string eventName,
+            CancellationToken cancellationToken,
+            Func<SocketIOResponse, Task> ack,
+            params object[] data)
+        {
+            _ackFuncHandlers.Add(++_packetId, ack);
+            await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
         }
 
 
@@ -839,9 +775,9 @@ namespace SocketIOClient
         {
             _connCts.TryDispose();
             Transport.TryDispose();
-            _ackHandlers.Clear();
+            _ackActionHandlers.Clear();
             _onAnyHandlers.Clear();
-            _eventHandlers.Clear();
+            _eventActionHandlers.Clear();
         }
     }
 }

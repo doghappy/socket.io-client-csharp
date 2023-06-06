@@ -55,6 +55,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
+        [Timeout(2000)]
         public async Task Properties_Value_Should_Be_Changed_After_Connected()
         {
             using var io = CreateSocketIO();
@@ -91,7 +92,7 @@ namespace SocketIOClient.IntegrationTests
 
         [TestMethod]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_emit_out_and_emit_back(
+        public async Task Should_emit_1_parameter_and_emit_back(
             int caseId,
             string eventName,
             object data,
@@ -124,18 +125,18 @@ namespace SocketIOClient.IntegrationTests
                 .Select((x, caseId) => new[]
                 {
                     caseId,
-                    x.EventName, 
-                    x.Data, 
+                    x.EventName,
+                    x.Data,
                     x.ExpectedJson,
                     x.ExpectedBytes
                 });
         }
 
         private static IEnumerable<(
-                string EventName,
-                object Data, 
-                string ExpectedJson, 
-                IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
+            string EventName,
+            object Data,
+            string ExpectedJson,
+            IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
         {
             return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]>? ExpectedBytes)[]
             {
@@ -177,13 +178,17 @@ namespace SocketIOClient.IntegrationTests
         [DataRow("2:emit", -1.234567890, 1.234567890, "[-1.23456789,1.23456789]")]
         [DataRow("2:emit", "hello", "世界", "[\"hello\",\"世界\"]")]
         [DynamicData(nameof(Emit2ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_Be_Able_To_Emit_2_Parameters_And_Emit_Back(string eventName,
+        public async Task Should_emit_2_parameters_and_emit_back(string eventName,
             object data1,
             object data2,
             string excepted)
         {
             using var io = CreateSocketIO();
-            string json = null;
+            io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
+            });
+            string? json = null;
             io.On(eventName, res => json = res.ToString());
 
             await io.ConnectAsync();
@@ -231,16 +236,16 @@ namespace SocketIOClient.IntegrationTests
         #region Callback
 
         [TestMethod]
-        public async Task Callback_Should_Be_Work()
+        public async Task Callback_should_be_work()
         {
-            string guid = Guid.NewGuid().ToString();
-            string resText = null;
+            var guid = Guid.NewGuid().ToString();
+            string? resText = null;
             using var io = CreateSocketIO();
             io.On("callback_step2", async res => await res.CallbackAsync(guid));
             io.On("callback_step3", res => resText = res.GetValue<string>());
 
             await io.ConnectAsync();
-            await io.EmitAsync("callback_step1", async res => { await res.CallbackAsync(guid); });
+            await io.EmitAsync("callback_step1", async res => await res.CallbackAsync(guid));
             await Task.Delay(100);
 
             resText.Should().Be(guid + "-server");
@@ -272,10 +277,10 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
-        public async Task Should_Connect_Failed_If_Token_Is_Incorrect()
+        public async Task Should_trigger_OnError_if_token_is_incorrect()
         {
-            int times = 0;
-            string error = null;
+            var times = 0;
+            string? error = null;
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
                 AutoUpgrade = false,
@@ -288,7 +293,7 @@ namespace SocketIOClient.IntegrationTests
             });
             io.OnConnected += (_, _) => times++;
             io.OnError += (_, e) => error = e;
-                
+
             await io.ConnectAsync();
 
             times.Should().Be(0);
@@ -470,7 +475,7 @@ namespace SocketIOClient.IntegrationTests
         [DataRow("user-agent", "dotnet-socketio[client]/socket")]
         public async Task ExtraHeaders(string key, string value)
         {
-            string actual = null;
+            string? actual = null;
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
@@ -493,10 +498,10 @@ namespace SocketIOClient.IntegrationTests
         #region OnAny OffAny Off
 
         [TestMethod]
-        public async Task OnAny_Should_Be_Work()
+        public async Task OnAny_should_be_triggered()
         {
-            string eventName = null;
-            string text = null;
+            string? eventName = null;
+            string? text = null;
             using var io = CreateSocketIO();
             io.OnAny((e, r) =>
             {
