@@ -17,5 +17,11 @@ namespace SocketIO.Serializer.Core
         IMessage2 Deserialize(EngineIO eio, string text);
         string MessageToJson(IMessage2 message);
         IMessage2 NewMessage(MessageType type);
+
+        SerializedItem SerializeConnectedMessage(
+            string ns, 
+            EngineIO eio, 
+            string auth,
+            IEnumerable<KeyValuePair<string, string>> queries);
     }
 }

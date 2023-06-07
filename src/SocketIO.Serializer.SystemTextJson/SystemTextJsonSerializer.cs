@@ -60,7 +60,7 @@ namespace SocketIO.Serializer.SystemTextJson
             Array.Copy(data, 0, newData, 1, data.Length);
             return newData;
         }
-        
+
         public List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data)
         {
             return InternalSerialize(eventName, packetId, ns, data);
@@ -123,7 +123,7 @@ namespace SocketIO.Serializer.SystemTextJson
             // builder.Append(json);
             // return NewSerializedItems(builder, converter.Bytes);
         }
-        
+
         private List<SerializedItem> InternalSerialize(string eventName, int? packetId, string ns, object[] data)
         {
             var newData = InsertEventToData(eventName, data);
@@ -209,6 +209,64 @@ namespace SocketIO.Serializer.SystemTextJson
             return new JsonMessage(type);
         }
 
+        #region Serialize ConnectedMessage
+
+        public SerializedItem SerializeConnectedMessage(
+            string ns,
+            EngineIO eio, 
+            string auth,
+            IEnumerable<KeyValuePair<string, string>> queries)
+        {
+            return eio switch
+            {
+                EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
+                EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
+                _ => throw new ArgumentOutOfRangeException(nameof(eio), eio, null)
+            };
+        }
+
+        private static SerializedItem SerializeEio3ConnectedMessage(string ns, IEnumerable<KeyValuePair<string, string>> queries)
+        {
+            var serializedItem = new SerializedItem();
+            if (string.IsNullOrEmpty(ns))
+            {
+                return serializedItem;
+            }
+
+            var builder = new StringBuilder("40");
+            builder.Append(ns);
+            if (queries != null)
+            {
+                var i = -1;
+                foreach (var item in queries)
+                {
+                    i++;
+                    builder.Append(i == 0 ? '?' : '&');
+                    builder.Append(item.Key).Append('=').Append(item.Value);
+                }
+            }
+
+            builder.Append(',');
+            serializedItem.Text = builder.ToString();
+            return serializedItem;
+        }
+        
+        private static SerializedItem SerializeEio4ConnectedMessage(string ns, string auth)
+        {
+            var builder = new StringBuilder("40");
+            if (!string.IsNullOrEmpty(ns))
+            {
+                builder.Append(ns).Append(',');
+            }
+            builder.Append(auth);
+            return new SerializedItem
+            {
+                Text = builder.ToString()
+            };
+        }
+
+        #endregion
+
         #region Read Message
 
         private static void ReadMessage(IMessage2 message, EngineIO eio, string text)
@@ -223,6 +281,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 case MessageType.Pong:
                     break;
                 case MessageType.Connected:
+                    ReadConnectedMessage(message, text, eio);
                     break;
                 case MessageType.Disconnected:
                     break;
@@ -258,6 +317,60 @@ namespace SocketIO.Serializer.SystemTextJson
             message.PingInterval = newMessage.PingInterval;
             message.PingTimeout = newMessage.PingTimeout;
             message.Upgrades = newMessage.Upgrades;
+        }
+
+        private static void ReadConnectedMessage(IMessage2 message, string text, EngineIO eio)
+        {
+            switch (eio)
+            {
+                case EngineIO.V3:
+                    ReadEio3ConnectedMessage(message, text);
+                    break;
+                case EngineIO.V4:
+                    ReadEio4ConnectedMessage(message, text);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(eio), eio, null);
+            }
+        }
+
+        private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
+        {
+            var index = text.IndexOf('{');
+            if (index > 0)
+            {
+                message.Namespace = text.Substring(0, index - 1);
+                text = text.Substring(index);
+            }
+            else
+            {
+                message.Namespace = string.Empty;
+            }
+
+            message.Sid = JsonDocument.Parse(text).RootElement.GetProperty("sid").GetString();
+        }
+
+        private static void ReadEio3ConnectedMessage(IMessage2 message, string text)
+        {
+            if (text.Length < 2) return;
+            var startIndex = text.IndexOf('/');
+            if (startIndex == -1)
+            {
+                return;
+            }
+
+            var endIndex = text.IndexOf('?', startIndex);
+            if (endIndex == -1)
+            {
+                endIndex = text.IndexOf(',', startIndex);
+            }
+
+            if (endIndex == -1)
+            {
+                endIndex = text.Length;
+            }
+
+            message.Namespace = text.Substring(startIndex, endIndex);
         }
 
         private static void ReadEventMessage(IMessage2 message, string text)

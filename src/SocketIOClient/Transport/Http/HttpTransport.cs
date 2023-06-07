@@ -140,12 +140,12 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        protected override async Task OpenAsync(IMessage2 msg)
+        protected override async Task OpenAsync(IMessage2 message)
         {
-            _httpUri += "&sid=" + msg.Sid;
+            _httpUri += "&sid=" + message.Sid;
             _pollingTokenSource = new CancellationTokenSource();
             StartPolling(_pollingTokenSource.Token);
-            await base.OpenAsync(msg);
+            await base.OpenAsync(message);
         }
     }
 }
