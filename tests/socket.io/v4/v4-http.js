@@ -6,7 +6,9 @@ const server = http.createServer();
 const port = 11401;
 
 var io = socket(server, {
-    transports: ["polling"]
+    transports: ["polling"],
+    pingInterval: 5000,
+    pingTimeout: 10000,
 });
 
 io.on('connection', socket => {

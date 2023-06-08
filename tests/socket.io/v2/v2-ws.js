@@ -6,6 +6,8 @@ const server = http.createServer();
 const port = 11200;
 
 var io = socket(server, {
+    pingInterval: 5000,
+    pingTimeout: 10000,
 });
 
 io.on('connection', socket => {

@@ -11,7 +11,9 @@ const port = 11201;
 // app.use('/static', express.static('static'))
 
 var io = socket(server, {
-    transports: ["polling"]
+    transports: ["polling"],
+    pingInterval: 5000,
+    pingTimeout: 10000,
 });
 
 io.on('connection', socket => {

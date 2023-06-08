@@ -67,15 +67,17 @@ namespace SocketIOClient.Transport
                     await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
                     try
                     {
-                        var ping = Serializer.NewMessage(MessageType.Ping);
                         using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout))
                         {
-                            // await SendAsync(ping, cts.Token).ConfigureAwait(false);
                             Debug.WriteLine("Ping");
+                            await SendAsync(new List<SerializedItem>
+                            {
+                                Serializer.SerializePingMessage()
+                            }, cts.Token).ConfigureAwait(false);
                         }
 
                         _pingTime = DateTime.Now;
-                        OnReceived.TryInvoke(ping);
+                        OnReceived.TryInvoke(Serializer.NewMessage(MessageType.Ping));
                     }
                     catch (Exception e)
                     {
@@ -166,7 +168,10 @@ namespace SocketIOClient.Transport
                 _pingTime = DateTime.Now;
                 try
                 {
-                    // await SendAsync(new PongMessage(), CancellationToken.None).ConfigureAwait(false);
+                    await SendAsync(new List<SerializedItem>
+                    {
+                        Serializer.SerializePingMessage()
+                    }, CancellationToken.None).ConfigureAwait(false);
                     var pong = Serializer.NewMessage(MessageType.Pong);
                     pong.Duration = DateTime.Now - _pingTime;
                     OnReceived.TryInvoke(pong);

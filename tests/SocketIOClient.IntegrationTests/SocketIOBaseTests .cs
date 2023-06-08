@@ -29,7 +29,7 @@ namespace SocketIOClient.IntegrationTests
             return new SocketIO(ServerUrl, options);
         }
 
-        protected SocketIO CreateTokenSocketIO(SocketIOOptions options)
+        private SocketIO CreateTokenSocketIO(SocketIOOptions options)
         {
             return new SocketIO(ServerTokenUrl, options);
         }
@@ -312,13 +312,13 @@ namespace SocketIOClient.IntegrationTests
                 return;
             }
 
-            UserDTO? auth = null;
+            UserDto? auth = null;
             var guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EIO,
-                Auth = new UserDTO
+                Auth = new UserDto
                 {
                     Name = "test",
                     Password = guid
@@ -327,17 +327,17 @@ namespace SocketIOClient.IntegrationTests
             });
 
             await io.ConnectAsync();
-            await io.EmitAsync("get_auth", res => auth = res.GetValue<UserDTO>());
+            await io.EmitAsync("get_auth", res => auth = res.GetValue<UserDto>());
             await Task.Delay(100);
 
             auth!.Name.Should().Be("test");
             auth.Password.Should().Be(guid);
         }
 
-        class UserDTO
+        private class UserDto
         {
-            public string Name { get; set; }
-            public string Password { get; set; }
+            public string Name { get; init; } = null!;
+            public string Password { get; init; } = null!;
         }
 
         #endregion
@@ -354,8 +354,8 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_Can_Disconnect_From_Client()
         {
-            int times = 0;
-            string reason = null;
+            var times = 0;
+            string? reason = null;
             using var io = CreateSocketIO();
             io.OnDisconnected += (s, e) =>
             {
@@ -374,8 +374,8 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_Can_Disconnect_From_Server()
         {
-            int times = 0;
-            string reason = null;
+            var times = 0;
+            string? reason = null;
             using var io = CreateSocketIO();
             io.OnDisconnected += (s, e) =>
             {
@@ -555,5 +555,22 @@ namespace SocketIOClient.IntegrationTests
         }
 
         #endregion
+        
+        [TestMethod]
+        [DataRow(4000, 0, 0)]
+        [DataRow(5100, 1, 1)]
+        [DataRow(10100, 2, 2)]
+        public async Task Ping_pong_test(int ms, int expectedPingTimes, int expectedPongTimes)
+        {
+            var pingTimes = 0;
+            var pongTimes = 0;
+            using var io = CreateSocketIO();
+            io.OnPing += (_, _) => pingTimes++;
+            io.OnPong += (_, _) => pongTimes++;
+            await io.ConnectAsync();
+            await Task.Delay(ms);
+            pingTimes.Should().Be(expectedPingTimes);
+            pongTimes.Should().Be(expectedPongTimes);
+        }
     }
 }

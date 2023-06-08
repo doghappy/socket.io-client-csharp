@@ -165,6 +165,14 @@ namespace SocketIO.Serializer.SystemTextJson
             return new JsonMessage(type);
         }
 
+        public SerializedItem SerializePingMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "2"
+            };
+        }
+
         #region Serialize ConnectedMessage
 
         public SerializedItem SerializeConnectedMessage(
@@ -235,6 +243,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 case MessageType.Ping:
                     break;
                 case MessageType.Pong:
+                    // ReadPongMessage(message, text);
                     break;
                 case MessageType.Connected:
                     ReadConnectedMessage(message, text, eio);
@@ -274,6 +283,11 @@ namespace SocketIO.Serializer.SystemTextJson
             message.PingTimeout = newMessage.PingTimeout;
             message.Upgrades = newMessage.Upgrades;
         }
+
+        // private static void ReadPongMessage(IMessage2 message, string text)
+        // {
+        //     
+        // }
 
         private static void ReadConnectedMessage(IMessage2 message, string text, EngineIO eio)
         {

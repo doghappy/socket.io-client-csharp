@@ -20,5 +20,7 @@ namespace SocketIO.Serializer.Core
             EngineIO eio, 
             string auth,
             IEnumerable<KeyValuePair<string, string>> queries);
+        
+        SerializedItem SerializePingMessage();
     }
 }
