@@ -123,8 +123,8 @@ namespace SocketIOClient.Transport.Http
 
                 if (items[0].Type == SerializedMessageType.Text)
                 {
-                    await _pollingHandler.PostAsync(_httpUri, items[0].Text, cancellationToken);
                     Debug.WriteLine($"[Polling⬆] {items[0].Text}");
+                    await _pollingHandler.PostAsync(_httpUri, items[0].Text, cancellationToken);
                 }
 
                 var binary = items.AllBinary();

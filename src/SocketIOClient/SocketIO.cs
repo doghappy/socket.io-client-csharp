@@ -178,7 +178,7 @@ namespace SocketIOClient
             {
                 EIO = Options.EIO,
                 Query = Options.Query,
-                Auth = Options.Auth == null ? string.Empty : Serializer.Serialize(Options.Auth).FirstText(),
+                Auth = Options.Auth == null ? string.Empty : Serializer.Serialize(Options.Auth),
                 ConnectionTimeout = Options.ConnectionTimeout
             };
             if (Options.Transport == TransportProtocol.Polling)
@@ -671,7 +671,7 @@ namespace SocketIOClient
             await EmitAsync(eventName, CancellationToken.None, data).ConfigureAwait(false);
         }
 
-        public async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
+        private async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
             var serializedItems = Serializer.Serialize(eventName, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
@@ -701,7 +701,7 @@ namespace SocketIOClient
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task EmitAsync(
+        private async Task EmitAsync(
             string eventName,
             CancellationToken cancellationToken,
             Action<SocketIOResponse> ack,
@@ -711,7 +711,7 @@ namespace SocketIOClient
             await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
         }
 
-        public async Task EmitAsync(
+        private async Task EmitAsync(
             string eventName,
             CancellationToken cancellationToken,
             Func<SocketIOResponse, Task> ack,

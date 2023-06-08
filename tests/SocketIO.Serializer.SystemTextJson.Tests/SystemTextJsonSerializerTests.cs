@@ -97,7 +97,7 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = new byte[] { 4, 1, 2, 3 }
+                        Binary = new byte[] { 1, 2, 3 }
                     }
                 }),
             (
@@ -119,12 +119,12 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = new byte[] { 4, 1, 2, 3 }
+                        Binary = new byte[] { 1, 2, 3 }
                     },
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = new byte[] { 4, 4, 5, 6 }
+                        Binary = new byte[] { 4, 5, 6 }
                     }
                 }),
             (
@@ -172,7 +172,7 @@ public class SystemTextJsonSerializerTests
         IEnumerable<SerializedItem> expectedItems)
     {
         var serializer = new SystemTextJsonSerializer();
-        var items = serializer.Serialize(eventName, ns, eio, data);
+        var items = serializer.Serialize(eventName, ns, data);
         items.Should().BeEquivalentTo(expectedItems, config => config.WithStrictOrdering());
     }
 }

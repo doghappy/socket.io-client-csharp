@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIO.Serializer.Core;
 using SocketIOClient.Extensions;
-using SocketIOClient.Messages;
 using SocketIO.Core;
 
 namespace SocketIOClient.Transport
@@ -36,22 +35,6 @@ namespace SocketIOClient.Transport
 
         public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
-
-        // public async Task SendAsync(IMessage msg, CancellationToken cancellationToken)
-        // {
-        //     msg.EIO = Options.EIO;
-        //     msg.Protocol = Protocol;
-        //     var payload = new Payload
-        //     {
-        //         Text = msg.Write()
-        //     };
-        //     if (msg.OutgoingBytes != null)
-        //     {
-        //         payload.Bytes = msg.OutgoingBytes;
-        //     }
-        //
-        //     await SendAsync(payload, cancellationToken).ConfigureAwait(false);
-        // }
 
         public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
 

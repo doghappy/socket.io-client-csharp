@@ -30,16 +30,16 @@ namespace SocketIO.Serializer.SystemTextJson
             return options;
         }
 
-        public List<SerializedItem> Serialize(object data)
+        public string Serialize(object data)
         {
-            throw new NotImplementedException();
+            return JsonSerializer.Serialize(data, _options);
         }
 
         private static List<SerializedItem> NewSerializedItems(StringBuilder builder, IEnumerable<byte[]> bytes)
         {
             var result = new List<SerializedItem>
             {
-                new SerializedItem
+                new()
                 {
                     Type = SerializedMessageType.Text,
                     Text = builder.ToString()
@@ -99,29 +99,6 @@ namespace SocketIO.Serializer.SystemTextJson
         public List<SerializedItem> Serialize(string eventName, string ns, object[] data)
         {
             return InternalSerialize(eventName, null, ns, data);
-            // var newData = InsertEventToData(eventName, data);
-            //
-            // var converter = new ByteArrayConverter();
-            // var options = NewOptions(converter);
-            // var json = JsonSerializer.Serialize(newData, options);
-            //
-            // var builder = new StringBuilder();
-            // if (converter.Bytes.Count == 0)
-            // {
-            //     builder.Append("42");
-            // }
-            // else
-            // {
-            //     builder.Append("45").Append(converter.Bytes.Count).Append('-');
-            // }
-            //
-            // if (!string.IsNullOrEmpty(ns))
-            // {
-            //     builder.Append(ns);
-            // }
-            //
-            // builder.Append(json);
-            // return NewSerializedItems(builder, converter.Bytes);
         }
 
         private List<SerializedItem> InternalSerialize(string eventName, int? packetId, string ns, object[] data)
@@ -144,7 +121,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
             if (!string.IsNullOrEmpty(ns))
             {
-                builder.Append(ns);
+                builder.Append(ns).Append(',');
             }
 
             if (packetId is not null)
@@ -160,27 +137,6 @@ namespace SocketIO.Serializer.SystemTextJson
         {
             var item = ((JsonMessage)message).JsonArray[index];
             return item.Deserialize<T>(_options);
-        }
-
-        public object Deserialize(string json, Type type)
-        {
-            return JsonSerializer.Deserialize(json, type, _options);
-        }
-
-        public T Deserialize<T>(string json, IEnumerable<byte[]> bytes)
-        {
-            var converter = new ByteArrayConverter();
-            converter.Bytes.AddRange(bytes);
-            var options = NewOptions(converter);
-            return JsonSerializer.Deserialize<T>(json, options);
-        }
-
-        public object Deserialize(string json, Type type, IEnumerable<byte[]> bytes)
-        {
-            var converter = new ByteArrayConverter();
-            converter.Bytes.AddRange(bytes);
-            var options = NewOptions(converter);
-            return JsonSerializer.Deserialize(json, type, options);
         }
 
         public IMessage2 Deserialize(EngineIO eio, string text)

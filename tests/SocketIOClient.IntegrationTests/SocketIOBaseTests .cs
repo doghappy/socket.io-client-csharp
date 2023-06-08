@@ -305,15 +305,15 @@ namespace SocketIOClient.IntegrationTests
         #region Auth
 
         [TestMethod]
-        public async Task Should_Be_Able_To_Get_Auth()
+        public async Task Should_get_auth()
         {
             if (EIO == EngineIO.V3)
             {
                 return;
             }
 
-            UserDTO auth = null;
-            string guid = Guid.NewGuid().ToString();
+            UserDTO? auth = null;
+            var guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
@@ -322,14 +322,15 @@ namespace SocketIOClient.IntegrationTests
                 {
                     Name = "test",
                     Password = guid
-                }
+                },
+                ConnectionTimeout = TimeSpan.FromSeconds(1)
             });
 
             await io.ConnectAsync();
             await io.EmitAsync("get_auth", res => auth = res.GetValue<UserDTO>());
             await Task.Delay(100);
 
-            auth.Name.Should().Be("test");
+            auth!.Name.Should().Be("test");
             auth.Password.Should().Be(guid);
         }
 
