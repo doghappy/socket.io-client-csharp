@@ -50,7 +50,7 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp[\"test\"]"
+                        Text = "42nsp,[\"test\"]"
                     }
                 }),
             (
@@ -63,7 +63,7 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp[\"test\",true]"
+                        Text = "42nsp,[\"test\",true]"
                     }
                 }),
             (
@@ -76,7 +76,7 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp[\"test\",true,false,123]"
+                        Text = "42nsp,[\"test\",true,false,123]"
                     }
                 }),
             (
@@ -114,7 +114,7 @@ public class SystemTextJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "452-nsp[\"test\",{\"_placeholder\":true,\"num\":0},{\"_placeholder\":true,\"num\":1}]"
+                        Text = "452-nsp,[\"test\",{\"_placeholder\":true,\"num\":0},{\"_placeholder\":true,\"num\":1}]"
                     },
                     new()
                     {

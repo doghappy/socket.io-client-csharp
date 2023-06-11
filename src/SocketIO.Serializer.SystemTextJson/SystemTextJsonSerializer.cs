@@ -172,6 +172,14 @@ namespace SocketIO.Serializer.SystemTextJson
                 Text = "2"
             };
         }
+        
+        public SerializedItem SerializePongMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "3"
+            };
+        }
 
         #region Serialize ConnectedMessage
 

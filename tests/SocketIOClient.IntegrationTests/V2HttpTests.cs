@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIO.Core;
+using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests
 {

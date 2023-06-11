@@ -142,6 +142,29 @@ namespace SocketIOClient.Transport
             return false;
         }
 
+        private async Task HandlePingMessage(IMessage2 message)
+        {
+            if (Options.EIO == EngineIO.V3) return;
+            if (message.Type == MessageType.Ping)
+            {
+                _pingTime = DateTime.Now;
+                try
+                {
+                    await SendAsync(new List<SerializedItem>
+                    {
+                        Serializer.SerializePongMessage()
+                    }, CancellationToken.None).ConfigureAwait(false);
+                    var pong = Serializer.NewMessage(MessageType.Pong);
+                    pong.Duration = DateTime.Now - _pingTime;
+                    OnReceived.TryInvoke(pong);
+                }
+                catch (Exception e)
+                {
+                    OnError.TryInvoke(e);
+                }
+            }
+        }
+
         protected async Task OnTextReceived(string text)
         {
             Debug.WriteLine($"[{Protocol}⬇] {text}");
@@ -163,24 +186,7 @@ namespace SocketIOClient.Transport
 
             OnReceived.TryInvoke(message);
 
-            if (message.Type == MessageType.Ping)
-            {
-                _pingTime = DateTime.Now;
-                try
-                {
-                    await SendAsync(new List<SerializedItem>
-                    {
-                        Serializer.SerializePingMessage()
-                    }, CancellationToken.None).ConfigureAwait(false);
-                    var pong = Serializer.NewMessage(MessageType.Pong);
-                    pong.Duration = DateTime.Now - _pingTime;
-                    OnReceived.TryInvoke(pong);
-                }
-                catch (Exception e)
-                {
-                    OnError.TryInvoke(e);
-                }
-            }
+            await HandlePingMessage(message);
         }
 
         protected void OnBinaryReceived(byte[] bytes)

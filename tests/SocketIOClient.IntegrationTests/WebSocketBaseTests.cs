@@ -2,7 +2,7 @@
 {
     public abstract class WebSocketBaseTests : SocketIOBaseTests
     {
-        protected override SocketIOOptions CreateOptions()
+        protected virtual SocketIOOptions CreateOptions()
         {
             return new SocketIOOptions
             {

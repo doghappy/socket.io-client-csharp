@@ -3,7 +3,7 @@
 const http = require('http');
 const socket = require('socket.io');
 const server = http.createServer();
-const port = 11400;
+const port = process.env.PORT || 11400;
 
 var io = socket(server, {
     // parser: require('socket.io-msgpack-parser'),

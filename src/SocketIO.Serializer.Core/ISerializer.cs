@@ -22,5 +22,6 @@ namespace SocketIO.Serializer.Core
             IEnumerable<KeyValuePair<string, string>> queries);
         
         SerializedItem SerializePingMessage();
+        SerializedItem SerializePongMessage();
     }
 }

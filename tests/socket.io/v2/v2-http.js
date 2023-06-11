@@ -6,7 +6,7 @@ const socket = require('socket.io');
 // const app = express()
 // const server = http.createServer(app);
 const server = http.createServer();
-const port = 11201;
+const port = process.env.PORT || 11201;
 
 // app.use('/static', express.static('static'))
 

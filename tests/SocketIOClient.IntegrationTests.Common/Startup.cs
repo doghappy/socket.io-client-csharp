@@ -16,16 +16,6 @@ namespace SocketIOClient.IntegrationTests.Common
         public static string V4_HTTP_TOKEN { get; private set; }
         public static string V4_NSP_HTTP_TOKEN { get; private set; }
 
-        public static string V3_WS { get; private set; }
-        public static string V3_NSP_WS { get; private set; }
-        public static string V3_WS_TOKEN { get; private set; }
-        public static string V3_NSP_WS_TOKEN { get; private set; }
-
-        public static string V3_HTTP { get; private set; }
-        public static string V3_NSP_HTTP { get; private set; }
-        public static string V3_HTTP_TOKEN { get; private set; }
-        public static string V3_NSP_HTTP_TOKEN { get; private set; }
-
         public static string V2_WS { get; private set; }
         public static string V2_NSP_WS { get; private set; }
         public static string V2_WS_TOKEN { get; private set; }
@@ -59,16 +49,6 @@ namespace SocketIOClient.IntegrationTests.Common
             V4_HTTP_TOKEN = configuration["server:v4:http_token"];
             V4_NSP_HTTP_TOKEN = configuration["server:v4:nsp_http_token"];
 
-            V3_WS = configuration["server:v3:ws"];
-            V3_NSP_WS = configuration["server:v3:nsp_ws"];
-            V3_WS_TOKEN = configuration["server:v3:ws_token"];
-            V3_NSP_WS_TOKEN = configuration["server:v4:nsp_ws_token"];
-
-            V3_HTTP = configuration["server:v3:http"];
-            V3_NSP_HTTP = configuration["server:v3:nsp_ws"];
-            V3_HTTP_TOKEN = configuration["server:v3:ws_token"];
-            V3_NSP_HTTP_TOKEN = configuration["server:v3:nsp_ws_token"];
-
             V2_WS = configuration["server:v2:ws"];
             V2_NSP_WS = configuration["server:v2:nsp_ws"];
             V2_WS_TOKEN = configuration["server:v2:ws_token"];
@@ -78,6 +58,6 @@ namespace SocketIOClient.IntegrationTests.Common
             V2_NSP_HTTP = configuration["server:v2:nsp_ws"];
             V2_HTTP_TOKEN = configuration["server:v2:ws_token"];
             V2_NSP_HTTP_TOKEN = configuration["server:v2:nsp_ws_token"];
-    }
+        }
     }
 }

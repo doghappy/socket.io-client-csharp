@@ -4,7 +4,7 @@ namespace SocketIOClient.IntegrationTests
 {
     public abstract class HttpBaseTests : SocketIOBaseTests
     {
-        protected override SocketIOOptions CreateOptions()
+        protected virtual SocketIOOptions CreateOptions()
         {
             return new SocketIOOptions
             {

@@ -2,6 +2,9 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -21,7 +24,6 @@ namespace SocketIOClient.IntegrationTests
         protected abstract string ServerTokenUrl { get; }
         protected abstract EngineIO EIO { get; }
 
-        protected abstract SocketIOOptions CreateOptions();
         protected abstract SocketIO CreateSocketIO();
 
         protected SocketIO CreateSocketIO(SocketIOOptions options)
@@ -555,7 +557,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         #endregion
-        
+
         [TestMethod]
         [DataRow(4000, 0, 0)]
         [DataRow(5100, 1, 1)]

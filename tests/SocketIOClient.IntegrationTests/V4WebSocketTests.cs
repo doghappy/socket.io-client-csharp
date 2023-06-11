@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System;
 using System.Net.Sockets;
 using SocketIO.Core;
+using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -13,8 +14,8 @@ namespace SocketIOClient.IntegrationTests
     public class V4WebSocketTests : WebSocketBaseTests
     {
         protected override string ServerUrl => Common.Startup.V4_WS;
-        protected override string ServerTokenUrl => Common.Startup.V4_WS_TOKEN;
         protected override EngineIO EIO => EngineIO.V4;
+        protected override string ServerTokenUrl => Common.Startup.V4_WS_TOKEN;
 
         [TestMethod]
         public async Task Should_Be_Work_Even_An_Exception_Thrown_From_Handler()
