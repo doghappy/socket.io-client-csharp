@@ -251,12 +251,12 @@ namespace SocketIO.Serializer.SystemTextJson
                 case MessageType.Ping:
                     break;
                 case MessageType.Pong:
-                    // ReadPongMessage(message, text);
                     break;
                 case MessageType.Connected:
                     ReadConnectedMessage(message, text, eio);
                     break;
                 case MessageType.Disconnected:
+                    ReadDisconnectedMessage(message, text);
                     break;
                 case MessageType.Event:
                     ReadEventMessage(message, text);
@@ -271,6 +271,7 @@ namespace SocketIO.Serializer.SystemTextJson
                     ReadBinaryMessage(message, text);
                     break;
                 case MessageType.BinaryAck:
+                    ReadBinaryAckMessage(message, text);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(message.Type), message.Type, null);
@@ -292,11 +293,6 @@ namespace SocketIO.Serializer.SystemTextJson
             message.Upgrades = newMessage.Upgrades;
         }
 
-        // private static void ReadPongMessage(IMessage2 message, string text)
-        // {
-        //     
-        // }
-
         private static void ReadConnectedMessage(IMessage2 message, string text, EngineIO eio)
         {
             switch (eio)
@@ -310,6 +306,11 @@ namespace SocketIO.Serializer.SystemTextJson
                 default:
                     throw new ArgumentOutOfRangeException(nameof(eio), eio, null);
             }
+        }
+
+        private static void ReadDisconnectedMessage(IMessage2 message, string text)
+        {
+           message.Namespace = text.TrimEnd(',');
         }
 
         private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
@@ -449,6 +450,28 @@ namespace SocketIO.Serializer.SystemTextJson
                 {
                     message.Id = int.Parse(text.Substring(index1 + 1, idLength));
                 }
+            }
+
+            message.ReceivedText = text.Substring(index2);
+        }
+
+        private static void ReadBinaryAckMessage(IMessage2 message, string text)
+        {
+            
+            var index1 = text.IndexOf('-');
+            message.BinaryCount = int.Parse(text.Substring(0, index1));
+
+            var index2 = text.IndexOf('[');
+
+            var index3 = text.LastIndexOf(',', index2);
+            if (index3 > -1)
+            {
+                message.Namespace = text.Substring(index1 + 1, index3 - index1 - 1);
+                message.Id = int.Parse(text.Substring(index3 + 1, index2 - index3 - 1));
+            }
+            else
+            {
+                message.Id = int.Parse(text.Substring(index1 + 1, index2 - index1 - 1));
             }
 
             message.ReceivedText = text.Substring(index2);

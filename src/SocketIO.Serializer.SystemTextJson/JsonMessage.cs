@@ -11,6 +11,7 @@ namespace SocketIO.Serializer.SystemTextJson
         public JsonMessage(MessageType type)
         {
             Type = type;
+            Id = -1;
         }
 
         public MessageType Type { get; }
@@ -72,10 +73,8 @@ namespace SocketIO.Serializer.SystemTextJson
         private void SetEvent(JsonArray jsonArray)
         {
             if (Type != MessageType.Event && Type != MessageType.Binary)
-            {
                 return;
-            }
-            
+
             if (jsonArray.Count < 1)
             {
                 throw new ArgumentException("Cannot get event name from an empty json array");
