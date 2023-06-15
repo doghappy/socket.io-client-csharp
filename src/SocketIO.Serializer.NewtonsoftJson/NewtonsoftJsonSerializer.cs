@@ -2,37 +2,37 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
-namespace SocketIO.Serializer.SystemTextJson
+namespace SocketIO.Serializer.NewtonsoftJson
 {
-    public class SystemTextJsonSerializer : ISerializer
+    public class NewtonsoftJsonSerializer : ISerializer
     {
-        public SystemTextJsonSerializer() : this(new JsonSerializerOptions())
+        public NewtonsoftJsonSerializer() : this(new JsonSerializerSettings())
         {
         }
 
-        public SystemTextJsonSerializer(JsonSerializerOptions options)
+        public NewtonsoftJsonSerializer(JsonSerializerSettings options)
         {
-            _options = options ?? new JsonSerializerOptions();
+            _options = options ?? new JsonSerializerSettings();
         }
 
-        private readonly JsonSerializerOptions _options;
+        private readonly JsonSerializerSettings _options;
 
-        private JsonSerializerOptions NewOptions(JsonConverter converter)
+        private JsonSerializerSettings NewSettings(JsonConverter converter)
         {
-            var options = new JsonSerializerOptions(_options);
+            var options = new JsonSerializerSettings(_options);
             options.Converters.Add(converter);
             return options;
         }
 
         public string Serialize(object data)
         {
-            return JsonSerializer.Serialize(data, _options);
+            return JsonConvert.SerializeObject(data, _options);
         }
 
         private static List<SerializedItem> NewSerializedItems(StringBuilder builder, IEnumerable<byte[]> bytes)
@@ -69,9 +69,9 @@ namespace SocketIO.Serializer.SystemTextJson
         public List<SerializedItem> Serialize(int packetId, string ns, object[] data)
         {
             var converter = new ByteArrayConverter();
-            var options = NewOptions(converter);
+            var options = NewSettings(converter);
             var json = data is { Length: > 0 }
-                ? JsonSerializer.Serialize(data, options)
+                ? JsonConvert.SerializeObject(data, options)
                 : "[]";
 
             var builder = new StringBuilder();
@@ -106,8 +106,8 @@ namespace SocketIO.Serializer.SystemTextJson
             var newData = InsertEventToData(eventName, data);
 
             var converter = new ByteArrayConverter();
-            var options = NewOptions(converter);
-            var json = JsonSerializer.Serialize(newData, options);
+            var options = NewSettings(converter);
+            var json = JsonConvert.SerializeObject(newData, options);
 
             var builder = new StringBuilder();
             if (converter.Bytes.Count == 0)
@@ -133,7 +133,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        private (JsonNode jsonNode, JsonSerializerOptions options) GetSerializationData(IMessage2 message, int index)
+        private (JToken jsonNode, JsonSerializer serializer) GetSerializationData(IMessage2 message, int index)
         {
             var jsonMessage = (JsonMessage)message;
             var item = jsonMessage.JsonArray[index];
@@ -143,20 +143,20 @@ namespace SocketIO.Serializer.SystemTextJson
                 converter.Bytes.AddRange(jsonMessage.ReceivedBinary);
             }
 
-            var options = NewOptions(converter);
-            return (item, options);
+            var options = NewSettings(converter);
+            return (item, JsonSerializer.Create(options));
         }
 
         public T Deserialize<T>(IMessage2 message, int index)
         {
-            var (jsonNode, options) = GetSerializationData(message, index);
-            return jsonNode.Deserialize<T>(options);
+            var (jsonNode, serializer) = GetSerializationData(message, index);
+            return jsonNode.ToObject<T>(serializer);
         }
 
         public object Deserialize(IMessage2 message, int index, Type returnType)
         {
-            var (jsonNode, options) = GetSerializationData(message, index);
-            return jsonNode.Deserialize(returnType, options);
+            var (jsonNode, serializer) = GetSerializationData(message, index);
+            return jsonNode.ToObject(returnType, serializer);
         }
 
         public IMessage2 Deserialize(EngineIO eio, string text)
@@ -177,7 +177,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         public string MessageToJson(IMessage2 message)
         {
-            return ((JsonMessage)message).JsonArray.ToJsonString(_options);
+            return ((JsonMessage)message).JsonArray.ToString(_options.Formatting);
         }
 
         public IMessage2 NewMessage(MessageType type)
@@ -304,10 +304,12 @@ namespace SocketIO.Serializer.SystemTextJson
         {
             // TODO: Should deserializing to existing object
             // But haven't support yet. https://github.com/dotnet/runtime/issues/78556
-            var newMessage = JsonSerializer.Deserialize<JsonMessage>(text, new JsonSerializerOptions
+            var newMessage = JsonConvert.DeserializeObject<JsonMessage>(text, new JsonSerializerSettings
             {
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy(),
+                }
             });
             message.Sid = newMessage.Sid;
             message.PingInterval = newMessage.PingInterval;
@@ -348,7 +350,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 message.Namespace = string.Empty;
             }
 
-            message.Sid = JsonDocument.Parse(text).RootElement.GetProperty("sid").GetString();
+            message.Sid = JObject.Parse(text).Value<string>("sid");
         }
 
         private static void ReadEio3ConnectedMessage(IMessage2 message, string text)
@@ -431,19 +433,8 @@ namespace SocketIO.Serializer.SystemTextJson
                     text = text.Substring(index);
                 }
 
-                var jsonNode = JsonNode.Parse(text);
-                if (jsonNode is null)
-                {
-                    throw new InvalidOperationException($"Get a null while parse '{text}' to JsonNode");
-                }
-
-                var jsonObject = jsonNode.AsObject();
-                if (jsonObject is null)
-                {
-                    throw new InvalidCastException("Cannot cast JsonNode to JsonObject");
-                }
-
-                message.Error = jsonObject["message"]?.GetValue<string>();
+                var jsonObject = JObject.Parse(text);
+                message.Error = jsonObject.Value<string>("message");
             }
         }
 

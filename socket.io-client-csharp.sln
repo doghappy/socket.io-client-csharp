@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.SystemT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Core", "src\SocketIO.Core\SocketIO.Core.csproj", "{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.NewtonsoftJson", "src\SocketIO.Serializer.NewtonsoftJson\SocketIO.Serializer.NewtonsoftJson.csproj", "{30A74619-DB12-47B7-8CA5-F9593A53ECCA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -105,5 +111,6 @@ Global
 		{6237820C-D794-43E7-B0CE-F4EFA13004E9} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
 		{9C5B4812-4C20-448B-B01B-C8C0A9117B1E} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{30A74619-DB12-47B7-8CA5-F9593A53ECCA} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
 	EndGlobalSection
 EndGlobal
