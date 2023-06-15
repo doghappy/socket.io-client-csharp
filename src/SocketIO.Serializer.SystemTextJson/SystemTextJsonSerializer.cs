@@ -18,7 +18,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         public SystemTextJsonSerializer(JsonSerializerOptions options)
         {
-            _options = options;
+            _options = options ?? new JsonSerializerOptions();
         }
 
         private readonly JsonSerializerOptions _options;
@@ -133,10 +133,30 @@ namespace SocketIO.Serializer.SystemTextJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
+        private (JsonNode jsonNode, JsonSerializerOptions options) GetSerializationData(IMessage2 message, int index)
+        {
+            var jsonMessage = (JsonMessage)message;
+            var item = jsonMessage.JsonArray[index];
+            var converter = new ByteArrayConverter();
+            if (jsonMessage.ReceivedBinary is not null)
+            {
+                converter.Bytes.AddRange(jsonMessage.ReceivedBinary);
+            }
+
+            var options = NewOptions(converter);
+            return (item, options);
+        }
+
         public T Deserialize<T>(IMessage2 message, int index)
         {
-            var item = ((JsonMessage)message).JsonArray[index];
-            return item.Deserialize<T>(_options);
+            var (jsonNode, options) = GetSerializationData(message, index);
+            return jsonNode.Deserialize<T>(options);
+        }
+
+        public object Deserialize(IMessage2 message, int index, Type returnType)
+        {
+            var (jsonNode, options) = GetSerializationData(message, index);
+            return jsonNode.Deserialize(returnType, options);
         }
 
         public IMessage2 Deserialize(EngineIO eio, string text)
@@ -172,7 +192,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 Text = "2"
             };
         }
-        
+
         public SerializedItem SerializePongMessage()
         {
             return new SerializedItem
@@ -185,7 +205,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         public SerializedItem SerializeConnectedMessage(
             string ns,
-            EngineIO eio, 
+            EngineIO eio,
             string auth,
             IEnumerable<KeyValuePair<string, string>> queries)
         {
@@ -197,7 +217,8 @@ namespace SocketIO.Serializer.SystemTextJson
             };
         }
 
-        private static SerializedItem SerializeEio3ConnectedMessage(string ns, IEnumerable<KeyValuePair<string, string>> queries)
+        private static SerializedItem SerializeEio3ConnectedMessage(string ns,
+            IEnumerable<KeyValuePair<string, string>> queries)
         {
             var serializedItem = new SerializedItem();
             if (string.IsNullOrEmpty(ns))
@@ -222,7 +243,7 @@ namespace SocketIO.Serializer.SystemTextJson
             serializedItem.Text = builder.ToString();
             return serializedItem;
         }
-        
+
         private static SerializedItem SerializeEio4ConnectedMessage(string ns, string auth)
         {
             var builder = new StringBuilder("40");
@@ -230,6 +251,7 @@ namespace SocketIO.Serializer.SystemTextJson
             {
                 builder.Append(ns).Append(',');
             }
+
             builder.Append(auth);
             return new SerializedItem
             {
@@ -310,7 +332,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         private static void ReadDisconnectedMessage(IMessage2 message, string text)
         {
-           message.Namespace = text.TrimEnd(',');
+            message.Namespace = text.TrimEnd(',');
         }
 
         private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
@@ -457,7 +479,6 @@ namespace SocketIO.Serializer.SystemTextJson
 
         private static void ReadBinaryAckMessage(IMessage2 message, string text)
         {
-            
             var index1 = text.IndexOf('-');
             message.BinaryCount = int.Parse(text.Substring(0, index1));
 
