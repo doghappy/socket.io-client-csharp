@@ -1,15 +1,15 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
     /// <summary>
     /// The server calls the client's callback
     /// </summary>
-    public class ClientAckMessage : IJsonMessage
+    public class ClientAckMessage<T> : IJsonMessage<T>
     {
         public MessageType Type => MessageType.AckMessage;
 
@@ -17,7 +17,6 @@ namespace SocketIOClient.Messages
 
         public string Event { get; set; }
 
-        public List<JsonElement> JsonElements { get; set; }
 
         public string Json { get; set; }
 
@@ -32,6 +31,9 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get; set; }
+
+        public List<T> JsonElements { get; set; }
 
         public void Read(string msg)
         {
@@ -48,7 +50,7 @@ namespace SocketIOClient.Messages
                 Id = int.Parse(msg.Substring(0, index));
             }
             msg = msg.Substring(index);
-            JsonElements = JsonDocument.Parse(msg).RootElement.EnumerateArray().ToList();
+            JsonElements = Serializer.GetListOfElementsFromRoot<T>(msg);
         }
 
         public string Write()

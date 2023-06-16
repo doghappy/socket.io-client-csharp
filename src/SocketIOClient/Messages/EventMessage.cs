@@ -1,11 +1,11 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
-    public class EventMessage : IJsonMessage
+    public class EventMessage<T> : IJsonMessage<T>
     {
         public MessageType Type => MessageType.EventMessage;
 
@@ -15,7 +15,7 @@ namespace SocketIOClient.Messages
 
         public int Id { get; set; }
 
-        public List<JsonElement> JsonElements { get; set; }
+        public List<T> JsonElements { get; set; }
 
         public string Json { get; set; }
 
@@ -28,6 +28,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {
@@ -57,21 +58,9 @@ namespace SocketIOClient.Messages
             //    Namespace = msg.Substring(0, index - 1);
             //    msg = msg.Substring(index);
             //}
-            var array = JsonDocument.Parse(msg).RootElement.EnumerateArray();
-            int i = -1;
-            foreach (var item in array)
-            {
-                i++;
-                if (i == 0)
-                {
-                    Event = item.GetString();
-                    JsonElements = new List<JsonElement>();
-                }
-                else
-                {
-                    JsonElements.Add(item);
-                }
-            }
+            var array = Serializer.GetListOfElementsFromRoot<T>(msg);
+            Event = Serializer.GetString(array[0]);
+            JsonElements = array.GetRange(1, array.Count - 1);
         }
 
         public string Write()

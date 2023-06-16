@@ -1,4 +1,5 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace SocketIOClient.Messages
     /// <summary>
     /// The client calls the server's callback
     /// </summary>
-    public class ServerAckMessage : IMessage
+    public class ServerAckMessage<T> : IMessage
     {
         public MessageType Type => MessageType.AckMessage;
 
@@ -26,6 +27,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {

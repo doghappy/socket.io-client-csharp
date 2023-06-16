@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Text.Json;
 using System.Collections.Generic;
 using SocketIOClient.Transport;
+using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.Messages
 {
-    public class OpenedMessage : IMessage
+    public class OpenedMessage<T> : IMessage
     {
         public MessageType Type => MessageType.Opened;
 
@@ -28,39 +28,30 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
-        private int GetInt32FromJsonElement(JsonElement element, string msg, string name)
-        {
-            var p = element.GetProperty(name);
-            int val;
-            switch (p.ValueKind)
-            {
-                case JsonValueKind.String:
-                    val = int.Parse(p.GetString());
-                    break;
-                case JsonValueKind.Number:
-                    val = p.GetInt32();
-                    break;
-                default:
-                    throw new ArgumentException($"Invalid message: '{msg}'");
-            }
-            return val;
-        }
+
 
         public void Read(string msg)
         {
-            var doc = JsonDocument.Parse(msg);
-            var root = doc.RootElement;
-            Sid = root.GetProperty("sid").GetString();
+            //var doc = JsonDocument.Parse(msg);
+            //var root = doc.RootElement;
+            var root = Serializer.GetRootElement<T>(msg);
+            //Sid = root.GetProperty("sid").GetString();
+            Sid = Serializer.GetString(Serializer.GetProperty<T>(root, "sid"));
 
-            PingInterval = GetInt32FromJsonElement(root, msg, "pingInterval");
-            PingTimeout = GetInt32FromJsonElement(root, msg, "pingTimeout");
+            //PingInterval = GetInt32FromJsonElement(root, msg, "pingInterval");
+            PingInterval = Serializer.GetInt32FromJsonElement(root, msg, "pingInterval");
+            //PingTimeout = GetInt32FromJsonElement(root, msg, "pingTimeout");
+            PingTimeout = Serializer.GetInt32FromJsonElement(root, msg, "pingTimeout");
 
             Upgrades = new List<string>();
-            var upgrades = root.GetProperty("upgrades").EnumerateArray();
+            //var upgrades = root.GetProperty("upgrades").EnumerateArray();
+            var upgrades = Serializer.GetListOfElements<T>(Serializer.GetProperty<T>(root, "upgrades"));
             foreach (var item in upgrades)
             {
-                Upgrades.Add(item.GetString());
+                //Upgrades.Add(item.GetString());
+                Upgrades.Add(Serializer.GetString(item));
             }
         }
 

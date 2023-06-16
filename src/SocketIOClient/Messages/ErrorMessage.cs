@@ -1,11 +1,12 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+
 
 namespace SocketIOClient.Messages
 {
-    public class ErrorMessage : IMessage
+    public class ErrorMessage<T> : IMessage
     {
         public MessageType Type => MessageType.ErrorMessage;
 
@@ -22,6 +23,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public void Read(string msg)
         {
@@ -37,8 +39,10 @@ namespace SocketIOClient.Messages
                     Namespace = msg.Substring(0, index - 1);
                     msg = msg.Substring(index);
                 }
-                var doc = JsonDocument.Parse(msg);
-                Message = doc.RootElement.GetProperty("message").GetString();
+                //var doc = JsonDocument.Parse(msg);
+                var doc = Serializer.GetRootElement<T>(msg);
+                //Message = doc.RootElement.GetProperty("message").GetString();
+                Message = Serializer.GetString<T>(Serializer.GetProperty<T>(doc, "message"));
             }
         }
 

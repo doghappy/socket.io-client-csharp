@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
-    public interface IJsonMessage : IMessage
+    public interface IJsonMessage<T> : IMessage
     {
-        List<JsonElement> JsonElements { get; }
+        List<T> JsonElements { get; }
     }
 }

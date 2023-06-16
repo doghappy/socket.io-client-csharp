@@ -2,11 +2,11 @@
 using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
+using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.Messages
 {
-    public class ConnectedMessage : IMessage
+    public class ConnectedMessage<T> : IMessage
     {
         public MessageType Type => MessageType.Connected;
 
@@ -26,6 +26,7 @@ namespace SocketIOClient.Messages
 
         public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
         public string AuthJsonStr { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {
@@ -60,7 +61,8 @@ namespace SocketIOClient.Messages
             {
                 Namespace = string.Empty;
             }
-            Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
+            //Sid = JsonDocument.Parse(msg).RootElement.GetProperty("sid").GetString();
+            Sid = Serializer.GetString<T>(Serializer.GetProperty<T>(Serializer.GetRootElement<T>(msg), "sid"));
         }
 
         private string Eio4Write()

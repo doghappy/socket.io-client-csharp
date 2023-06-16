@@ -5,13 +5,14 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Extensions;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 
 namespace SocketIOClient.Transport.Http
 {
-    public class HttpTransport : BaseTransport
+    public class HttpTransport<T> : BaseTransport<T>
     {
-        public HttpTransport(TransportOptions options, IHttpPollingHandler pollingHandler) : base(options)
+        public HttpTransport(TransportOptions options, IHttpPollingHandler pollingHandler,IJsonSerializer Serializer) : base(options,Serializer)
         {
             _pollingHandler = pollingHandler ?? throw new ArgumentNullException(nameof(pollingHandler));
             _pollingHandler.OnTextReceived = OnTextReceived;
@@ -134,7 +135,7 @@ namespace SocketIOClient.Transport.Http
             }
         }
 
-        protected override async Task OpenAsync(OpenedMessage msg)
+        protected override async Task OpenAsync(OpenedMessage<T> msg)
         {
             _httpUri += "&sid=" + msg.Sid;
             _pollingTokenSource = new CancellationTokenSource();

@@ -11,6 +11,7 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using SocketIOClient.UriConverters;
+using System.Text.Json;
 
 #if DEBUG
 using System.Diagnostics;
@@ -19,9 +20,13 @@ using System.Diagnostics;
 namespace SocketIOClient
 {
     /// <summary>
-    /// socket.io client class
+    /// socket.io client class with generic type, currently 2 supported
+    /// <para><c>JsonElement</c> from <c>System.Text.Json </c></para>
+    /// OR
+    /// <para><c>JToken</c> from <c>Newtonsoft.Json.Linq</c></para>
     /// </summary>
-    public class SocketIO : IDisposable
+
+    public class SocketIO<T> : IDisposable
     {
         /// <summary>
         /// Create SocketIO object with default options
@@ -32,10 +37,28 @@ namespace SocketIOClient
         }
 
         /// <summary>
+        /// Create SocketIO object with default options and JSON serializer
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="serializer"></param>
+        public SocketIO(string uri, IJsonSerializer serializer) : this(new Uri(uri), serializer)
+        {
+        }
+
+        /// <summary>
         /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
         public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
+        {
+        }
+
+        /// <summary>
+        /// Create SocketIO object with options and JSON Serializer
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="uri"></param>
+        public SocketIO(Uri uri, IJsonSerializer serializer) : this(uri, new SocketIOOptions(), serializer)
         {
         }
 
@@ -49,6 +72,16 @@ namespace SocketIOClient
         }
 
         /// <summary>
+        /// Create SocketIO object with options and JSON serializer
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        /// <param name="serializer"></param>
+        public SocketIO(string uri, SocketIOOptions options, IJsonSerializer serializer) : this(new Uri(uri), options, serializer)
+        {
+        }
+
+        /// <summary>
         /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
@@ -57,12 +90,41 @@ namespace SocketIOClient
         {
             ServerUri = uri ?? throw new ArgumentNullException("uri");
             Options = options ?? throw new ArgumentNullException("options");
-            Initialize();
+            Initialize(new SystemTextJsonSerializer());
         }
 
+        /// <summary>
+        /// Create SocketIO object with options and JSON Serializer
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        /// <param name="serializer"></param>
+        public SocketIO(Uri uri, SocketIOOptions options, IJsonSerializer serializer)
+        {
+            if (!IsValidType(typeof(T)))
+            {
+                throw new ArgumentException($"Invalid type '{typeof(T)}' for SocketIO<T> valid options are JToken from Newtonsoft.Json.Linq and JsonElement from System.Text.Json");
+            }
+            ServerUri = uri ?? throw new ArgumentNullException("uri");
+            Options = options ?? throw new ArgumentNullException("options");
+            if (serializer == null) throw new ArgumentNullException("options");
+            Initialize(serializer);
+        }
+        private bool IsValidType(Type type)
+        {
+            switch (type.Name.ToLower())
+            {
+                case "jtoken":
+                case "jsonelement":
+                    return true;
+                default:
+                    return false;
+            }
+
+        }
         Uri _serverUri;
 
-        private Uri ServerUri
+        public Uri ServerUri
         {
             get => _serverUri;
             set
@@ -94,7 +156,7 @@ namespace SocketIOClient
 
         public SocketIOOptions Options { get; }
 
-        public IJsonSerializer JsonSerializer { get; set; }
+        public IJsonSerializer JsonSerializer { get; private set; }
         public ITransport Transport { get; set; }
         public IHttpClient HttpClient { get; set; }
 
@@ -106,9 +168,9 @@ namespace SocketIOClient
 
         int _packetId;
         Exception _backgroundException;
-        Dictionary<int, Action<SocketIOResponse>> _ackHandlers;
-        List<OnAnyHandler> _onAnyHandlers;
-        Dictionary<string, Action<SocketIOResponse>> _eventHandlers;
+        Dictionary<int, Action<SocketIOResponse<T>>> _ackHandlers;
+        List<OnAnyHandler<T>> _onAnyHandlers;
+        Dictionary<string, Action<SocketIOResponse<T>>> _eventHandlers;
         double _reconnectionDelay;
         bool _exitFromBackground;
 
@@ -146,14 +208,15 @@ namespace SocketIOClient
 
         #endregion
 
-        private void Initialize()
+        private void Initialize(IJsonSerializer serializer)
         {
             _packetId = -1;
-            _ackHandlers = new Dictionary<int, Action<SocketIOResponse>>();
-            _eventHandlers = new Dictionary<string, Action<SocketIOResponse>>();
-            _onAnyHandlers = new List<OnAnyHandler>();
+            _ackHandlers = new Dictionary<int, Action<SocketIOResponse<T>>>();
+            _eventHandlers = new Dictionary<string, Action<SocketIOResponse<T>>>();
+            _onAnyHandlers = new List<OnAnyHandler<T>>();
 
-            JsonSerializer = new SystemTextJsonSerializer();
+            //JsonSerializer = new SystemTextJsonSerializer();
+            JsonSerializer = serializer;
 
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
@@ -181,7 +244,7 @@ namespace SocketIOClient
             if (Options.Transport == TransportProtocol.Polling)
             {
                 var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, HttpClient);
-                Transport = new HttpTransport(transportOptions, handler);
+                Transport = new HttpTransport<T>(transportOptions, handler, JsonSerializer);
             }
             else
             {
@@ -193,7 +256,7 @@ namespace SocketIOClient
                 }
 
                 _resources.Add(ws);
-                Transport = new WebSocketTransport(transportOptions, ws);
+                Transport = new WebSocketTransport<T>(transportOptions, ws, JsonSerializer);
                 SetWebSocketHeaders();
             }
 
@@ -429,12 +492,12 @@ namespace SocketIOClient
             OnPing.TryInvoke(this, EventArgs.Empty);
         }
 
-        private void PongHandler(PongMessage msg)
+        private void PongHandler(PongMessage<T> msg)
         {
             OnPong.TryInvoke(this, msg.Duration);
         }
 
-        private void ConnectedHandler(ConnectedMessage msg)
+        private void ConnectedHandler(ConnectedMessage<T> msg)
         {
             Id = msg.Sid;
             Connected = true;
@@ -453,9 +516,9 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
         }
 
-        private void EventMessageHandler(EventMessage m)
+        private void EventMessageHandler(EventMessage<T> m)
         {
-            var res = new SocketIOResponse(m.JsonElements, this)
+            var res = new SocketIOResponse<T>(m.JsonElements, this)
             {
                 PacketId = m.Id
             };
@@ -470,25 +533,25 @@ namespace SocketIOClient
             }
         }
 
-        private void AckMessageHandler(ClientAckMessage m)
+        private void AckMessageHandler(ClientAckMessage<T> m)
         {
             if (_ackHandlers.ContainsKey(m.Id))
             {
-                var res = new SocketIOResponse(m.JsonElements, this);
+                var res = new SocketIOResponse<T>(m.JsonElements, this);
                 _ackHandlers[m.Id].TryInvoke(res);
                 _ackHandlers.Remove(m.Id);
             }
         }
 
-        private void ErrorMessageHandler(ErrorMessage msg)
+        private void ErrorMessageHandler(ErrorMessage<T> msg)
         {
             _connCts.Dispose();
             OnError.TryInvoke(this, msg.Message);
         }
 
-        private void BinaryMessageHandler(BinaryMessage msg)
+        private void BinaryMessageHandler(BinaryMessage<T> msg)
         {
-            var response = new SocketIOResponse(msg.JsonElements, this)
+            var response = new SocketIOResponse<T>(msg.JsonElements, this)
             {
                 PacketId = msg.Id,
             };
@@ -504,11 +567,11 @@ namespace SocketIOClient
             }
         }
 
-        private void BinaryAckMessageHandler(ClientBinaryAckMessage msg)
+        private void BinaryAckMessageHandler(ClientBinaryAckMessage<T> msg)
         {
             if (_ackHandlers.ContainsKey(msg.Id))
             {
-                var response = new SocketIOResponse(msg.JsonElements, this)
+                var response = new SocketIOResponse<T>(msg.JsonElements, this)
                 {
                     PacketId = msg.Id,
                 };
@@ -535,28 +598,28 @@ namespace SocketIOClient
                         PingHandler();
                         break;
                     case MessageType.Pong:
-                        PongHandler(msg as PongMessage);
+                        PongHandler(msg as PongMessage<T>);
                         break;
                     case MessageType.Connected:
-                        ConnectedHandler(msg as ConnectedMessage);
+                        ConnectedHandler(msg as ConnectedMessage<T>);
                         break;
                     case MessageType.Disconnected:
                         DisconnectedHandler();
                         break;
                     case MessageType.EventMessage:
-                        EventMessageHandler(msg as EventMessage);
+                        EventMessageHandler(msg as EventMessage<T>);
                         break;
                     case MessageType.AckMessage:
-                        AckMessageHandler(msg as ClientAckMessage);
+                        AckMessageHandler(msg as ClientAckMessage<T>);
                         break;
                     case MessageType.ErrorMessage:
-                        ErrorMessageHandler(msg as ErrorMessage);
+                        ErrorMessageHandler(msg as ErrorMessage<T>);
                         break;
                     case MessageType.BinaryMessage:
-                        BinaryMessageHandler(msg as BinaryMessage);
+                        BinaryMessageHandler(msg as BinaryMessage<T>);
                         break;
                     case MessageType.BinaryAckMessage:
-                        BinaryAckMessageHandler(msg as ClientBinaryAckMessage);
+                        BinaryAckMessageHandler(msg as ClientBinaryAckMessage<T>);
                         break;
                 }
             }
@@ -571,7 +634,7 @@ namespace SocketIOClient
         public async Task DisconnectAsync()
         {
             _connCts.TryDispose();
-            var msg = new DisconnectedMessage
+            var msg = new DisconnectedMessage<T>
             {
                 Namespace = Namespace
             };
@@ -594,7 +657,7 @@ namespace SocketIOClient
         /// </summary>
         /// <param name="eventName"></param>
         /// <param name="callback"></param>
-        public void On(string eventName, Action<SocketIOResponse> callback)
+        public void On(string eventName, Action<SocketIOResponse<T>> callback)
         {
             if (_eventHandlers.ContainsKey(eventName))
             {
@@ -617,7 +680,7 @@ namespace SocketIOClient
             }
         }
 
-        public void OnAny(OnAnyHandler handler)
+        public void OnAny(OnAnyHandler<T> handler)
         {
             if (handler != null)
             {
@@ -625,7 +688,7 @@ namespace SocketIOClient
             }
         }
 
-        public void PrependAny(OnAnyHandler handler)
+        public void PrependAny(OnAnyHandler<T> handler)
         {
             if (handler != null)
             {
@@ -633,7 +696,7 @@ namespace SocketIOClient
             }
         }
 
-        public void OffAny(OnAnyHandler handler)
+        public void OffAny(OnAnyHandler<T> handler)
         {
             if (handler != null)
             {
@@ -641,7 +704,7 @@ namespace SocketIOClient
             }
         }
 
-        public OnAnyHandler[] ListenersAny() => _onAnyHandlers.ToArray();
+        public OnAnyHandler<T>[] ListenersAny() => _onAnyHandlers.ToArray();
 
         internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
         {
@@ -651,7 +714,7 @@ namespace SocketIOClient
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    msg = new ServerBinaryAckMessage
+                    msg = new ServerBinaryAckMessage<T>
                     {
                         Id = packetId,
                         Namespace = Namespace,
@@ -661,7 +724,7 @@ namespace SocketIOClient
                 }
                 else
                 {
-                    msg = new ServerAckMessage
+                    msg = new ServerAckMessage<T>
                     {
                         Namespace = Namespace,
                         Id = packetId,
@@ -671,7 +734,7 @@ namespace SocketIOClient
             }
             else
             {
-                msg = new ServerAckMessage
+                msg = new ServerAckMessage<T>
                 {
                     Namespace = Namespace,
                     Id = packetId
@@ -699,7 +762,7 @@ namespace SocketIOClient
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    var msg = new BinaryMessage
+                    var msg = new BinaryMessage<T>
                     {
                         Namespace = Namespace,
                         OutgoingBytes = new List<byte[]>(result.Bytes),
@@ -710,7 +773,7 @@ namespace SocketIOClient
                 }
                 else
                 {
-                    var msg = new EventMessage
+                    var msg = new EventMessage<T>
                     {
                         Namespace = Namespace,
                         Event = eventName,
@@ -721,7 +784,7 @@ namespace SocketIOClient
             }
             else
             {
-                var msg = new EventMessage
+                var msg = new EventMessage<T>
                 {
                     Namespace = Namespace,
                     Event = eventName
@@ -737,14 +800,14 @@ namespace SocketIOClient
         /// <param name="ack">will be called with the server answer.</param>
         /// <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
         /// <returns></returns>
-        public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
+        public async Task EmitAsync(string eventName, Action<SocketIOResponse<T>> ack, params object[] data)
         {
             await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
         }
 
         public async Task EmitAsync(string eventName,
             CancellationToken cancellationToken,
-            Action<SocketIOResponse> ack,
+            Action<SocketIOResponse<T>> ack,
             params object[] data)
         {
             _ackHandlers.Add(++_packetId, ack);
@@ -753,7 +816,7 @@ namespace SocketIOClient
                 var result = JsonSerializer.Serialize(data);
                 if (result.Bytes.Count > 0)
                 {
-                    var msg = new ClientBinaryAckMessage
+                    var msg = new ClientBinaryAckMessage<T>
                     {
                         Event = eventName,
                         Namespace = Namespace,
@@ -765,7 +828,7 @@ namespace SocketIOClient
                 }
                 else
                 {
-                    var msg = new ClientAckMessage
+                    var msg = new ClientAckMessage<T>
                     {
                         Event = eventName,
                         Namespace = Namespace,
@@ -777,7 +840,7 @@ namespace SocketIOClient
             }
             else
             {
-                var msg = new ClientAckMessage
+                var msg = new ClientAckMessage<T>
                 {
                     Event = eventName,
                     Namespace = Namespace,
@@ -846,4 +909,54 @@ namespace SocketIOClient
             _eventHandlers.Clear();
         }
     }
+
+    /// <summary>
+    /// socket.io client class with with JsonElement from System.Text.Json type selected as serializer input parameters and return types, if you want to choose other type use generic implementation of SocketIO
+    /// </summary>
+    public class SocketIO : SocketIO<JsonElement>
+    {
+        /// <summary>
+        /// Create SocketIO object with default options
+        /// </summary>
+        /// <param name="uri"></param>
+        public SocketIO(string uri) : this(new Uri(uri))
+        {
+        }
+
+
+
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
+        public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
+        {
+        }
+
+
+
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
+        {
+        }
+
+
+
+        /// <summary>
+        /// Create SocketIO object with options
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="options"></param>
+        public SocketIO(Uri uri, SocketIOOptions options) : base(uri, options, new SystemTextJsonSerializer())
+        {
+
+        }
+
+
+    }
+
 }

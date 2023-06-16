@@ -1,40 +1,41 @@
-﻿using System;
+﻿using SocketIOClient.JsonSerializer;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace SocketIOClient.Messages
 {
-    public static class MessageFactory
+    public static class MessageFactory<T>
     {
         private static IMessage CreateMessage(MessageType type)
         {
             switch (type)
             {
                 case MessageType.Opened:
-                    return new OpenedMessage();
+                    return new OpenedMessage<T>();
                 case MessageType.Ping:
-                    return new PingMessage();
+                    return new PingMessage<T>();
                 case MessageType.Pong:
-                    return new PongMessage();
+                    return new PongMessage<T>();
                 case MessageType.Connected:
-                    return new ConnectedMessage();
+                    return new ConnectedMessage<T>();
                 case MessageType.Disconnected:
-                    return new DisconnectedMessage();
+                    return new DisconnectedMessage<T>();
                 case MessageType.EventMessage:
-                    return new EventMessage();
+                    return new EventMessage<T>();
                 case MessageType.AckMessage:
-                    return new ClientAckMessage();
+                    return new ClientAckMessage<T>();
                 case MessageType.ErrorMessage:
-                    return new ErrorMessage();
+                    return new ErrorMessage<T>();
                 case MessageType.BinaryMessage:
-                    return new BinaryMessage();
+                    return new BinaryMessage<T>();
                 case MessageType.BinaryAckMessage:
-                    return new ClientBinaryAckMessage();
+                    return new ClientBinaryAckMessage<T>();
             }
             return null;
         }
 
-        public static IMessage CreateMessage(EngineIO eio, string msg)
+        public static IMessage CreateMessage(EngineIO eio,IJsonSerializer serializer, string msg)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType item in enums)
@@ -45,6 +46,7 @@ namespace SocketIOClient.Messages
                     IMessage result = CreateMessage(item);
                     if (result != null)
                     {
+                        result.Serializer = serializer;
                         result.EIO = eio;
                         result.Read(msg.Substring(prefix.Length));
                         return result;
@@ -54,9 +56,9 @@ namespace SocketIOClient.Messages
             return null;
         }
 
-        public static OpenedMessage CreateOpenedMessage(string msg)
+        public static OpenedMessage<T> CreateOpenedMessage(string msg)
         {
-            var openedMessage = new OpenedMessage();
+            var openedMessage = new OpenedMessage<T>();
             if (msg[0] == '0')
             {
                 openedMessage.EIO = EngineIO.V4;

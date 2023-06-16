@@ -1,9 +1,10 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
 {
-    public class DisconnectedMessage : IMessage
+    public class DisconnectedMessage<T> : IMessage
     {
         public MessageType Type => MessageType.Disconnected;
 
@@ -18,6 +19,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {

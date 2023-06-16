@@ -4,7 +4,7 @@ namespace SocketIOClient.Extensions
 {
     internal static class SocketIOEventExtensions
     {
-        public static void TryInvoke(this OnAnyHandler handler, string eventName, SocketIOResponse response)
+        public static void TryInvoke<T>(this OnAnyHandler<T> handler, string eventName, SocketIOResponse<T> response)
         {
             try
             {
@@ -15,7 +15,7 @@ namespace SocketIOClient.Extensions
                 // The exception is thrown by the user code, so it can be swallowed
             }
         }
-        public static void TryInvoke(this Action<SocketIOResponse> handler, SocketIOResponse response)
+        public static void TryInvoke<T>(this Action<SocketIOResponse<T>> handler, SocketIOResponse<T> response)
         {
             try
             {

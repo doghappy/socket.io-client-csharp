@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Extensions;
+using SocketIOClient.JsonSerializer;
 
 #if DEBUG
 using System.Diagnostics;
@@ -11,9 +12,9 @@ using System.Diagnostics;
 
 namespace SocketIOClient.Transport.WebSockets
 {
-    public class WebSocketTransport : BaseTransport
+    public class WebSocketTransport<T> : BaseTransport<T>
     {
-        public WebSocketTransport(TransportOptions options, IClientWebSocket ws) : base(options)
+        public WebSocketTransport(TransportOptions options, IClientWebSocket ws, IJsonSerializer serializer) : base(options,serializer)
         {
             _ws = ws;
             _sendLock = new SemaphoreSlim(1, 1);

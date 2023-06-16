@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using SocketIOClient.Transport;
+using System.Text.Json;
 
 namespace SocketIOClient.IntegrationTests.Net472
 {
@@ -16,7 +17,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         public async Task ExtraHeaders(string key, string value)
         {
             string actual = null;
-            using (var io = new SocketIO(Common.Startup.V4_WS, new SocketIOOptions
+            using (var io = new SocketIO<JsonElement>(Common.Startup.V4_WS, new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EngineIO.V4,
@@ -29,7 +30,8 @@ namespace SocketIOClient.IntegrationTests.Net472
             {
                 await io.ConnectAsync();
                 await io.EmitAsync("get_header",
-                    res => actual = res.GetValue<string>(),
+                    //res => actual = res.GetValue<string>(),
+                    res => actual = io.JsonSerializer.GetString(res.GetValue()),
                     key.ToLower());
                 await Task.Delay(100);
 

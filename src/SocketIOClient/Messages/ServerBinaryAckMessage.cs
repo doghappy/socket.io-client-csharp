@@ -1,20 +1,20 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.Json;
 
 namespace SocketIOClient.Messages
 {
     /// <summary>
     /// The client calls the server's callback with binary
     /// </summary>
-    public class ServerBinaryAckMessage : IJsonMessage
+    public class ServerBinaryAckMessage<T> : IJsonMessage<T>
     {
         public MessageType Type => MessageType.BinaryAckMessage;
 
         public string Namespace { get; set; }
 
-        public List<JsonElement> JsonElements { get; set; }
+        public List<T> JsonElements { get; set; }
 
         public string Json { get; set; }
 
@@ -29,6 +29,7 @@ namespace SocketIOClient.Messages
         public List<byte[]> OutgoingBytes { get; set; }
 
         public List<byte[]> IncomingBytes { get; set; }
+        public IJsonSerializer Serializer { get ; set ; }
 
         public void Read(string msg)
         {

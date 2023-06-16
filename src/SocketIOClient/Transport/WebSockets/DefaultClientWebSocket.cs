@@ -26,7 +26,7 @@ namespace SocketIOClient.Transport.WebSockets
         {
             "User-Agent"
         };
-
+       
         private void AllowHeaders()
         {
             var property = _ws.Options
@@ -62,13 +62,14 @@ namespace SocketIOClient.Transport.WebSockets
             }
         }
 #endif
-
+        public Action<object> ConfigOptions { get; set; }
         readonly ClientWebSocket _ws;
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
+            ConfigOptions?.Invoke(_ws.Options);
             await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }
 

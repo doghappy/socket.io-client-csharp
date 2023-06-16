@@ -1,4 +1,5 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
@@ -18,6 +19,8 @@ namespace SocketIOClient.Messages
         TransportProtocol Protocol { get; set; }
 
         void Read(string msg);
+
+        IJsonSerializer Serializer{ get; set; }
 
         //void Eio3WsRead(string msg);
 

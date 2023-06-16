@@ -1,9 +1,10 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
 {
-    public class PingMessage : IMessage
+    public class PingMessage<T> : IMessage
     {
         public MessageType Type => MessageType.Ping;
 
@@ -16,6 +17,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
+        public IJsonSerializer Serializer { get ; set ; }
 
         public void Read(string msg)
         {

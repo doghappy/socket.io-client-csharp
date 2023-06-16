@@ -1,10 +1,11 @@
-﻿using SocketIOClient.Transport;
+﻿using SocketIOClient.JsonSerializer;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
 
 namespace SocketIOClient.Messages
 {
-    public class PongMessage : IMessage
+    public class PongMessage<T> : IMessage
     {
         public MessageType Type => MessageType.Pong;
 
@@ -19,6 +20,7 @@ namespace SocketIOClient.Messages
         public TransportProtocol Protocol { get; set; }
 
         public TimeSpan Duration { get; set; }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {

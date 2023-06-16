@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace SocketIOClient
 {
-    public delegate void OnAnyHandler(string eventName, SocketIOResponse response);
+    public delegate void OnAnyHandler<T>(string eventName, SocketIOResponse<T> response);
     public delegate void OnOpenedHandler(string sid, int pingInterval, int pingTimeout);
     //public delegate void OnDisconnectedHandler(string sid, int pingInterval, int pingTimeout);
     public delegate void OnAck(int packetId, List<JsonElement> array);
