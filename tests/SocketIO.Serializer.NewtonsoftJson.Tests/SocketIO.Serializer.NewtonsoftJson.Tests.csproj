@@ -23,7 +23,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
+      <ProjectReference Include="..\..\src\SocketIO.Core\SocketIO.Core.csproj" />
+      <ProjectReference Include="..\..\src\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
+      <ProjectReference Include="..\..\src\SocketIO.Serializer.NewtonsoftJson\SocketIO.Serializer.NewtonsoftJson.csproj" />
       <ProjectReference Include="..\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj" />
     </ItemGroup>
 

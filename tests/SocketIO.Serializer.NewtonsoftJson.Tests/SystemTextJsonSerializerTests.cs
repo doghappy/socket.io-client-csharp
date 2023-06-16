@@ -1,13 +1,14 @@
 using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
 using SocketIO.Serializer.Tests.Models;
 
-namespace SocketIO.Serializer.SystemTextJson.Tests;
+namespace SocketIO.Serializer.NewtonsoftJson.Tests;
 
-public class SystemTextJsonSerializerTests
+public class NewtonsoftJsonSerializerTests
 {
     private static IEnumerable<(
             string eventName,
@@ -175,7 +176,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         IEnumerable<SerializedItem> expectedItems)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         var items = serializer.Serialize(eventName, ns, data);
         items.Should().BeEquivalentTo(expectedItems, config => config.WithStrictOrdering());
     }
@@ -257,7 +258,7 @@ public class SystemTextJsonSerializerTests
         IEnumerable<KeyValuePair<string, string>> queries,
         SerializedItem? expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.SerializeConnectedMessage(ns, eio, auth, queries)
             .Should().BeEquivalentTo(expected);
     }
@@ -316,7 +317,7 @@ public class SystemTextJsonSerializerTests
                 {
                     Type = MessageType.Event,
                     Event = "hi",
-                    JsonArray = JsonNode.Parse("[\"V3: onAny\"]")!.AsArray()
+                    JsonArray = JArray.Parse("[\"V3: onAny\"]")
                 }),
             (
                 EngineIO.V4,
@@ -326,7 +327,7 @@ public class SystemTextJsonSerializerTests
                     Type = MessageType.Event,
                     Event = "hi",
                     Namespace = "/test",
-                    JsonArray = JsonNode.Parse("[\"V3: onAny\"]")!.AsArray()
+                    JsonArray = JArray.Parse("[\"V3: onAny\"]")
                 }),
             (
                 EngineIO.V4,
@@ -337,7 +338,7 @@ public class SystemTextJsonSerializerTests
                     Id = 17,
                     Namespace = "/test",
                     Event = "cool",
-                    JsonArray = JsonNode.Parse("[]")!.AsArray()
+                    JsonArray = JArray.Parse("[]")
                 }),
             (
                 EngineIO.V4,
@@ -346,7 +347,7 @@ public class SystemTextJsonSerializerTests
                 {
                     Type = MessageType.Ack,
                     Id = 1,
-                    JsonArray = JsonNode.Parse("[\"nice\"]")!.AsArray()
+                    JsonArray = JArray.Parse("[\"nice\"]")
                 }),
             (
                 EngineIO.V4,
@@ -356,7 +357,7 @@ public class SystemTextJsonSerializerTests
                     Type = MessageType.Ack,
                     Id = 1,
                     Namespace = "/test",
-                    JsonArray = JsonNode.Parse("[\"nice\"]")!.AsArray()
+                    JsonArray = JArray.Parse("[\"nice\"]")
                 }),
             (
                 EngineIO.V3,
@@ -391,7 +392,7 @@ public class SystemTextJsonSerializerTests
                     Type = MessageType.Binary,
                     BinaryCount = 1,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -401,7 +402,7 @@ public class SystemTextJsonSerializerTests
                     Type = MessageType.Binary,
                     BinaryCount = 1,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V3,
@@ -412,7 +413,7 @@ public class SystemTextJsonSerializerTests
                     Namespace = "/test",
                     BinaryCount = 1,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -423,7 +424,7 @@ public class SystemTextJsonSerializerTests
                     Namespace = "/test",
                     BinaryCount = 1,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V3,
@@ -434,7 +435,7 @@ public class SystemTextJsonSerializerTests
                     BinaryCount = 1,
                     Id = 30,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -445,7 +446,7 @@ public class SystemTextJsonSerializerTests
                     BinaryCount = 1,
                     Id = 30,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -457,7 +458,7 @@ public class SystemTextJsonSerializerTests
                     BinaryCount = 1,
                     Id = 30,
                     Event = "1 params",
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -467,7 +468,7 @@ public class SystemTextJsonSerializerTests
                     Type = MessageType.BinaryAck,
                     BinaryCount = 1,
                     Id = 6,
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
             (
                 EngineIO.V4,
@@ -478,7 +479,7 @@ public class SystemTextJsonSerializerTests
                     BinaryCount = 1,
                     Namespace = "/test",
                     Id = 6,
-                    JsonArray = JsonNode.Parse("[{\"_placeholder\":true,\"num\":0}]")!.AsArray()
+                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
                 }),
         };
 
@@ -495,19 +496,19 @@ public class SystemTextJsonSerializerTests
     [MemberData(nameof(DeserializeEioTextCases))]
     public void Should_deserialize_eio_and_text(int caseId, EngineIO eio, string? text, object? expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Deserialize(eio, text)
             .Should().BeEquivalentTo(expected, options => options
-                .Using<JsonArray>(x => x.Subject.ToJsonString().Should().Be(x.Expectation.ToJsonString()))
-                .WhenTypeIs<JsonArray>());
+                .Using<JArray>(x => x.Subject.ToString().Should().Be(x.Expectation.ToString()))
+                .WhenTypeIs<JArray>());
     }
 
     private static IEnumerable<(
         IMessage2 message,
         int index,
-        JsonSerializerOptions options,
+        JsonSerializerSettings options,
         object expected)> DeserializeGenericMethodTupleCases =>
-        new (IMessage2 message, int index, JsonSerializerOptions options, object expected)[]
+        new (IMessage2 message, int index, JsonSerializerSettings options, object expected)[]
         {
             (new JsonMessage(MessageType.Event)
             {
@@ -521,9 +522,12 @@ public class SystemTextJsonSerializerTests
                 new JsonMessage(MessageType.Event)
                 {
                     ReceivedText = "[\"event\",\"hello\",{\"user\":\"admin\",\"password\":\"test\"}]"
-                }, 1, new JsonSerializerOptions
+                }, 1, new JsonSerializerSettings
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new CamelCaseNamingStrategy(),
+                    }
                 },
                 new UserPasswordDto
                 {
@@ -543,9 +547,12 @@ public class SystemTextJsonSerializerTests
                     ReceivedText =
                         "[\"event\",{\"_placeholder\":true,\"num\":0},{\"size\":2023,\"name\":\"test.txt\",\"bytes\":{\"_placeholder\":true,\"num\":1}}]",
                     ReceivedBinary = new List<byte[]> { "hello world!"u8.ToArray(), "🐮🍺"u8.ToArray() }
-                }, 1, new JsonSerializerOptions
+                }, 1, new JsonSerializerSettings
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    ContractResolver = new DefaultContractResolver
+                    {
+                        NamingStrategy = new CamelCaseNamingStrategy(),
+                    }
                 }, new FileDto
                 {
                     Size = 2023,
@@ -570,13 +577,13 @@ public class SystemTextJsonSerializerTests
         int caseId,
         IMessage2 message,
         int index,
-        JsonSerializerOptions options,
+        JsonSerializerSettings options,
         object expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options);
         var actual = serializer.GetType()
             .GetMethod(
-                nameof(SystemTextJsonSerializer.Deserialize),
+                nameof(NewtonsoftJsonSerializer.Deserialize),
                 BindingFlags.Public | BindingFlags.Instance,
                 new[] { typeof(IMessage2), typeof(int) })!
             .MakeGenericMethod(expected.GetType())
@@ -590,10 +597,10 @@ public class SystemTextJsonSerializerTests
         int caseId,
         IMessage2 message,
         int index,
-        JsonSerializerOptions options,
+        JsonSerializerSettings options,
         object expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options);
         var actual = serializer.Deserialize(message, index, expected.GetType());
         actual.Should().BeEquivalentTo(expected);
     }
@@ -702,7 +709,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Serialize(packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -815,7 +822,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Serialize(eventName, packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -925,16 +932,16 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer();
         serializer.Serialize(eventName, ns, data)
             .Should().BeEquivalentTo(expected);
     }
 
     private static IEnumerable<(
-        JsonSerializerOptions? options,
+        JsonSerializerSettings? options,
         IMessage2 message,
         string expected)> MessageToJsonTupleCases =>
-        new (JsonSerializerOptions? options, IMessage2 message, string expected)[]
+        new (JsonSerializerSettings? options, IMessage2 message, string expected)[]
         {
             (
                 null,
@@ -944,9 +951,9 @@ public class SystemTextJsonSerializerTests
                 },
                 "[1]"),
             (
-                new JsonSerializerOptions
+                new JsonSerializerSettings
                 {
-                    WriteIndented = true
+                    Formatting = Formatting.Indented
                 },
                 new JsonMessage(MessageType.Event)
                 {
@@ -981,11 +988,11 @@ public class SystemTextJsonSerializerTests
     [MemberData(nameof(MessageToJsonCases))]
     public void Message_should_be_able_to_json(
         int caseId,
-        JsonSerializerOptions? options,
+        JsonSerializerSettings? options,
         IMessage2 message,
         string expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options);
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }

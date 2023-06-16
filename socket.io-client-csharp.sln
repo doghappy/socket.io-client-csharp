@@ -33,6 +33,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Core", "src\Socket
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.NewtonsoftJson", "src\SocketIO.Serializer.NewtonsoftJson\SocketIO.Serializer.NewtonsoftJson.csproj", "{30A74619-DB12-47B7-8CA5-F9593A53ECCA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.NewtonsoftJson.Tests", "tests\SocketIO.Serializer.NewtonsoftJson.Tests\SocketIO.Serializer.NewtonsoftJson.Tests.csproj", "{23176B4F-95F2-4306-9ADF-F3DCB049BAD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.Tests.Models", "tests\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj", "{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +95,14 @@ Global
 		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30A74619-DB12-47B7-8CA5-F9593A53ECCA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23176B4F-95F2-4306-9ADF-F3DCB049BAD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23176B4F-95F2-4306-9ADF-F3DCB049BAD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23176B4F-95F2-4306-9ADF-F3DCB049BAD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23176B4F-95F2-4306-9ADF-F3DCB049BAD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,5 +124,7 @@ Global
 		{9C5B4812-4C20-448B-B01B-C8C0A9117B1E} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{93CDCF52-263C-4FF9-B55A-BBDFE315E1BB} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
 		{30A74619-DB12-47B7-8CA5-F9593A53ECCA} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{23176B4F-95F2-4306-9ADF-F3DCB049BAD7} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal
