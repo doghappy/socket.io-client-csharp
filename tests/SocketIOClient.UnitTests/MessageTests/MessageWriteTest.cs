@@ -3,6 +3,7 @@ using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace SocketIOClient.UnitTests.MessageTests
 {
@@ -12,7 +13,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Ping()
         {
-            var msg = new PingMessage();
+            var msg = new PingMessage<JsonElement>();
             string text = msg.Write();
             Assert.AreEqual("2", text);
         }
@@ -20,7 +21,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Pong()
         {
-            var msg = new PongMessage();
+            var msg = new PongMessage<JsonElement>();
             string text = msg.Write();
             Assert.AreEqual("3", text);
         }
@@ -28,7 +29,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio4Connected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V4
             };
@@ -39,7 +40,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio4NamespaceConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V4,
                 Namespace = "/microsoft"
@@ -51,7 +52,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3WsWithoutQueryConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
@@ -64,7 +65,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3WsWith1ParamConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
@@ -81,7 +82,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3WsWith2ParamConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.WebSocket,
@@ -99,7 +100,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3PollingWithoutQueryConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
@@ -112,7 +113,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3PollingWith1ParamConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
@@ -129,7 +130,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3PollingWith2ParamConnected()
         {
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>  
             {
                 EIO = EngineIO.V3,
                 Protocol = TransportProtocol.Polling,
@@ -146,7 +147,7 @@ namespace SocketIOClient.UnitTests.MessageTests
 
         [TestMethod]
         public void Eio4_Auth_Query_Namespace_Should_Include_Auth_Namespace(){
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V4,
                 Protocol = TransportProtocol.Polling,
@@ -164,7 +165,7 @@ namespace SocketIOClient.UnitTests.MessageTests
 
         [TestMethod]
         public void Eio4_Auth_Should_Include_Auth(){
-            var msg = new ConnectedMessage
+            var msg = new ConnectedMessage<JsonElement>
             {
                 EIO = EngineIO.V4,
                 Protocol = TransportProtocol.Polling,
@@ -177,7 +178,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Disconnected()
         {
-            var msg = new DisconnectedMessage();
+            var msg = new DisconnectedMessage<JsonElement>();
             string text = msg.Write();
             Assert.AreEqual("41", text);
         }
@@ -185,7 +186,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceDisconnected()
         {
-            var msg = new DisconnectedMessage
+            var msg = new DisconnectedMessage<JsonElement>
             {
                 Namespace = "/hello-world"
             };
@@ -196,7 +197,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Event0Param()
         {
-            var msg = new EventMessage
+            var msg = new EventMessage<JsonElement>
             {
                 Event = "event name",
             };
@@ -207,7 +208,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Event1Param()
         {
-            var msg = new EventMessage
+            var msg = new EventMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[\"socket.io\"]"
@@ -219,7 +220,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceEvent0Param()
         {
-            var msg = new EventMessage
+            var msg = new EventMessage<JsonElement>
             {
                 Event = "event name",
                 Namespace = "/test"
@@ -231,7 +232,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceEvent1Param()
         {
-            var msg = new EventMessage
+            var msg = new EventMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1234]",
@@ -244,7 +245,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Ack()
         {
-            var msg = new ClientAckMessage
+            var msg = new ClientAckMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -257,7 +258,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceAck()
         {
-            var msg = new ClientAckMessage
+            var msg = new ClientAckMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -271,7 +272,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void ServerAckWihtoutJson()
         {
-            var msg = new ServerAckMessage
+            var msg = new ServerAckMessage<JsonElement>
             {
                 Id = 8964
             };
@@ -282,7 +283,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceServerAck()
         {
-            var msg = new ServerAckMessage
+            var msg = new ServerAckMessage<JsonElement>
             {
                 Json = "[1989,\"test\",false]",
                 Id = 8964,
@@ -295,7 +296,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Binary()
         {
-            var msg = new BinaryMessage
+            var msg = new BinaryMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -312,7 +313,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceBinary()
         {
-            var msg = new BinaryMessage
+            var msg = new BinaryMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -330,7 +331,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void BinaryAck()
         {
-            var msg = new ClientBinaryAckMessage
+            var msg = new ClientBinaryAckMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -352,7 +353,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceBinaryAck()
         {
-            var msg = new ClientBinaryAckMessage
+            var msg = new ClientBinaryAckMessage<JsonElement>
             {
                 Event = "event name",
                 Json = "[1989]",
@@ -375,7 +376,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void ServerBinaryAck()
         {
-            var msg = new ServerBinaryAckMessage
+            var msg = new ServerBinaryAckMessage<JsonElement>
             {
                 Json = "[1989,\"test\",false]",
                 Id = 185,
@@ -391,7 +392,7 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceServerBinaryAck()
         {
-            var msg = new ServerBinaryAckMessage
+            var msg = new ServerBinaryAckMessage<JsonElement>
             {
                 Id = 185,
                 Namespace = "/q",

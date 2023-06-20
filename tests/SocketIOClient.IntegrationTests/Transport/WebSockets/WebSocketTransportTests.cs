@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.WebSockets;
@@ -23,17 +25,17 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             using var server = new WebSocketServer();
             _ = server.ListenAsync();
 
-            using var ws = new DefaultClientWebSocket();
-            using var transport = new WebSocketTransport(new TransportOptions
+            using var ws = new DefaultClientWebSocket();           
+            using var transport = new WebSocketTransport<JsonElement>(new TransportOptions
             {
                 EIO = EngineIO.V3,
-            }, ws);
+            }, ws,new SystemTextJsonSerializer());
             transport.OnReceived = m => messages.Add(m);
             await transport.ConnectAsync(server.ServerUrl, CancellationToken.None);
 
             foreach (var item in TestHelper.TestMessages)
             {
-                var msg = new EventMessage
+                var msg = new EventMessage<JsonElement>
                 {
                     Event = eventName,
                     Json = $"[\"{item}\"]"
@@ -45,7 +47,7 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
                 .Should().HaveCount(TestHelper.TestMessages.Count)
                 .And.Equal(TestHelper.TestMessages, (a, b) =>
                 {
-                    var em = a as EventMessage;
+                    var em = a as EventMessage<JsonElement>;
                     if (em is null)
                         return false;
                     return em.JsonElements[0].GetString() == b;
@@ -59,10 +61,10 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
             _ = server.ListenAsync();
 
             using var ws = new DefaultClientWebSocket();
-            using var transport = new WebSocketTransport(new TransportOptions
+            using var transport = new WebSocketTransport<JsonElement>(new TransportOptions
             {
                 EIO = EngineIO.V3,
-            }, ws);
+            }, ws, new SystemTextJsonSerializer());
             await transport.ConnectAsync(server.ServerUrl, CancellationToken.None);
 
             transport

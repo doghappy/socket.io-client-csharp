@@ -16,7 +16,7 @@ namespace SocketIOClient.UnitTests
         public void TestToString(string json)
         {
             var array = JsonDocument.Parse(json).RootElement.EnumerateArray().ToList();
-            var response = new SocketIOResponse(array, null);
+            var response = new SocketIOResponse<JsonElement>(array, null);
             Assert.AreEqual(json, response.ToString());
         }
     }

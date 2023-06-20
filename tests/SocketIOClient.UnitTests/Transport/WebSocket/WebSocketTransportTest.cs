@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.WebSockets;
@@ -22,10 +24,10 @@ public class WebSocketTransportTest
         Uri uri = new("http://localhost:11002/socket.io/?EIO=3&transport=websocket");
         var mockWs = new Mock<IClientWebSocket>();
 
-        var transport = new WebSocketTransport(new TransportOptions
+        var transport = new WebSocketTransport<JsonElement>(new TransportOptions
         {
             EIO = EngineIO.V3,
-        }, mockWs.Object);
+        }, mockWs.Object, new SystemTextJsonSerializer());
 
         await transport.ConnectAsync(uri, CancellationToken.None);
 
@@ -45,10 +47,10 @@ public class WebSocketTransportTest
             .Setup(m => m.ConnectAsync(uri, It.IsAny<CancellationToken>()))
             .Throws<Exception>();
 
-        var transport = new WebSocketTransport(new TransportOptions
+        var transport = new WebSocketTransport<JsonElement>(new TransportOptions
         {
             EIO = EngineIO.V3,
-        }, mockWs.Object);
+        }, mockWs.Object, new SystemTextJsonSerializer());
 
         using var cts = new CancellationTokenSource(100);
         await transport
@@ -94,16 +96,16 @@ public class WebSocketTransportTest
                 }
             });
 
-        var transport = new WebSocketTransport(new TransportOptions
+        var transport = new WebSocketTransport<JsonElement>(new TransportOptions
         {
             EIO = eio,
-        }, mockWs.Object);
+        }, mockWs.Object, new SystemTextJsonSerializer());
         transport.OnReceived = (m => msg = m);
         await transport.ConnectAsync(null, CancellationToken.None);
         await Task.Delay(100);
 
         msg.Should().BeEquivalentTo(expectedMsg);
-        if (msg is IJsonMessage jsonMsg)
+        if (msg is IJsonMessage<JsonElement> jsonMsg)
         {
             jsonMsg.JsonElements
                 .Select(x => x.GetRawText())
@@ -415,10 +417,10 @@ public class WebSocketTransportTest
     {
         var mockWs = new Mock<IClientWebSocket>();
 
-        var transport = new WebSocketTransport(new TransportOptions
+        var transport = new WebSocketTransport<JsonElement>(new TransportOptions
         {
             EIO = eio,
-        }, mockWs.Object);
+        }, mockWs.Object, new SystemTextJsonSerializer());
         await transport.SendAsync(payload, CancellationToken.None);
 
         mockWs.Verify(
@@ -544,10 +546,7 @@ public class WebSocketTransportTest
                 CancellationToken.None))
             .Callback(() => (++order % 4).Should().Be(0));
 
-        var transport = new WebSocketTransport(new TransportOptions
-        {
-            EIO = eio,
-        }, mockWs.Object);
+        var transport = new WebSocketTransport<JsonElement>(new TransportOptions { EIO = eio }, mockWs.Object, new SystemTextJsonSerializer());
         var payload = new Payload
         {
             Text = new string('a', ChunkSize.Size8K + 1),

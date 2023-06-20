@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SocketIOClient.JsonSerializer;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -37,12 +38,25 @@ namespace SocketIOClient
         {
             var builder = new StringBuilder();
             builder.Append('[');
-            foreach (var item in _array)
-            {
-                builder.Append(SocketIO.JsonSerializer.GetRawText(item));
-                if (_array.IndexOf(item) < _array.Count - 1)
+            if (SocketIO != null)
+                foreach (var item in _array)
                 {
-                    builder.Append(',');
+                    builder.Append(SocketIO.JsonSerializer.GetRawText(item));
+                    if (_array.IndexOf(item) < _array.Count - 1)
+                    {
+                        builder.Append(',');
+                    }
+                }
+            else
+            {
+                var defaultSerializer = new SystemTextJsonSerializer();
+                foreach (var item in _array)
+                {
+                    builder.Append(defaultSerializer.GetRawText(item));
+                    if (_array.IndexOf(item) < _array.Count - 1)
+                    {
+                        builder.Append(',');
+                    }
                 }
             }
             builder.Append(']');

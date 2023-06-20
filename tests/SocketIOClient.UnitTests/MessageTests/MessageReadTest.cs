@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 
 namespace SocketIOClient.UnitTests.MessageTests
@@ -10,24 +11,24 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Ping()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "2");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4,new SystemTextJsonSerializer(), "2");
             Assert.AreEqual(MessageType.Ping, msg.Type);
         }
 
         [TestMethod]
         public void Pong()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "3");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "3");
             Assert.AreEqual(MessageType.Pong, msg.Type);
         }
 
         [TestMethod]
         public void Eio4Connected()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "40{\"sid\":\"aMA_EmVTuzpgR16PAc4w\"}");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual(string.Empty, connectedMsg.Namespace);
             Assert.AreEqual("aMA_EmVTuzpgR16PAc4w", connectedMsg.Sid);
@@ -36,10 +37,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio4NamespaceConnected()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "40/nsp,{\"sid\":\"xO_jp2_xrGtXUveLAc4y\"}");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "40/nsp,{\"sid\":\"xO_jp2_xrGtXUveLAc4y\"}");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", connectedMsg.Namespace);
             Assert.AreEqual("xO_jp2_xrGtXUveLAc4y", connectedMsg.Sid);
@@ -48,10 +49,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3Connected()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V3, new SystemTextJsonSerializer(), "40");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.IsTrue(string.IsNullOrEmpty(connectedMsg.Namespace));
             Assert.IsNull(connectedMsg.Sid);
@@ -60,10 +61,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected1()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp,");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V3, new SystemTextJsonSerializer(),"40/nsp,");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", connectedMsg.Namespace);
             Assert.IsNull(connectedMsg.Sid);
@@ -72,10 +73,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected2()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V3, new SystemTextJsonSerializer(), "40/nsp");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", connectedMsg.Namespace);
             Assert.IsNull(connectedMsg.Sid);
@@ -84,10 +85,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected3()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp?token=V2,");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V3, new SystemTextJsonSerializer(), "40/nsp?token=V2,");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", connectedMsg.Namespace);
             Assert.IsNull(connectedMsg.Sid);
@@ -96,10 +97,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Eio3NamespaceConnected4()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V3, "40/nsp?token=V2");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V3, new SystemTextJsonSerializer(), "40/nsp?token=V2");
             Assert.AreEqual(MessageType.Connected, msg.Type);
 
-            var connectedMsg = msg as ConnectedMessage;
+            var connectedMsg = msg as ConnectedMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", connectedMsg.Namespace);
             Assert.IsNull(connectedMsg.Sid);
@@ -108,10 +109,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Disconnected()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "41");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "41");
             Assert.AreEqual(MessageType.Disconnected, msg.Type);
 
-            var realMsg = msg as DisconnectedMessage;
+            var realMsg = msg as DisconnectedMessage<JsonElement>;
 
             Assert.AreEqual(string.Empty, realMsg.Namespace);
         }
@@ -119,10 +120,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceDisconnected()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "41/github,");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "41/github,");
             Assert.AreEqual(MessageType.Disconnected, msg.Type);
 
-            var realMsg = msg as DisconnectedMessage;
+            var realMsg = msg as DisconnectedMessage<JsonElement>;
 
             Assert.AreEqual("/github", realMsg.Namespace);
         }
@@ -130,10 +131,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Event0Param()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42[\"hi\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "42[\"hi\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
-            var realMsg = msg as EventMessage;
+            var realMsg = msg as EventMessage<JsonElement>;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
 
@@ -144,10 +145,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Event1Param()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42[\"hi\",\"V3: onAny\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "42[\"hi\",\"V3: onAny\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
-            var realMsg = msg as EventMessage;
+            var realMsg = msg as EventMessage<JsonElement>;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
 
@@ -159,10 +160,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceEvent0Param()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,[\"234\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "42/nsp,[\"234\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
-            var realMsg = msg as EventMessage;
+            var realMsg = msg as EventMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", realMsg.Namespace);
 
@@ -173,10 +174,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceEvent1Param()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,[\"qww\",true]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "42/nsp,[\"qww\",true]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
-            var realMsg = msg as EventMessage;
+            var realMsg = msg as EventMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", realMsg.Namespace);
 
@@ -188,10 +189,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void EventMessageWithId()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "42/nsp,17[\"client calls the server's callback 0\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "42/nsp,17[\"client calls the server's callback 0\"]");
             Assert.AreEqual(MessageType.EventMessage, msg.Type);
 
-            var realMsg = msg as EventMessage;
+            var realMsg = msg as EventMessage<JsonElement>;
 
             Assert.AreEqual("/nsp", realMsg.Namespace);
 
@@ -203,10 +204,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Ack()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "431[\"doghappy\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "431[\"doghappy\"]");
             Assert.AreEqual(MessageType.AckMessage, msg.Type);
 
-            var realMsg = msg as ClientAckMessage;
+            var realMsg = msg as ClientAckMessage<JsonElement>;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
             Assert.AreEqual(1, realMsg.Id);
@@ -218,10 +219,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceAck()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "43/google,15[\"doghappy\"]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "43/google,15[\"doghappy\"]");
             Assert.AreEqual(MessageType.AckMessage, msg.Type);
 
-            var realMsg = msg as ClientAckMessage;
+            var realMsg = msg as ClientAckMessage<JsonElement>;
 
             Assert.AreEqual("/google", realMsg.Namespace);
             Assert.AreEqual(15, realMsg.Id);
@@ -233,10 +234,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Error()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "44{\"message\":\"Authentication error2\"}");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "44{\"message\":\"Authentication error2\"}");
             Assert.AreEqual(MessageType.ErrorMessage, msg.Type);
 
-            var result = msg as ErrorMessage;
+            var result = msg as ErrorMessage<JsonElement>;
 
             Assert.IsNull(result.Namespace);
             Assert.AreEqual("Authentication error2", result.Message);
@@ -245,10 +246,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceError()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "44/message,{\"message\":\"Authentication error\"}");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "44/message,{\"message\":\"Authentication error\"}");
             Assert.AreEqual(MessageType.ErrorMessage, msg.Type);
 
-            var result = msg as ErrorMessage;
+            var result = msg as ErrorMessage<JsonElement>;
 
             Assert.AreEqual("/message", result.Namespace);
             Assert.AreEqual("Authentication error", result.Message);
@@ -257,10 +258,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void Binary()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
-            var realMsg = msg as BinaryMessage;
+            var realMsg = msg as BinaryMessage<JsonElement>;
 
             Assert.IsTrue(string.IsNullOrEmpty(realMsg.Namespace));
             Assert.AreEqual(1, realMsg.BinaryCount);
@@ -273,10 +274,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceBinary()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-/why-ve,[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "451-/why-ve,[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
-            var realMsg = msg as BinaryMessage;
+            var realMsg = msg as BinaryMessage<JsonElement>;
 
             Assert.AreEqual("/why-ve", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
@@ -289,10 +290,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceBinaryWithId()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "451-/why-ve,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "451-/why-ve,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryMessage, msg.Type);
 
-            var realMsg = msg as BinaryMessage;
+            var realMsg = msg as BinaryMessage<JsonElement>;
 
             Assert.AreEqual("/why-ve", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
@@ -306,10 +307,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void BinaryAck()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "461-6[{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "461-6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as ClientBinaryAckMessage;
+            var realMsg = msg as ClientBinaryAckMessage<JsonElement>;
 
             Assert.IsNull(realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);
@@ -322,10 +323,10 @@ namespace SocketIOClient.UnitTests.MessageTests
         [TestMethod]
         public void NamespaceBinaryAck()
         {
-            var msg = MessageFactory.CreateMessage(EngineIO.V4, "461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
+            var msg = MessageFactory<JsonElement>.CreateMessage(EngineIO.V4, new SystemTextJsonSerializer(), "461-/name-space,6[{\"_placeholder\":true,\"num\":0}]");
             Assert.AreEqual(MessageType.BinaryAckMessage, msg.Type);
 
-            var realMsg = msg as ClientBinaryAckMessage;
+            var realMsg = msg as ClientBinaryAckMessage<JsonElement>;
 
             Assert.AreEqual("/name-space", realMsg.Namespace);
             Assert.AreEqual(1, realMsg.BinaryCount);

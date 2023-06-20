@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SocketIOClient.JsonSerializer;
 using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
@@ -24,7 +26,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             Uri uri = new("http://localhost:11002/socket.io/?EIO=3&transport=polling");
             var options = new TransportOptions();
             var mockedHandler = new Mock<IHttpPollingHandler>();
-            using var transport = new HttpTransport(options, mockedHandler.Object);
+            using var transport = new HttpTransport<JsonElement>(options, mockedHandler.Object, new SystemTextJsonSerializer());
 
             await transport.ConnectAsync(uri, CancellationToken.None);
 
@@ -52,8 +54,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
                                                          StringComparison.OrdinalIgnoreCase) == 0),
                     It.IsAny<CancellationToken>()))
                 .Throws<Exception>();
-
-            using var transport = new HttpTransport(options, mockedHandler.Object);
+            using var transport = new HttpTransport<JsonElement>(options, mockedHandler.Object, new SystemTextJsonSerializer());
 
             using var cts = new CancellationTokenSource(100);
             var token = cts.Token;
@@ -74,10 +75,10 @@ namespace SocketIOClient.UnitTests.Transport.Http
                 .Returns(async () => await Task.Delay(100));
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            _ = new HttpTransport(new TransportOptions
+            _ = new HttpTransport<JsonElement>(new TransportOptions
             {
                 EIO = eio,
-            }, mockHttpPollingHandler.Object);
+            }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             await mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
@@ -95,10 +96,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = eio,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = eio }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             transport.OnReceived = (m => msg = m);
             mockHttpPollingHandler.Object.OnTextReceived(text);
             msg.Should().BeEquivalentTo(expected);
@@ -136,14 +134,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            _ = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V4,
-                Auth = auth,
-            }, mockHttpPollingHandler.Object)
-            {
-                Namespace = ns,
-            };
+            _ = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V4, Auth = auth }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
@@ -160,10 +151,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            _ = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V3,
-            }, mockHttpPollingHandler.Object);
+            _ = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V3 }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             await mockHttpPollingHandler.Object.OnTextReceived($"0{{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":{pingInterval},\"pingTimeout\":5000}}");
             await mockHttpPollingHandler.Object.OnTextReceived("40");
             await Task.Delay(delay);
@@ -179,11 +167,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V3,
-                Query = query,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V3, Query = query }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             transport.Namespace = ns;
             await mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":1000,\"pingTimeout\":5000}");
@@ -235,11 +219,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V4,
-                Auth = auth,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V4, Auth = auth }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             transport.Namespace = ns;
             await mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":1000,\"pingTimeout\":5000}");
@@ -257,10 +237,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
             mockHttpPollingHandler.SetupProperty(h => h.OnBytesReceived);
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = eio,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = eio }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             transport.OnReceived = (msg => msgs.Add(msg));
 
             foreach (var item in input)
@@ -415,10 +392,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V4,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V4 }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             transport.OnReceived = m => msgs.Add(m);
 
             mockHttpPollingHandler.Object.OnTextReceived("2");
@@ -443,7 +417,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
                     },
                 });
 
-            var pong = msgs[1] as PongMessage;
+            var pong = msgs[1] as PongMessage<JsonElement>;
             pong.Duration.Should()
                 .BeGreaterThan(TimeSpan.Zero)
                 .And.BeLessThan(TimeSpan.FromMilliseconds(100));
@@ -455,10 +429,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = eio,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = eio }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
 
             await transport.SendAsync(payload, CancellationToken.None);
 
@@ -501,10 +472,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
                 .Setup(h => h.PostAsync(null, It.IsAny<IEnumerable<byte[]>>(), CancellationToken.None))
                 .Callback(() => (++i % 2).Should().Be(0));
 
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = eio,
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = eio }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
 
             var payload = new Payload
             {
@@ -530,11 +498,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
         {
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
-            var transport = new HttpTransport(new TransportOptions
-            {
-                EIO = EngineIO.V3,
-                ConnectionTimeout = TimeSpan.FromSeconds(1),
-            }, mockHttpPollingHandler.Object);
+            var transport = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V3, ConnectionTimeout = TimeSpan.FromSeconds(1) }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
             var msgs = new List<IMessage>();
             transport.OnReceived = m => msgs.Add(m);
 

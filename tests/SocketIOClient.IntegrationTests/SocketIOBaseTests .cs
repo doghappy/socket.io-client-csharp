@@ -7,6 +7,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using SocketIOClient.Transport;
+using System.Text.Json;
+using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -92,7 +94,7 @@ namespace SocketIOClient.IntegrationTests
             IEnumerable<byte[]> expectedBytes)
         {
             using var io = CreateSocketIO();
-            SocketIOResponse response = null;
+            SocketIOResponse<JsonElement> response = null;
             io.On(eventName, res => response = res);
 
             await io.ConnectAsync();
@@ -211,7 +213,7 @@ namespace SocketIOClient.IntegrationTests
             string resText = null;
             using var io = CreateSocketIO();
             io.On("callback_step2", async res => await res.CallbackAsync(guid));
-            io.On("callback_step3", res => resText = res.GetValue<string>());
+            io.On("callback_step3", res => resText = res.GetValue().ToString());
 
             await io.ConnectAsync();
             await io.EmitAsync("callback_step1", async res => { await res.CallbackAsync(guid); });
@@ -295,7 +297,8 @@ namespace SocketIOClient.IntegrationTests
             });
 
             await io.ConnectAsync();
-            await io.EmitAsync("get_auth", res => auth = res.GetValue<UserDTO>());
+            var serailizer = new SystemTextJsonSerializer();
+            await io.EmitAsync("get_auth", res => auth = (UserDTO?)serailizer.Deserialize(res.GetValue().ToString(),typeof(UserDTO)));
             await Task.Delay(100);
 
             auth.Name.Should().Be("test");
@@ -457,7 +460,7 @@ namespace SocketIOClient.IntegrationTests
 
             await io.ConnectAsync();
             await io.EmitAsync("get_header",
-                res => actual = res.GetValue<string>(),
+                res => actual = res.GetValue().ToString(),
                 key.ToLower());
             await Task.Delay(100);
 
@@ -475,7 +478,7 @@ namespace SocketIOClient.IntegrationTests
             io.OnAny((e, r) =>
             {
                 eventName = e;
-                text = r.GetValue<string>();
+                text = r.GetValue().ToString();
             });
 
             await io.ConnectAsync();

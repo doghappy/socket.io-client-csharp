@@ -56,17 +56,19 @@ namespace SocketIOClient.Messages
             return null;
         }
 
-        public static OpenedMessage<T> CreateOpenedMessage(string msg)
+        public static OpenedMessage<T> CreateOpenedMessage(string msg, IJsonSerializer serializer)
         {
             var openedMessage = new OpenedMessage<T>();
             if (msg[0] == '0')
             {
                 openedMessage.EIO = EngineIO.V4;
+                openedMessage.Serializer = serializer;
                 openedMessage.Read(msg.Substring(1));
             }
             else
             {
                 openedMessage.EIO = EngineIO.V3;
+                openedMessage.Serializer = serializer;
                 int index = msg.IndexOf(':');
                 openedMessage.Read(msg.Substring(index + 2));
             }

@@ -23,7 +23,7 @@ namespace SocketIOClient.Messages
         public EngineIO EIO { get; set; }
 
         public TransportProtocol Protocol { get; set; }
-        public IJsonSerializer Serializer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IJsonSerializer Serializer { get; set; }
 
         public void Read(string msg)
         {

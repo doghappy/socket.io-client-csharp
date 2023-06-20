@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using System.Net.Sockets;
+using SocketIOClient.JsonSerializer;
 
 namespace SocketIOClient.IntegrationTests
 {
@@ -20,7 +21,8 @@ namespace SocketIOClient.IntegrationTests
         {
             using var io = CreateSocketIO();
             var results = new List<int>();
-            io.On("1:emit", res => results.Add(6 / res.GetValue<int>()));
+            var serializer = new SystemTextJsonSerializer();
+            io.On("1:emit", res => results.Add(6 / serializer.Deserialize<int>(res.GetValue().ToString())));
 
             await io.ConnectAsync();
             await io.EmitAsync("1:emit", 0);

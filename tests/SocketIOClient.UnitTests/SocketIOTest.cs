@@ -15,6 +15,7 @@ using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
+using System.Text.Json;
 
 [assembly: Parallelize(Workers = 8, Scope = ExecutionScope.ClassLevel)]
 
@@ -523,7 +524,7 @@ namespace SocketIOClient.UnitTests
                         },
                         m =>
                         {
-                            var msg = (EventMessage)m;
+                            var msg = (EventMessage<JsonElement>)m;
                             var text = System.Text.Json.JsonSerializer.Serialize(
                                 "hello world 你好🌍🌏🌎 hello world");
                             return msg.Event == "1 param" && msg.Json == $"[{text}]";
@@ -536,7 +537,7 @@ namespace SocketIOClient.UnitTests
                         },
                         m =>
                         {
-                            var msg = (BinaryMessage)m;
+                            var msg = (BinaryMessage<JsonElement>)m;
                             return msg.Event == "test-2"
                                    && msg.Json == "[{\"_placeholder\":true,\"num\":0}]"
                                    && msg.OutgoingBytes[0]
