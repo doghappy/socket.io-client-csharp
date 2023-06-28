@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -17,13 +16,11 @@ namespace SocketIOClient.Transport
         {
             Options = options ?? throw new ArgumentNullException(nameof(options));
             Serializer = serializer;
-            _messageQueue = new ConcurrentQueue<IMessage2>();
         }
 
         protected const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
 
         DateTime _pingTime;
-        readonly ConcurrentQueue<IMessage2> _messageQueue;
         protected TransportOptions Options { get; }
         protected ISerializer Serializer { get; }
 
@@ -169,13 +166,19 @@ namespace SocketIOClient.Transport
         {
             Debug.WriteLine($"[{Protocol}⬇] {text}");
             var message = Serializer.Deserialize(Options.EIO, text);
-            if (message == null) return;
+            await HandleMessage(message).ConfigureAwait(false);
+        }
 
-            if (message.BinaryCount > 0)
-            {
-                _messageQueue.Enqueue(message);
-                return;
-            }
+        protected async Task OnBinaryReceived(byte[] bytes)
+        {
+            Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
+            var message = Serializer.Deserialize(Options.EIO, bytes);
+            await HandleMessage(message).ConfigureAwait(false);
+        }
+
+        private async Task HandleMessage(IMessage2 message)
+        {
+            if (message == null) return;
 
             if (message.Type == MessageType.Opened)
             {
@@ -186,25 +189,7 @@ namespace SocketIOClient.Transport
 
             OnReceived.TryInvoke(message);
 
-            await HandlePingMessage(message);
-        }
-
-        protected void OnBinaryReceived(byte[] bytes)
-        {
-            Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
-
-            if (_messageQueue.Count <= 0)
-                return;
-            if (!_messageQueue.TryPeek(out var msg))
-                return;
-
-            msg.ReceivedBinary.Add(bytes);
-
-            if (msg.ReceivedBinary.Count < msg.BinaryCount)
-                return;
-
-            _messageQueue.TryDequeue(out var result);
-            OnReceived.TryInvoke(result);
+            await HandlePingMessage(message).ConfigureAwait(false);
         }
     }
 }

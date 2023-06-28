@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,9 +20,11 @@ namespace SocketIO.Serializer.SystemTextJson
         public SystemTextJsonSerializer(JsonSerializerOptions options)
         {
             _options = options ?? new JsonSerializerOptions();
+            _messageQueue = new ConcurrentQueue<IMessage2>();
         }
 
         private readonly JsonSerializerOptions _options;
+        readonly ConcurrentQueue<IMessage2> _messageQueue;
 
         private JsonSerializerOptions NewOptions(JsonConverter converter)
         {
@@ -30,7 +33,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return options;
         }
 
-        public string Serialize(object data)
+        private string Serialize(object data)
         {
             return JsonSerializer.Serialize(data, _options);
         }
@@ -169,10 +172,34 @@ namespace SocketIO.Serializer.SystemTextJson
 
                 var message = NewMessage(type);
                 ReadMessage(message, eio, text.Substring(prefix.Length));
+
+                if (message.BinaryCount > 0)
+                {
+                    _messageQueue.Enqueue(message);
+                    message.ReceivedBinary = new List<byte[]>(message.BinaryCount);
+                    return null;
+                }
+
                 return message;
             }
 
             return null;
+        }
+
+        public IMessage2 Deserialize(EngineIO eio, byte[] bytes)
+        {
+            if (_messageQueue.Count <= 0)
+                return null;
+            if (!_messageQueue.TryPeek(out var msg))
+                return null;
+
+            msg.ReceivedBinary.Add(bytes);
+
+            if (msg.ReceivedBinary.Count < msg.BinaryCount)
+                return null;
+
+            _messageQueue.TryDequeue(out var result);
+            return result;
         }
 
         public string MessageToJson(IMessage2 message)
@@ -206,7 +233,7 @@ namespace SocketIO.Serializer.SystemTextJson
         public SerializedItem SerializeConnectedMessage(
             string ns,
             EngineIO eio,
-            string auth,
+            object auth,
             IEnumerable<KeyValuePair<string, string>> queries)
         {
             return eio switch
@@ -220,12 +247,12 @@ namespace SocketIO.Serializer.SystemTextJson
         private static SerializedItem SerializeEio3ConnectedMessage(string ns,
             IEnumerable<KeyValuePair<string, string>> queries)
         {
-            var serializedItem = new SerializedItem();
             if (string.IsNullOrEmpty(ns))
             {
-                return serializedItem;
+                return null;
             }
 
+            var serializedItem = new SerializedItem();
             var builder = new StringBuilder("40");
             builder.Append(ns);
             if (queries != null)
@@ -244,7 +271,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return serializedItem;
         }
 
-        private static SerializedItem SerializeEio4ConnectedMessage(string ns, string auth)
+        private SerializedItem SerializeEio4ConnectedMessage(string ns, object auth)
         {
             var builder = new StringBuilder("40");
             if (!string.IsNullOrEmpty(ns))
@@ -252,7 +279,11 @@ namespace SocketIO.Serializer.SystemTextJson
                 builder.Append(ns).Append(',');
             }
 
-            builder.Append(auth);
+            if (auth is not null)
+            {
+                builder.Append(Serialize(auth));
+            }
+
             return new SerializedItem
             {
                 Text = builder.ToString()

@@ -11,6 +11,6 @@ namespace SocketIO.Core
         Ack,
         Error,
         Binary,
-        BinaryAck
+        BinaryAck,
     }
 }

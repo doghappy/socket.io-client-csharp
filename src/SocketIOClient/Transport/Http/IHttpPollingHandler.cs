@@ -10,7 +10,7 @@ namespace SocketIOClient.Transport.Http
     public interface IHttpPollingHandler
     {
         Func<string, Task> OnTextReceived { get; set; }
-        Action<byte[]> OnBytesReceived { get; set; }
+        Func<byte[], Task> OnBytesReceived { get; set; }
         Task GetAsync(string uri, CancellationToken cancellationToken);
         Task SendAsync(HttpRequestMessage req, CancellationToken cancellationToken);
         Task PostAsync(string uri, string content, CancellationToken cancellationToken);

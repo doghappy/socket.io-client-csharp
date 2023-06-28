@@ -178,7 +178,7 @@ namespace SocketIOClient
             {
                 EIO = Options.EIO,
                 Query = Options.Query,
-                Auth = Options.Auth == null ? string.Empty : Serializer.Serialize(Options.Auth),
+                Auth = Options.Auth,
                 ConnectionTimeout = Options.ConnectionTimeout
             };
             if (Options.Transport == TransportProtocol.Polling)

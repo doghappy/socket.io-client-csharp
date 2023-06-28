@@ -13,16 +13,14 @@ public class NewtonsoftJsonSerializerTests
     private static IEnumerable<(
             string eventName,
             string ns,
-            EngineIO eio,
             object[] data,
             IEnumerable<SerializedItem> expectedItems)>
         SerializeTupleCases =>
-        new (string eventName, string ns, EngineIO eio, object[] data, IEnumerable<SerializedItem> expectedItems)[]
+        new (string eventName, string ns, object[] data, IEnumerable<SerializedItem> expectedItems)[]
         {
             (
                 "test",
                 string.Empty,
-                EngineIO.V3,
                 Array.Empty<object>(),
                 new SerializedItem[]
                 {
@@ -35,7 +33,6 @@ public class NewtonsoftJsonSerializerTests
             (
                 "test",
                 string.Empty,
-                EngineIO.V3,
                 new object[1],
                 new SerializedItem[]
                 {
@@ -47,47 +44,43 @@ public class NewtonsoftJsonSerializerTests
                 }),
             (
                 "test",
-                "nsp",
-                EngineIO.V3,
+                "/nsp",
                 Array.Empty<object>(),
                 new SerializedItem[]
                 {
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp,[\"test\"]"
+                        Text = "42/nsp,[\"test\"]"
                     }
                 }),
             (
                 "test",
-                "nsp",
-                EngineIO.V3,
+                "/nsp",
                 new object[] { true },
                 new SerializedItem[]
                 {
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp,[\"test\",true]"
+                        Text = "42/nsp,[\"test\",true]"
                     }
                 }),
             (
                 "test",
-                "nsp",
-                EngineIO.V3,
+                "/nsp",
                 new object[] { true, false, 123 },
                 new SerializedItem[]
                 {
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "42nsp,[\"test\",true,false,123]"
+                        Text = "42/nsp,[\"test\",true,false,123]"
                     }
                 }),
             (
                 "test",
                 string.Empty,
-                EngineIO.V3,
                 new object[]
                 {
                     new byte[] { 1, 2, 3 }
@@ -107,8 +100,7 @@ public class NewtonsoftJsonSerializerTests
                 }),
             (
                 "test",
-                "nsp",
-                EngineIO.V3,
+                "/nsp",
                 new object[]
                 {
                     new byte[] { 1, 2, 3 },
@@ -119,7 +111,7 @@ public class NewtonsoftJsonSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Text,
-                        Text = "452-nsp,[\"test\",{\"_placeholder\":true,\"num\":0},{\"_placeholder\":true,\"num\":1}]"
+                        Text = "452-/nsp,[\"test\",{\"_placeholder\":true,\"num\":0},{\"_placeholder\":true,\"num\":1}]"
                     },
                     new()
                     {
@@ -132,27 +124,6 @@ public class NewtonsoftJsonSerializerTests
                         Binary = new byte[] { 4, 5, 6 }
                     }
                 }),
-            (
-                "test",
-                string.Empty,
-                EngineIO.V4,
-                new object[]
-                {
-                    new byte[] { 1, 2, 3 }
-                },
-                new SerializedItem[]
-                {
-                    new()
-                    {
-                        Type = SerializedMessageType.Text,
-                        Text = "451-[\"test\",{\"_placeholder\":true,\"num\":0}]"
-                    },
-                    new()
-                    {
-                        Type = SerializedMessageType.Binary,
-                        Binary = new byte[] { 1, 2, 3 }
-                    }
-                }),
         };
 
     public static IEnumerable<object[]> SerializeCases => SerializeTupleCases
@@ -161,7 +132,6 @@ public class NewtonsoftJsonSerializerTests
             caseId,
             x.eventName,
             x.ns,
-            x.eio,
             x.data,
             x.expectedItems
         });
@@ -172,7 +142,6 @@ public class NewtonsoftJsonSerializerTests
         int caseId,
         string eventName,
         string ns,
-        EngineIO eio,
         object[] data,
         IEnumerable<SerializedItem> expectedItems)
     {
@@ -184,19 +153,23 @@ public class NewtonsoftJsonSerializerTests
     private static IEnumerable<(
             string? ns,
             EngineIO eio,
-            string? auth,
+            object? auth,
             IEnumerable<KeyValuePair<string, string>> queries,
             SerializedItem? expected)>
         SerializeConnectedTupleCases =>
-        new (string? ns, EngineIO eio, string? auth, IEnumerable<KeyValuePair<string, string>> queries, SerializedItem?
-            expected)[]
+        new (
+            string? ns,
+            EngineIO eio,
+            object? auth,
+            IEnumerable<KeyValuePair<string, string>> queries,
+            SerializedItem? expected)[]
             {
-                (null, EngineIO.V3, null, null, new SerializedItem())!,
-                (null, EngineIO.V3, "{\"userId\":1}", null, new SerializedItem())!,
-                (null, EngineIO.V3, "{\"userId\":1}", new Dictionary<string, string>
+                (null, EngineIO.V3, null, null, null)!,
+                (null, EngineIO.V3, new { userId = 1 }, null, null)!,
+                (null, EngineIO.V3, new { userId = 1 }, new Dictionary<string, string>
                 {
                     ["hello"] = "world"
-                }, new SerializedItem()),
+                }, null),
                 ("/test", EngineIO.V3, null, null, new SerializedItem
                 {
                     Text = "40/test,"
@@ -218,11 +191,11 @@ public class NewtonsoftJsonSerializerTests
                 {
                     Text = "40/test,"
                 })!,
-                (null, EngineIO.V4, "{\"userId\":1}", null, new SerializedItem
+                (null, EngineIO.V4, new { userId = 1 }, null, new SerializedItem
                 {
                     Text = "40{\"userId\":1}"
                 })!,
-                ("/test", EngineIO.V4, "{\"userId\":1}", null, new SerializedItem
+                ("/test", EngineIO.V4, new { userId = 1 }, null, new SerializedItem
                 {
                     Text = "40/test,{\"userId\":1}"
                 })!,
@@ -254,7 +227,7 @@ public class NewtonsoftJsonSerializerTests
         int caseId,
         string? ns,
         EngineIO eio,
-        string? auth,
+        object? auth,
         IEnumerable<KeyValuePair<string, string>> queries,
         SerializedItem? expected)
     {
@@ -384,103 +357,6 @@ public class NewtonsoftJsonSerializerTests
                     Namespace = "/test",
                     Error = "Authentication error2"
                 }),
-            (
-                EngineIO.V3,
-                "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    BinaryCount = 1,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    BinaryCount = 1,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V3,
-                "451-/test,[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    Namespace = "/test",
-                    BinaryCount = 1,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "451-/test,[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    Namespace = "/test",
-                    BinaryCount = 1,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V3,
-                "451-30[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    BinaryCount = 1,
-                    Id = 30,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "451-30[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    BinaryCount = 1,
-                    Id = 30,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "451-/test,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.Binary,
-                    Namespace = "/test",
-                    BinaryCount = 1,
-                    Id = 30,
-                    Event = "1 params",
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "461-6[{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.BinaryAck,
-                    BinaryCount = 1,
-                    Id = 6,
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
-            (
-                EngineIO.V4,
-                "461-/test,6[{\"_placeholder\":true,\"num\":0}]",
-                new
-                {
-                    Type = MessageType.BinaryAck,
-                    BinaryCount = 1,
-                    Namespace = "/test",
-                    Id = 6,
-                    JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
-                }),
         };
 
     public static IEnumerable<object?[]> DeserializeEioTextCases => DeserializeEioTextTupleCases
@@ -501,6 +377,290 @@ public class NewtonsoftJsonSerializerTests
             .Should().BeEquivalentTo(expected, options => options
                 .Using<JArray>(x => x.Subject.ToString().Should().Be(x.Expectation.ToString()))
                 .WhenTypeIs<JArray>());
+    }
+
+    private static IEnumerable<(EngineIO eio, List<SerializedItem> items, List<object> expected)>
+        DeserializeEioBinaryTupleCases =>
+        new (EngineIO eio, List<SerializedItem> items, List<object> expected)[]
+        {
+            (
+                EngineIO.V3,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    }
+                },
+                new List<object>()),
+            (
+                EngineIO.V3,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        BinaryCount = 1,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        BinaryCount = 1,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V3,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-/test,[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        Namespace = "/test",
+                        BinaryCount = 1,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-/test,[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        Namespace = "/test",
+                        BinaryCount = 1,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V3,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-30[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        BinaryCount = 1,
+                        Id = 30,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-30[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        BinaryCount = 1,
+                        Id = 30,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "451-/test,30[\"1 params\",{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.Binary,
+                        Namespace = "/test",
+                        BinaryCount = 1,
+                        Id = 30,
+                        Event = "1 params",
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "461-6[{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.BinaryAck,
+                        BinaryCount = 1,
+                        Id = 6,
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+            (
+                EngineIO.V4,
+                new List<SerializedItem>
+                {
+                    new()
+                    {
+                        Type = SerializedMessageType.Text,
+                        Text = "461-/test,6[{\"_placeholder\":true,\"num\":0}]"
+                    },
+                    new()
+                    {
+                        Type = SerializedMessageType.Binary,
+                        Binary = new byte[1]
+                    }
+                },
+                new List<object>
+                {
+                    new
+                    {
+                        Type = MessageType.BinaryAck,
+                        BinaryCount = 1,
+                        Namespace = "/test",
+                        Id = 6,
+                        JsonArray = JArray.Parse("[{\"_placeholder\":true,\"num\":0}]")
+                    }
+                }),
+        };
+
+    public static IEnumerable<object[]> DeserializeEioBinaryCases => DeserializeEioBinaryTupleCases
+        .Select((x, caseId) => new object[]
+        {
+            caseId,
+            x.eio,
+            x.items,
+            x.expected
+        });
+
+    [Theory]
+    [MemberData(nameof(DeserializeEioBinaryCases))]
+    public void Should_deserialize_eio_and_binary(
+        int caseId,
+        EngineIO eio,
+        List<SerializedItem> items,
+        List<object> expected)
+    {
+        var serializer = new NewtonsoftJsonSerializer();
+        var list = new List<IMessage2>();
+        foreach (var item in items)
+        {
+            var message = item.Type == SerializedMessageType.Text
+                ? serializer.Deserialize(eio, item.Text)
+                : serializer.Deserialize(eio, item.Binary);
+            if (message is not null)
+            {
+                list.Add(message);
+            }
+        }
+
+        list.Should().BeEquivalentTo(expected, options => options
+            .Using<JArray>(x => x.Subject.ToString().Should().Be(x.Expectation.ToString()))
+            .WhenTypeIs<JArray>());
     }
 
     private static IEnumerable<(

@@ -26,7 +26,7 @@ namespace SocketIOClient.Extensions
             {
                 return;
             }
-            await func(arg1);
+            await func(arg1).ConfigureAwait(false);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace SocketIOClient.Transport.Http
                 return;
             }
             string text = builder.ToString().TrimEnd(Separator);
-            await PostAsync(uri, text, cancellationToken);
+            await PostAsync(uri, text, cancellationToken).ConfigureAwait(false);
         }
 
         protected override async Task ProduceText(string text)
@@ -38,11 +38,11 @@ namespace SocketIOClient.Transport.Http
                 if (item[0] == 'b')
                 {
                     byte[] bytes = Convert.FromBase64String(item.Substring(1));
-                    OnBytes(bytes);
+                    await OnBytes(bytes).ConfigureAwait(false);
                 }
                 else
                 {
-                    await OnTextReceived.TryInvokeAsync(item);
+                    await OnTextReceived.TryInvokeAsync(item).ConfigureAwait(false);
                 }
             }
         }

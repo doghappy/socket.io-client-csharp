@@ -8,7 +8,7 @@ namespace SocketIOClient.Transport
     {
         public EngineIO EIO { get; set; }
         public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
-        public string Auth { get; set; }
+        public object Auth { get; set; }
         public TimeSpan ConnectionTimeout { get; set; }
     }
 }

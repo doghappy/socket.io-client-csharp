@@ -19,7 +19,7 @@ namespace SocketIOClient.Transport.Http
 
         protected IHttpClient HttpClient { get; }
         public Func<string, Task> OnTextReceived { get; set; }
-        public Action<byte[]> OnBytesReceived { get; set; }
+        public Func<byte[], Task> OnBytesReceived { get; set; }
 
         public void AddHeader(string key, string val)
         {
@@ -45,6 +45,7 @@ namespace SocketIOClient.Transport.Http
             {
                 throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
             }
+
             await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
@@ -55,13 +56,15 @@ namespace SocketIOClient.Transport.Http
             {
                 throw new HttpRequestException($"Response status code does not indicate success: {resMsg.StatusCode}");
             }
+
             await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
         public virtual async Task PostAsync(string uri, string content, CancellationToken cancellationToken)
         {
             var httpContent = new StringContent(content);
-            var resMsg = await HttpClient.PostAsync(AppendRandom(uri), httpContent, cancellationToken).ConfigureAwait(false);
+            var resMsg = await HttpClient.PostAsync(AppendRandom(uri), httpContent, cancellationToken)
+                .ConfigureAwait(false);
             await ProduceMessageAsync(resMsg).ConfigureAwait(false);
         }
 
@@ -72,20 +75,20 @@ namespace SocketIOClient.Transport.Http
             if (resMsg.Content.Headers.ContentType.MediaType == "application/octet-stream")
             {
                 byte[] bytes = await resMsg.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
-                await ProduceBytes(bytes);
+                await ProduceBytes(bytes).ConfigureAwait(false);
             }
             else
             {
                 string text = await resMsg.Content.ReadAsStringAsync().ConfigureAwait(false);
-                await ProduceText(text);
+                await ProduceText(text).ConfigureAwait(false);
             }
         }
 
         protected abstract Task ProduceText(string text);
 
-        protected void OnBytes(byte[] bytes)
+        protected async Task OnBytes(byte[] bytes)
         {
-            OnBytesReceived.TryInvoke(bytes);
+            await OnBytesReceived.TryInvokeAsync(bytes);
         }
 
         private async Task ProduceBytes(byte[] bytes)
@@ -101,6 +104,7 @@ namespace SocketIOClient.Transport.Http
                     builder.Append(bytes[i]);
                     i++;
                 }
+
                 i++;
                 int length = int.Parse(builder.ToString());
                 if (type == 0)
@@ -115,6 +119,7 @@ namespace SocketIOClient.Transport.Http
                     Buffer.BlockCopy(bytes, i + 1, buffer, 0, buffer.Length);
                     OnBytes(buffer);
                 }
+
                 i += length;
             }
         }

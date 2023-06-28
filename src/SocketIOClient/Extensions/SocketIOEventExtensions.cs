@@ -29,11 +29,11 @@ namespace SocketIOClient.Extensions
             }
         }
 
-        public static void TryInvoke(this Func<SocketIOResponse, Task> handler, SocketIOResponse response)
+        public static async Task TryInvoke(this Func<SocketIOResponse, Task> handler, SocketIOResponse response)
         {
             try
             {
-                handler(response);
+                await handler(response);
             }
             catch
             {

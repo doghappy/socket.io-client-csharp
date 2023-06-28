@@ -13,10 +13,10 @@ namespace SocketIOClient.IntegrationTests
     public class AutoReconnectTests
     {
         [TestMethod]
-        [DataRow("v2", "v2-ws.js", 11202, EngineIO.V3, TransportProtocol.WebSocket)]
-        [DataRow("v2", "v2-http.js", 11203, EngineIO.V3, TransportProtocol.Polling)]
-        [DataRow("v4", "v4-ws.js", 11402, EngineIO.V4, TransportProtocol.WebSocket)]
-        [DataRow("v4", "v4-http.js", 11403, EngineIO.V4, TransportProtocol.Polling)]
+        [DataRow("v2", "v2-ws.js", 11292, EngineIO.V3, TransportProtocol.WebSocket)]
+        [DataRow("v2", "v2-http.js", 11293, EngineIO.V3, TransportProtocol.Polling)]
+        [DataRow("v4", "v4-ws.js", 11492, EngineIO.V4, TransportProtocol.WebSocket)]
+        [DataRow("v4", "v4-http.js", 11493, EngineIO.V4, TransportProtocol.Polling)]
         public async Task Should_reconnect_when_server_shutdown(
             string folder,
             string name,
