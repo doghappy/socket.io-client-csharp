@@ -7,7 +7,7 @@ const port = process.env.PORT || 11402;
 
 var io = socket(server, {
     parser: require('socket.io-msgpack-parser'),
-    transports: ["polling"],
+    // transports: ["polling"],
     pingInterval: 5000,
     pingTimeout: 10000,
     cors: {

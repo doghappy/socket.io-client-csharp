@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MessagePack;
-using MessagePack.Formatters;
-using MessagePack.Resolvers;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
 
 namespace SocketIO.Serializer.MessagePack
 {
+    public class TestDto
+    {
+        public int Id { get; set; }
+        public byte[] Data { get; set; }
+    }
+
     public class SocketIOMessagePackSerializer : ISerializer
     {
         public SocketIOMessagePackSerializer() : this(MessagePackSerializerOptions.Standard)
@@ -22,21 +26,6 @@ namespace SocketIO.Serializer.MessagePack
         }
 
         private readonly MessagePackSerializerOptions _options;
-        // private int _id;
-
-        // private MessagePackSerializerOptions NewOptions(JsonConverter converter)
-        // {
-        //     
-        //     var options = new MessagePackSerializerOptions(convert);
-        //     options.Converters.Add(converter);
-        //     return options;
-        // }
-
-        public string Serialize(object data)
-        {
-            var bytes = MessagePackSerializer.Serialize(data, _options);
-            return MessagePackSerializer.ConvertToJson(bytes, _options);
-        }
 
         private static object[] InsertEventToData(string eventName, object[] data)
         {
@@ -48,33 +37,45 @@ namespace SocketIO.Serializer.MessagePack
 
         public List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data)
         {
-            // return InternalSerialize(eventName, packetId, ns, data);
             throw new NotImplementedException();
         }
 
-        public List<SerializedItem> Serialize(int packetId, string ns, object[] data)
+        public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
         {
             var message = new PackMessage2
             {
+                Type = PackMessageType.Ack,
                 Id = packetId,
-                Nsp = ns,
+                Nsp = GetNsp(nsp),
             };
-            if (data is not null && data.Length > 0)
+            if (data is null)
             {
-                message.Data.AddRange(data);
+                message.Data = new List<object>();
             }
+            else if (data.Length > 0)
+            {
+                message.Type = PackMessageType.BinaryAck;
+                message.Data = data.ToList();
+            }
+
+            var test = MessagePackSerializer.Serialize(message, _options);
+            var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
+            var testjson = MessagePackSerializer.ConvertToJson(test);
+            // var test2 = MessagePackSerializer.Serialize("🐮🍺"u8.ToArray(), ContractlessStandardResolver.Options);
+            // var text2 = BitConverter.ToString(test2).Replace("-", " ");
+            // var testjson2 = MessagePackSerializer.ConvertToJson(test2);
 
             return new List<SerializedItem>
             {
                 new()
                 {
                     Type = SerializedMessageType.Binary,
-                    Binary = MessagePackSerializer.Serialize(message)
+                    Binary = MessagePackSerializer.Serialize(message, _options)
                 }
             };
         }
 
-        public List<SerializedItem> Serialize(string eventName, string ns, object[] data)
+        public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
         {
             var message = new PackMessage2
             {
@@ -85,7 +86,7 @@ namespace SocketIO.Serializer.MessagePack
                 },
             };
             message.Data.AddRange(data);
-            message.Nsp = GetNsp(ns);
+            message.Nsp = GetNsp(nsp);
             return new List<SerializedItem>
             {
                 new()
@@ -101,64 +102,20 @@ namespace SocketIO.Serializer.MessagePack
             return string.IsNullOrEmpty(ns) ? "/" : ns;
         }
 
-        // private List<SerializedItem> InternalSerialize(string eventName, int? packetId, string ns, object[] data)
-        // {
-        //     var newData = InsertEventToData(eventName, data);
-        //
-        //     var converter = new ByteArrayConverter();
-        //     var options = NewOptions(converter);
-        //     var json = JsonSerializer.Serialize(newData, options);
-        //
-        //     var builder = new StringBuilder();
-        //     if (converter.Bytes.Count == 0)
-        //     {
-        //         builder.Append("42");
-        //     }
-        //     else
-        //     {
-        //         builder.Append("45").Append(converter.Bytes.Count).Append('-');
-        //     }
-        //
-        //     if (!string.IsNullOrEmpty(ns))
-        //     {
-        //         builder.Append(ns).Append(',');
-        //     }
-        //
-        //     if (packetId is not null)
-        //     {
-        //         builder.Append(packetId);
-        //     }
-        //
-        //     builder.Append(json);
-        //     return NewSerializedItems(builder, converter.Bytes);
-        // }
-        //
-        // private (JsonNode jsonNode, JsonSerializerOptions options) GetSerializationData(IMessage2 message, int index)
-        // {
-        //     var jsonMessage = (JsonMessage)message;
-        //     var item = jsonMessage.JsonArray[index];
-        //     var converter = new ByteArrayConverter();
-        //     if (jsonMessage.ReceivedBinary is not null)
-        //     {
-        //         converter.Bytes.AddRange(jsonMessage.ReceivedBinary);
-        //     }
-        //
-        //     var options = NewOptions(converter);
-        //     return (item, options);
-        // }
-
         public T Deserialize<T>(IMessage2 message, int index)
         {
-            // var (jsonNode, options) = GetSerializationData(message, index);
-            // return jsonNode.Deserialize<T>(options);
-            throw new NotImplementedException();
+            var packMessage = (PackMessage)message;
+            var data = packMessage.Data[index];
+            var bytes = MessagePackSerializer.Serialize(data, _options);
+            return MessagePackSerializer.Deserialize<T>(bytes, _options);
         }
 
         public object Deserialize(IMessage2 message, int index, Type returnType)
         {
-            // var (jsonNode, options) = GetSerializationData(message, index);
-            // return jsonNode.Deserialize(returnType, options);
-            throw new NotImplementedException();
+            var packMessage = (PackMessage)message;
+            var data = packMessage.Data[index];
+            var bytes = MessagePackSerializer.Serialize(data, _options);
+            return MessagePackSerializer.Deserialize(returnType, bytes, _options);
         }
 
         public IMessage2 Deserialize(EngineIO eio, byte[] bytes)
@@ -199,26 +156,6 @@ namespace SocketIO.Serializer.MessagePack
                 default:
                     return HandleDefaultMessage(protocol, text.Substring(1), eio);
             }
-            // switch (protocol)
-            // {
-            //     case '4':
-            //         return HandleEventMessage();
-            //     default:
-            //         return HandleEngineProtocol(text);
-            // }
-
-            // var enums = Enum.GetValues(typeof(MessageType));
-            // foreach (MessageType type in enums)
-            // {
-            //     var prefix = ((int)type).ToString();
-            //     if (!text.StartsWith(prefix)) continue;
-            //
-            //     var message = NewMessage(type);
-            //     ReadMessage(message, eio, text.Substring(prefix.Length));
-            //     return message;
-            // }
-            //
-            // return null;
         }
 
         private static IMessage2 HandleEventMessage()
@@ -365,9 +302,9 @@ namespace SocketIO.Serializer.MessagePack
                 case MessageType.Event:
                     ReadEventMessage(message, odm);
                     break;
-                // case MessageType.Ack:
-                //     ReadAckMessage(message, text);
-                //     break;
+                case MessageType.Ack:
+                    ReadAckMessage(message, odm);
+                    break;
                 case MessageType.Error:
                     ReadErrorMessage(message, odm);
                     break;
@@ -392,17 +329,6 @@ namespace SocketIO.Serializer.MessagePack
 
         private static void ReadConnectedMessage(IMessage2 message, ObjectDataMessage odm)
         {
-            // switch (eio)
-            // {
-            //     case EngineIO.V3:
-            //         ReadEio3ConnectedMessage(message, odm);
-            //         break;
-            //     // case EngineIO.V4:
-            //     //     ReadEio4ConnectedMessage(message, objectData);
-            //     //     break;
-            //     default:
-            //         throw new ArgumentOutOfRangeException(nameof(eio), eio, null);
-            // }
             message.Namespace = odm.Namespace;
             if (odm.Data is not null)
             {
@@ -412,28 +338,6 @@ namespace SocketIO.Serializer.MessagePack
         }
 
         private static void ReadDisconnectedMessage(IMessage2 message, ObjectDataMessage odm)
-        {
-            message.Namespace = odm.Namespace;
-        }
-
-        private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
-        {
-            // var index = text.IndexOf('{');
-            // if (index > 0)
-            // {
-            //     message.Namespace = text.Substring(0, index - 1);
-            //     text = text.Substring(index);
-            // }
-            // else
-            // {
-            //     message.Namespace = string.Empty;
-            // }
-            //
-            // message.Sid = JsonDocument.Parse(text).RootElement.GetProperty("sid").GetString();
-            throw new NotImplementedException();
-        }
-
-        private static void ReadEio3ConnectedMessage(IMessage2 message, ObjectDataMessage odm)
         {
             message.Namespace = odm.Namespace;
         }
@@ -449,22 +353,14 @@ namespace SocketIO.Serializer.MessagePack
             packMessage.Data = data.Skip(1).ToList();
         }
 
-        private static void ReadAckMessage(IMessage2 message, string text)
+        private static void ReadAckMessage(IMessage2 message, ObjectDataMessage odm)
         {
-            var index = text.IndexOf('[');
-            var lastIndex = text.LastIndexOf(',', index);
-            if (lastIndex > -1)
-            {
-                var subText = text.Substring(0, index);
-                message.Namespace = subText.Substring(0, lastIndex);
-                message.Id = int.Parse(subText.Substring(lastIndex + 1));
-            }
-            else
-            {
-                message.Id = int.Parse(text.Substring(0, index));
-            }
+            message.Namespace = odm.Namespace;
+            message.Id = odm.Id;
 
-            message.ReceivedText = text.Substring(index);
+            var data = (object[])odm.Data;
+            var packMessage = (PackMessage)message;
+            packMessage.Data = data.ToList();
         }
 
         private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm)
@@ -498,27 +394,6 @@ namespace SocketIO.Serializer.MessagePack
                 {
                     message.Id = int.Parse(text.Substring(index1 + 1, idLength));
                 }
-            }
-
-            message.ReceivedText = text.Substring(index2);
-        }
-
-        private static void ReadBinaryAckMessage(IMessage2 message, string text)
-        {
-            var index1 = text.IndexOf('-');
-            message.BinaryCount = int.Parse(text.Substring(0, index1));
-
-            var index2 = text.IndexOf('[');
-
-            var index3 = text.LastIndexOf(',', index2);
-            if (index3 > -1)
-            {
-                message.Namespace = text.Substring(index1 + 1, index3 - index1 - 1);
-                message.Id = int.Parse(text.Substring(index3 + 1, index2 - index3 - 1));
-            }
-            else
-            {
-                message.Id = int.Parse(text.Substring(index1 + 1, index2 - index1 - 1));
             }
 
             message.ReceivedText = text.Substring(index2);

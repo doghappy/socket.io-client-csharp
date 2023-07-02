@@ -1,6 +1,9 @@
+using System.Reflection;
 using MessagePack;
+using MessagePack.Resolvers;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
+using SocketIO.Serializer.Tests.Models;
 
 namespace SocketIO.Serializer.MessagePack.Tests;
 
@@ -308,127 +311,56 @@ public class SocketIOMessagePackSerializerTests
     private static IEnumerable<(EngineIO eio, string? text, object? expected)> DeserializeTextTupleCases =>
         new (EngineIO eio, string? text, object? expected)[]
         {
-            // (EngineIO.V3, string.Empty, null),
-            // (EngineIO.V3, "hello", null),
-            // (EngineIO.V4, "2", new { Type = MessageType.Ping }),
-            // (EngineIO.V4, "3", new { Type = MessageType.Pong }),
-            // (
-            //     EngineIO.V4,
-            //     "0{\"sid\":\"wOuAvDB9Jj6yE0VrAL8N\",\"upgrades\":[\"websocket\"],\"pingInterval\":25000,\"pingTimeout\":30000}",
-            //     new
-            //     {
-            //         Type = MessageType.Opened,
-            //         Sid = "wOuAvDB9Jj6yE0VrAL8N",
-            //         PingInterval = 25000,
-            //         PingTimeout = 30000,
-            //         Upgrades = new List<string> { "websocket" }
-            //     }),
-            // (EngineIO.V3, "4{\"type\":0,\"nsp\":\"/\"}", new { Type = MessageType.Connected }),
-            // (EngineIO.V3, "4{\"type\":0,\"nsp\":\"/test\"}", new { Type = MessageType.Connected, Namespace = "/test" }),
-            // (
-            //     EngineIO.V3,
-            //     "4{\"type\":0,\"query\":\"token=eio3\",\"nsp\":\"/test?token=eio3\"}",
-            //     new
-            //     {
-            //         Type = MessageType.Connected,
-            //         Namespace = "/test?token=eio3"
-            //     }),
-            // (
-            //     EngineIO.V4,
-            //     "4{\"type\":0,\"data\":{\"sid\":\"test-id\"}}",
-            //     new
-            //     {
-            //         Type = MessageType.Connected,
-            //         Sid = "test-id"
-            //     }),
-            // (
-            //     EngineIO.V4,
-            //     "4{\"type\":0,\"data\":{\"sid\":\"test-id\"},\"nsp\":\"/test\"}",
-            //     new
-            //     {
-            //         Type = MessageType.Connected,
-            //         Sid = "test-id",
-            //         Namespace = "/test"
-            //     }),
-
-            /*
-             (
-                 EngineIO.V4,
-                 "42[\"hi\",\"V3: onAny\"]",
-                 new
-                 {
-                     Type = MessageType.Event,
-                     Event = "hi",
-                     JsonArray = JsonNode.Parse("[\"V3: onAny\"]")!.AsArray()
-                 }),
-             (
-                 EngineIO.V4,
-                 "42/test,[\"hi\",\"V3: onAny\"]",
-                 new
-                 {
-                     Type = MessageType.Event,
-                     Event = "hi",
-                     Namespace = "/test",
-                     JsonArray = JsonNode.Parse("[\"V3: onAny\"]")!.AsArray()
-                 }),
-             (
-                 EngineIO.V4,
-                 "42/test,17[\"cool\"]",
-                 new
-                 {
-                     Type = MessageType.Event,
-                     Id = 17,
-                     Namespace = "/test",
-                     Event = "cool",
-                     JsonArray = JsonNode.Parse("[]")!.AsArray()
-                 }),
-             (
-                 EngineIO.V4,
-                 "431[\"nice\"]",
-                 new
-                 {
-                     Type = MessageType.Ack,
-                     Id = 1,
-                     JsonArray = JsonNode.Parse("[\"nice\"]")!.AsArray()
-                 }),
-             (
-                 EngineIO.V4,
-                 "43/test,1[\"nice\"]",
-                 new
-                 {
-                     Type = MessageType.Ack,
-                     Id = 1,
-                     Namespace = "/test",
-                     JsonArray = JsonNode.Parse("[\"nice\"]")!.AsArray()
-                 }),
-             */
-            // (
-            //     EngineIO.V3,
-            //     "4{\"type\":4,\"data\":\"Authentication error\",\"nsp\":\"/\"}",
-            //     new
-            //     {
-            //         Type = MessageType.Error,
-            //         Error = "Authentication error"
-            //     }),
-            /*
-               (
-                  EngineIO.V4,
-                  "44{\"message\":\"Authentication error\"}",
-                  new
-                  {
-                      Type = MessageType.Error,
-                      Error = "Authentication error"
-                  }),
-              (
-                  EngineIO.V4,
-                  "44/test,{\"message\":\"Authentication error\"}",
-                  new
-                  {
-                      Type = MessageType.Error,
-                      Namespace = "/test",
-                      Error = "Authentication error"
-                  }),
-             */
+            (EngineIO.V3, string.Empty, null),
+            (EngineIO.V3, "hello", null),
+            (EngineIO.V4, "2", new { Type = MessageType.Ping }),
+            (EngineIO.V4, "3", new { Type = MessageType.Pong }),
+            (
+                EngineIO.V4,
+                "0{\"sid\":\"wOuAvDB9Jj6yE0VrAL8N\",\"upgrades\":[\"websocket\"],\"pingInterval\":25000,\"pingTimeout\":30000}",
+                new
+                {
+                    Type = MessageType.Opened,
+                    Sid = "wOuAvDB9Jj6yE0VrAL8N",
+                    PingInterval = 25000,
+                    PingTimeout = 30000,
+                    Upgrades = new List<string> { "websocket" }
+                }),
+            (EngineIO.V3, "4{\"type\":0,\"nsp\":\"/\"}", new { Type = MessageType.Connected }),
+            (EngineIO.V3, "4{\"type\":0,\"nsp\":\"/test\"}", new { Type = MessageType.Connected, Namespace = "/test" }),
+            (
+                EngineIO.V3,
+                "4{\"type\":0,\"query\":\"token=eio3\",\"nsp\":\"/test?token=eio3\"}",
+                new
+                {
+                    Type = MessageType.Connected,
+                    Namespace = "/test?token=eio3"
+                }),
+            (
+                EngineIO.V4,
+                "4{\"type\":0,\"data\":{\"sid\":\"test-id\"}}",
+                new
+                {
+                    Type = MessageType.Connected,
+                    Sid = "test-id"
+                }),
+            (
+                EngineIO.V4,
+                "4{\"type\":0,\"data\":{\"sid\":\"test-id\"},\"nsp\":\"/test\"}",
+                new
+                {
+                    Type = MessageType.Connected,
+                    Sid = "test-id",
+                    Namespace = "/test"
+                }),
+            (
+                EngineIO.V3,
+                "4{\"type\":4,\"data\":\"Authentication error\",\"nsp\":\"/\"}",
+                new
+                {
+                    Type = MessageType.Error,
+                    Error = "Authentication error"
+                }),
         };
 
     public static IEnumerable<object?[]> DeserializeTextCases => DeserializeTextTupleCases
@@ -456,30 +388,34 @@ public class SocketIOMessagePackSerializerTests
     private static IEnumerable<(EngineIO eio, byte[] binary, object? expected)> DeserializeBinaryTupleCases =>
         new (EngineIO eio, byte[] binary, object? expected)[]
         {
-            // (
-            //     EngineIO.V4,
-            //     new byte[] { 0x82, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F },
-            //     new
-            //     {
-            //         Type = MessageType.Disconnected,
-            //         Namespace = "/"
-            //     }),
-            // (
-            //     EngineIO.V4,
-            //     new byte[]
-            //     {
-            //         0x82, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA5, 0x2F, 0x74, 0x65, 0x73, 0x74
-            //     },
-            //     new
-            //     {
-            //         Type = MessageType.Disconnected,
-            //         Namespace = "/test"
-            //     }),
             (
                 EngineIO.V4,
+                // {"type":1,"nsp":"/"}
+                new byte[] { 0x82, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F },
+                new
+                {
+                    Type = MessageType.Disconnected,
+                    Namespace = "/"
+                }),
+            (
+                EngineIO.V4,
+                // {"type":1,"nsp":"/test"}
                 new byte[]
                 {
-                    0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x02, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA2, 0x68, 0x69, 0xA9, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x2E, 0x69, 0x6F, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
+                    0x82, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA5, 0x2F, 0x74, 0x65, 0x73, 0x74
+                },
+                new
+                {
+                    Type = MessageType.Disconnected,
+                    Namespace = "/test"
+                }),
+            (
+                EngineIO.V4,
+                // {"type":2,"data":["hi","socket.io"],"nsp":"/"}
+                new byte[]
+                {
+                    0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x02, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA2, 0x68, 0x69,
+                    0xA9, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x2E, 0x69, 0x6F, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
                 },
                 new
                 {
@@ -487,6 +423,85 @@ public class SocketIOMessagePackSerializerTests
                     Event = "hi",
                     Data = new object[] { "socket.io" },
                     Namespace = "/"
+                }),
+            (
+                EngineIO.V4,
+                // {"type":2,"data":["hi","socket.io"],"nsp":"/nsp"}
+                new byte[]
+                {
+                    0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x02, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA2, 0x68, 0x69,
+                    0xA9, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x2E, 0x69, 0x6F, 0xA3, 0x6E, 0x73, 0x70, 0xA4, 0x2F,
+                    0x6E, 0x73, 0x70
+                },
+                new
+                {
+                    Type = MessageType.Event,
+                    Event = "hi",
+                    Data = new object[] { "socket.io" },
+                    Namespace = "/nsp"
+                }),
+            (
+                EngineIO.V4,
+                // {"type":2,"data":["hi","socket.io"],"id":17,"nsp":"/"}
+                new byte[]
+                {
+                    0x84, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x02, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA2, 0x68, 0x69,
+                    0xA9, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x2E, 0x69, 0x6F, 0xA2, 0x69, 0x64, 0x11, 0xA3, 0x6E,
+                    0x73, 0x70, 0xA1, 0x2F
+                },
+                new
+                {
+                    Type = MessageType.Event,
+                    Event = "hi",
+                    Data = new object[] { "socket.io" },
+                    Namespace = "/",
+                    Id = 17
+                }),
+            (
+                EngineIO.V4,
+                // {"type":2,"data":["hi","socket.io"],"id":17,"nsp":"/nsp"}
+                new byte[]
+                {
+                    0x84, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x02, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA2, 0x68, 0x69,
+                    0xA9, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x2E, 0x69, 0x6F, 0xA2, 0x69, 0x64, 0x11, 0xA3, 0x6E,
+                    0x73, 0x70, 0xA4, 0x2F, 0x6E, 0x73, 0x70
+                },
+                new
+                {
+                    Type = MessageType.Event,
+                    Event = "hi",
+                    Data = new object[] { "socket.io" },
+                    Namespace = "/nsp",
+                    Id = 17
+                }),
+            (
+                EngineIO.V4,
+                // {"type":3,"data":["hello"],"id":1,"nsp":"/"}
+                new byte[]
+                {
+                    0x84, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x03, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x91, 0xA5, 0x68, 0x65,
+                    0x6C, 0x6C, 0x6F, 0xA2, 0x69, 0x64, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
+                },
+                new
+                {
+                    Type = MessageType.Ack,
+                    Data = new object[] { "hello" },
+                    Namespace = "/",
+                    Id = 1
+                }),
+            (
+                EngineIO.V4,
+                new byte[]
+                {
+                    0x84, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x03, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x91, 0xA5, 0x68, 0x65,
+                    0x6C, 0x6C, 0x6F, 0xA2, 0x69, 0x64, 0x01, 0xA3, 0x6E, 0x73, 0x70, 0xA4, 0x2F, 0x6E, 0x73, 0x70
+                },
+                new
+                {
+                    Type = MessageType.Ack,
+                    Data = new object[] { "hello" },
+                    Namespace = "/nsp",
+                    Id = 1
                 }),
         };
 
@@ -509,6 +524,265 @@ public class SocketIOMessagePackSerializerTests
     {
         var serializer = new SocketIOMessagePackSerializer();
         serializer.Deserialize(eio, binary)
+            .Should().BeEquivalentTo(expected);
+    }
+
+    private static IEnumerable<(
+        IMessage2 message,
+        int index,
+        MessagePackSerializerOptions? options,
+        object expected)> DeserializeGenericMethodTupleCases =>
+        new (IMessage2 message, int index, MessagePackSerializerOptions? AssertionOptions, object expected)[]
+        {
+            (new PackMessage(MessageType.Event)
+            {
+                Event = "event",
+                Data = new List<object> { 1 }
+            }, 0, null, 1)!,
+            (new PackMessage(MessageType.Event)
+            {
+                Event = "event",
+                Data = new List<object> { "hello" }
+            }, 0, null, "hello")!,
+            (
+                new PackMessage(MessageType.Event)
+                {
+                    Event = "event",
+                    Data = new List<object>
+                    {
+                        "hello",
+                        new
+                        {
+                            User = "admin",
+                            Password = "test"
+                        }
+                    }
+                }, 1, null, new MessagePackUserPasswordDto
+                {
+                    User = "admin",
+                    Password = "test"
+                }),
+            (
+                new PackMessage(MessageType.Event)
+                {
+                    Event = "event",
+                    Data = new List<object>
+                    {
+                        "hello",
+                        new
+                        {
+                            User = "admin",
+                            Password = "test"
+                        }
+                    }
+                }, 1, ContractlessStandardResolver.Options, new UserPasswordDto
+                {
+                    User = "admin",
+                    Password = "test"
+                }),
+            (
+                new PackMessage(MessageType.Event)
+                {
+                    Event = "event",
+                    Data = new List<object>
+                    {
+                        "hello world!"u8.ToArray(),
+                        new
+                        {
+                            Size = 2023,
+                            Name = "test.txt",
+                            Bytes = "🐮🍺"u8.ToArray()
+                        }
+                    }
+                }, 0, ContractlessStandardResolver.Options, "hello world!"u8.ToArray()),
+            (
+                new PackMessage(MessageType.Event)
+                {
+                    Event = "event",
+                    Data = new List<object>
+                    {
+                        "hello world!"u8.ToArray(),
+                        new
+                        {
+                            Size = 2023,
+                            Name = "test.txt",
+                            Bytes = "🐮🍺"u8.ToArray()
+                        }
+                    }
+                }, 1, ContractlessStandardResolver.Options, new FileDto
+                {
+                    Size = 2023,
+                    Name = "test.txt",
+                    Bytes = "🐮🍺"u8.ToArray()
+                }),
+        };
+
+    public static IEnumerable<object?[]> DeserializeGenericMethodCases => DeserializeGenericMethodTupleCases
+        .Select((x, caseId) => new[]
+        {
+            caseId,
+            x.message,
+            x.index,
+            x.options,
+            x.expected
+        });
+
+    [Theory]
+    [MemberData(nameof(DeserializeGenericMethodCases))]
+    public void Should_deserialize_generic_type_by_message_and_index(
+        int caseId,
+        IMessage2 message,
+        int index,
+        MessagePackSerializerOptions? options,
+        object expected)
+    {
+        var serializer = new SocketIOMessagePackSerializer(options);
+        var actual = serializer.GetType()
+            .GetMethod(
+                nameof(SocketIOMessagePackSerializer.Deserialize),
+                BindingFlags.Public | BindingFlags.Instance,
+                new[] { typeof(IMessage2), typeof(int) })!
+            .MakeGenericMethod(expected.GetType())
+            .Invoke(serializer, new object?[] { message, index });
+        actual.Should().BeEquivalentTo(expected);
+    }
+
+    [Theory]
+    [MemberData(nameof(DeserializeGenericMethodCases))]
+    public void Should_deserialize_non_generic_type_by_message_and_index_and_type(
+        int caseId,
+        IMessage2 message,
+        int index,
+        MessagePackSerializerOptions? options,
+        object expected)
+    {
+        var serializer = new SocketIOMessagePackSerializer(options);
+        var actual = serializer.Deserialize(message, index, expected.GetType());
+        actual.Should().BeEquivalentTo(expected);
+    }
+
+    private static IEnumerable<(
+        int packetId,
+        string? nsp,
+        MessagePackSerializerOptions? options,
+        object[] data,
+        List<SerializedItem> expected)> SerializePacketIdNamespaceDataTupleCases =>
+        new (
+            int packetId,
+            string? nsp,
+            MessagePackSerializerOptions? options,
+            object[] data,
+            List<SerializedItem> expected)[]
+            {
+                (0, null, null, null,
+                    new()
+                    {
+                        new()
+                        {
+                            Type = SerializedMessageType.Binary,
+                            // {"type":3,"data":[],"options":{"compress":true},"id":0,"nsp":"/"}
+                            Binary = new byte[]
+                            {
+                                0x85, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x03, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x90, 0xA7,
+                                0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x81, 0xA8, 0x63, 0x6F, 0x6D, 0x70, 0x72,
+                                0x65, 0x73, 0x73, 0xC3, 0xA2, 0x69, 0x64, 0x00, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
+                            }
+                        }
+                    })!,
+                (0, null, null, new object?[] { "string", 1, true, null },
+                    new()
+                    {
+                        new()
+                        {
+                            Type = SerializedMessageType.Binary,
+                            // {"type":6,"data":["string",1,true,null],"options":{"compress":true},"id":0,"nsp":"/"}
+                            Binary = new byte[]
+                            {
+                                0x85, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x06, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x94, 0xA6,
+                                0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0xD2, 0x00, 0x00, 0x00, 0x01, 0xC3, 0xC0, 0xA7,
+                                0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x81, 0xA8, 0x63, 0x6F, 0x6D, 0x70, 0x72,
+                                0x65, 0x73, 0x73, 0xC3, 0xA2, 0x69, 0x64, 0x00, 0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
+                            }
+                        }
+                    })!,
+                (23, "/test", null, new object?[] { "string", 1, true, null },
+                    new()
+                    {
+                        new()
+                        {
+                            Type = SerializedMessageType.Binary,
+                            // {"type":6,"data":["string",1,true,null],"options":{"compress":true},"id":23,"nsp":"/test"}
+                            Binary = new byte[]
+                            {
+                                0x85, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x06, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x94, 0xA6,
+                                0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0xD2, 0x00, 0x00, 0x00, 0x01, 0xC3, 0xC0, 0xA7,
+                                0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x81, 0xA8, 0x63, 0x6F, 0x6D, 0x70, 0x72,
+                                0x65, 0x73, 0x73, 0xC3, 0xA2, 0x69, 0x64, 0x17, 0xA3, 0x6E, 0x73, 0x70, 0xA5, 0x2F,
+                                0x74, 0x65, 0x73, 0x74
+                            }
+                        }
+                    })!,
+                (8964, "/test", ContractlessStandardResolver.Options,
+                    new object?[]
+                    {
+                        123456.789,
+                        new UserPasswordDto
+                        {
+                            User = "test",
+                            Password = "hello"
+                        },
+                        new FileDto
+                        {
+                            Size = 2023,
+                            Name = "test.txt",
+                            Bytes = "🐮🍺"u8.ToArray()
+                        }
+                    },
+                    new()
+                    {
+                        new()
+                        {
+                            Type = SerializedMessageType.Binary,
+                            // {"type":6,"data":[123456.789,{"User":"test","Password":"hello"},{"Size":2023,"Name":"test.txt","Bytes":{"type":"Buffer","data":[240,159,144,174,240,159,141,186]}}],"options":{"compress":true},"id":8964,"nsp":"/test"}
+                            Binary = new byte[]
+                            {
+                                0x85, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x06, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x93, 0xCB,
+                                0x40, 0xFE, 0x24, 0x0C, 0x9F, 0xBE, 0x76, 0xC9, 0x82, 0xA4, 0x55, 0x73, 0x65, 0x72,
+                                0xA4, 0x74, 0x65, 0x73, 0x74, 0xA8, 0x50, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64,
+                                0xA5, 0x68, 0x65, 0x6C, 0x6C, 0x6F, 0x83, 0xA4, 0x53, 0x69, 0x7A, 0x65, 0xCD, 0x07,
+                                0xE7, 0xA4, 0x4E, 0x61, 0x6D, 0x65, 0xA8, 0x74, 0x65, 0x73, 0x74, 0x2E, 0x74, 0x78,
+                                0x74, 0xA5, 0x42, 0x79, 0x74, 0x65, 0x73, 0xC4, 0x08, 0xF0, 0x9F, 0x90, 0xAE, 0xF0,
+                                0x9F, 0x8D, 0xBA, 0xA7, 0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x81, 0xA8, 0x63,
+                                0x6F, 0x6D, 0x70, 0x72, 0x65, 0x73, 0x73, 0xC3, 0xA2, 0x69, 0x64, 0xCD, 0x23, 0x04,
+                                0xA3, 0x6E, 0x73, 0x70, 0xA5, 0x2F, 0x74, 0x65, 0x73, 0x74
+                            }
+                        }
+                    })!,
+            };
+
+    public static IEnumerable<object?[]> SerializePacketIdNamespaceDataCases => SerializePacketIdNamespaceDataTupleCases
+        .Select((x, caseId) => new object?[]
+        {
+            caseId,
+            x.packetId,
+            x.nsp,
+            x.options,
+            x.data,
+            x.expected
+        });
+
+    [Theory]
+    [MemberData(nameof(SerializePacketIdNamespaceDataCases))]
+    public void Should_serialize_packet_id_and_namespace_and_data(
+        int caseId,
+        int packetId,
+        string nsp,
+        MessagePackSerializerOptions? options,
+        object[] data,
+        List<SerializedItem> expected)
+    {
+        var serializer = new SocketIOMessagePackSerializer(options);
+        serializer.Serialize(packetId, nsp, data)
             .Should().BeEquivalentTo(expected);
     }
 }

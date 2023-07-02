@@ -69,7 +69,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return InternalSerialize(eventName, packetId, ns, data);
         }
 
-        public List<SerializedItem> Serialize(int packetId, string ns, object[] data)
+        public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
         {
             var converter = new ByteArrayConverter();
             var options = NewSettings(converter);
@@ -90,18 +90,18 @@ namespace SocketIO.Serializer.NewtonsoftJson
                     .Append('-');
             }
 
-            if (!string.IsNullOrEmpty(ns))
+            if (!string.IsNullOrEmpty(nsp))
             {
-                builder.Append(ns).Append(',');
+                builder.Append(nsp).Append(',');
             }
 
             builder.Append(packetId).Append(json);
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        public List<SerializedItem> Serialize(string eventName, string ns, object[] data)
+        public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
         {
-            return InternalSerialize(eventName, null, ns, data);
+            return InternalSerialize(eventName, null, nsp, data);
         }
 
         private List<SerializedItem> InternalSerialize(string eventName, int? packetId, string ns, object[] data)

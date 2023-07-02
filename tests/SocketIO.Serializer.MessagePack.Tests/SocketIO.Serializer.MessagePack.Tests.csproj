@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\SocketIO.Serializer.MessagePack\SocketIO.Serializer.MessagePack.csproj" />
+      <ProjectReference Include="..\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj" />
     </ItemGroup>
 
 </Project>
