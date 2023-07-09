@@ -144,7 +144,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         IEnumerable<SerializedItem> expectedItems)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new SystemTextJsonSerializer(EngineIO.V4);
         var items = serializer.Serialize(eventName, ns, data);
         items.Should().BeEquivalentTo(expectedItems, config => config.WithStrictOrdering());
     }
@@ -230,8 +230,8 @@ public class SystemTextJsonSerializerTests
         IEnumerable<KeyValuePair<string, string>> queries,
         SerializedItem? expected)
     {
-        var serializer = new SystemTextJsonSerializer();
-        serializer.SerializeConnectedMessage(ns, eio, auth, queries)
+        var serializer = new SystemTextJsonSerializer(eio);
+        serializer.SerializeConnectedMessage(ns, auth, queries)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -371,8 +371,8 @@ public class SystemTextJsonSerializerTests
     [MemberData(nameof(DeserializeEioTextCases))]
     public void Should_deserialize_eio_and_text(int caseId, EngineIO eio, string? text, object? expected)
     {
-        var serializer = new SystemTextJsonSerializer();
-        serializer.Deserialize(eio, text)
+        var serializer = new SystemTextJsonSerializer(eio);
+        serializer.Deserialize(text)
             .Should().BeEquivalentTo(expected, options => options
                 .Using<JsonArray>(x => x.Subject.ToJsonString().Should().Be(x.Expectation.ToJsonString()))
                 .WhenTypeIs<JsonArray>());
@@ -644,13 +644,13 @@ public class SystemTextJsonSerializerTests
         List<SerializedItem> items,
         List<object> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new SystemTextJsonSerializer(eio);
         var list = new List<IMessage2>();
         foreach (var item in items)
         {
             var message = item.Type == SerializedMessageType.Text
-                ? serializer.Deserialize(eio, item.Text)
-                : serializer.Deserialize(eio, item.Binary);
+                ? serializer.Deserialize(item.Text)
+                : serializer.Deserialize(item.Binary);
             if (message is not null)
             {
                 list.Add(message);
@@ -733,7 +733,7 @@ public class SystemTextJsonSerializerTests
         JsonSerializerOptions options,
         object expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new SystemTextJsonSerializer(options, EngineIO.V4);
         var actual = serializer.GetType()
             .GetMethod(
                 nameof(SystemTextJsonSerializer.Deserialize),
@@ -753,7 +753,7 @@ public class SystemTextJsonSerializerTests
         JsonSerializerOptions options,
         object expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new SystemTextJsonSerializer(options, EngineIO.V4);
         var actual = serializer.Deserialize(message, index, expected.GetType());
         actual.Should().BeEquivalentTo(expected);
     }
@@ -862,7 +862,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new SystemTextJsonSerializer(EngineIO.V4);
         serializer.Serialize(packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -975,7 +975,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new SystemTextJsonSerializer(EngineIO.V4);
         serializer.Serialize(eventName, packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -1085,7 +1085,7 @@ public class SystemTextJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SystemTextJsonSerializer();
+        var serializer = new SystemTextJsonSerializer(EngineIO.V4);
         serializer.Serialize(eventName, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -1145,7 +1145,7 @@ public class SystemTextJsonSerializerTests
         IMessage2 message,
         string expected)
     {
-        var serializer = new SystemTextJsonSerializer(options);
+        var serializer = new SystemTextJsonSerializer(options, EngineIO.V4);
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }

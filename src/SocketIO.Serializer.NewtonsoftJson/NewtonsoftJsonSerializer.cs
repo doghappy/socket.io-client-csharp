@@ -13,16 +13,18 @@ namespace SocketIO.Serializer.NewtonsoftJson
 {
     public class NewtonsoftJsonSerializer : ISerializer
     {
-        public NewtonsoftJsonSerializer() : this(new JsonSerializerSettings())
+        public NewtonsoftJsonSerializer(EngineIO eio) : this(new JsonSerializerSettings(), eio)
         {
         }
 
-        public NewtonsoftJsonSerializer(JsonSerializerSettings options)
+        public NewtonsoftJsonSerializer(JsonSerializerSettings options, EngineIO eio)
         {
+            _eio = eio;
             _options = options ?? new JsonSerializerSettings();
             _messageQueue = new ConcurrentQueue<IMessage2>();
         }
 
+        private readonly EngineIO _eio;
         private readonly JsonSerializerSettings _options;
         readonly ConcurrentQueue<IMessage2> _messageQueue;
 
@@ -162,7 +164,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return jsonNode.ToObject(returnType, serializer);
         }
 
-        public IMessage2 Deserialize(EngineIO eio, string text)
+        public IMessage2 Deserialize(string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -171,7 +173,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
                 if (!text.StartsWith(prefix)) continue;
 
                 var message = NewMessage(type);
-                ReadMessage(message, eio, text.Substring(prefix.Length));
+                ReadMessage(message, _eio, text.Substring(prefix.Length));
 
                 if (message.BinaryCount > 0)
                 {
@@ -186,7 +188,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return null;
         }
 
-        public IMessage2 Deserialize(EngineIO eio, byte[] bytes)
+        public IMessage2 Deserialize(byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -230,17 +232,13 @@ namespace SocketIO.Serializer.NewtonsoftJson
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(
-            string ns,
-            EngineIO eio,
-            object auth,
-            IEnumerable<KeyValuePair<string, string>> queries)
+        public SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return eio switch
+            return _eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(eio), eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
             };
         }
 

@@ -1,27 +1,27 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using MessagePack;
+using MessagePack.Resolvers;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
 
 namespace SocketIO.Serializer.MessagePack
 {
-    public class TestDto
-    {
-        public int Id { get; set; }
-        public byte[] Data { get; set; }
-    }
-
     public class SocketIOMessagePackSerializer : ISerializer
     {
-        public SocketIOMessagePackSerializer() : this(MessagePackSerializerOptions.Standard)
+        private readonly EngineIO _eio;
+
+        public SocketIOMessagePackSerializer(EngineIO eio) : this(MessagePackSerializerOptions.Standard, eio)
         {
         }
 
-        public SocketIOMessagePackSerializer(MessagePackSerializerOptions options)
+        public SocketIOMessagePackSerializer(MessagePackSerializerOptions options, EngineIO eio)
         {
+            _eio = eio;
             _options = options ?? MessagePackSerializerOptions.Standard;
         }
 
@@ -35,66 +35,132 @@ namespace SocketIO.Serializer.MessagePack
             return newData;
         }
 
-        public List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data)
+        private bool HasByteArray(object data)
         {
-            throw new NotImplementedException();
+            if (data is null)
+                return false;
+
+            var dataType = data.GetType();
+            if (dataType.IsSimpleType())
+                return false;
+
+            if (data is byte[] bytes)
+                return bytes.Length > 0;
+
+            if (data is IEnumerable items)
+            {
+                foreach (var item in items)
+                {
+                    var flag = HasByteArray(item);
+                    if (flag)
+                        return true;
+                }
+            }
+
+            var props = dataType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+            foreach (var prop in props)
+            {
+                var value = prop.GetValue(data);
+                if (value is null || prop.PropertyType.IsSimpleType())
+                    continue;
+                var flag = HasByteArray(value);
+                if (flag)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private List<SerializedItem> InternalSerialize(string eventName, int packetId, string nsp, object[] data)
+        {
+            var message = new PackOutMessage
+            {
+                Type = PackMessageType.Event,
+                Id = packetId,
+                Nsp = GetNsp(nsp),
+                Data = new List<object>()
+            };
+            if (eventName is not null)
+            {
+                message.Data.Add(eventName);
+            }
+            if (data is not null && data.Length > 0)
+            {
+                message.Data.AddRange(data);
+            }
+
+            var serializedItem = new SerializedItem
+            {
+                Type = SerializedMessageType.Binary
+            };
+            if (_eio == EngineIO.V3)
+            {
+                serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
+                if (HasByteArray(data))
+                {
+                    serializedItem.Binary[6] = 5;
+                }
+            }
+            else
+            {
+                serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
+            }
+
+            // var test = MessagePackSerializer.Serialize(message, _options);
+            // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
+            return new List<SerializedItem>
+            {
+                serializedItem
+            };
+        }
+
+        public List<SerializedItem> Serialize(string eventName, int packetId, string nsp, object[] data)
+        {
+            return InternalSerialize(eventName, packetId, nsp, data);
         }
 
         public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
         {
-            var message = new PackMessage2
+            var message = new PackOutMessage
             {
                 Type = PackMessageType.Ack,
                 Id = packetId,
                 Nsp = GetNsp(nsp),
+                Data = new List<object>()
             };
-            if (data is null)
+            if (data is not null && data.Length > 0)
             {
-                message.Data = new List<object>();
-            }
-            else if (data.Length > 0)
-            {
-                message.Type = PackMessageType.BinaryAck;
-                message.Data = data.ToList();
+                message.Data.AddRange(data);
             }
 
-            var test = MessagePackSerializer.Serialize(message, _options);
-            var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
-            var testjson = MessagePackSerializer.ConvertToJson(test);
-            // var test2 = MessagePackSerializer.Serialize("🐮🍺"u8.ToArray(), ContractlessStandardResolver.Options);
-            // var text2 = BitConverter.ToString(test2).Replace("-", " ");
-            // var testjson2 = MessagePackSerializer.ConvertToJson(test2);
+            var serializedItem = new SerializedItem
+            {
+                Type = SerializedMessageType.Binary
+            };
+            if (_eio == EngineIO.V3)
+            {
+                serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
+                if (HasByteArray(data))
+                {
+                    serializedItem.Binary[6] = 6;
+                }
+            }
+            else
+            {
+                serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
+            }
 
+            // var test = MessagePackSerializer.Serialize(message, _options);
+            // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
             return new List<SerializedItem>
             {
-                new()
-                {
-                    Type = SerializedMessageType.Binary,
-                    Binary = MessagePackSerializer.Serialize(message, _options)
-                }
+                serializedItem
             };
         }
 
         public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
         {
-            var message = new PackMessage2
-            {
-                Type = PackMessageType.Event,
-                Data = new List<object>(1 + data.Length)
-                {
-                    eventName
-                },
-            };
-            message.Data.AddRange(data);
-            message.Nsp = GetNsp(nsp);
-            return new List<SerializedItem>
-            {
-                new()
-                {
-                    Type = SerializedMessageType.Binary,
-                    Binary = MessagePackSerializer.Serialize(message)
-                }
-            };
+           return InternalSerialize(eventName, 0, nsp, data);
         }
 
         private static string GetNsp(string ns)
@@ -118,16 +184,16 @@ namespace SocketIO.Serializer.MessagePack
             return MessagePackSerializer.Deserialize(returnType, bytes, _options);
         }
 
-        public IMessage2 Deserialize(EngineIO eio, byte[] bytes)
+        public IMessage2 Deserialize(byte[] bytes)
         {
             var odm = MessagePackSerializer.Deserialize<ObjectDataMessage>(bytes);
             var type = (MessageType)(40 + odm.Type);
             var message = new PackMessage(type);
-            ReadMessage(message, odm, eio);
+            ReadMessage(message, odm, _eio);
             return message;
         }
 
-        public IMessage2 Deserialize(EngineIO eio, string text)
+        public IMessage2 Deserialize(string text)
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -154,7 +220,7 @@ namespace SocketIO.Serializer.MessagePack
                 // case EngineIOProtocol.Message:
                 //     return HandleEventMessage();
                 default:
-                    return HandleDefaultMessage(protocol, text.Substring(1), eio);
+                    return HandleDefaultMessage(protocol, text.Substring(1), _eio);
             }
         }
 
@@ -175,8 +241,12 @@ namespace SocketIO.Serializer.MessagePack
 
         public string MessageToJson(IMessage2 message)
         {
-            // return ((JsonMessage)message).JsonArray.ToJsonString(_options);
-            throw new NotImplementedException();
+            var data = ((PackMessage)message).Data;
+            if (message.Type is MessageType.Event or MessageType.Binary)
+            {
+                data.RemoveAt(0);
+            }
+            return MessagePackSerializer.SerializeToJson(data, _options);
         }
 
         public IMessage2 NewMessage(MessageType type)
@@ -202,17 +272,14 @@ namespace SocketIO.Serializer.MessagePack
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(
-            string ns,
-            EngineIO eio,
-            object auth,
+        public SerializedItem SerializeConnectedMessage(string ns, object auth,
             IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return eio switch
+            return _eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(eio), eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
             };
         }
 

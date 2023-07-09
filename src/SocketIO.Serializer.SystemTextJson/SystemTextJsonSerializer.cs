@@ -13,16 +13,18 @@ namespace SocketIO.Serializer.SystemTextJson
 {
     public class SystemTextJsonSerializer : ISerializer
     {
-        public SystemTextJsonSerializer() : this(new JsonSerializerOptions())
+        public SystemTextJsonSerializer(EngineIO eio) : this(new JsonSerializerOptions(), eio)
         {
         }
 
-        public SystemTextJsonSerializer(JsonSerializerOptions options)
+        public SystemTextJsonSerializer(JsonSerializerOptions options, EngineIO eio)
         {
+            _eio = eio;
             _options = options ?? new JsonSerializerOptions();
             _messageQueue = new ConcurrentQueue<IMessage2>();
         }
 
+        private readonly EngineIO _eio;
         private readonly JsonSerializerOptions _options;
         readonly ConcurrentQueue<IMessage2> _messageQueue;
 
@@ -162,7 +164,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return jsonNode.Deserialize(returnType, options);
         }
 
-        public IMessage2 Deserialize(EngineIO eio, string text)
+        public IMessage2 Deserialize(string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -171,7 +173,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 if (!text.StartsWith(prefix)) continue;
 
                 var message = NewMessage(type);
-                ReadMessage(message, eio, text.Substring(prefix.Length));
+                ReadMessage(message, _eio, text.Substring(prefix.Length));
 
                 if (message.BinaryCount > 0)
                 {
@@ -186,7 +188,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return null;
         }
 
-        public IMessage2 Deserialize(EngineIO eio, byte[] bytes)
+        public IMessage2 Deserialize(byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -230,17 +232,13 @@ namespace SocketIO.Serializer.SystemTextJson
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(
-            string ns,
-            EngineIO eio,
-            object auth,
-            IEnumerable<KeyValuePair<string, string>> queries)
+        public SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return eio switch
+            return _eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(eio), eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
             };
         }
 

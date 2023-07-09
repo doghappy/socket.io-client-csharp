@@ -145,7 +145,7 @@ public class NewtonsoftJsonSerializerTests
         object[] data,
         IEnumerable<SerializedItem> expectedItems)
     {
-        var serializer = new NewtonsoftJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer(EngineIO.V4);
         var items = serializer.Serialize(eventName, ns, data);
         items.Should().BeEquivalentTo(expectedItems, config => config.WithStrictOrdering());
     }
@@ -231,8 +231,8 @@ public class NewtonsoftJsonSerializerTests
         IEnumerable<KeyValuePair<string, string>> queries,
         SerializedItem? expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
-        serializer.SerializeConnectedMessage(ns, eio, auth, queries)
+        var serializer = new NewtonsoftJsonSerializer(eio);
+        serializer.SerializeConnectedMessage(ns, auth, queries)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -372,8 +372,8 @@ public class NewtonsoftJsonSerializerTests
     [MemberData(nameof(DeserializeEioTextCases))]
     public void Should_deserialize_eio_and_text(int caseId, EngineIO eio, string? text, object? expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
-        serializer.Deserialize(eio, text)
+        var serializer = new NewtonsoftJsonSerializer(eio);
+        serializer.Deserialize(text)
             .Should().BeEquivalentTo(expected, options => options
                 .Using<JArray>(x => x.Subject.ToString().Should().Be(x.Expectation.ToString()))
                 .WhenTypeIs<JArray>());
@@ -645,13 +645,13 @@ public class NewtonsoftJsonSerializerTests
         List<SerializedItem> items,
         List<object> expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer(eio);
         var list = new List<IMessage2>();
         foreach (var item in items)
         {
             var message = item.Type == SerializedMessageType.Text
-                ? serializer.Deserialize(eio, item.Text)
-                : serializer.Deserialize(eio, item.Binary);
+                ? serializer.Deserialize(item.Text)
+                : serializer.Deserialize(item.Binary);
             if (message is not null)
             {
                 list.Add(message);
@@ -740,7 +740,7 @@ public class NewtonsoftJsonSerializerTests
         JsonSerializerSettings options,
         object expected)
     {
-        var serializer = new NewtonsoftJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options, EngineIO.V4);
         var actual = serializer.GetType()
             .GetMethod(
                 nameof(NewtonsoftJsonSerializer.Deserialize),
@@ -760,7 +760,7 @@ public class NewtonsoftJsonSerializerTests
         JsonSerializerSettings options,
         object expected)
     {
-        var serializer = new NewtonsoftJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options, EngineIO.V4);
         var actual = serializer.Deserialize(message, index, expected.GetType());
         actual.Should().BeEquivalentTo(expected);
     }
@@ -869,7 +869,7 @@ public class NewtonsoftJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer(EngineIO.V4);
         serializer.Serialize(packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -982,7 +982,7 @@ public class NewtonsoftJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer(EngineIO.V4);
         serializer.Serialize(eventName, packetId, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -1092,7 +1092,7 @@ public class NewtonsoftJsonSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new NewtonsoftJsonSerializer();
+        var serializer = new NewtonsoftJsonSerializer(EngineIO.V4);
         serializer.Serialize(eventName, ns, data)
             .Should().BeEquivalentTo(expected);
     }
@@ -1152,7 +1152,7 @@ public class NewtonsoftJsonSerializerTests
         IMessage2 message,
         string expected)
     {
-        var serializer = new NewtonsoftJsonSerializer(options);
+        var serializer = new NewtonsoftJsonSerializer(options, EngineIO.V4);
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }

@@ -4,9 +4,9 @@ using MessagePack;
 namespace SocketIO.Serializer.MessagePack;
 
 [MessagePackObject]
-public class PackMessage2
+public class PackOutMessage
 {
-    public PackMessage2()
+    public PackOutMessage()
     {
         Options = new PackMessageOptions
         {
