@@ -7,26 +7,12 @@ const port = process.env.PORT || 11202;
 
 var io = socket(server, {
     parser: require('socket.io-msgpack-parser'),
-    transports: ["websocket"],
     pingInterval: 5000,
     pingTimeout: 10000,
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
-
-io.use((socket, next) => {
-    if (socket.handshake.query.token === "abc") {
-        next();
-    } else {
-        next(new Error("Authentication error"));
-    }
 });
 
 io.on('connection', socket => {
     socket.on('1:emit', data => {
-        console.log(data.toString('utf8'))
         socket.emit('1:emit', data);
     });
     socket.on('2:emit', (d1, d2) => {
@@ -52,15 +38,6 @@ io.on('connection', socket => {
 });
 
 const nsp = io.of("/nsp");
-
-nsp.use((socket, next) => {
-    if (socket.handshake.query.token === "abc") {
-        next();
-    } else {
-        next(new Error("Authentication error"));
-    }
-});
-
 nsp.on("connection", socket => {
     socket.on('1:emit', data => {
         socket.emit('1:emit', data);
@@ -88,5 +65,5 @@ nsp.on("connection", socket => {
 });
 
 server.listen(port, () => {
-    console.log(`v4-msg-pack: ${port}`);
+    console.log(`v2-ws: ${port}`);
 });

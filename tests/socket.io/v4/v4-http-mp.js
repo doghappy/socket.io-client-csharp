@@ -2,15 +2,11 @@
 
 const http = require('http');
 const socket = require('socket.io');
-// const express = require('express')
-// const app = express()
-// const server = http.createServer(app);
 const server = http.createServer();
-const port = process.env.PORT || 11210;
-
-// app.use('/static', express.static('static'))
+const port = process.env.PORT || 11412;
 
 var io = socket(server, {
+    parser: require('socket.io-msgpack-parser'),
     transports: ["polling"],
     pingInterval: 5000,
     pingTimeout: 10000,
@@ -70,5 +66,5 @@ nsp.on("connection", socket => {
 });
 
 server.listen(port, () => {
-    console.log(`v2-http: ${port}`);
+    console.log(`v4-http: ${port}`);
 });

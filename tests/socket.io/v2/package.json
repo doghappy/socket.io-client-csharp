@@ -7,7 +7,11 @@
     "v2-ws": "node v2-ws.js",
     "v2-ws-token": "node v2-ws-token.js",
     "v2-http": "node v2-http.js",
-    "v2-http-token": "node v2-http-token.js"
+    "v2-http-token": "node v2-http-token.js",
+    "v2-ws-mp": "node v2-ws-mp.js",
+    "v2-ws-token-mp": "node v2-ws-token-mp.js",
+    "v2-http-mp": "node v2-http-mp.js",
+    "v2-http-token-mp": "node v2-http-token-mp.js"
   },
   "author": "https://github.com/doghappy",
   "license": "Apache",

@@ -6,7 +6,6 @@ const server = http.createServer();
 const port = process.env.PORT || 11400;
 
 var io = socket(server, {
-    // parser: require('socket.io-msgpack-parser'),
     pingInterval: 5000,
     pingTimeout: 10000,
     cors: {

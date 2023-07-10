@@ -3,9 +3,10 @@
 const http = require('http');
 const socket = require('socket.io');
 const server = http.createServer();
-const port = 11401;
+const port = 11203;
 
 var io = socket(server, {
+    parser: require('socket.io-msgpack-parser'),
 });
 
 io.use((socket, next) => {
@@ -32,5 +33,5 @@ nsp.on("connection", socket => {
 });
 
 server.listen(port, () => {
-    console.log(`v4-ws-token: ${port}`);
+    console.log(`v2-ws-token: ${port}`);
 });

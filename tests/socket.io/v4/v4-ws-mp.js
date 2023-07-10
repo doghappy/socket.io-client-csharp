@@ -7,7 +7,6 @@ const port = process.env.PORT || 11402;
 
 var io = socket(server, {
     parser: require('socket.io-msgpack-parser'),
-    // transports: ["polling"],
     pingInterval: 5000,
     pingTimeout: 10000,
     cors: {
@@ -18,7 +17,6 @@ var io = socket(server, {
 
 io.on('connection', socket => {
     socket.on('1:emit', data => {
-        console.log(data.toString('utf8'))
         socket.emit('1:emit', data);
     });
     socket.on('2:emit', (d1, d2) => {
@@ -35,9 +33,6 @@ io.on('connection', socket => {
     });
     socket.on('disconnect', close => {
         socket.disconnect(close);
-    });
-    socket.on('disconnect2', () => {
-        socket.disconnect(false);
     });
     socket.on('callback_step1', () => {
         socket.emit('callback_step2', (arg1) => {
@@ -74,5 +69,5 @@ nsp.on("connection", socket => {
 });
 
 server.listen(port, () => {
-    console.log(`v4-msg-pack: ${port}`);
+    console.log(`v4-ws: ${port}`);
 });

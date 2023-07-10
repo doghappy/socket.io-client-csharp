@@ -6,11 +6,12 @@ const socket = require('socket.io');
 // const app = express()
 // const server = http.createServer(app);
 const server = http.createServer();
-const port = process.env.PORT || 11210;
+const port = process.env.PORT || 11212;
 
 // app.use('/static', express.static('static'))
 
 var io = socket(server, {
+    parser: require('socket.io-msgpack-parser'),
     transports: ["polling"],
     pingInterval: 5000,
     pingTimeout: 10000,

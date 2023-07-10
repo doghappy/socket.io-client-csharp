@@ -26,12 +26,12 @@ namespace SocketIOClient.IntegrationTests
 
         protected abstract SocketIO CreateSocketIO();
 
-        protected SocketIO CreateSocketIO(SocketIOOptions options)
+        protected virtual SocketIO CreateSocketIO(SocketIOOptions options)
         {
             return new SocketIO(ServerUrl, options);
         }
 
-        private SocketIO CreateTokenSocketIO(SocketIOOptions options)
+        protected virtual SocketIO CreateTokenSocketIO(SocketIOOptions options)
         {
             return new SocketIO(ServerTokenUrl, options);
         }

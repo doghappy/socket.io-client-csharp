@@ -2,18 +2,36 @@ server:
   v4:
     ws: http://localhost:11400
     nsp_ws: http://localhost:11400/nsp
-    ws_token: http://localhost:11410
-    nsp_ws_token: http://localhost:11410/nsp
-    http: http://localhost:11401
-    nsp_http: http://localhost:11401/nsp
+    ws_token: http://localhost:11401
+    nsp_ws_token: http://localhost:11401/nsp
+    http: http://localhost:11410
+    nsp_http: http://localhost:11410/nsp
     http_token: http://localhost:11411
     nsp_http_token: http://localhost:11411/nsp
+  v4_mp:
+    ws: http://localhost:11402
+    nsp_ws: http://localhost:11402/nsp
+    ws_token: http://localhost:11403
+    nsp_ws_token: http://localhost:11403/nsp
+    http: http://localhost:11412
+    nsp_http: http://localhost:11412/nsp
+    http_token: http://localhost:11413
+    nsp_http_token: http://localhost:11413/nsp
   v2:
     ws: http://localhost:11200
     nsp_ws: http://localhost:11200/nsp
-    ws_token: http://localhost:11210
-    nsp_ws_token: http://localhost:11210/nsp
-    http: http://localhost:11201
-    nsp_http: http://localhost:11201/nsp
+    ws_token: http://localhost:11201
+    nsp_ws_token: http://localhost:11201/nsp
+    http: http://localhost:11210
+    nsp_http: http://localhost:11210/nsp
     http_token: http://localhost:11211
     nsp_http_token: http://localhost:11211/nsp
+  v2_mp:
+    ws: http://localhost:11202
+    nsp_ws: http://localhost:11202/nsp
+    ws_token: http://localhost:11203
+    nsp_ws_token: http://localhost:11203/nsp
+    http: http://localhost:11212
+    nsp_http: http://localhost:11212/nsp
+    http_token: http://localhost:11213
+    nsp_http_token: http://localhost:11213/nsp

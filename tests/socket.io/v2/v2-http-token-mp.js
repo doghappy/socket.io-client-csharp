@@ -3,9 +3,11 @@
 const http = require('http');
 const socket = require('socket.io');
 const server = http.createServer();
-const port = 11401;
+const port = 11213;
 
 var io = socket(server, {
+    parser: require('socket.io-msgpack-parser'),
+    transports: ["polling"]
 });
 
 io.use((socket, next) => {
@@ -14,7 +16,7 @@ io.use((socket, next) => {
     } else {
         next(new Error("Authentication error"));
     }
-});
+})
 
 io.on('connection', socket => {
 });
@@ -32,5 +34,5 @@ nsp.on("connection", socket => {
 });
 
 server.listen(port, () => {
-    console.log(`v4-ws-token: ${port}`);
+    console.log(`v2-http-token: ${port}`);
 });
