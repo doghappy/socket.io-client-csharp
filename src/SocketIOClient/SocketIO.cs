@@ -156,7 +156,7 @@ namespace SocketIOClient
             _eventFuncHandlers = new Dictionary<string, Func<SocketIOResponse, Task>>();
             _onAnyHandlers = new List<OnAnyHandler>();
 
-            Serializer = new SystemTextJsonSerializer();
+            Serializer = new SystemTextJsonSerializer(Options.EIO);
 
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();

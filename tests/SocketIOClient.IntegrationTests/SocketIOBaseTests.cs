@@ -108,7 +108,7 @@ namespace SocketIOClient.IntegrationTests
                 // Currently, the UnicodeRange class supports only named ranges in the Basic Multilingual Plane (BMP)
                 // which extends from U+0000 to U+FFFF.
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
-            });
+            }, io.Options.EIO);
             SocketIOResponse? response = null;
             io.On(eventName, res => response = res);
 
@@ -189,7 +189,7 @@ namespace SocketIOClient.IntegrationTests
             io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
             {
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
-            });
+            }, io.Options.EIO);
             string? json = null;
             io.On(eventName, res => json = res.ToString());
 

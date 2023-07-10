@@ -45,7 +45,6 @@ namespace SocketIOClient.Transport
 
             var connectedMessage = Serializer.SerializeConnectedMessage(
                 Namespace,
-                Options.EIO,
                 Options.Auth,
                 Options.Query);
 
@@ -165,14 +164,14 @@ namespace SocketIOClient.Transport
         protected async Task OnTextReceived(string text)
         {
             Debug.WriteLine($"[{Protocol}⬇] {text}");
-            var message = Serializer.Deserialize(Options.EIO, text);
+            var message = Serializer.Deserialize(text);
             await HandleMessage(message).ConfigureAwait(false);
         }
 
         protected async Task OnBinaryReceived(byte[] bytes)
         {
             Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
-            var message = Serializer.Deserialize(Options.EIO, bytes);
+            var message = Serializer.Deserialize(bytes);
             await HandleMessage(message).ConfigureAwait(false);
         }
 

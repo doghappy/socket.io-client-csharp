@@ -6,7 +6,7 @@ namespace SocketIO.Serializer.MessagePack;
 public class GenericMessage
 {
     [Key("type")]
-    public PackMessageType Type => PackMessageType.Connected;
+    public int Type => PackMessageType.Connected;
     
     [Key("data")]
     public object Data { get; set; }

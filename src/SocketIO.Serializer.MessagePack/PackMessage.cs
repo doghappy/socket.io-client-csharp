@@ -1,89 +1,125 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using MessagePack;
 using SocketIO.Core;
 
 namespace SocketIO.Serializer.MessagePack
 {
+    [MessagePackObject]
     public class PackMessage : IMessage2
     {
-        public PackMessage(MessageType type)
+        public PackMessage()
+        {
+            Options = new PackMessageOptions
+            {
+                Compress = true
+            };
+        }
+
+        public PackMessage(MessageType type) : this()
         {
             Type = type;
             Id = -1;
         }
 
-        public MessageType Type { get; }
-        public string Sid { get; set; }
-        public int PingInterval { get; set; }
-        public int PingTimeout { get; set; }
-        public List<string> Upgrades { get; set; }
-        public int BinaryCount { get; set; }
-        public List<byte[]> OutgoingBytes { get; set; }
-        public List<byte[]> IncomingBytes { get; set; }
-        public string Namespace { get; set; }
-        public TimeSpan Duration { get; set; }
+        [Key("type")]
+        public int RawType { get; set; }
+
+        [Key("data")]
+        public object Data { get; set; }
+
+        [Key("options")]
+        public PackMessageOptions Options { get; }
+
+        [Key("id")]
         public int Id { get; set; }
+
+        [Key("nsp")]
+        public string Namespace { get; set; }
+
+        [IgnoreMember]
+        public MessageType Type { get; }
+
+        [IgnoreMember]
+        public string Sid { get; set; }
+
+        [IgnoreMember]
+        public int PingInterval { get; set; }
+
+        [IgnoreMember]
+        public int PingTimeout { get; set; }
+
+        [IgnoreMember]
+        public List<string> Upgrades { get; set; }
+
+        [IgnoreMember]
+        public int BinaryCount { get; set; }
+
+        [IgnoreMember]
+        public List<byte[]> OutgoingBytes { get; set; }
+
+        [IgnoreMember]
+        public List<byte[]> IncomingBytes { get; set; }
+
+        [IgnoreMember]
+        public TimeSpan Duration { get; set; }
+
+        [IgnoreMember]
         public string Error { get; set; }
+
+        [IgnoreMember]
         public string ReceivedText { get; set; }
+
+        [IgnoreMember]
         public List<byte[]> ReceivedBinary { get; set; }
-        public List<object> Data { get; set; }
 
         private bool _parsed;
+        private List<object> _dataList;
 
-        // private JsonArray _jsonArray;
-        //
-        // public JsonArray JsonArray
-        // {
-        //     get
-        //     {
-        //         Parse();
-        //         return _jsonArray;
-        //     }
-        // }
+        [IgnoreMember]
+        public List<object> DataList
+        {
+            get
+            {
+                Parse();
+                return _dataList;
+            }
+        }
 
         private string _event;
+
+        [IgnoreMember]
         public string Event
         {
             get
             {
-                // Parse();
+                Parse();
                 return _event;
             }
-            set => _event = value;
+            // set => _event = value;
         }
 
-        // private void Parse()
-        // {
-        //     if (_parsed) return;
-        //     var jsonNode = JsonNode.Parse(ReceivedText);
-        //     if (jsonNode is null)
-        //     {
-        //         throw new ArgumentException($"Cannot parse '{ReceivedText}' to JsonNode");
-        //     }
-        //
-        //     var jsonArray = jsonNode.AsArray();
-        //     SetEvent(jsonArray);
-        //     _jsonArray = jsonArray;
-        //     _parsed = true;
-        // }
+        private void Parse()
+        {
+            if (_parsed) return;
+            _dataList = new List<object>();
+            if (Data is IEnumerable)
+            {
+                _dataList.AddRange((IEnumerable<object>)Data);
+            }
+            else if (Data is not null)
+            {
+                _dataList.Add(Data);
+            }
 
-        // private void SetEvent(JsonArray jsonArray)
-        // {
-        //     if (Type != MessageType.Event && Type != MessageType.Binary)
-        //         return;
-        //
-        //     if (jsonArray.Count < 1)
-        //     {
-        //         throw new ArgumentException("Cannot get event name from an empty json array");
-        //     }
-        //
-        //     if (jsonArray[0] is null)
-        //     {
-        //         throw new ArgumentException("Event name is null");
-        //     }
-        //
-        //     Event = jsonArray[0].GetValue<string>();
-        //     jsonArray.RemoveAt(0);
-        // }
+            if (Type is MessageType.Event or MessageType.Binary)
+            {
+                _event = _dataList[0].ToString();
+                _dataList.RemoveAt(0);
+            }
+
+            _parsed = true;
+        }
     }
 }

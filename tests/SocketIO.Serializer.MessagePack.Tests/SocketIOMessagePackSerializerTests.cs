@@ -26,10 +26,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/",
                             Data = new List<object> { "test" }
                         })
                     }
@@ -43,10 +43,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/",
                             Data = new List<object> { "test", null! }
                         })
                     }
@@ -60,10 +60,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/nsp",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/nsp",
                             Data = new List<object> { "test" }
                         })
                     }
@@ -77,10 +77,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/nsp",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/nsp",
                             Data = new List<object> { "test", true }
                         })
                     }
@@ -94,10 +94,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/nsp",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/nsp",
                             Data = new List<object> { "test", true, false, 123 }
                         })
                     }
@@ -114,10 +114,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/",
                             Data = new List<object>
                             {
                                 "test",
@@ -139,10 +139,10 @@ public class SocketIOMessagePackSerializerTests
                     new()
                     {
                         Type = SerializedMessageType.Binary,
-                        Binary = MessagePackSerializer.Serialize(new PackOutMessage
+                        Binary = MessagePackSerializer.Serialize(new PackMessage
                         {
-                            Type = PackMessageType.Event,
-                            Nsp = "/nsp",
+                            RawType = PackMessageType.Event,
+                            Namespace = "/nsp",
                             Data = new List<object>
                             {
                                 "test",
@@ -395,6 +395,7 @@ public class SocketIOMessagePackSerializerTests
                 new
                 {
                     Type = MessageType.Disconnected,
+                    DataList = new List<object>(),
                     Namespace = "/"
                 }),
             (
@@ -407,6 +408,7 @@ public class SocketIOMessagePackSerializerTests
                 new
                 {
                     Type = MessageType.Disconnected,
+                    DataList = new List<object>(),
                     Namespace = "/test"
                 }),
             (
@@ -421,7 +423,7 @@ public class SocketIOMessagePackSerializerTests
                 {
                     Type = MessageType.Event,
                     Event = "hi",
-                    Data = new object[] { "socket.io" },
+                    DataList = new object[] { "socket.io" },
                     Namespace = "/"
                 }),
             (
@@ -437,7 +439,7 @@ public class SocketIOMessagePackSerializerTests
                 {
                     Type = MessageType.Event,
                     Event = "hi",
-                    Data = new object[] { "socket.io" },
+                    DataList = new object[] { "socket.io" },
                     Namespace = "/nsp"
                 }),
             (
@@ -453,7 +455,7 @@ public class SocketIOMessagePackSerializerTests
                 {
                     Type = MessageType.Event,
                     Event = "hi",
-                    Data = new object[] { "socket.io" },
+                    DataList = new object[] { "socket.io" },
                     Namespace = "/",
                     Id = 17
                 }),
@@ -470,7 +472,7 @@ public class SocketIOMessagePackSerializerTests
                 {
                     Type = MessageType.Event,
                     Event = "hi",
-                    Data = new object[] { "socket.io" },
+                    DataList = new object[] { "socket.io" },
                     Namespace = "/nsp",
                     Id = 17
                 }),
@@ -485,7 +487,7 @@ public class SocketIOMessagePackSerializerTests
                 new
                 {
                     Type = MessageType.Ack,
-                    Data = new object[] { "hello" },
+                    DataList = new object[] { "hello" },
                     Namespace = "/",
                     Id = 1
                 }),
@@ -499,7 +501,7 @@ public class SocketIOMessagePackSerializerTests
                 new
                 {
                     Type = MessageType.Ack,
-                    Data = new object[] { "hello" },
+                    DataList = new object[] { "hello" },
                     Namespace = "/nsp",
                     Id = 1
                 }),
@@ -536,20 +538,18 @@ public class SocketIOMessagePackSerializerTests
         {
             (new PackMessage(MessageType.Event)
             {
-                Event = "event",
-                Data = new List<object> { 1 }
+                Data = new List<object> { "event", 1 }
             }, 0, null, 1)!,
             (new PackMessage(MessageType.Event)
             {
-                Event = "event",
-                Data = new List<object> { "hello" }
+                Data = new List<object> { "event", "hello" }
             }, 0, null, "hello")!,
             (
                 new PackMessage(MessageType.Event)
                 {
-                    Event = "event",
                     Data = new List<object>
                     {
+                        "event", 
                         "hello",
                         new
                         {
@@ -565,9 +565,9 @@ public class SocketIOMessagePackSerializerTests
             (
                 new PackMessage(MessageType.Event)
                 {
-                    Event = "event",
                     Data = new List<object>
                     {
+                        "event", 
                         "hello",
                         new
                         {
@@ -583,9 +583,9 @@ public class SocketIOMessagePackSerializerTests
             (
                 new PackMessage(MessageType.Event)
                 {
-                    Event = "event",
                     Data = new List<object>
                     {
+                        "event", 
                         "hello world!"u8.ToArray(),
                         new
                         {
@@ -598,9 +598,9 @@ public class SocketIOMessagePackSerializerTests
             (
                 new PackMessage(MessageType.Event)
                 {
-                    Event = "event",
                     Data = new List<object>
                     {
+                        "event", 
                         "hello world!"u8.ToArray(),
                         new
                         {
@@ -1500,10 +1500,9 @@ public class SocketIOMessagePackSerializerTests
                 null,
                 new PackMessage(MessageType.Connected)
                 {
-                    sdf
-                    Data = new List<object> { "event", 1 }
+                    Data = null
                 },
-                "[1]"),
+                "[]"),
             (
                 ContractlessStandardResolver.Options,
                 new PackMessage(MessageType.Event)

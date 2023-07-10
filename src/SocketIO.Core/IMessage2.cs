@@ -18,7 +18,7 @@ namespace SocketIO.Core
         TimeSpan Duration { get; set; }
         int Id { get; set; }
 
-        string Event { get; set; }
+        string Event { get; }
         string Error { get; set; }
         
         // TODO: move this to sub class

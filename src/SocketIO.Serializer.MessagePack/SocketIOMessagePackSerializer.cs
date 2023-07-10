@@ -73,20 +73,21 @@ namespace SocketIO.Serializer.MessagePack
 
         private List<SerializedItem> InternalSerialize(string eventName, int packetId, string nsp, object[] data)
         {
-            var message = new PackOutMessage
+            var items = new List<object>();
+            var message = new PackMessage
             {
-                Type = PackMessageType.Event,
+                RawType = PackMessageType.Event,
                 Id = packetId,
-                Nsp = GetNsp(nsp),
-                Data = new List<object>()
+                Namespace = GetNsp(nsp),
+                Data = items 
             };
             if (eventName is not null)
             {
-                message.Data.Add(eventName);
+                items.Add(eventName);
             }
             if (data is not null && data.Length > 0)
             {
-                message.Data.AddRange(data);
+                items.AddRange(data);
             }
 
             var serializedItem = new SerializedItem
@@ -106,8 +107,8 @@ namespace SocketIO.Serializer.MessagePack
                 serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
             }
 
-            // var test = MessagePackSerializer.Serialize(message, _options);
-            // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
+            var test = MessagePackSerializer.Serialize(message, _options);
+            var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
             return new List<SerializedItem>
             {
                 serializedItem
@@ -121,16 +122,17 @@ namespace SocketIO.Serializer.MessagePack
 
         public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
         {
-            var message = new PackOutMessage
+            var items = new List<object>();
+            var message = new PackMessage
             {
-                Type = PackMessageType.Ack,
+                RawType = PackMessageType.Ack,
                 Id = packetId,
-                Nsp = GetNsp(nsp),
-                Data = new List<object>()
+                Namespace = GetNsp(nsp),
+                Data = items
             };
             if (data is not null && data.Length > 0)
             {
-                message.Data.AddRange(data);
+                items.AddRange(data);
             }
 
             var serializedItem = new SerializedItem
@@ -171,7 +173,7 @@ namespace SocketIO.Serializer.MessagePack
         public T Deserialize<T>(IMessage2 message, int index)
         {
             var packMessage = (PackMessage)message;
-            var data = packMessage.Data[index];
+            var data = packMessage.DataList[index];
             var bytes = MessagePackSerializer.Serialize(data, _options);
             return MessagePackSerializer.Deserialize<T>(bytes, _options);
         }
@@ -179,7 +181,7 @@ namespace SocketIO.Serializer.MessagePack
         public object Deserialize(IMessage2 message, int index, Type returnType)
         {
             var packMessage = (PackMessage)message;
-            var data = packMessage.Data[index];
+            var data = packMessage.DataList[index];
             var bytes = MessagePackSerializer.Serialize(data, _options);
             return MessagePackSerializer.Deserialize(returnType, bytes, _options);
         }
@@ -241,11 +243,7 @@ namespace SocketIO.Serializer.MessagePack
 
         public string MessageToJson(IMessage2 message)
         {
-            var data = ((PackMessage)message).Data;
-            if (message.Type is MessageType.Event or MessageType.Binary)
-            {
-                data.RemoveAt(0);
-            }
+            var data = ((PackMessage)message).DataList;
             return MessagePackSerializer.SerializeToJson(data, _options);
         }
 
@@ -414,10 +412,8 @@ namespace SocketIO.Serializer.MessagePack
             message.Namespace = odm.Namespace;
             message.Id = odm.Id;
 
-            var data = (object[])odm.Data;
             var packMessage = (PackMessage)message;
-            packMessage.Event = (string)data[0];
-            packMessage.Data = data.Skip(1).ToList();
+            packMessage.Data = (object[])odm.Data;
         }
 
         private static void ReadAckMessage(IMessage2 message, ObjectDataMessage odm)
