@@ -1,9 +1,10 @@
-﻿using MessagePack.Resolvers;
+﻿using System;
+using MessagePack.Resolvers;
 using SocketIO.Serializer.MessagePack;
 
 namespace SocketIOClient.IntegrationTests
 {
-    public abstract class WebSocketMPBaseTests : WebSocketBaseTests
+    public abstract class HttpMpTests : HttpTests
     {
         protected override SocketIO CreateSocketIO(SocketIOOptions options)
         {

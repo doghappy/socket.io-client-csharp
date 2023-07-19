@@ -30,3 +30,33 @@ public class ObjectDataMessage
     [Key("id")]
     public int Id { get; set; } = -1;
 }
+
+// [MessagePackObject]
+// public class ObjectDataMessage2
+// {
+//     [Key("type")]
+//     public int Type { get; set; }
+//         
+//     [Key("data")]
+//     public ObjectDataMessageData Data { get; set; }
+// }
+//
+// [MessagePackObject]
+// public class ObjectDataMessageData
+// {
+//     [Key("message")]
+//     public string Message { get; set; }
+//         
+//     [Key("data")]
+//     public object Data { get; set; }
+// }
+//
+// [MessagePackObject]
+// public class ObjectDataMessageDataData
+// {
+//     [Key("type")]
+//     public int Type { get; set; }
+//         
+//     [Key("buffer")]
+//     public byte[] Buffer { get; set; }
+// }

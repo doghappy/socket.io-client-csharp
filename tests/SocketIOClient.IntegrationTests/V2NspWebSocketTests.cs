@@ -5,7 +5,7 @@ using SocketIOClient.Transport;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V2NspWebSocketTests : WebSocketBaseTests
+    public class V2NspWebSocketTests : WebSocketTests
     {
         protected override string ServerUrl => Common.Startup.V2_NSP_WS;
         protected override EngineIO EIO => EngineIO.V3;

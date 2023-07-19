@@ -15,14 +15,16 @@ using System.Threading.Tasks;
 using SocketIOClient.Transport;
 using SocketIO.Core;
 using SocketIO.Serializer.SystemTextJson;
+using SocketIO.Serializer.Tests.Models;
 
 namespace SocketIOClient.IntegrationTests
 {
-    public abstract class SocketIOBaseTests
+    public abstract class SocketIOTests
     {
         protected abstract string ServerUrl { get; }
         protected abstract string ServerTokenUrl { get; }
         protected abstract EngineIO EIO { get; }
+        protected abstract TransportProtocol Protocol { get; }
 
         protected abstract SocketIO CreateSocketIO();
 
@@ -94,7 +96,7 @@ namespace SocketIOClient.IntegrationTests
 
         [TestMethod]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public async Task Should_emit_1_parameter_and_emit_back(
+        public virtual async Task Should_emit_1_parameter_and_emit_back(
             int caseId,
             string eventName,
             object data,
@@ -109,6 +111,7 @@ namespace SocketIOClient.IntegrationTests
                 // which extends from U+0000 to U+FFFF.
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
             }, io.Options.EIO);
+
             SocketIOResponse? response = null;
             io.On(eventName, res => response = res);
 
@@ -164,7 +167,7 @@ namespace SocketIOClient.IntegrationTests
                     "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
                     new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
                 ("1:emit",
-                    new { Result = Encoding.UTF8.GetBytes("test"), Data = Encoding.UTF8.GetBytes("🦊🐶🐱") },
+                    new { Result = "test"u8.ToArray(), Data = "🦊🐶🐱"u8.ToArray() },
                     "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
                     new[]
                     {
@@ -186,10 +189,14 @@ namespace SocketIOClient.IntegrationTests
             string excepted)
         {
             using var io = CreateSocketIO();
-            io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+            if (!GetType().IsSubclassOf(typeof(WebSocketMpTests)))
             {
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
-            }, io.Options.EIO);
+                io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+                {
+                    Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
+                }, io.Options.EIO);
+            }
+
             string? json = null;
             io.On(eventName, res => json = res.ToString());
 
@@ -285,6 +292,7 @@ namespace SocketIOClient.IntegrationTests
             string? error = null;
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
+                Transport = Protocol,
                 AutoUpgrade = false,
                 Reconnection = false,
                 EIO = EIO,
@@ -307,39 +315,33 @@ namespace SocketIOClient.IntegrationTests
         #region Auth
 
         [TestMethod]
-        public async Task Should_get_auth()
+        public virtual async Task Should_get_auth()
         {
             if (EIO == EngineIO.V3)
             {
                 return;
             }
 
-            UserDto? auth = null;
+            UserPasswordDto? auth = null;
             var guid = Guid.NewGuid().ToString();
             using var io = CreateSocketIO(new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EIO,
-                Auth = new UserDto
+                Auth = new UserPasswordDto
                 {
-                    Name = "test",
+                    User = "test",
                     Password = guid
                 },
                 ConnectionTimeout = TimeSpan.FromSeconds(1)
             });
 
             await io.ConnectAsync();
-            await io.EmitAsync("get_auth", res => auth = res.GetValue<UserDto>());
+            await io.EmitAsync("get_auth", res => auth = res.GetValue<UserPasswordDto>());
             await Task.Delay(100);
 
-            auth!.Name.Should().Be("test");
+            auth!.User.Should().Be("test");
             auth.Password.Should().Be(guid);
-        }
-
-        private class UserDto
-        {
-            public string Name { get; init; } = null!;
-            public string Password { get; init; } = null!;
         }
 
         #endregion
@@ -451,7 +453,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
-        public async Task Should_keep_trying_to_reconnect()
+        public virtual async Task Should_keep_trying_to_reconnect()
         {
             using var io = new SocketIO("http://localhost:4404", new SocketIOOptions
             {

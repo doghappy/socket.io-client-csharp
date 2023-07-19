@@ -4,7 +4,7 @@ using SocketIO.Core;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V4WebSocketMPTests : WebSocketMPBaseTests
+    public class V4WebSocketMPTests : WebSocketMpTests
     {
         protected override string ServerUrl => Common.Startup.V4_WS_MP;
         protected override EngineIO EIO => EngineIO.V4;

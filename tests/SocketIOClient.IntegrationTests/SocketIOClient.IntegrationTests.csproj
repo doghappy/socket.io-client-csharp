@@ -16,6 +16,7 @@
     </PackageReference>
     <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
     <ProjectReference Include="..\..\src\SocketIO.Serializer.MessagePack\SocketIO.Serializer.MessagePack.csproj" />
+    <ProjectReference Include="..\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj" />
     <ProjectReference Include="..\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj" />
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
     <None Remove="Transport/**" />

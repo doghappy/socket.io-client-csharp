@@ -4,7 +4,7 @@ using SocketIO.Core;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V4NspHttpMPTests : HttpMPBaseTests
+    public class V4NspHttpMPTests : HttpMpTests
     {
         protected override string ServerUrl => Common.Startup.V4_NSP_HTTP_MP;
         protected override EngineIO EIO => EngineIO.V4;

@@ -1,8 +1,12 @@
-﻿namespace SocketIOClient.IntegrationTests
+﻿using SocketIOClient.Transport;
+
+namespace SocketIOClient.IntegrationTests
 {
-    public abstract class WebSocketBaseTests : SocketIOBaseTests
+    public abstract class WebSocketTests : SocketIOTests
     {
-        protected virtual SocketIOOptions CreateOptions()
+        protected override TransportProtocol Protocol => TransportProtocol.WebSocket;
+        
+        protected SocketIOOptions CreateOptions()
         {
             return new SocketIOOptions
             {

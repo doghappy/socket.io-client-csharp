@@ -1,10 +1,13 @@
 ﻿using System;
+using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests
 {
-    public abstract class HttpBaseTests : SocketIOBaseTests
+    public abstract class HttpTests : SocketIOTests
     {
-        protected virtual SocketIOOptions CreateOptions()
+        protected override TransportProtocol Protocol => TransportProtocol.Polling;
+        
+        protected SocketIOOptions CreateOptions()
         {
             return new SocketIOOptions
             {

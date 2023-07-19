@@ -79,12 +79,13 @@ namespace SocketIO.Serializer.MessagePack
                 RawType = PackMessageType.Event,
                 Id = packetId,
                 Namespace = GetNsp(nsp),
-                Data = items 
+                Data = items
             };
             if (eventName is not null)
             {
                 items.Add(eventName);
             }
+
             if (data is not null && data.Length > 0)
             {
                 items.AddRange(data);
@@ -107,8 +108,8 @@ namespace SocketIO.Serializer.MessagePack
                 serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
             }
 
-            var test = MessagePackSerializer.Serialize(message, _options);
-            var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
+            // var test = MessagePackSerializer.Serialize(message, _options);
+            // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
             return new List<SerializedItem>
             {
                 serializedItem
@@ -162,7 +163,7 @@ namespace SocketIO.Serializer.MessagePack
 
         public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
         {
-           return InternalSerialize(eventName, 0, nsp, data);
+            return InternalSerialize(eventName, 0, nsp, data);
         }
 
         private static string GetNsp(string ns)
@@ -188,7 +189,9 @@ namespace SocketIO.Serializer.MessagePack
 
         public IMessage2 Deserialize(byte[] bytes)
         {
-            var odm = MessagePackSerializer.Deserialize<ObjectDataMessage>(bytes);
+            var json = MessagePackSerializer.ConvertToJson(bytes, _options);
+            var newBytes = MessagePackSerializer.ConvertFromJson(json);
+            var odm = MessagePackSerializer.Deserialize<ObjectDataMessage>(newBytes, _options);
             var type = (MessageType)(40 + odm.Type);
             var message = new PackMessage(type);
             ReadMessage(message, odm, _eio);
@@ -325,7 +328,7 @@ namespace SocketIO.Serializer.MessagePack
             return serializedItem;
         }
 
-        private static SerializedItem SerializeEio4ConnectedMessage(string nsp, object auth)
+        private SerializedItem SerializeEio4ConnectedMessage(string nsp, object auth)
         {
             var message = new GenericMessage
             {
@@ -335,11 +338,32 @@ namespace SocketIO.Serializer.MessagePack
             {
                 message.Data = auth;
             }
+            else
+            {
+                message.Data = new
+                {
+                    buffer = new byte[1],
+                    type = 0
+                };
+            }
 
+            // var message = new PackMessage(MessageType.Connected)
+            // {
+            //     Namespace = GetNsp(nsp)
+            // };
+            // if (auth is not null)
+            // {
+            //     message.Data = auth;
+            // }
+
+            // var test = MessagePackSerializer.SerializeToJson(message);
+
+            // var test = MessagePackSerializer.Serialize(message);
+            // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
             return new()
             {
                 Type = SerializedMessageType.Binary,
-                Binary = MessagePackSerializer.Serialize(message)
+                Binary = MessagePackSerializer.Serialize(message, _options)
             };
         }
 
@@ -428,7 +452,8 @@ namespace SocketIO.Serializer.MessagePack
 
         private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm)
         {
-            message.Error = (string)odm.Data;
+            var dictionary = (Dictionary<object, object>)odm.Data;
+            message.Error = (string)dictionary["message"];
             message.Namespace = odm.Namespace;
         }
 
