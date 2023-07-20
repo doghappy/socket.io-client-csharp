@@ -275,11 +275,12 @@ public class SocketIOMessagePackSerializerTests
                     new SerializedItem
                     {
                         Type = SerializedMessageType.Binary,
-                        // {"type":0,"data":null,"nsp":"/"}
+                        // {"type":0,"data":{"data":[0,"AA=="]},"nsp":"/"}
                         Binary = new byte[]
                         {
-                            0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x00, 0xA4, 0x64, 0x61, 0x74, 0x61, 0xC0, 0xA3, 0x6E,
-                            0x73, 0x70, 0xA1, 0x2F
+                            0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x00, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x82, 0xA6, 0x62,
+                            0x75, 0x66, 0x66, 0x65, 0x72, 0xC4, 0x01, 0x00, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x00, 0xA3,
+                            0x6E, 0x73, 0x70, 0xA1, 0x2F
                         }
                     }),
             };
@@ -357,7 +358,7 @@ public class SocketIOMessagePackSerializerTests
                 }),
             (
                 EngineIO.V3,
-                "4{\"type\":4,\"data\":\"Authentication error\",\"nsp\":\"/\"}",
+                "4{\"type\":4,\"data\":{\"message\":\"Authentication error\",\"data\":[0,\"AA==\"]},\"nsp\":\"/\"}",
                 new
                 {
                     Type = MessageType.Error,

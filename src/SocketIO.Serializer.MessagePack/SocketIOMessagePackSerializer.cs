@@ -347,18 +347,7 @@ namespace SocketIO.Serializer.MessagePack
                 };
             }
 
-            // var message = new PackMessage(MessageType.Connected)
-            // {
-            //     Namespace = GetNsp(nsp)
-            // };
-            // if (auth is not null)
-            // {
-            //     message.Data = auth;
-            // }
-
-            // var test = MessagePackSerializer.SerializeToJson(message);
-
-            // var test = MessagePackSerializer.Serialize(message);
+            // var test = MessagePackSerializer.Serialize(message, _options);
             // var text = "0x" + BitConverter.ToString(test).Replace("-", ", 0x");
             return new()
             {
