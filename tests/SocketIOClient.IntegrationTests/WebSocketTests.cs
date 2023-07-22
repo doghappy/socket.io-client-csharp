@@ -4,7 +4,7 @@ namespace SocketIOClient.IntegrationTests
 {
     public abstract class WebSocketTests : SocketIOTests
     {
-        protected override TransportProtocol Protocol => TransportProtocol.WebSocket;
+        protected override TransportProtocol Transport => TransportProtocol.WebSocket;
         
         protected SocketIOOptions CreateOptions()
         {

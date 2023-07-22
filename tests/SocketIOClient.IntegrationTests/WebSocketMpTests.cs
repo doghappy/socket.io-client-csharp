@@ -35,7 +35,7 @@ namespace SocketIOClient.IntegrationTests
 
         [TestMethod]
         [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public override async Task Should_emit_1_parameter_and_emit_back(
+        public new async Task Should_emit_1_parameter_and_emit_back(
             int caseId,
             string eventName,
             object data,

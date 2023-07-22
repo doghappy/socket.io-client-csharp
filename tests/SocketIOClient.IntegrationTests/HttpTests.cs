@@ -1,11 +1,12 @@
 ﻿using System;
+using SocketIOClient.IntegrationTests.Utils;
 using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests
 {
     public abstract class HttpTests : SocketIOTests
     {
-        protected override TransportProtocol Protocol => TransportProtocol.Polling;
+        protected override TransportProtocol Transport => TransportProtocol.Polling;
         
         protected SocketIOOptions CreateOptions()
         {
@@ -22,7 +23,9 @@ namespace SocketIOClient.IntegrationTests
             options.Reconnection = false;
             options.EIO = EIO;
             options.ConnectionTimeout = TimeSpan.FromSeconds(2);
-            return CreateSocketIO(options);
+            var io = new SocketIO(ServerUrl, options);
+            io.SetMessagePackSerializer();
+            return io;
         }
     }
 }

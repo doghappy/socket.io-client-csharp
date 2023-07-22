@@ -24,19 +24,11 @@ namespace SocketIOClient.IntegrationTests
         protected abstract string ServerUrl { get; }
         protected abstract string ServerTokenUrl { get; }
         protected abstract EngineIO EIO { get; }
-        protected abstract TransportProtocol Protocol { get; }
+        protected abstract TransportProtocol Transport { get; }
 
         protected abstract SocketIO CreateSocketIO();
-
-        protected virtual SocketIO CreateSocketIO(SocketIOOptions options)
-        {
-            return new SocketIO(ServerUrl, options);
-        }
-
-        protected virtual SocketIO CreateTokenSocketIO(SocketIOOptions options)
-        {
-            return new SocketIO(ServerTokenUrl, options);
-        }
+        protected abstract SocketIO CreateSocketIO(SocketIOOptions options);
+        protected abstract SocketIO CreateTokenSocketIO(SocketIOOptions options);
 
         [ClassInitialize]
         public void InitializeCheck()
@@ -95,22 +87,33 @@ namespace SocketIOClient.IntegrationTests
         #region Emit
 
         [TestMethod]
-        [DynamicData(nameof(Emit1ParameterCases), DynamicDataSourceType.Method)]
-        public virtual async Task Should_emit_1_parameter_and_emit_back(
-            int caseId,
+        public async Task Should_emit_1_parameter_and_emit_back()
+        {
+            // NOTE: [DynamicData] only supports getting test cases from static method.
+            foreach (var testCase in Emit1ParameterTupleCases)
+            {
+                await Should_emit_1_parameter_and_emit_back(
+                    testCase.EventName,
+                    testCase.Data,
+                    testCase.ExpectedJson,
+                    testCase.ExpectedBytes);
+            }
+        }
+
+        protected abstract void ConfigureSerializerForEmitting1Parameter(SocketIO io);
+
+        private async Task Should_emit_1_parameter_and_emit_back(
             string eventName,
             object data,
             string expectedJson,
             IEnumerable<byte[]>? expectedBytes)
         {
             using var io = CreateSocketIO();
-            io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
-            {
-                // https://learn.microsoft.com/zh-cn/dotnet/api/system.text.unicode.unicoderanges?view=net-8.0
-                // Currently, the UnicodeRange class supports only named ranges in the Basic Multilingual Plane (BMP)
-                // which extends from U+0000 to U+FFFF.
-                Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
-            }, io.Options.EIO);
+            // io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+            // {
+            //     Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
+            // }, io.Options.EIO);
+            ConfigureSerializerForEmitting1Parameter(io);
 
             SocketIOResponse? response = null;
             io.On(eventName, res => response = res);
@@ -121,61 +124,66 @@ namespace SocketIOClient.IntegrationTests
 
             response.Should().NotBeNull();
             response!.ToString().Should().Be(expectedJson);
-            response.InComingBytes.Should().BeEquivalentTo(expectedBytes, options => options.WithStrictOrdering());
+            response.InComingBytes.Should().BeEquivalentTo(
+                expectedBytes,
+                options => options.WithStrictOrdering());
         }
 
-        public static IEnumerable<object?[]> Emit1ParameterCases()
-        {
-            return Emit1ParameterTupleCase()
-                .Select((x, caseId) => new[]
-                {
-                    caseId,
-                    x.EventName,
-                    x.Data,
-                    x.ExpectedJson,
-                    x.ExpectedBytes
-                });
-        }
+        public IEnumerable<object?[]> Emit1ParameterCases => Emit1ParameterTupleCases
+            .Select((x, caseId) => new[]
+            {
+                caseId,
+                x.EventName,
+                x.Data,
+                x.ExpectedJson,
+                x.ExpectedBytes
+            });
 
-        private static IEnumerable<(
+        protected abstract IEnumerable<(
             string EventName,
             object Data,
             string ExpectedJson,
-            IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
-        {
-            return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]>? ExpectedBytes)[]
-            {
-                ("1:emit", null!, "[null]", null),
-                ("1:emit", true, "[true]", null),
-                ("1:emit", false, "[false]", null),
-                ("1:emit", -1234567890, "[-1234567890]", null),
-                ("1:emit", 1234567890, "[1234567890]", null),
-                ("1:emit", -1.234567890, "[-1.23456789]", null),
-                ("1:emit", 1.234567890, "[1.23456789]", null),
-                ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n\\uD83C\\uDF0D\\uD83C\\uDF0E\\uD83C\\uDF0F\"]", null),
-                ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", null),
-                ("1:emit",
-                    new { Result = true, Data = new { User = "abc", Password = "123" } },
-                    "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]",
-                    null),
-                ("1:emit",
-                    new { Result = true, Data = new[] { "a", "b" } },
-                    "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]",
-                    null),
-                ("1:emit",
-                    new { Result = true, Data = "🦊🐶🐱"u8.ToArray() },
-                    "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
-                    new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
-                ("1:emit",
-                    new { Result = "test"u8.ToArray(), Data = "🦊🐶🐱"u8.ToArray() },
-                    "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
-                    new[]
-                    {
-                        new byte[] { 0x74, 0x65, 0x73, 0x74 },
-                        new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }
-                    }),
-            };
-        }
+            IEnumerable<byte[]>? ExpectedBytes
+            )> Emit1ParameterTupleCases { get; }
+        // private static IEnumerable<(
+        //     string EventName,
+        //     object Data,
+        //     string ExpectedJson,
+        //     IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
+        // {
+        //     return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]>? ExpectedBytes)[]
+        //     {
+        //         ("1:emit", null!, "[null]", null),
+        //         ("1:emit", true, "[true]", null),
+        //         ("1:emit", false, "[false]", null),
+        //         ("1:emit", -1234567890, "[-1234567890]", null),
+        //         ("1:emit", 1234567890, "[1234567890]", null),
+        //         ("1:emit", -1.234567890, "[-1.23456789]", null),
+        //         ("1:emit", 1.234567890, "[1.23456789]", null),
+        //         ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n\\uD83C\\uDF0D\\uD83C\\uDF0E\\uD83C\\uDF0F\"]", null),
+        //         ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", null),
+        //         ("1:emit",
+        //             new { Result = true, Data = new { User = "abc", Password = "123" } },
+        //             "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]",
+        //             null),
+        //         ("1:emit",
+        //             new { Result = true, Data = new[] { "a", "b" } },
+        //             "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]",
+        //             null),
+        //         ("1:emit",
+        //             new { Result = true, Data = "🦊🐶🐱"u8.ToArray() },
+        //             "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
+        //             new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
+        //         ("1:emit",
+        //             new { Result = "test"u8.ToArray(), Data = "🦊🐶🐱"u8.ToArray() },
+        //             "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
+        //             new[]
+        //             {
+        //                 new byte[] { 0x74, 0x65, 0x73, 0x74 },
+        //                 new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }
+        //             }),
+        //     };
+        // }
 
         [TestMethod]
         [DataRow("2:emit", true, false, "[true,false]")]
@@ -189,13 +197,11 @@ namespace SocketIOClient.IntegrationTests
             string excepted)
         {
             using var io = CreateSocketIO();
-            if (!GetType().IsSubclassOf(typeof(WebSocketMpTests)))
-            {
-                io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
-                {
-                    Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
-                }, io.Options.EIO);
-            }
+            // io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+            // {
+            //     Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs)
+            // }, io.Options.EIO);
+            ConfigureSerializerForEmitting1Parameter(io);
 
             string? json = null;
             io.On(eventName, res => json = res.ToString());
@@ -292,7 +298,7 @@ namespace SocketIOClient.IntegrationTests
             string? error = null;
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
-                Transport = Protocol,
+                Transport = Transport,
                 AutoUpgrade = false,
                 Reconnection = false,
                 EIO = EIO,
