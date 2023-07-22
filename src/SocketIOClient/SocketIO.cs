@@ -259,8 +259,12 @@ namespace SocketIOClient
                         break;
                     DisposeResources();
                     await InitTransportAsync().ConfigureAwait(false);
-                    var serverUri = UriConverter.GetServerUri(Options.Transport == TransportProtocol.WebSocket,
-                        ServerUri, Options.EIO, Options.Path, Options.Query);
+                    var serverUri = UriConverter.GetServerUri(
+                        Options.Transport == TransportProtocol.WebSocket,
+                        ServerUri,
+                        Options.EIO,
+                        Options.Path,
+                        Options.Query);
                     if (_attempts > 0)
                         OnReconnectAttempt.TryInvoke(this, _attempts);
                     try

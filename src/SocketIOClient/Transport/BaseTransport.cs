@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -100,6 +101,13 @@ namespace SocketIOClient.Transport
             }
         }
 
+        private static readonly HashSet<string> DefaultNamespaces = new()
+        {
+            null,
+            string.Empty,
+            "/"
+        };
+
         private async Task<bool> HandleEio3Messages(IMessage2 message)
         {
             if (Options.EIO != EngineIO.V3) return false;
@@ -120,9 +128,8 @@ namespace SocketIOClient.Transport
                 }
 
                 message.Sid = OpenedMessage.Sid;
-                // if ((string.IsNullOrEmpty(Namespace) && string.IsNullOrEmpty(msg.Namespace)) ||
-                //     msg.Namespace == Namespace)
-                if (message.Namespace == Namespace)
+                if (message.Namespace == Namespace
+                    || (DefaultNamespaces.Contains(Namespace) && DefaultNamespaces.Contains(message.Namespace)))
                 {
                     PingTokenSource?.Cancel();
 

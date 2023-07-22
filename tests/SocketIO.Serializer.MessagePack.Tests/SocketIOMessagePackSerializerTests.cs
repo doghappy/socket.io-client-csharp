@@ -496,6 +496,7 @@ public class SocketIOMessagePackSerializerTests
                 }),
             (
                 EngineIO.V4,
+                // {"type":3,"data":["hello"],"id":1,"nsp":"/nsp"}
                 new byte[]
                 {
                     0x84, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x03, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x91, 0xA5, 0x68, 0x65,
@@ -507,6 +508,30 @@ public class SocketIOMessagePackSerializerTests
                     DataList = new object[] { "hello" },
                     Namespace = "/nsp",
                     Id = 1
+                }),
+            (
+                EngineIO.V3,
+                new byte[]
+                {
+                    // {"type":5,"data":["1:emit",{"Result":true,"Data":"8J+mivCfkLbwn5Cx"}],"nsp":"/"}
+                    0x83, 0xA4, 0x74, 0x79, 0x70, 0x65, 0x05, 0xA4, 0x64, 0x61, 0x74, 0x61, 0x92, 0xA6, 0x31, 0x3A,
+                    0x65, 0x6D, 0x69, 0x74, 0x82, 0xA6, 0x52, 0x65, 0x73, 0x75, 0x6C, 0x74, 0xC3, 0xA4, 0x44, 0x61,
+                    0x74, 0x61, 0xC4, 0x0C, 0xF0, 0x9F, 0xA6, 0x8A, 0xF0, 0x9F, 0x90, 0xB6, 0xF0, 0x9F, 0x90, 0xB1,
+                    0xA3, 0x6E, 0x73, 0x70, 0xA1, 0x2F
+                },
+                new
+                {
+                    Type = MessageType.Binary,
+                    Event = "1:emit",
+                    DataList = new object[]
+                    {
+                        new Dictionary<object, object>
+                        {
+                            ["Result"] = true,
+                            ["Data"] = "8J+mivCfkLbwn5Cx"
+                        }
+                    },
+                    Namespace = "/",
                 }),
         };
 

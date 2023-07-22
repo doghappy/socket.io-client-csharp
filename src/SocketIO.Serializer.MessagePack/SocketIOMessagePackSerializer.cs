@@ -44,28 +44,30 @@ namespace SocketIO.Serializer.MessagePack
             if (dataType.IsSimpleType())
                 return false;
 
-            if (data is byte[] bytes)
-                return bytes.Length > 0;
-
-            if (data is IEnumerable items)
+            if (dataType.IsArray)
             {
-                foreach (var item in items)
+                if (data is byte[] bytes)
+                    return bytes.Length > 0;
+                
+                foreach (var item in (IEnumerable)data)
                 {
                     var flag = HasByteArray(item);
                     if (flag)
                         return true;
                 }
             }
-
-            var props = dataType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-            foreach (var prop in props)
+            else
             {
-                var value = prop.GetValue(data);
-                if (value is null || prop.PropertyType.IsSimpleType())
-                    continue;
-                var flag = HasByteArray(value);
-                if (flag)
-                    return true;
+                var props = dataType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
+                foreach (var prop in props)
+                {
+                    var value = prop.GetValue(data);
+                    if (value is null || prop.PropertyType.IsSimpleType())
+                        continue;
+                    var flag = HasByteArray(value);
+                    if (flag)
+                        return true;
+                }
             }
 
             return false;
@@ -386,9 +388,9 @@ namespace SocketIO.Serializer.MessagePack
                 case MessageType.Error:
                     ReadErrorMessage(message, odm);
                     break;
-                // case MessageType.Binary:
-                //     ReadBinaryMessage(message, text);
-                //     break;
+                case MessageType.Binary:
+                    ReadBinaryMessage(message, odm);
+                    break;
                 // case MessageType.BinaryAck:
                 //     ReadBinaryAckMessage(message, text);
                 //     break;
@@ -431,12 +433,13 @@ namespace SocketIO.Serializer.MessagePack
 
         private static void ReadAckMessage(IMessage2 message, ObjectDataMessage odm)
         {
-            message.Namespace = odm.Namespace;
-            message.Id = odm.Id;
-
-            var data = (object[])odm.Data;
-            var packMessage = (PackMessage)message;
-            packMessage.Data = data.ToList();
+            // message.Namespace = odm.Namespace;
+            // message.Id = odm.Id;
+            //
+            // var data = (object[])odm.Data;
+            // var packMessage = (PackMessage)message;
+            // packMessage.Data = data.ToList();
+            ReadEventMessage(message, odm);
         }
 
         private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm)
@@ -446,34 +449,9 @@ namespace SocketIO.Serializer.MessagePack
             message.Namespace = odm.Namespace;
         }
 
-        private static void ReadBinaryMessage(IMessage2 message, string text)
+        private static void ReadBinaryMessage(IMessage2 message, ObjectDataMessage odm)
         {
-            message.ReceivedBinary = new List<byte[]>();
-            var index1 = text.IndexOf('-');
-            message.BinaryCount = int.Parse(text.Substring(0, index1));
-
-            var index2 = text.IndexOf('[');
-
-            var index3 = text.LastIndexOf(',', index2);
-            if (index3 > -1)
-            {
-                message.Namespace = text.Substring(index1 + 1, index3 - index1 - 1);
-                var idLength = index2 - index3 - 1;
-                if (idLength > 0)
-                {
-                    message.Id = int.Parse(text.Substring(index3 + 1, idLength));
-                }
-            }
-            else
-            {
-                var idLength = index2 - index1 - 1;
-                if (idLength > 0)
-                {
-                    message.Id = int.Parse(text.Substring(index1 + 1, idLength));
-                }
-            }
-
-            message.ReceivedText = text.Substring(index2);
+            ReadEventMessage(message, odm);
         }
 
         #endregion
