@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
+using SocketIO.Core;
 using SocketIOClient.Transport;
 
 namespace SocketIOClient.IntegrationTests.Net472
