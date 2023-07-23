@@ -48,7 +48,7 @@ namespace SocketIO.Serializer.MessagePack
             {
                 if (data is byte[] bytes)
                     return bytes.Length > 0;
-                
+
                 foreach (var item in (IEnumerable)data)
                 {
                     var flag = HasByteArray(item);
@@ -386,7 +386,7 @@ namespace SocketIO.Serializer.MessagePack
                     ReadAckMessage(message, odm);
                     break;
                 case MessageType.Error:
-                    ReadErrorMessage(message, odm);
+                    ReadErrorMessage(message, odm, eio);
                     break;
                 case MessageType.Binary:
                     ReadBinaryMessage(message, odm);
@@ -442,11 +442,18 @@ namespace SocketIO.Serializer.MessagePack
             ReadEventMessage(message, odm);
         }
 
-        private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm, EngineIO eio)
         {
-            var dictionary = (Dictionary<object, object>)odm.Data;
-            message.Error = (string)dictionary["message"];
             message.Namespace = odm.Namespace;
+            if (eio == EngineIO.V3)
+            {
+                message.Error = (string)odm.Data;
+            }
+            else
+            {
+                var dictionary = (Dictionary<object, object>)odm.Data;
+                message.Error = (string)dictionary["message"];
+            }
         }
 
         private static void ReadBinaryMessage(IMessage2 message, ObjectDataMessage odm)

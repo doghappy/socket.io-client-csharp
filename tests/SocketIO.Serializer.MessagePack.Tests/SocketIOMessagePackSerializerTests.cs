@@ -357,8 +357,16 @@ public class SocketIOMessagePackSerializerTests
                     Namespace = "/test"
                 }),
             (
-                EngineIO.V3,
+                EngineIO.V4,
                 "4{\"type\":4,\"data\":{\"message\":\"Authentication error\",\"data\":[0,\"AA==\"]},\"nsp\":\"/\"}",
+                new
+                {
+                    Type = MessageType.Error,
+                    Error = "Authentication error"
+                }),
+            (
+                EngineIO.V3,
+                "4{\"type\":4,\"data\":\"Authentication error\",\"nsp\":\"/\"}",
                 new
                 {
                     Type = MessageType.Error,
