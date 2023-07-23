@@ -13,21 +13,12 @@ namespace SocketIOClient
     {
         private readonly IMessage2 _message2;
 
-        public SocketIOResponse(IList<JsonElement> array, SocketIO socket)
-        {
-            _array = array;
-            _socketIO = socket;
-            PacketId = -1;
-        }
-
         public SocketIOResponse(IMessage2 message2, SocketIO socket)
         {
             _message2 = message2;
             _socketIO = socket;
             PacketId = -1;
         }
-
-        readonly IList<JsonElement> _array;
 
         public List<byte[]> InComingBytes => _message2.ReceivedBinary;
 
@@ -38,10 +29,6 @@ namespace SocketIOClient
         {
             return _socketIO.Serializer.Deserialize<T>(_message2, index);
         }
-
-        public JsonElement GetValue(int index = 0) => _array[index];
-
-        public int Count => _array.Count;
 
         public override string ToString()
         {
