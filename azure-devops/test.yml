@@ -18,9 +18,19 @@ stages:
               workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTests
               command: test
           - task: DotNetCoreCLI@2
-            displayName: SocketIOClient.Newtonsoft.Json.UnitTests
+            displayName: SocketIO.Serializer.SystemTextJson.Tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.Newtonsoft.Json.UnitTests
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.SystemTextJson.Tests
+              command: test
+          - task: DotNetCoreCLI@2
+            displayName: SocketIO.Serializer.NewtonsoftJson.Tests
+            inputs:
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.NewtonsoftJson.Tests
+              command: test
+          - task: DotNetCoreCLI@2
+            displayName: SocketIO.Serializer.MessagePack.Tests
+            inputs:
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.MessagePack.Tests
               command: test
       - job:
         displayName: Integration tests
