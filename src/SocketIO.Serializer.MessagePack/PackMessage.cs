@@ -57,9 +57,6 @@ namespace SocketIO.Serializer.MessagePack
         public int BinaryCount { get; set; }
 
         [IgnoreMember]
-        public List<byte[]> OutgoingBytes { get; set; }
-
-        [IgnoreMember]
         public List<byte[]> IncomingBytes { get; set; }
 
         [IgnoreMember]

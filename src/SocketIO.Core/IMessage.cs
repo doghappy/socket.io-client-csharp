@@ -11,7 +11,6 @@ namespace SocketIO.Core
         int PingTimeout { get; set; }
         List<string> Upgrades { get; set; }
         int BinaryCount { get; set; }
-        List<byte[]> OutgoingBytes { get; set; }
         [Obsolete]
         List<byte[]> IncomingBytes { get; set; }
         string Namespace { get; set; }

@@ -19,7 +19,6 @@ namespace SocketIO.Serializer.NewtonsoftJson
         public int PingTimeout { get; set; }
         public List<string> Upgrades { get; set; }
         public int BinaryCount { get; set; }
-        public List<byte[]> OutgoingBytes { get; set; }
         public List<byte[]> IncomingBytes { get; set; }
         public string Namespace { get; set; }
         public TimeSpan Duration { get; set; }
