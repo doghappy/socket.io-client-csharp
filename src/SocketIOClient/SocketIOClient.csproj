@@ -12,11 +12,12 @@
 		<PackageTags>socket.io-client</PackageTags>
 		<RepositoryType>github</RepositoryType>
 		<PackageLicenseFile></PackageLicenseFile>
-		<Version>3.0.8</Version>
+		<Version>3.0.9</Version>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<SignAssembly>true</SignAssembly>
 		<AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -134,7 +134,7 @@ namespace SocketIOClient.UnitTests.Transport.Http
             var mockHttpPollingHandler = new Mock<IHttpPollingHandler>();
             mockHttpPollingHandler.SetupProperty(h => h.OnTextReceived);
 
-            _ = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V4, Auth = auth }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer());
+            _ = new HttpTransport<JsonElement>(new TransportOptions { EIO = EngineIO.V4, Auth = auth }, mockHttpPollingHandler.Object, new SystemTextJsonSerializer()) { Namespace=ns};
             mockHttpPollingHandler.Object.OnTextReceived(
                 "0{\"sid\":\"LgtKYhIy7tUzKHH9AAAB\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
 
