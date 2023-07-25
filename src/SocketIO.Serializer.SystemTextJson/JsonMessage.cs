@@ -5,7 +5,7 @@ using SocketIO.Core;
 
 namespace SocketIO.Serializer.SystemTextJson
 {
-    public class JsonMessage : IMessage2
+    public class JsonMessage : IMessage
     {
         public JsonMessage(MessageType type)
         {

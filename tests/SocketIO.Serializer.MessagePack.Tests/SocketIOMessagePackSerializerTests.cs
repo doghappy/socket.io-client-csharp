@@ -566,11 +566,11 @@ public class SocketIOMessagePackSerializerTests
     }
 
     private static IEnumerable<(
-        IMessage2 message,
+        IMessage message,
         int index,
         MessagePackSerializerOptions? options,
         object expected)> DeserializeGenericMethodTupleCases =>
-        new (IMessage2 message, int index, MessagePackSerializerOptions? AssertionOptions, object expected)[]
+        new (IMessage message, int index, MessagePackSerializerOptions? AssertionOptions, object expected)[]
         {
             (new PackMessage(MessageType.Event)
             {
@@ -667,7 +667,7 @@ public class SocketIOMessagePackSerializerTests
     [MemberData(nameof(DeserializeGenericMethodCases))]
     public void Should_deserialize_generic_type_by_message_and_index(
         int caseId,
-        IMessage2 message,
+        IMessage message,
         int index,
         MessagePackSerializerOptions? options,
         object expected)
@@ -677,7 +677,7 @@ public class SocketIOMessagePackSerializerTests
             .GetMethod(
                 nameof(SocketIOMessagePackSerializer.Deserialize),
                 BindingFlags.Public | BindingFlags.Instance,
-                new[] { typeof(IMessage2), typeof(int) })!
+                new[] { typeof(IMessage), typeof(int) })!
             .MakeGenericMethod(expected.GetType())
             .Invoke(serializer, new object?[] { message, index });
         actual.Should().BeEquivalentTo(expected);
@@ -687,7 +687,7 @@ public class SocketIOMessagePackSerializerTests
     [MemberData(nameof(DeserializeGenericMethodCases))]
     public void Should_deserialize_non_generic_type_by_message_and_index_and_type(
         int caseId,
-        IMessage2 message,
+        IMessage message,
         int index,
         MessagePackSerializerOptions? options,
         object expected)
@@ -1521,9 +1521,9 @@ public class SocketIOMessagePackSerializerTests
 
     private static IEnumerable<(
         MessagePackSerializerOptions? options,
-        IMessage2 message,
+        IMessage message,
         string expected)> MessageToJsonTupleCases =>
-        new (MessagePackSerializerOptions? options, IMessage2 message, string expected)[]
+        new (MessagePackSerializerOptions? options, IMessage message, string expected)[]
         {
             (
                 null,
@@ -1571,7 +1571,7 @@ public class SocketIOMessagePackSerializerTests
     public void Message_should_be_able_to_json(
         int caseId,
         MessagePackSerializerOptions? options,
-        IMessage2 message,
+        IMessage message,
         string expected)
     {
         var serializer = new SocketIOMessagePackSerializer(options, EngineIO.V4);

@@ -7,7 +7,7 @@ using SocketIO.Core;
 namespace SocketIO.Serializer.MessagePack
 {
     [MessagePackObject]
-    public class PackMessage : IMessage2
+    public class PackMessage : IMessage
     {
         public PackMessage()
         {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SocketIO.Core
 {
-    public interface IMessage2
+    public interface IMessage
     {
         MessageType Type { get; }
         string Sid { get; set; }

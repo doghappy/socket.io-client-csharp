@@ -173,7 +173,7 @@ namespace SocketIO.Serializer.MessagePack
             return string.IsNullOrEmpty(ns) ? "/" : ns;
         }
 
-        public T Deserialize<T>(IMessage2 message, int index)
+        public T Deserialize<T>(IMessage message, int index)
         {
             var packMessage = (PackMessage)message;
             var data = packMessage.DataList[index];
@@ -181,7 +181,7 @@ namespace SocketIO.Serializer.MessagePack
             return MessagePackSerializer.Deserialize<T>(bytes, _options);
         }
 
-        public object Deserialize(IMessage2 message, int index, Type returnType)
+        public object Deserialize(IMessage message, int index, Type returnType)
         {
             var packMessage = (PackMessage)message;
             var data = packMessage.DataList[index];
@@ -189,7 +189,7 @@ namespace SocketIO.Serializer.MessagePack
             return MessagePackSerializer.Deserialize(returnType, bytes, _options);
         }
 
-        public IMessage2 Deserialize(byte[] bytes)
+        public IMessage Deserialize(byte[] bytes)
         {
             var json = MessagePackSerializer.ConvertToJson(bytes, _options);
             var newBytes = MessagePackSerializer.ConvertFromJson(json);
@@ -200,7 +200,7 @@ namespace SocketIO.Serializer.MessagePack
             return message;
         }
 
-        public IMessage2 Deserialize(string text)
+        public IMessage Deserialize(string text)
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -231,12 +231,12 @@ namespace SocketIO.Serializer.MessagePack
             }
         }
 
-        private static IMessage2 HandleEventMessage()
+        private static IMessage HandleEventMessage()
         {
             return null;
         }
 
-        private static IMessage2 HandleDefaultMessage(EngineIOProtocol protocol, string text, EngineIO eio)
+        private static IMessage HandleDefaultMessage(EngineIOProtocol protocol, string text, EngineIO eio)
         {
             var bytes = MessagePackSerializer.ConvertFromJson(text);
             var odm = MessagePackSerializer.Deserialize<ObjectDataMessage>(bytes);
@@ -246,13 +246,13 @@ namespace SocketIO.Serializer.MessagePack
             return message;
         }
 
-        public string MessageToJson(IMessage2 message)
+        public string MessageToJson(IMessage message)
         {
             var data = ((PackMessage)message).DataList;
             return MessagePackSerializer.SerializeToJson(data, _options);
         }
 
-        public IMessage2 NewMessage(MessageType type)
+        public IMessage NewMessage(MessageType type)
         {
             return new PackMessage(type);
         }
@@ -362,7 +362,7 @@ namespace SocketIO.Serializer.MessagePack
 
         #region Read Message
 
-        private static void ReadMessage(IMessage2 message, ObjectDataMessage odm, EngineIO eio)
+        private static void ReadMessage(IMessage message, ObjectDataMessage odm, EngineIO eio)
         {
             switch (message.Type)
             {
@@ -399,7 +399,7 @@ namespace SocketIO.Serializer.MessagePack
             }
         }
 
-        private static void ReadOpenedMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadOpenedMessage(IMessage message, ObjectDataMessage odm)
         {
             message.Sid = odm.Sid;
             message.PingInterval = odm.PingInterval;
@@ -407,7 +407,7 @@ namespace SocketIO.Serializer.MessagePack
             message.Upgrades = odm.Upgrades;
         }
 
-        private static void ReadConnectedMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadConnectedMessage(IMessage message, ObjectDataMessage odm)
         {
             message.Namespace = odm.Namespace;
             if (odm.Data is not null)
@@ -417,12 +417,12 @@ namespace SocketIO.Serializer.MessagePack
             }
         }
 
-        private static void ReadDisconnectedMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadDisconnectedMessage(IMessage message, ObjectDataMessage odm)
         {
             message.Namespace = odm.Namespace;
         }
 
-        private static void ReadEventMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadEventMessage(IMessage message, ObjectDataMessage odm)
         {
             message.Namespace = odm.Namespace;
             message.Id = odm.Id;
@@ -431,7 +431,7 @@ namespace SocketIO.Serializer.MessagePack
             packMessage.Data = (object[])odm.Data;
         }
 
-        private static void ReadAckMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadAckMessage(IMessage message, ObjectDataMessage odm)
         {
             // message.Namespace = odm.Namespace;
             // message.Id = odm.Id;
@@ -442,7 +442,7 @@ namespace SocketIO.Serializer.MessagePack
             ReadEventMessage(message, odm);
         }
 
-        private static void ReadErrorMessage(IMessage2 message, ObjectDataMessage odm, EngineIO eio)
+        private static void ReadErrorMessage(IMessage message, ObjectDataMessage odm, EngineIO eio)
         {
             message.Namespace = odm.Namespace;
             if (eio == EngineIO.V3)
@@ -456,7 +456,7 @@ namespace SocketIO.Serializer.MessagePack
             }
         }
 
-        private static void ReadBinaryMessage(IMessage2 message, ObjectDataMessage odm)
+        private static void ReadBinaryMessage(IMessage message, ObjectDataMessage odm)
         {
             ReadEventMessage(message, odm);
         }

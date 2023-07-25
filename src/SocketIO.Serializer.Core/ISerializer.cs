@@ -10,11 +10,11 @@ namespace SocketIO.Serializer.Core
         List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data);
         List<SerializedItem> Serialize(int packetId, string nsp, object[] data);
         List<SerializedItem> Serialize(string eventName, string nsp, object[] data);
-        T Deserialize<T>(IMessage2 message, int index);
-        IMessage2 Deserialize(string text);
-        IMessage2 Deserialize(byte[] bytes);
-        string MessageToJson(IMessage2 message);
-        IMessage2 NewMessage(MessageType type);
+        T Deserialize<T>(IMessage message, int index);
+        IMessage Deserialize(string text);
+        IMessage Deserialize(byte[] bytes);
+        string MessageToJson(IMessage message);
+        IMessage NewMessage(MessageType type);
 
         SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries);
         

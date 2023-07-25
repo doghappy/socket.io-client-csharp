@@ -646,7 +646,7 @@ public class NewtonsoftJsonSerializerTests
         List<object> expected)
     {
         var serializer = new NewtonsoftJsonSerializer(eio);
-        var list = new List<IMessage2>();
+        var list = new List<IMessage>();
         foreach (var item in items)
         {
             var message = item.Type == SerializedMessageType.Text
@@ -664,11 +664,11 @@ public class NewtonsoftJsonSerializerTests
     }
 
     private static IEnumerable<(
-        IMessage2 message,
+        IMessage message,
         int index,
         JsonSerializerSettings options,
         object expected)> DeserializeGenericMethodTupleCases =>
-        new (IMessage2 message, int index, JsonSerializerSettings options, object expected)[]
+        new (IMessage message, int index, JsonSerializerSettings options, object expected)[]
         {
             (new JsonMessage(MessageType.Event)
             {
@@ -735,7 +735,7 @@ public class NewtonsoftJsonSerializerTests
     [MemberData(nameof(DeserializeGenericMethodCases))]
     public void Should_deserialize_generic_type_by_message_and_index(
         int caseId,
-        IMessage2 message,
+        IMessage message,
         int index,
         JsonSerializerSettings options,
         object expected)
@@ -745,7 +745,7 @@ public class NewtonsoftJsonSerializerTests
             .GetMethod(
                 nameof(NewtonsoftJsonSerializer.Deserialize),
                 BindingFlags.Public | BindingFlags.Instance,
-                new[] { typeof(IMessage2), typeof(int) })!
+                new[] { typeof(IMessage), typeof(int) })!
             .MakeGenericMethod(expected.GetType())
             .Invoke(serializer, new object?[] { message, index });
         actual.Should().BeEquivalentTo(expected);
@@ -755,7 +755,7 @@ public class NewtonsoftJsonSerializerTests
     [MemberData(nameof(DeserializeGenericMethodCases))]
     public void Should_deserialize_non_generic_type_by_message_and_index_and_type(
         int caseId,
-        IMessage2 message,
+        IMessage message,
         int index,
         JsonSerializerSettings options,
         object expected)
@@ -1099,9 +1099,9 @@ public class NewtonsoftJsonSerializerTests
 
     private static IEnumerable<(
         JsonSerializerSettings? options,
-        IMessage2 message,
+        IMessage message,
         string expected)> MessageToJsonTupleCases =>
-        new (JsonSerializerSettings? options, IMessage2 message, string expected)[]
+        new (JsonSerializerSettings? options, IMessage message, string expected)[]
         {
             (
                 null,
@@ -1149,7 +1149,7 @@ public class NewtonsoftJsonSerializerTests
     public void Message_should_be_able_to_json(
         int caseId,
         JsonSerializerSettings? options,
-        IMessage2 message,
+        IMessage message,
         string expected)
     {
         var serializer = new NewtonsoftJsonSerializer(options, EngineIO.V4);

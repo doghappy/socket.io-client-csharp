@@ -25,18 +25,18 @@ namespace SocketIOClient.Transport
         protected TransportOptions Options { get; }
         protected ISerializer Serializer { get; }
 
-        public Action<IMessage2> OnReceived { get; set; }
+        public Action<IMessage> OnReceived { get; set; }
 
         protected abstract TransportProtocol Protocol { get; }
         protected CancellationTokenSource PingTokenSource { get; private set; }
-        protected IMessage2 OpenedMessage { get; private set; }
+        protected IMessage OpenedMessage { get; private set; }
 
         public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
 
         public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
 
-        protected virtual async Task OpenAsync(IMessage2 message)
+        protected virtual async Task OpenAsync(IMessage message)
         {
             OpenedMessage = message;
             if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Namespace))
@@ -108,7 +108,7 @@ namespace SocketIOClient.Transport
             "/"
         };
 
-        private async Task<bool> HandleEio3Messages(IMessage2 message)
+        private async Task<bool> HandleEio3Messages(IMessage message)
         {
             if (Options.EIO != EngineIO.V3) return false;
             if (message.Type == MessageType.Pong)
@@ -145,7 +145,7 @@ namespace SocketIOClient.Transport
             return false;
         }
 
-        private async Task HandlePingMessage(IMessage2 message)
+        private async Task HandlePingMessage(IMessage message)
         {
             if (Options.EIO == EngineIO.V3) return;
             if (message.Type == MessageType.Ping)
@@ -182,7 +182,7 @@ namespace SocketIOClient.Transport
             await HandleMessage(message).ConfigureAwait(false);
         }
 
-        private async Task HandleMessage(IMessage2 message)
+        private async Task HandleMessage(IMessage message)
         {
             if (message == null) return;
 

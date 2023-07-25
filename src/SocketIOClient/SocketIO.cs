@@ -423,12 +423,12 @@ namespace SocketIOClient
             OnPing.TryInvoke(this, EventArgs.Empty);
         }
 
-        private void PongHandler(IMessage2 msg)
+        private void PongHandler(IMessage msg)
         {
             OnPong.TryInvoke(this, msg.Duration);
         }
 
-        private void ConnectedHandler(IMessage2 msg)
+        private void ConnectedHandler(IMessage msg)
         {
             Id = msg.Sid;
             Connected = true;
@@ -447,7 +447,7 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
         }
 
-        private void EventMessageHandler(IMessage2 message)
+        private void EventMessageHandler(IMessage message)
         {
             // TODO: run actions in background. eg: Task.Run
             var res = new SocketIOResponse(message, this)
@@ -469,7 +469,7 @@ namespace SocketIOClient
             }
         }
 
-        private void AckMessageHandler(IMessage2 message)
+        private void AckMessageHandler(IMessage message)
         {
             var res = new SocketIOResponse(message, this);
             if (_ackActionHandlers.ContainsKey(message.Id))
@@ -484,13 +484,13 @@ namespace SocketIOClient
             }
         }
 
-        private void ErrorMessageHandler(IMessage2 msg)
+        private void ErrorMessageHandler(IMessage msg)
         {
             _connCts.Dispose();
             OnError.TryInvoke(this, msg.Error);
         }
 
-        private void BinaryMessageHandler(IMessage2 message)
+        private void BinaryMessageHandler(IMessage message)
         {
             var response = new SocketIOResponse(message, this)
             {
@@ -508,7 +508,7 @@ namespace SocketIOClient
             }
         }
 
-        private void BinaryAckMessageHandler(IMessage2 msg)
+        private void BinaryAckMessageHandler(IMessage msg)
         {
             if (_ackActionHandlers.TryGetValue(msg.Id, out var handler))
             {
@@ -529,7 +529,7 @@ namespace SocketIOClient
             _ = InvokeDisconnect(DisconnectReason.TransportClose);
         }
 
-        private void OnMessageReceived(IMessage2 msg)
+        private void OnMessageReceived(IMessage msg)
         {
             try
             {

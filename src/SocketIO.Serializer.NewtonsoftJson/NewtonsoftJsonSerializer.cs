@@ -21,12 +21,12 @@ namespace SocketIO.Serializer.NewtonsoftJson
         {
             _eio = eio;
             _options = options ?? new JsonSerializerSettings();
-            _messageQueue = new ConcurrentQueue<IMessage2>();
+            _messageQueue = new ConcurrentQueue<IMessage>();
         }
 
         private readonly EngineIO _eio;
         private readonly JsonSerializerSettings _options;
-        readonly ConcurrentQueue<IMessage2> _messageQueue;
+        readonly ConcurrentQueue<IMessage> _messageQueue;
 
         private JsonSerializerSettings NewSettings(JsonConverter converter)
         {
@@ -138,7 +138,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        private (JToken jsonNode, JsonSerializer serializer) GetSerializationData(IMessage2 message, int index)
+        private (JToken jsonNode, JsonSerializer serializer) GetSerializationData(IMessage message, int index)
         {
             var jsonMessage = (JsonMessage)message;
             var item = jsonMessage.JsonArray[index];
@@ -152,19 +152,19 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return (item, JsonSerializer.Create(options));
         }
 
-        public T Deserialize<T>(IMessage2 message, int index)
+        public T Deserialize<T>(IMessage message, int index)
         {
             var (jsonNode, serializer) = GetSerializationData(message, index);
             return jsonNode.ToObject<T>(serializer);
         }
 
-        public object Deserialize(IMessage2 message, int index, Type returnType)
+        public object Deserialize(IMessage message, int index, Type returnType)
         {
             var (jsonNode, serializer) = GetSerializationData(message, index);
             return jsonNode.ToObject(returnType, serializer);
         }
 
-        public IMessage2 Deserialize(string text)
+        public IMessage Deserialize(string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -188,7 +188,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return null;
         }
 
-        public IMessage2 Deserialize(byte[] bytes)
+        public IMessage Deserialize(byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -204,12 +204,12 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return result;
         }
 
-        public string MessageToJson(IMessage2 message)
+        public string MessageToJson(IMessage message)
         {
             return ((JsonMessage)message).JsonArray.ToString(_options.Formatting);
         }
 
-        public IMessage2 NewMessage(MessageType type)
+        public IMessage NewMessage(MessageType type)
         {
             return new JsonMessage(type);
         }
@@ -293,7 +293,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
 
         #region Read Message
 
-        private static void ReadMessage(IMessage2 message, EngineIO eio, string text)
+        private static void ReadMessage(IMessage message, EngineIO eio, string text)
         {
             switch (message.Type)
             {
@@ -330,7 +330,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             }
         }
 
-        private static void ReadOpenedMessage(IMessage2 message, string text)
+        private static void ReadOpenedMessage(IMessage message, string text)
         {
             JsonConvert.PopulateObject(text, message, new JsonSerializerSettings
             {
@@ -341,7 +341,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             });
         }
 
-        private static void ReadConnectedMessage(IMessage2 message, string text, EngineIO eio)
+        private static void ReadConnectedMessage(IMessage message, string text, EngineIO eio)
         {
             switch (eio)
             {
@@ -356,12 +356,12 @@ namespace SocketIO.Serializer.NewtonsoftJson
             }
         }
 
-        private static void ReadDisconnectedMessage(IMessage2 message, string text)
+        private static void ReadDisconnectedMessage(IMessage message, string text)
         {
             message.Namespace = text.TrimEnd(',');
         }
 
-        private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
+        private static void ReadEio4ConnectedMessage(IMessage message, string text)
         {
             var index = text.IndexOf('{');
             if (index > 0)
@@ -377,7 +377,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             message.Sid = JObject.Parse(text).Value<string>("sid");
         }
 
-        private static void ReadEio3ConnectedMessage(IMessage2 message, string text)
+        private static void ReadEio3ConnectedMessage(IMessage message, string text)
         {
             if (text.Length < 2) return;
             var startIndex = text.IndexOf('/');
@@ -400,7 +400,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             message.Namespace = text.Substring(startIndex, endIndex);
         }
 
-        private static void ReadEventMessage(IMessage2 message, string text)
+        private static void ReadEventMessage(IMessage message, string text)
         {
             var index = text.IndexOf('[');
             var lastIndex = text.LastIndexOf(',', index);
@@ -424,7 +424,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             message.ReceivedText = text.Substring(index);
         }
 
-        private static void ReadAckMessage(IMessage2 message, string text)
+        private static void ReadAckMessage(IMessage message, string text)
         {
             var index = text.IndexOf('[');
             var lastIndex = text.LastIndexOf(',', index);
@@ -442,7 +442,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             message.ReceivedText = text.Substring(index);
         }
 
-        private static void ReadErrorMessage(IMessage2 message, string text, EngineIO eio)
+        private static void ReadErrorMessage(IMessage message, string text, EngineIO eio)
         {
             if (eio == EngineIO.V3)
             {
@@ -462,7 +462,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             }
         }
 
-        private static void ReadBinaryMessage(IMessage2 message, string text)
+        private static void ReadBinaryMessage(IMessage message, string text)
         {
             message.ReceivedBinary = new List<byte[]>();
             var index1 = text.IndexOf('-');
@@ -492,7 +492,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             message.ReceivedText = text.Substring(index2);
         }
 
-        private static void ReadBinaryAckMessage(IMessage2 message, string text)
+        private static void ReadBinaryAckMessage(IMessage message, string text)
         {
             var index1 = text.IndexOf('-');
             message.BinaryCount = int.Parse(text.Substring(0, index1));

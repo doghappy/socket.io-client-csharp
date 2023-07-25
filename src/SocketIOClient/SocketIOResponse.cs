@@ -11,28 +11,28 @@ namespace SocketIOClient
 {
     public class SocketIOResponse
     {
-        private readonly IMessage2 _message2;
+        private readonly IMessage _message;
 
-        public SocketIOResponse(IMessage2 message2, SocketIO socket)
+        public SocketIOResponse(IMessage message, SocketIO socket)
         {
-            _message2 = message2;
+            _message = message;
             _socketIO = socket;
             PacketId = -1;
         }
 
-        public List<byte[]> InComingBytes => _message2.ReceivedBinary;
+        public List<byte[]> InComingBytes => _message.ReceivedBinary;
 
         private readonly SocketIO _socketIO;
         public int PacketId { get; set; }
 
         public T GetValue<T>(int index = 0)
         {
-            return _socketIO.Serializer.Deserialize<T>(_message2, index);
+            return _socketIO.Serializer.Deserialize<T>(_message, index);
         }
 
         public override string ToString()
         {
-            return _socketIO.Serializer.MessageToJson(_message2);
+            return _socketIO.Serializer.MessageToJson(_message);
         }
 
         public async Task CallbackAsync(params object[] data)

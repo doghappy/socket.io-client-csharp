@@ -21,12 +21,12 @@ namespace SocketIO.Serializer.SystemTextJson
         {
             _eio = eio;
             _options = options ?? new JsonSerializerOptions();
-            _messageQueue = new ConcurrentQueue<IMessage2>();
+            _messageQueue = new ConcurrentQueue<IMessage>();
         }
 
         private readonly EngineIO _eio;
         private readonly JsonSerializerOptions _options;
-        readonly ConcurrentQueue<IMessage2> _messageQueue;
+        readonly ConcurrentQueue<IMessage> _messageQueue;
 
         private JsonSerializerOptions NewOptions(JsonConverter converter)
         {
@@ -138,7 +138,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        private (JsonNode jsonNode, JsonSerializerOptions options) GetSerializationData(IMessage2 message, int index)
+        private (JsonNode jsonNode, JsonSerializerOptions options) GetSerializationData(IMessage message, int index)
         {
             var jsonMessage = (JsonMessage)message;
             var item = jsonMessage.JsonArray[index];
@@ -152,19 +152,19 @@ namespace SocketIO.Serializer.SystemTextJson
             return (item, options);
         }
 
-        public T Deserialize<T>(IMessage2 message, int index)
+        public T Deserialize<T>(IMessage message, int index)
         {
             var (jsonNode, options) = GetSerializationData(message, index);
             return jsonNode.Deserialize<T>(options);
         }
 
-        public object Deserialize(IMessage2 message, int index, Type returnType)
+        public object Deserialize(IMessage message, int index, Type returnType)
         {
             var (jsonNode, options) = GetSerializationData(message, index);
             return jsonNode.Deserialize(returnType, options);
         }
 
-        public IMessage2 Deserialize(string text)
+        public IMessage Deserialize(string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -188,7 +188,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return null;
         }
 
-        public IMessage2 Deserialize(byte[] bytes)
+        public IMessage Deserialize(byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -204,12 +204,12 @@ namespace SocketIO.Serializer.SystemTextJson
             return result;
         }
 
-        public string MessageToJson(IMessage2 message)
+        public string MessageToJson(IMessage message)
         {
             return ((JsonMessage)message).JsonArray.ToJsonString(_options);
         }
 
-        public IMessage2 NewMessage(MessageType type)
+        public IMessage NewMessage(MessageType type)
         {
             return new JsonMessage(type);
         }
@@ -292,7 +292,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         #region Read Message
 
-        private static void ReadMessage(IMessage2 message, EngineIO eio, string text)
+        private static void ReadMessage(IMessage message, EngineIO eio, string text)
         {
             switch (message.Type)
             {
@@ -329,7 +329,7 @@ namespace SocketIO.Serializer.SystemTextJson
             }
         }
 
-        private static void ReadOpenedMessage(IMessage2 message, string text)
+        private static void ReadOpenedMessage(IMessage message, string text)
         {
             // TODO: Should deserializing to existing object
             // But haven't support yet. https://github.com/dotnet/runtime/issues/78556
@@ -344,7 +344,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.Upgrades = newMessage.Upgrades;
         }
 
-        private static void ReadConnectedMessage(IMessage2 message, string text, EngineIO eio)
+        private static void ReadConnectedMessage(IMessage message, string text, EngineIO eio)
         {
             switch (eio)
             {
@@ -359,12 +359,12 @@ namespace SocketIO.Serializer.SystemTextJson
             }
         }
 
-        private static void ReadDisconnectedMessage(IMessage2 message, string text)
+        private static void ReadDisconnectedMessage(IMessage message, string text)
         {
             message.Namespace = text.TrimEnd(',');
         }
 
-        private static void ReadEio4ConnectedMessage(IMessage2 message, string text)
+        private static void ReadEio4ConnectedMessage(IMessage message, string text)
         {
             var index = text.IndexOf('{');
             if (index > 0)
@@ -380,7 +380,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.Sid = JsonDocument.Parse(text).RootElement.GetProperty("sid").GetString();
         }
 
-        private static void ReadEio3ConnectedMessage(IMessage2 message, string text)
+        private static void ReadEio3ConnectedMessage(IMessage message, string text)
         {
             if (text.Length < 2) return;
             var startIndex = text.IndexOf('/');
@@ -403,7 +403,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.Namespace = text.Substring(startIndex, endIndex);
         }
 
-        private static void ReadEventMessage(IMessage2 message, string text)
+        private static void ReadEventMessage(IMessage message, string text)
         {
             var index = text.IndexOf('[');
             var lastIndex = text.LastIndexOf(',', index);
@@ -427,7 +427,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.ReceivedText = text.Substring(index);
         }
 
-        private static void ReadAckMessage(IMessage2 message, string text)
+        private static void ReadAckMessage(IMessage message, string text)
         {
             var index = text.IndexOf('[');
             var lastIndex = text.LastIndexOf(',', index);
@@ -445,7 +445,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.ReceivedText = text.Substring(index);
         }
 
-        private static void ReadErrorMessage(IMessage2 message, string text, EngineIO eio)
+        private static void ReadErrorMessage(IMessage message, string text, EngineIO eio)
         {
             if (eio == EngineIO.V3)
             {
@@ -476,7 +476,7 @@ namespace SocketIO.Serializer.SystemTextJson
             }
         }
 
-        private static void ReadBinaryMessage(IMessage2 message, string text)
+        private static void ReadBinaryMessage(IMessage message, string text)
         {
             message.ReceivedBinary = new List<byte[]>();
             var index1 = text.IndexOf('-');
@@ -506,7 +506,7 @@ namespace SocketIO.Serializer.SystemTextJson
             message.ReceivedText = text.Substring(index2);
         }
 
-        private static void ReadBinaryAckMessage(IMessage2 message, string text)
+        private static void ReadBinaryAckMessage(IMessage message, string text)
         {
             var index1 = text.IndexOf('-');
             message.BinaryCount = int.Parse(text.Substring(0, index1));
