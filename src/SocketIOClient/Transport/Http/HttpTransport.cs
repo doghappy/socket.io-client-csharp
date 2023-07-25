@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
 using SocketIOClient.Extensions;
-using SocketIOClient.Messages;
 
 namespace SocketIOClient.Transport.Http
 {

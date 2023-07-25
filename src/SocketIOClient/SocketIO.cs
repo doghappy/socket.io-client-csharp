@@ -9,7 +9,6 @@ using SocketIO.Core;
 using SocketIO.Serializer.Core;
 using SocketIO.Serializer.SystemTextJson;
 using SocketIOClient.Extensions;
-using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
@@ -576,10 +575,10 @@ namespace SocketIOClient
         public async Task DisconnectAsync()
         {
             _connCts.TryDispose();
-            var msg = new DisconnectedMessage
-            {
-                Namespace = Namespace
-            };
+            // var msg = new DisconnectedMessage
+            // {
+            //     Namespace = Namespace
+            // };
             try
             {
                 // await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);

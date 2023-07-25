@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
-using SocketIOClient.Messages;
 
 namespace SocketIOClient.Transport
 {

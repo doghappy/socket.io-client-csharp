@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.Messages;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.WebSockets;
 using SocketIO.Core;
