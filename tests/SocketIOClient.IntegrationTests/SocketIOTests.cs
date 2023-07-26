@@ -145,45 +145,6 @@ namespace SocketIOClient.IntegrationTests
             string ExpectedJson,
             IEnumerable<byte[]>? ExpectedBytes
             )> Emit1ParameterTupleCases { get; }
-        // private static IEnumerable<(
-        //     string EventName,
-        //     object Data,
-        //     string ExpectedJson,
-        //     IEnumerable<byte[]>? ExpectedBytes)> Emit1ParameterTupleCase()
-        // {
-        //     return new (string EventName, object Data, string ExpectedJson, IEnumerable<byte[]>? ExpectedBytes)[]
-        //     {
-        //         ("1:emit", null!, "[null]", null),
-        //         ("1:emit", true, "[true]", null),
-        //         ("1:emit", false, "[false]", null),
-        //         ("1:emit", -1234567890, "[-1234567890]", null),
-        //         ("1:emit", 1234567890, "[1234567890]", null),
-        //         ("1:emit", -1.234567890, "[-1.23456789]", null),
-        //         ("1:emit", 1.234567890, "[1.23456789]", null),
-        //         ("1:emit", "hello\n世界\n🌍🌎🌏", "[\"hello\\n世界\\n\\uD83C\\uDF0D\\uD83C\\uDF0E\\uD83C\\uDF0F\"]", null),
-        //         ("1:emit", new { User = "abc", Password = "123" }, "[{\"User\":\"abc\",\"Password\":\"123\"}]", null),
-        //         ("1:emit",
-        //             new { Result = true, Data = new { User = "abc", Password = "123" } },
-        //             "[{\"Result\":true,\"Data\":{\"User\":\"abc\",\"Password\":\"123\"}}]",
-        //             null),
-        //         ("1:emit",
-        //             new { Result = true, Data = new[] { "a", "b" } },
-        //             "[{\"Result\":true,\"Data\":[\"a\",\"b\"]}]",
-        //             null),
-        //         ("1:emit",
-        //             new { Result = true, Data = "🦊🐶🐱"u8.ToArray() },
-        //             "[{\"Result\":true,\"Data\":{\"_placeholder\":true,\"num\":0}}]",
-        //             new[] { new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 } }),
-        //         ("1:emit",
-        //             new { Result = "test"u8.ToArray(), Data = "🦊🐶🐱"u8.ToArray() },
-        //             "[{\"Result\":{\"_placeholder\":true,\"num\":0},\"Data\":{\"_placeholder\":true,\"num\":1}}]",
-        //             new[]
-        //             {
-        //                 new byte[] { 0x74, 0x65, 0x73, 0x74 },
-        //                 new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }
-        //             }),
-        //     };
-        // }
 
         [TestMethod]
         [DataRow("2:emit", true, false, "[true,false]")]
@@ -232,18 +193,39 @@ namespace SocketIOClient.IntegrationTests
             };
         }
 
+        private static IEnumerable<(object Data, string Expected, List<byte[]> Bytes)> AckTupleCases =>
+            new (object Data, string Expected, List<byte[]> Bytes)[]
+            {
+                ("ack", "[\"ack\"]", null!),
+                (FileDto.IndexHtml,
+                    "[{\"Size\":1024,\"Name\":\"index.html\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+                    new List<byte[]> { FileDto.IndexHtml.Bytes })
+            };
+
+        public static IEnumerable<object[]> AckCases => AckTupleCases
+            .Select(x => new[]
+            {
+                x.Data,
+                x.Expected,
+                x.Bytes
+            });
+
         [TestMethod]
-        [DataRow("1:ack", "ack", "[\"ack\"]")]
-        public async Task Should_Be_Able_To_Emit_1_Parameters_And_Ack(string eventName, object data, string excepted)
+        [DynamicData(nameof(AckCases))]
+        public async Task Emit_1_data_then_execute_ack_on_client(
+            object data,
+            string expectedJson,
+            List<byte[]> expectedBytes)
         {
             using var io = CreateSocketIO();
-            string? json = null;
+            SocketIOResponse? response = null;
 
             await io.ConnectAsync();
-            await io.EmitAsync(eventName, res => json = res.ToString(), data);
+            await io.EmitAsync("1:ack", res => response = res, data);
             await Task.Delay(100);
 
-            json.Should().Be(excepted);
+            response!.ToString().Should().Be(expectedJson);
+            response!.InComingBytes.Should().BeEquivalentTo(expectedBytes);
         }
 
         #endregion
@@ -251,19 +233,34 @@ namespace SocketIOClient.IntegrationTests
         #region Callback
 
         [TestMethod]
-        public async Task Callback_should_be_work()
+        public async Task Client_should_about_to_call_CallbackAsync()
         {
-            var guid = Guid.NewGuid().ToString();
+            var text = nameof(Client_should_about_to_call_CallbackAsync);
             string? resText = null;
             using var io = CreateSocketIO();
-            io.On("callback_step2", async res => await res.CallbackAsync(guid));
-            io.On("callback_step3", res => resText = res.GetValue<string>());
+            io.On("client sending data to server", async res => await res.CallbackAsync(text));
+            io.On("server received data", res => resText = res.GetValue<string>());
 
             await io.ConnectAsync();
-            await io.EmitAsync("callback_step1", async res => await res.CallbackAsync(guid));
+            await io.EmitAsync("client will be sending data to server");
             await Task.Delay(100);
 
-            resText.Should().Be(guid + "-server");
+            resText.Should().Be(nameof(Client_should_about_to_call_CallbackAsync));
+        }
+
+        [TestMethod]
+        public async Task Client_should_about_to_call_CallbackAsync_with_bytes()
+        {
+            SocketIOResponse? response = null;
+            using var io = CreateSocketIO();
+            io.On("client sending data to server", async res => await res.CallbackAsync(FileDto.IndexHtml));
+            io.On("server received data", res => response = res);
+
+            await io.ConnectAsync();
+            await io.EmitAsync("client will be sending data to server");
+            await Task.Delay(100);
+
+            response!.GetValue<FileDto>().Should().BeEquivalentTo(FileDto.IndexHtml);
         }
 
         #endregion

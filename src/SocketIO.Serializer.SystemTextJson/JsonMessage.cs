@@ -19,7 +19,6 @@ namespace SocketIO.Serializer.SystemTextJson
         public int PingTimeout { get; set; }
         public List<string> Upgrades { get; set; }
         public int BinaryCount { get; set; }
-        public List<byte[]> IncomingBytes { get; set; }
         public string Namespace { get; set; }
         public TimeSpan Duration { get; set; }
         public int Id { get; set; }

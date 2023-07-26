@@ -30,9 +30,9 @@ io.on('connection', socket => {
     socket.on('disconnect', close => {
         socket.disconnect(close);
     });
-    socket.on('callback_step1', () => {
-        socket.emit('callback_step2', (arg1) => {
-            socket.emit("callback_step3", arg1 + '-server');
+    socket.on('client will be sending data to server', () => {
+        socket.emit('client sending data to server', (arg) => {
+            socket.emit("server received data", arg);
         });
     });
 });
@@ -57,9 +57,9 @@ nsp.on("connection", socket => {
     socket.on('disconnect', close => {
         socket.disconnect(close);
     });
-    socket.on('callback_step1', () => {
-        socket.emit('callback_step2', (arg1) => {
-            socket.emit("callback_step3", arg1 + '-server');
+    socket.on('client will be sending data to server', () => {
+        socket.emit('client sending data to server', (arg) => {
+            socket.emit("server received data", arg);
         });
     });
 });

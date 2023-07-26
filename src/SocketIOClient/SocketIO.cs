@@ -516,7 +516,6 @@ namespace SocketIOClient
                 {
                     PacketId = msg.Id,
                 };
-                response.InComingBytes.AddRange(msg.IncomingBytes);
                 handler.TryInvoke(response);
             }
         }
