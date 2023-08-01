@@ -175,18 +175,20 @@ namespace SocketIO.Serializer.MessagePack
 
         public T Deserialize<T>(IMessage message, int index)
         {
-            var packMessage = (PackMessage)message;
-            var data = packMessage.DataList[index];
-            var bytes = MessagePackSerializer.Serialize(data, _options);
-            return MessagePackSerializer.Deserialize<T>(bytes, _options);
+            var data = Deserialize(message, index, typeof(T));
+            return (T)data;
         }
 
         public object Deserialize(IMessage message, int index, Type returnType)
         {
             var packMessage = (PackMessage)message;
-            var data = packMessage.DataList[index];
-            var bytes = MessagePackSerializer.Serialize(data, _options);
-            return MessagePackSerializer.Deserialize(returnType, bytes, _options);
+            var obj = packMessage.DataList[index];
+            if (obj is null)
+                return default;
+            if (obj.GetType() == returnType)
+                return obj;
+            var data = (Dictionary<object, object>)obj;
+            return data.ToObject(returnType);
         }
 
         public IMessage Deserialize(byte[] bytes)

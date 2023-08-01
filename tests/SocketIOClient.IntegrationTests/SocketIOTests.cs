@@ -193,39 +193,24 @@ namespace SocketIOClient.IntegrationTests
             };
         }
 
-        private static IEnumerable<(object Data, string Expected, List<byte[]> Bytes)> AckTupleCases =>
-            new (object Data, string Expected, List<byte[]> Bytes)[]
-            {
-                ("ack", "[\"ack\"]", null!),
-                (FileDto.IndexHtml,
-                    "[{\"Size\":1024,\"Name\":\"index.html\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
-                    new List<byte[]> { FileDto.IndexHtml.Bytes })
-            };
-
-        public static IEnumerable<object[]> AckCases => AckTupleCases
-            .Select(x => new[]
-            {
-                x.Data,
-                x.Expected,
-                x.Bytes
-            });
+        protected abstract IEnumerable<(object Data, string Expected, List<byte[]> Bytes)> AckCases { get; }
 
         [TestMethod]
-        [DynamicData(nameof(AckCases))]
-        public async Task Emit_1_data_then_execute_ack_on_client(
-            object data,
-            string expectedJson,
-            List<byte[]> expectedBytes)
+        public async Task Emit_1_data_then_execute_ack_on_client()
         {
             using var io = CreateSocketIO();
             SocketIOResponse? response = null;
 
             await io.ConnectAsync();
-            await io.EmitAsync("1:ack", res => response = res, data);
-            await Task.Delay(100);
 
-            response!.ToString().Should().Be(expectedJson);
-            response!.InComingBytes.Should().BeEquivalentTo(expectedBytes);
+            foreach (var item in AckCases)
+            {
+                await io.EmitAsync("1:ack", res => response = res, item.Data);
+                await Task.Delay(100);
+
+                response!.ToString().Should().Be(item.Expected);
+                response!.InComingBytes.Should().BeEquivalentTo(item.Bytes);
+            }
         }
 
         #endregion
@@ -260,6 +245,8 @@ namespace SocketIOClient.IntegrationTests
             await io.EmitAsync("client will be sending data to server");
             await Task.Delay(100);
 
+            var test = response!.GetValue<FileDto>();
+            var text = "0x" + BitConverter.ToString(test.Bytes).Replace("-", ", 0x");
             response!.GetValue<FileDto>().Should().BeEquivalentTo(FileDto.IndexHtml);
         }
 

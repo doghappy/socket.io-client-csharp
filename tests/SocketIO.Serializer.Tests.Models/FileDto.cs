@@ -12,4 +12,15 @@ public class FileDto
         Size = 1024,
         Bytes = "Hello World!"u8.ToArray()
     };
+
+    /// <summary>
+    /// Niubility is a popular Chinglish word to describe great ability.
+    /// Niubility => 牛比 => 🐮🍺
+    /// </summary>
+    public static FileDto Niubility = new()
+    {
+        Name = "Niubility",
+        Size = 666,
+        Bytes = "🐮🍺"u8.ToArray()
+    };
 }

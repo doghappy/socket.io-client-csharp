@@ -568,18 +568,17 @@ public class SocketIOMessagePackSerializerTests
     private static IEnumerable<(
         IMessage message,
         int index,
-        MessagePackSerializerOptions? options,
         object expected)> DeserializeGenericMethodTupleCases =>
-        new (IMessage message, int index, MessagePackSerializerOptions? AssertionOptions, object expected)[]
+        new (IMessage message, int index, object expected)[]
         {
             (new PackMessage(MessageType.Event)
             {
                 Data = new List<object> { "event", 1 }
-            }, 0, null, 1)!,
+            }, 0, 1)!,
             (new PackMessage(MessageType.Event)
             {
                 Data = new List<object> { "event", "hello" }
-            }, 0, null, "hello")!,
+            }, 0, "hello")!,
             (
                 new PackMessage(MessageType.Event)
                 {
@@ -587,31 +586,13 @@ public class SocketIOMessagePackSerializerTests
                     {
                         "event",
                         "hello",
-                        new
+                        new Dictionary<object, object>
                         {
-                            User = "admin",
-                            Password = "test"
+                            ["User"] = "admin",
+                            ["Password"] = "test",
                         }
                     }
-                }, 1, null, new MessagePackUserPasswordDto
-                {
-                    User = "admin",
-                    Password = "test"
-                }),
-            (
-                new PackMessage(MessageType.Event)
-                {
-                    Data = new List<object>
-                    {
-                        "event",
-                        "hello",
-                        new
-                        {
-                            User = "admin",
-                            Password = "test"
-                        }
-                    }
-                }, 1, ContractlessStandardResolver.Options, new UserPasswordDto
+                }, 1, new MessagePackUserPasswordDto
                 {
                     User = "admin",
                     Password = "test"
@@ -623,34 +604,45 @@ public class SocketIOMessagePackSerializerTests
                     {
                         "event",
                         "hello world!"u8.ToArray(),
-                        new
+                        new Dictionary<object, object>
                         {
-                            Size = 2023,
-                            Name = "test.txt",
-                            Bytes = "🐮🍺"u8.ToArray()
-                        }
+                            [nameof(FileDto.Name)] = FileDto.Niubility.Name,
+                            [nameof(FileDto.Size)] = FileDto.Niubility.Size,
+                            [nameof(FileDto.Bytes)] = FileDto.Niubility.Bytes,
+                        },
+                        FileDto.Niubility
                     }
-                }, 0, ContractlessStandardResolver.Options, "hello world!"u8.ToArray()),
+                }, 0, "hello world!"u8.ToArray()),
             (
                 new PackMessage(MessageType.Event)
                 {
                     Data = new List<object>
                     {
                         "event",
-                        "hello world!"u8.ToArray(),
-                        new
+                        new Dictionary<object, object>
                         {
-                            Size = 2023,
-                            Name = "test.txt",
-                            Bytes = "🐮🍺"u8.ToArray()
+                            [nameof(FileDto.Name)] = FileDto.IndexHtml.Name,
+                            [nameof(FileDto.Size)] = FileDto.IndexHtml.Size,
+                            [nameof(FileDto.Bytes)] = FileDto.IndexHtml.Bytes,
                         }
                     }
-                }, 1, ContractlessStandardResolver.Options, new FileDto
+                }, 0, FileDto.IndexHtml),
+            (
+                new PackMessage(MessageType.Event)
                 {
-                    Size = 2023,
-                    Name = "test.txt",
-                    Bytes = "🐮🍺"u8.ToArray()
-                }),
+                    Data = new List<object>
+                    {
+                        "event",
+                        new Dictionary<object, object>
+                        {
+                            [nameof(User.Name)] = User.SpaceJockey.Name,
+                            [nameof(User.Address)] = new Dictionary<object, object>
+                            {
+                                [nameof(Address.Planet)] = User.SpaceJockey.Address.Planet,
+                            },
+                        }
+                    }
+                }, 0, User.SpaceJockey),
         };
 
     public static IEnumerable<object?[]> DeserializeGenericMethodCases => DeserializeGenericMethodTupleCases
@@ -659,7 +651,6 @@ public class SocketIOMessagePackSerializerTests
             caseId,
             x.message,
             x.index,
-            x.options,
             x.expected
         });
 
@@ -669,10 +660,9 @@ public class SocketIOMessagePackSerializerTests
         int caseId,
         IMessage message,
         int index,
-        MessagePackSerializerOptions? options,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, EngineIO.V4);
+        var serializer = new SocketIOMessagePackSerializer(EngineIO.V4);
         var actual = serializer.GetType()
             .GetMethod(
                 nameof(SocketIOMessagePackSerializer.Deserialize),
@@ -689,10 +679,9 @@ public class SocketIOMessagePackSerializerTests
         int caseId,
         IMessage message,
         int index,
-        MessagePackSerializerOptions? options,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, EngineIO.V4);
+        var serializer = new SocketIOMessagePackSerializer(EngineIO.V4);
         var actual = serializer.Deserialize(message, index, expected.GetType());
         actual.Should().BeEquivalentTo(expected);
     }
@@ -1578,4 +1567,51 @@ public class SocketIOMessagePackSerializerTests
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }
+    
+    // private static IEnumerable<(
+    //     MessagePackSerializerOptions? options,
+    //     IMessage message,
+    //     int index,
+    //     object expected)> DeserializeMessageTupleCases =>
+    //     new (MessagePackSerializerOptions? options, IMessage message, int Index, object expected)[]
+    //     {
+    //         (
+    //             ContractlessStandardResolver.Options,
+    //             new PackMessage(MessageType.Event)
+    //             {
+    //                 Data = new List<object> { FileDto.IndexHtml }
+    //             },
+    //             0,
+    //             FileDto.IndexHtml),
+    //     };
+    //
+    // public static IEnumerable<object?[]> DeserializeMessageCases => DeserializeMessageTupleCases
+    //     .Select((x, caseId) => new object?[]
+    //     {
+    //         caseId,
+    //         x.options,
+    //         x.message,
+    //         x.index,
+    //         x.expected
+    //     });
+    //
+    // [Theory]
+    // [MemberData(nameof(DeserializeMessageCases))]
+    // public void Deserialize_message_for_response(
+    //     int caseId,
+    //     MessagePackSerializerOptions? options,
+    //     IMessage message,
+    //     int index,
+    //     object expected)
+    // {
+    //     var serializer = new SocketIOMessagePackSerializer(options, EngineIO.V4);
+    //     var actual = serializer.GetType()
+    //         .GetMethod(
+    //             nameof(SocketIOMessagePackSerializer.Deserialize),
+    //             BindingFlags.Public | BindingFlags.Instance,
+    //             new[] { typeof(IMessage), typeof(int) })!
+    //         .MakeGenericMethod(expected.GetType())
+    //         .Invoke(serializer, new object?[] { message, index });
+    //     actual.Should().BeEquivalentTo(expected);
+    // }
 }

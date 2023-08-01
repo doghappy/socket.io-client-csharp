@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIO.Serializer.Tests.Models;
 using SocketIOClient.IntegrationTests.Utils;
 
 namespace SocketIOClient.IntegrationTests
@@ -80,6 +81,15 @@ namespace SocketIOClient.IntegrationTests
                         new byte[] { 0x74, 0x65, 0x73, 0x74 },
                         new byte[] { 0xf0, 0x9f, 0xa6, 0x8a, 0xf0, 0x9f, 0x90, 0xb6, 0xf0, 0x9f, 0x90, 0xb1 }
                     }),
+            };
+
+        protected override IEnumerable<(object Data, string Expected, List<byte[]> Bytes)> AckCases =>
+            new (object Data, string Expected, List<byte[]> Bytes)[]
+            {
+                ("ack", "[\"ack\"]", null!),
+                (FileDto.IndexHtml,
+                    "[{\"Size\":1024,\"Name\":\"index.html\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+                    new List<byte[]> { FileDto.IndexHtml.Bytes })
             };
     }
 }
