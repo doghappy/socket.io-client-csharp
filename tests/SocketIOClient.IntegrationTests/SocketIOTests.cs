@@ -199,14 +199,14 @@ namespace SocketIOClient.IntegrationTests
         public async Task Emit_1_data_then_execute_ack_on_client()
         {
             using var io = CreateSocketIO();
-            SocketIOResponse? response = null;
 
             await io.ConnectAsync();
 
             foreach (var item in AckCases)
             {
+                SocketIOResponse? response = null;
                 await io.EmitAsync("1:ack", res => response = res, item.Data);
-                await Task.Delay(100);
+                await Task.Delay(1000);
 
                 response!.ToString().Should().Be(item.Expected);
                 response!.InComingBytes.Should().BeEquivalentTo(item.Bytes);

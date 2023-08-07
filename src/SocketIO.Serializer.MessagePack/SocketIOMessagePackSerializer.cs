@@ -382,20 +382,14 @@ namespace SocketIO.Serializer.MessagePack
                     ReadDisconnectedMessage(message, odm);
                     break;
                 case MessageType.Event:
-                    ReadEventMessage(message, odm);
-                    break;
                 case MessageType.Ack:
-                    ReadAckMessage(message, odm);
+                case MessageType.Binary:
+                case MessageType.BinaryAck:
+                    ReadEventMessage(message, odm);
                     break;
                 case MessageType.Error:
                     ReadErrorMessage(message, odm, eio);
                     break;
-                case MessageType.Binary:
-                    ReadBinaryMessage(message, odm);
-                    break;
-                // case MessageType.BinaryAck:
-                //     ReadBinaryAckMessage(message, text);
-                //     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(message.Type), message.Type, null);
             }
@@ -433,17 +427,6 @@ namespace SocketIO.Serializer.MessagePack
             packMessage.Data = (object[])odm.Data;
         }
 
-        private static void ReadAckMessage(IMessage message, ObjectDataMessage odm)
-        {
-            // message.Namespace = odm.Namespace;
-            // message.Id = odm.Id;
-            //
-            // var data = (object[])odm.Data;
-            // var packMessage = (PackMessage)message;
-            // packMessage.Data = data.ToList();
-            ReadEventMessage(message, odm);
-        }
-
         private static void ReadErrorMessage(IMessage message, ObjectDataMessage odm, EngineIO eio)
         {
             message.Namespace = odm.Namespace;
@@ -456,11 +439,6 @@ namespace SocketIO.Serializer.MessagePack
                 var dictionary = (Dictionary<object, object>)odm.Data;
                 message.Error = (string)dictionary["message"];
             }
-        }
-
-        private static void ReadBinaryMessage(IMessage message, ObjectDataMessage odm)
-        {
-            ReadEventMessage(message, odm);
         }
 
         #endregion
