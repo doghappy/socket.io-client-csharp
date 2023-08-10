@@ -1156,4 +1156,22 @@ public class NewtonsoftJsonSerializerTests
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }
+
+    [Fact]
+    public void Should_throw_Exception_if_data_depth_greater_than_configured_when_serializing()
+    {
+        var options = new JsonSerializerSettings
+        {
+            MaxDepth = 1
+        };
+        var serializer = new NewtonsoftJsonSerializer(options, EngineIO.V4);
+        var message = new JsonMessage(MessageType.Ack)
+        {
+            ReceivedText = "[{\"value\":1,\"next\":{\"value\":2}}]"
+        };
+        serializer.Invoking(s => s.Deserialize<Depth>(message, 0))
+            .Should()
+            .Throw<JsonReaderException>()
+            .WithMessage("The reader's MaxDepth of 1 has been exceeded. Path '[0].next', line 1, position 19.");
+    }
 }
