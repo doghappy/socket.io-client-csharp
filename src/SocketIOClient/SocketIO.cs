@@ -574,20 +574,16 @@ namespace SocketIOClient
         public async Task DisconnectAsync()
         {
             _connCts.TryDispose();
-            // var msg = new DisconnectedMessage
+            // try
             // {
-            //     Namespace = Namespace
-            // };
-            try
-            {
-                // await Transport.SendAsync(msg, CancellationToken.None).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-#if DEBUG
-                Debug.WriteLine(e);
-#endif
-            }
+            //     var message = Serializer.SerializeDisconnectionMessage();
+            //     using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+            //     await Transport.SendAsync(new List<SerializedItem> { message }, cts.Token).ConfigureAwait(false);
+            // }
+            // catch (Exception e)
+            // {
+            //     Debug.WriteLine(e);
+            // }
 
             await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
         }

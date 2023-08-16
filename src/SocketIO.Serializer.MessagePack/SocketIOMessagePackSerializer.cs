@@ -233,11 +233,6 @@ namespace SocketIO.Serializer.MessagePack
             }
         }
 
-        private static IMessage HandleEventMessage()
-        {
-            return null;
-        }
-
         private static IMessage HandleDefaultMessage(EngineIOProtocol protocol, string text, EngineIO eio)
         {
             var bytes = MessagePackSerializer.ConvertFromJson(text);
@@ -274,6 +269,18 @@ namespace SocketIO.Serializer.MessagePack
                 Text = "3"
             };
         }
+
+        // public SerializedItem SerializeDisconnectionMessage()
+        // {
+        //     return new SerializedItem
+        //     {
+        //         Type = SerializedMessageType.Binary,
+        //         Binary =  MessagePackSerializer.Serialize(new
+        //         {
+        //             type = PackMessageType.Disconnected
+        //         })
+        //     };
+        // }
 
         #region Serialize ConnectedMessage
 

@@ -230,6 +230,14 @@ namespace SocketIO.Serializer.NewtonsoftJson
             };
         }
 
+        // public SerializedItem SerializeDisconnectionMessage()
+        // {
+        //     return new SerializedItem
+        //     {
+        //         Text = "41"
+        //     };
+        // }
+
         #region Serialize ConnectedMessage
 
         public SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)

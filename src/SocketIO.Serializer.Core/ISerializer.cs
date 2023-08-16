@@ -20,5 +20,6 @@ namespace SocketIO.Serializer.Core
         
         SerializedItem SerializePingMessage();
         SerializedItem SerializePongMessage();
+        // SerializedItem SerializeDisconnectionMessage();
     }
 }
