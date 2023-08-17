@@ -22,12 +22,12 @@ namespace SocketIOClient.IntegrationTests.Transport.WebSockets
         const int ReceiveChunkSize = ChunkSize.Size8K;
 
         readonly CancellationTokenSource _cts;
-        HttpListener _listener;
+        HttpListener _listener = null!;
         CancellationToken _token;
         bool _disposed;
         List<WebSocket> _connections;
 
-        public Uri ServerUrl { get; private set; }
+        public Uri ServerUrl { get; private set; } = null!;
 
         public void Dispose()
         {

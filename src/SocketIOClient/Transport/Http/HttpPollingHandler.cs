@@ -117,7 +117,7 @@ namespace SocketIOClient.Transport.Http
                 {
                     var buffer = new byte[length - 1];
                     Buffer.BlockCopy(bytes, i + 1, buffer, 0, buffer.Length);
-                    OnBytes(buffer);
+                    await OnBytes(buffer);
                 }
 
                 i += length;

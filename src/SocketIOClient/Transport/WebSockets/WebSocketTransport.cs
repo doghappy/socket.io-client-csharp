@@ -122,7 +122,7 @@ namespace SocketIOClient.Transport.WebSockets
                                     Buffer.BlockCopy(binary, 0, bytes, 0, bytes.Length);
                                 }
 
-                                OnBinaryReceived(bytes);
+                                await OnBinaryReceived(bytes);
                                 break;
                             case TransportMessageType.Close:
                                 OnError.TryInvoke(new TransportException("Received a Close message"));
