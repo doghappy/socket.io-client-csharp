@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using MessagePack;
-using MessagePack.Resolvers;
 using SocketIO.Core;
 using SocketIO.Serializer.Core;
 
@@ -13,15 +11,12 @@ namespace SocketIO.Serializer.MessagePack
 {
     public class SocketIOMessagePackSerializer : ISerializer
     {
-        private readonly EngineIO _eio;
-
-        public SocketIOMessagePackSerializer(EngineIO eio) : this(MessagePackSerializerOptions.Standard, eio)
+        public SocketIOMessagePackSerializer() : this(MessagePackSerializerOptions.Standard)
         {
         }
 
-        public SocketIOMessagePackSerializer(MessagePackSerializerOptions options, EngineIO eio)
+        public SocketIOMessagePackSerializer(MessagePackSerializerOptions options)
         {
-            _eio = eio;
             _options = options ?? MessagePackSerializerOptions.Standard;
         }
 
@@ -73,7 +68,7 @@ namespace SocketIO.Serializer.MessagePack
             return false;
         }
 
-        private List<SerializedItem> InternalSerialize(string eventName, int packetId, string nsp, object[] data)
+        private List<SerializedItem> InternalSerialize(EngineIO eio, string eventName, int packetId, string nsp, object[] data)
         {
             var items = new List<object>();
             var message = new PackMessage
@@ -97,7 +92,7 @@ namespace SocketIO.Serializer.MessagePack
             {
                 Type = SerializedMessageType.Binary
             };
-            if (_eio == EngineIO.V3)
+            if (eio == EngineIO.V3)
             {
                 serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
                 if (HasByteArray(data))
@@ -118,12 +113,12 @@ namespace SocketIO.Serializer.MessagePack
             };
         }
 
-        public List<SerializedItem> Serialize(string eventName, int packetId, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO eio, string eventName, int packetId, string nsp, object[] data)
         {
-            return InternalSerialize(eventName, packetId, nsp, data);
+            return InternalSerialize(eio, eventName, packetId, nsp, data);
         }
 
-        public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO eio, int packetId, string nsp, object[] data)
         {
             var items = new List<object>();
             var message = new PackMessage
@@ -142,7 +137,7 @@ namespace SocketIO.Serializer.MessagePack
             {
                 Type = SerializedMessageType.Binary
             };
-            if (_eio == EngineIO.V3)
+            if (eio == EngineIO.V3)
             {
                 serializedItem.Binary = MessagePackSerializer.Serialize(message, _options);
                 if (HasByteArray(data))
@@ -163,9 +158,9 @@ namespace SocketIO.Serializer.MessagePack
             };
         }
 
-        public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO eio, string eventName, string nsp, object[] data)
         {
-            return InternalSerialize(eventName, 0, nsp, data);
+            return InternalSerialize(eio, eventName, 0, nsp, data);
         }
 
         private static string GetNsp(string ns)
@@ -191,18 +186,18 @@ namespace SocketIO.Serializer.MessagePack
             return data.ToObject(returnType);
         }
 
-        public IMessage Deserialize(byte[] bytes)
+        public IMessage Deserialize(EngineIO eio, byte[] bytes)
         {
             var json = MessagePackSerializer.ConvertToJson(bytes, _options);
             var newBytes = MessagePackSerializer.ConvertFromJson(json);
             var odm = MessagePackSerializer.Deserialize<ObjectDataMessage>(newBytes, _options);
             var type = (MessageType)(40 + odm.Type);
             var message = new PackMessage(type);
-            ReadMessage(message, odm, _eio);
+            ReadMessage(message, odm, eio);
             return message;
         }
 
-        public IMessage Deserialize(string text)
+        public IMessage Deserialize(EngineIO eio, string text)
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -229,7 +224,7 @@ namespace SocketIO.Serializer.MessagePack
                 // case EngineIOProtocol.Message:
                 //     return HandleEventMessage();
                 default:
-                    return HandleDefaultMessage(protocol, text.Substring(1), _eio);
+                    return HandleDefaultMessage(protocol, text.Substring(1), eio);
             }
         }
 
@@ -284,14 +279,16 @@ namespace SocketIO.Serializer.MessagePack
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(string ns, object auth,
+        public SerializedItem SerializeConnectedMessage(EngineIO eio, 
+            string ns,
+            object auth,
             IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return _eio switch
+            return eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), eio, null)
             };
         }
 

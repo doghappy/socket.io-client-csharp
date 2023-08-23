@@ -173,8 +173,8 @@ public class SocketIOMessagePackSerializerTests
         object[] data,
         IEnumerable<SerializedItem> expectedItems)
     {
-        var serializer = new SocketIOMessagePackSerializer(EngineIO.V4);
-        var items = serializer.Serialize(eventName, ns, data);
+        var serializer = new SocketIOMessagePackSerializer();
+        var items = serializer.Serialize(EngineIO.V4, eventName, ns, data);
         items.Should().BeEquivalentTo(expectedItems, config => config.WithStrictOrdering());
     }
 
@@ -306,8 +306,8 @@ public class SocketIOMessagePackSerializerTests
         IEnumerable<KeyValuePair<string, string>> queries,
         SerializedItem? expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(eio);
-        serializer.SerializeConnectedMessage(ns, auth, queries)
+        var serializer = new SocketIOMessagePackSerializer();
+        serializer.SerializeConnectedMessage(eio, ns, auth, queries)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -391,8 +391,8 @@ public class SocketIOMessagePackSerializerTests
         string? text,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(eio);
-        serializer.Deserialize(text)
+        var serializer = new SocketIOMessagePackSerializer();
+        serializer.Deserialize(eio, text)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -560,8 +560,8 @@ public class SocketIOMessagePackSerializerTests
         byte[] binary,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(eio);
-        serializer.Deserialize(binary)
+        var serializer = new SocketIOMessagePackSerializer();
+        serializer.Deserialize(eio, binary)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -662,7 +662,7 @@ public class SocketIOMessagePackSerializerTests
         int index,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(EngineIO.V4);
+        var serializer = new SocketIOMessagePackSerializer();
         var actual = serializer.GetType()
             .GetMethod(
                 nameof(SocketIOMessagePackSerializer.Deserialize),
@@ -681,7 +681,7 @@ public class SocketIOMessagePackSerializerTests
         int index,
         object expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(EngineIO.V4);
+        var serializer = new SocketIOMessagePackSerializer();
         var actual = serializer.Deserialize(message, index, expected.GetType());
         actual.Should().BeEquivalentTo(expected);
     }
@@ -989,8 +989,8 @@ public class SocketIOMessagePackSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, eio);
-        serializer.Serialize(packetId, nsp, data)
+        var serializer = new SocketIOMessagePackSerializer(options);
+        serializer.Serialize(eio, packetId, nsp, data)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -1251,8 +1251,8 @@ public class SocketIOMessagePackSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, eio);
-        serializer.Serialize(eventName, packetId, nsp, data)
+        var serializer = new SocketIOMessagePackSerializer(options);
+        serializer.Serialize(eio, eventName, packetId, nsp, data)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -1503,8 +1503,8 @@ public class SocketIOMessagePackSerializerTests
         object[] data,
         List<SerializedItem> expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, eio);
-        serializer.Serialize(eventName, ns, data)
+        var serializer = new SocketIOMessagePackSerializer(options);
+        serializer.Serialize(eio, eventName, ns, data)
             .Should().BeEquivalentTo(expected);
     }
 
@@ -1563,7 +1563,7 @@ public class SocketIOMessagePackSerializerTests
         IMessage message,
         string expected)
     {
-        var serializer = new SocketIOMessagePackSerializer(options, EngineIO.V4);
+        var serializer = new SocketIOMessagePackSerializer(options);
         serializer.MessageToJson(message)
             .Should().BeEquivalentTo(expected);
     }

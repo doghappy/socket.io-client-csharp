@@ -13,18 +13,16 @@ namespace SocketIO.Serializer.SystemTextJson
 {
     public class SystemTextJsonSerializer : ISerializer
     {
-        public SystemTextJsonSerializer(EngineIO eio) : this(new JsonSerializerOptions(), eio)
+        public SystemTextJsonSerializer() : this(new JsonSerializerOptions())
         {
         }
 
-        public SystemTextJsonSerializer(JsonSerializerOptions options, EngineIO eio)
+        public SystemTextJsonSerializer(JsonSerializerOptions options)
         {
-            _eio = eio;
             _options = options ?? new JsonSerializerOptions();
             _messageQueue = new ConcurrentQueue<IMessage>();
         }
 
-        private readonly EngineIO _eio;
         private readonly JsonSerializerOptions _options;
         readonly ConcurrentQueue<IMessage> _messageQueue;
 
@@ -66,12 +64,12 @@ namespace SocketIO.Serializer.SystemTextJson
             return newData;
         }
 
-        public List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, string eventName, int packetId, string ns, object[] data)
         {
             return InternalSerialize(eventName, packetId, ns, data);
         }
 
-        public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, int packetId, string nsp, object[] data)
         {
             var converter = new ByteArrayConverter();
             var options = NewOptions(converter);
@@ -101,7 +99,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, string eventName, string nsp, object[] data)
         {
             return InternalSerialize(eventName, null, nsp, data);
         }
@@ -164,7 +162,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return jsonNode.Deserialize(returnType, options);
         }
 
-        public IMessage Deserialize(string text)
+        public IMessage Deserialize(EngineIO eio, string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -173,7 +171,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 if (!text.StartsWith(prefix)) continue;
 
                 var message = NewMessage(type);
-                ReadMessage(message, _eio, text.Substring(prefix.Length));
+                ReadMessage(message, eio, text.Substring(prefix.Length));
 
                 if (message.BinaryCount > 0)
                 {
@@ -188,7 +186,7 @@ namespace SocketIO.Serializer.SystemTextJson
             return null;
         }
 
-        public IMessage Deserialize(byte[] bytes)
+        public IMessage Deserialize(EngineIO _, byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -240,13 +238,13 @@ namespace SocketIO.Serializer.SystemTextJson
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
+        public SerializedItem SerializeConnectedMessage(EngineIO eio, string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return _eio switch
+            return eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), eio, null)
             };
         }
 

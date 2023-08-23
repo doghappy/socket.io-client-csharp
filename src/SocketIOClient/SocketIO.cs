@@ -155,7 +155,7 @@ namespace SocketIOClient
             _eventFuncHandlers = new Dictionary<string, Func<SocketIOResponse, Task>>();
             _onAnyHandlers = new List<OnAnyHandler>();
 
-            Serializer = new SystemTextJsonSerializer(Options.EIO);
+            Serializer = new SystemTextJsonSerializer();
 
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();
@@ -654,7 +654,7 @@ namespace SocketIOClient
 
         internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
         {
-            var serializedItems = Serializer.Serialize(packetId, Namespace, data);
+            var serializedItems = Serializer.Serialize(Options.EIO, packetId, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
@@ -671,7 +671,7 @@ namespace SocketIOClient
 
         private async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
-            var serializedItems = Serializer.Serialize(eventName, Namespace, data);
+            var serializedItems = Serializer.Serialize(Options.EIO, eventName, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
@@ -695,7 +695,7 @@ namespace SocketIOClient
         private async Task EmitForAck(string eventName, int packetId, CancellationToken cancellationToken,
             params object[] data)
         {
-            var serializedItems = Serializer.Serialize(eventName, packetId, Namespace, data);
+            var serializedItems = Serializer.Serialize(Options.EIO, eventName, packetId, Namespace, data);
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 

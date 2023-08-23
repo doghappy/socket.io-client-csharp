@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,6 +44,7 @@ namespace SocketIOClient.Transport
             }
 
             var connectedMessage = Serializer.SerializeConnectedMessage(
+                Options.EIO,
                 Namespace,
                 Options.Auth,
                 Options.Query);
@@ -171,14 +171,14 @@ namespace SocketIOClient.Transport
         protected async Task OnTextReceived(string text)
         {
             Debug.WriteLine($"[{Protocol}⬇] {text}");
-            var message = Serializer.Deserialize(text);
+            var message = Serializer.Deserialize(Options.EIO, text);
             await HandleMessage(message).ConfigureAwait(false);
         }
 
         protected async Task OnBinaryReceived(byte[] bytes)
         {
             Debug.WriteLine($"[{Protocol}⬇]0️⃣1️⃣0️⃣1️⃣");
-            var message = Serializer.Deserialize(bytes);
+            var message = Serializer.Deserialize(Options.EIO, bytes);
             await HandleMessage(message).ConfigureAwait(false);
         }
 

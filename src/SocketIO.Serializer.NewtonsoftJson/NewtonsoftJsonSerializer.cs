@@ -13,18 +13,16 @@ namespace SocketIO.Serializer.NewtonsoftJson
 {
     public class NewtonsoftJsonSerializer : ISerializer
     {
-        public NewtonsoftJsonSerializer(EngineIO eio) : this(new JsonSerializerSettings(), eio)
+        public NewtonsoftJsonSerializer() : this(new JsonSerializerSettings())
         {
         }
 
-        public NewtonsoftJsonSerializer(JsonSerializerSettings options, EngineIO eio)
+        public NewtonsoftJsonSerializer(JsonSerializerSettings options)
         {
-            _eio = eio;
             _options = options ?? new JsonSerializerSettings();
             _messageQueue = new ConcurrentQueue<IMessage>();
         }
 
-        private readonly EngineIO _eio;
         private readonly JsonSerializerSettings _options;
         readonly ConcurrentQueue<IMessage> _messageQueue;
 
@@ -66,12 +64,12 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return newData;
         }
 
-        public List<SerializedItem> Serialize(string eventName, int packetId, string ns, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, string eventName, int packetId, string ns, object[] data)
         {
             return InternalSerialize(eventName, packetId, ns, data);
         }
 
-        public List<SerializedItem> Serialize(int packetId, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, int packetId, string nsp, object[] data)
         {
             var converter = new ByteArrayConverter();
             var options = NewSettings(converter);
@@ -101,7 +99,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        public List<SerializedItem> Serialize(string eventName, string nsp, object[] data)
+        public List<SerializedItem> Serialize(EngineIO _, string eventName, string nsp, object[] data)
         {
             return InternalSerialize(eventName, null, nsp, data);
         }
@@ -164,7 +162,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return jsonNode.ToObject(returnType, serializer);
         }
 
-        public IMessage Deserialize(string text)
+        public IMessage Deserialize(EngineIO eio, string text)
         {
             var enums = Enum.GetValues(typeof(MessageType));
             foreach (MessageType type in enums)
@@ -173,7 +171,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
                 if (!text.StartsWith(prefix)) continue;
 
                 var message = NewMessage(type);
-                ReadMessage(message, _eio, text.Substring(prefix.Length));
+                ReadMessage(message, eio, text.Substring(prefix.Length));
 
                 if (message.BinaryCount > 0)
                 {
@@ -188,7 +186,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return null;
         }
 
-        public IMessage Deserialize(byte[] bytes)
+        public IMessage Deserialize(EngineIO _, byte[] bytes)
         {
             if (_messageQueue.Count <= 0)
                 return null;
@@ -240,13 +238,13 @@ namespace SocketIO.Serializer.NewtonsoftJson
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
+        public SerializedItem SerializeConnectedMessage(EngineIO eio, string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries)
         {
-            return _eio switch
+            return eio switch
             {
                 EngineIO.V3 => SerializeEio3ConnectedMessage(ns, queries),
                 EngineIO.V4 => SerializeEio4ConnectedMessage(ns, auth),
-                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), _eio, null)
+                _ => throw new ArgumentOutOfRangeException(nameof(EngineIO), eio, null)
             };
         }
 

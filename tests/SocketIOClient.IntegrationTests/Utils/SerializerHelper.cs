@@ -12,12 +12,12 @@ public static class SerializerHelper
 {
     public static void SetMessagePackSerializer(this SocketIO io)
     {
-        io.Serializer = new SocketIOMessagePackSerializer(ContractlessStandardResolver.Options, io.Options.EIO);
+        io.Serializer = new SocketIOMessagePackSerializer(ContractlessStandardResolver.Options);
     }
     
     public static void ConfigureSystemTextJsonSerializer(this SocketIO io, JsonSerializerOptions options)
     {
-        io.Serializer = new SystemTextJsonSerializer(options, io.Options.EIO);
+        io.Serializer = new SystemTextJsonSerializer(options);
     }
     
     public static void ConfigureSystemTextJsonSerializerForEmitting1Parameter(this SocketIO io)
