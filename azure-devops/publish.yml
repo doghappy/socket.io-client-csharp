@@ -11,7 +11,9 @@ parameters:
     values:
       - SocketIOClient
       - SocketIOClient.Windows7
-      - SocketIOClient.Newtonsoft.Json
+      - SocketIO.Serializer.MessagePack
+      - SocketIO.Serializer.NewtonsoftJson
+      - SocketIO.Serializer.SystemTextJson
 
 jobs:
   - job:

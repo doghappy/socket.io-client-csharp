@@ -18,9 +18,7 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
   - [Windows 7 Support](#windows-7-support)
   - [Xamarin](#xamarin)
 - [Breaking changes](#breaking-changes)
-  - [Breaking changes in 3.0.0](#breaking-changes-in-300)
-  - [Breaking changes in 2.2.4](#breaking-changes-in-224)
-  - [Breaking changes in 2.2.0](#breaking-changes-in-220)
+  - [Breaking changes in 3.1.0](#breaking-changes-in-310)
 - [Change log](#change-log)
 - [Sponsors](#Sponsors)
 
@@ -197,31 +195,30 @@ client.On("new files", response =>
 });
 ```
 
-## JsonSerializer
+## Serializer
 
 The library uses System.Text.Json to serialize and deserialize json by default, If you want to change JsonSerializerOptions, you can do this:
 
 ```cs
 var client = new SocketIO("http://localhost:11000/");
-var jsonSerializer = client.JsonSerializer as SystemTextJsonSerializer;
+var jsonSerializer = client.Serializer as SystemTextJsonSerializer;
 jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
 {
     PropertyNameCaseInsensitive = true
 };
 ```
 
-Of course you can also use Newtonsoft.Json library, for this, you need to install `SocketIOClient.Newtonsoft.Json` dependency.
+Of course you can also use Newtonsoft.Json library, for this, you need to install `SocketIO.Serializer.NewtonsoftJson` 
+dependency.
 
 ```cs
-var jsonSerializer = new NewtonsoftJsonSerializer();
-jsonSerializer.OptionsProvider = () => new JsonSerializerSettings
+client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
 {
     ContractResolver = new DefaultContractResolver
     {
         NamingStrategy = new CamelCaseNamingStrategy()
     }
-};
-client.JsonSerializer = jsonSerializer;
+});
 ```
 
 ## Windows 7 Support
@@ -271,37 +268,17 @@ I don't know the specific exceptions of Xamarin.iOS. Welcome to create a pr and 
 
 # Change log
 
-## [3.0.8] - 2023-03-04
+## [3.1.0] - 2023-08-25
 
 ### Added
 
-- Expose namepsace as a readonly property #304
+- `SocketIO.Serializer.MessagePack` serializer
+- `SocketIO.Serializer.NewtonsoftJson` serializer
+- `SocketIO.Serializer.SystemTextJson` serializer
 
-### Changed
+### Removed
 
-- Update NuGet dependencies
-- Cancel reconnecting when calling Disconnect or Dispose #307
-- Improve proformance
-
-## [3.0.7] - 2022-11-29
-
-### Added
-
-- Support custom User-Agent header
-
-### Changed
-
-- Fixed OnAny does not fire when received binary messages
-- Update NuGet dependencies
-- Fixed http pooling concurrency issues
-- Improve proformance
-
-## [3.0.6] - 2022-03-17
-
-### Added
-
-- auth handshake for socket.io server v3
-- support auto upgrade transport protocol
+- `SocketIOClient.Newtonsoft.Json` serializer
 
 [See more](./CHANGELOG.md)
 
