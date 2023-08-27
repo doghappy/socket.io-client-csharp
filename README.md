@@ -201,11 +201,10 @@ The library uses System.Text.Json to serialize and deserialize json by default, 
 
 ```cs
 var client = new SocketIO("http://localhost:11000/");
-var jsonSerializer = client.Serializer as SystemTextJsonSerializer;
-jsonSerializer.OptionsProvider = () => new JsonSerializerOptions
+client.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
 {
     PropertyNameCaseInsensitive = true
-};
+});
 ```
 
 Of course you can also use Newtonsoft.Json library, for this, you need to install `SocketIO.Serializer.NewtonsoftJson` 
