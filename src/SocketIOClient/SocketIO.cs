@@ -705,8 +705,9 @@ namespace SocketIOClient
             Action<SocketIOResponse> ack,
             params object[] data)
         {
-            _ackActionHandlers.Add(++_packetId, ack);
-            await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
+            var msgPacketId = ++_packetId;
+            _ackActionHandlers.Add(msgPacketId, ack);
+            await EmitForAck(eventName, msgPacketId, cancellationToken, data).ConfigureAwait(false);
         }
 
         private async Task EmitAsync(
@@ -715,8 +716,9 @@ namespace SocketIOClient
             Func<SocketIOResponse, Task> ack,
             params object[] data)
         {
-            _ackFuncHandlers.Add(++_packetId, ack);
-            await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
+            var msgPacketId = ++_packetId;
+            _ackFuncHandlers.Add(msgPacketId, ack);
+            await EmitForAck(eventName, msgPacketId, cancellationToken, data).ConfigureAwait(false);
         }
 
 
