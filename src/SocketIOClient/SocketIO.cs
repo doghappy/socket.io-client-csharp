@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.WebSockets;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIO.Core;
@@ -13,6 +14,12 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 using SocketIOClient.UriConverters;
+
+[assembly: InternalsVisibleTo("SocketIOClient.UnitTests, PublicKey=002400000480000094000000060200000024" +
+                              "0000525341310004000001000100b18b07d8d9f5f79927b53fb9601562a4986cd90fd64cbb7ccf0bd258" +
+                              "dc3f2119a2c7db7bfea28eba76ae4346a125e56a6b6713e920656c598027182f19b54bcd9f9012228b51" +
+                              "93d84c565e54caee24e4fcfa6f0cbe611b4bc631578fb4aa5f7dabf5beacbe8df27716a5a1849b5d124e" +
+                              "5924161577424002142ba1ade29d089c")]
 
 namespace SocketIOClient
 {
@@ -105,12 +112,15 @@ namespace SocketIOClient
         int _packetId;
         Exception _backgroundException;
         Dictionary<int, Action<SocketIOResponse>> _ackActionHandlers;
+        internal Dictionary<int, Action<SocketIOResponse>> AckActionHandlers => _ackActionHandlers;
         Dictionary<int, Func<SocketIOResponse, Task>> _ackFuncHandlers;
+        internal Dictionary<int, Func<SocketIOResponse, Task>> AckFuncHandlers => _ackFuncHandlers;
         List<OnAnyHandler> _onAnyHandlers;
         private Dictionary<string, Action<SocketIOResponse>> _eventActionHandlers;
         private Dictionary<string, Func<SocketIOResponse, Task>> _eventFuncHandlers;
         double _reconnectionDelay;
         bool _exitFromBackground;
+        readonly SemaphoreSlim _packetIdLock = new(1, 1);
 
         #region Socket.IO event
 
@@ -705,9 +715,16 @@ namespace SocketIOClient
             Action<SocketIOResponse> ack,
             params object[] data)
         {
-            var msgPacketId = ++_packetId;
-            _ackActionHandlers.Add(msgPacketId, ack);
-            await EmitForAck(eventName, msgPacketId, cancellationToken, data).ConfigureAwait(false);
+            try
+            {
+                await _packetIdLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                _ackActionHandlers.Add(++_packetId, ack);
+                await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
+            }
+            finally
+            {
+                _packetIdLock.Release();
+            }
         }
 
         private async Task EmitAsync(
@@ -716,9 +733,16 @@ namespace SocketIOClient
             Func<SocketIOResponse, Task> ack,
             params object[] data)
         {
-            var msgPacketId = ++_packetId;
-            _ackFuncHandlers.Add(msgPacketId, ack);
-            await EmitForAck(eventName, msgPacketId, cancellationToken, data).ConfigureAwait(false);
+            try
+            {
+                await _packetIdLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                _ackFuncHandlers.Add(++_packetId, ack);
+                await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
+            }
+            finally
+            {
+                _packetIdLock.Release();
+            }
         }
 
 
