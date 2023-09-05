@@ -32,6 +32,7 @@ jobs:
           nuGetServiceConnections: NuGet
       - task: NuGetCommand@2
         displayName: Publish ${{ parameters.package }}
+        workingDirectory: $(Build.ArtifactStagingDirectory)
         inputs:
           command: push
           nuGetFeedType: external
