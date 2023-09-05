@@ -29,7 +29,8 @@ jobs:
         workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
       - task: NuGetAuthenticate@1
         inputs:
+          nuGetServiceConnections: NuGet
       - pwsh: |
-          dotnet nuget push $(packageName) -s nuget.org
+          dotnet nuget push $(packageName) -s nuget.org -k placeholder
         displayName: Publish ${{ parameters.package }}
         workingDirectory: $(Build.ArtifactStagingDirectory)
