@@ -4,7 +4,7 @@
 		<TargetFrameworks>netstandard2;net462</TargetFrameworks>
 		<AssemblyName>SocketIOClient</AssemblyName>
 		<RootNamespace>SocketIOClient</RootNamespace>
-		<Authors>HeroWong</Authors>
+		<Authors>doghappy</Authors>
 		<Description>socket.io-client implemention for .NET</Description>
 		<PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>

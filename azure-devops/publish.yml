@@ -9,6 +9,8 @@ parameters:
     displayName: Package
     type: string
     values:
+      - SocketIO.Core
+      - SocketIO.Serializer.Core
       - SocketIOClient
       - SocketIOClient.Windows7
       - SocketIO.Serializer.MessagePack

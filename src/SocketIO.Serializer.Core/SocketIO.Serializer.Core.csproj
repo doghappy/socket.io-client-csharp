@@ -5,6 +5,12 @@
     <LangVersion>default</LangVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../SocketIOClient/SocketIOClient.snk</AssemblyOriginatorKeyFile>
+    <Version>3.1.0</Version>
+    <Authors>doghappy</Authors>
+    <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+    <RepositoryType>github</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

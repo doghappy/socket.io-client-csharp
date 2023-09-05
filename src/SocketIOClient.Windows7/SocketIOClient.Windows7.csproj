@@ -10,6 +10,7 @@
 		<PackageTags>socket.io-client</PackageTags>
 		<SignAssembly>true</SignAssembly>
 		<AssemblyOriginatorKeyFile>SocketIOClient.Windows7.snk</AssemblyOriginatorKeyFile>
+		<Authors>doghappy</Authors>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="matthid-System.Net.WebSockets.Client.Managed" Version="1.0.1" />
