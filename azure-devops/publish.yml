@@ -27,13 +27,9 @@ jobs:
           Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
         displayName: dotnet pack
         workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
-      - task: NuGetAuthenticate@1
-        inputs:
-          nuGetServiceConnections: NuGet
-      - task: NuGetCommand@2
+      - pwsh: |
+          dotnet nuget push $(packageName) -k ${env:NUGET_APIKEY} -s nuget.org
+        env:
+          NUGET_APIKEY: $(NUGET_APIKEY)
         displayName: Publish ${{ parameters.package }}
         workingDirectory: $(Build.ArtifactStagingDirectory)
-        inputs:
-          command: push
-          nuGetFeedType: external
-          publishFeedCredentials: nuget.org
