@@ -19,7 +19,7 @@ parameters:
 
 jobs:
   - job:
-    displayName: Publish {{ parameters.package }}
+    displayName: Publish ${{ parameters.package }}
     steps:
       - pwsh: |
           dotnet pack -c Release --output $(Build.ArtifactStagingDirectory)
