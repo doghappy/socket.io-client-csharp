@@ -30,7 +30,9 @@ jobs:
       - task: NuGetAuthenticate@1
         inputs:
           nuGetServiceConnections: NuGet
-      - pwsh: |
-          dotnet nuget push $(packageName) -s nuget.org -k placeholder
+      - task: NuGetCommand@2
         displayName: Publish ${{ parameters.package }}
-        workingDirectory: $(Build.ArtifactStagingDirectory)
+        inputs:
+          command: push
+          nuGetFeedType: external
+          publishFeedCredentials: nuget.org
