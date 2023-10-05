@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using MessagePack;
 
 namespace SocketIO.Serializer.MessagePack;
 
@@ -20,8 +22,11 @@ static class DictionaryExtensions
         var props = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
         foreach (var prop in props)
         {
-            if (!dictionary.TryGetValue(prop.Name, out var value))
+            if (!dictionary.TryGetValue(GetKey(prop), out var value))
+            {
                 continue;
+            }
+
             if (prop.PropertyType == typeof(byte[]) && value is string base64)
             {
                 var bytes = Convert.FromBase64String(base64);
@@ -40,5 +45,11 @@ static class DictionaryExtensions
         }
 
         return obj;
+    }
+
+    private static string GetKey(MemberInfo info)
+    {
+        var attribute = info.GetCustomAttributes(typeof(KeyAttribute), true).FirstOrDefault();
+        return (attribute as KeyAttribute)?.StringKey ?? info.Name;
     }
 }
