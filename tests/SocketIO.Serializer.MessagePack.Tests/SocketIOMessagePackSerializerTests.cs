@@ -603,6 +603,24 @@ public class SocketIOMessagePackSerializerTests
                     Data = new List<object>
                     {
                         "event",
+                        "hello",
+                        new Dictionary<object, object>
+                        {
+                            ["username"] = "admin",
+                            ["email"] = "test@example.com",
+                        }
+                    }
+                }, 1, new MessagePackUserDto
+                {
+                    Username = "admin",
+                    Email = "test@example.com"
+                }),
+            (
+                new PackMessage(MessageType.Event)
+                {
+                    Data = new List<object>
+                    {
+                        "event",
                         "hello world!"u8.ToArray(),
                         new Dictionary<object, object>
                         {
