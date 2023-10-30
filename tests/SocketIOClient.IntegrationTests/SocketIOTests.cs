@@ -553,7 +553,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         [DataRow(4000, 0, 0)]
         [DataRow(5900, 1, 1)]
-        [DataRow(14900, 2, 2)]
+        [DataRow(14000, 2, 2)]
         public async Task Ping_pong_test(int ms, int expectedPingTimes, int expectedPongTimes)
         {
             var pingTimes = 0;
