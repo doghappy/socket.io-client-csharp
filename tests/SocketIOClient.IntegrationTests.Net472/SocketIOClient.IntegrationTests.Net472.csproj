@@ -167,6 +167,10 @@
       <Project>{93cdcf52-263c-4ff9-b55a-bbdfe315e1bb}</Project>
       <Name>SocketIO.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj">
+      <Project>{2D5C3E28-CB0F-40BF-AEBF-FC1EF7E07F03}</Project>
+      <Name>SocketIO.Serializer.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj">
       <Project>{8c62bd1e-9f14-4170-8e19-29a39996aaa2}</Project>
       <Name>SocketIOClient.IntegrationTests.Common</Name>

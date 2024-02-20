@@ -1,20 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>../SocketIOClient/SocketIOClient.snk</AssemblyOriginatorKeyFile>
-    <Version>3.1.1</Version>
+    <Version>4.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.2" />
     <ProjectReference Include="..\SocketIO.Core\SocketIO.Core.csproj" />
     <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="7.0.3" />
-  </ItemGroup>
-
 </Project>

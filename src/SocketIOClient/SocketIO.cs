@@ -1,4 +1,11 @@
-﻿using System;
+﻿using SocketIO.Core;
+using SocketIO.Serializer.Core;
+using SocketIOClient.Extensions;
+using SocketIOClient.Transport;
+using SocketIOClient.Transport.Http;
+using SocketIOClient.Transport.WebSockets;
+using SocketIOClient.UriConverters;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
@@ -6,14 +13,12 @@ using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIO.Core;
-using SocketIO.Serializer.Core;
+
+#if NETSTANDARD2_0_OR_GREATER
 using SocketIO.Serializer.SystemTextJson;
-using SocketIOClient.Extensions;
-using SocketIOClient.Transport;
-using SocketIOClient.Transport.Http;
-using SocketIOClient.Transport.WebSockets;
-using SocketIOClient.UriConverters;
+#else
+using SocketIO.Serializer.NewtonsoftJson;
+#endif
 
 [assembly: InternalsVisibleTo("SocketIOClient.UnitTests, PublicKey=002400000480000094000000060200000024" +
                               "0000525341310004000001000100b18b07d8d9f5f79927b53fb9601562a4986cd90fd64cbb7ccf0bd258" +
@@ -31,37 +36,35 @@ namespace SocketIOClient
         /// <summary>
         /// Create SocketIO object with default options
         /// </summary>
-        /// <param name="uri"></param>
-        public SocketIO(string uri) : this(new Uri(uri))
+        /// <param name="uri">Server address of socket connection.</param>
+        /// <param name="options">Optional, <see cref="SocketIOOptions"/> to use.</param>
+        /// <param name="serializer">
+        /// <see cref="ISerializer"/> to use for json serialization. You can use your own custom implementation
+        /// or a prebuilt serializer like SystemTextJsonSerializer or NewtonsoftJsonSerializer.
+        /// </param>
+        public SocketIO(string uri, SocketIOOptions options = null, ISerializer serializer = null) : this(new Uri(uri), options, serializer)
         {
         }
 
         /// <summary>
-        /// Create SocketIO object with options
+        /// Create SocketIO object with default options
         /// </summary>
-        /// <param name="uri"></param>
-        public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
+        /// <param name="uri">Server address of socket connection.</param>
+        /// <param name="options">Optional, <see cref="SocketIOOptions"/> to use.</param>
+        /// <param name="serializer">
+        /// <see cref="ISerializer"/> to use for json serialization. You can use your own custom implementation
+        /// or a prebuilt serializer like SystemTextJsonSerializer or NewtonsoftJsonSerializer.
+        /// </param>
+        public SocketIO(Uri uri, SocketIOOptions options = null, ISerializer serializer = null)
         {
-        }
-
-        /// <summary>
-        /// Create SocketIO object with options
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="options"></param>
-        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
-        {
-        }
-
-        /// <summary>
-        /// Create SocketIO object with options
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="options"></param>
-        public SocketIO(Uri uri, SocketIOOptions options)
-        {
-            ServerUri = uri ?? throw new ArgumentNullException("uri");
-            Options = options ?? throw new ArgumentNullException("options");
+            ServerUri = uri ?? throw new ArgumentNullException(nameof(uri));
+            Options = options ?? new SocketIOOptions();
+            Serializer = serializer ??
+#if NETSTANDARD2_0_OR_GREATER
+                         new SystemTextJsonSerializer();
+#else
+                         new NewtonsoftJsonSerializer();
+#endif
             Initialize();
         }
 
@@ -147,7 +150,7 @@ namespace SocketIOClient
         public event EventHandler<Exception> OnReconnectError;
 
         /// <summary>
-        /// Fired when couldn’t reconnect within reconnectionAttempts
+        /// Fired when could not reconnect within reconnectionAttempts
         /// </summary>
         public event EventHandler OnReconnectFailed;
 
@@ -164,8 +167,6 @@ namespace SocketIOClient
             _eventActionHandlers = new Dictionary<string, Action<SocketIOResponse>>();
             _eventFuncHandlers = new Dictionary<string, Func<SocketIOResponse, Task>>();
             _onAnyHandlers = new List<OnAnyHandler>();
-
-            Serializer = new SystemTextJsonSerializer();
 
             HttpClient = new DefaultHttpClient();
             ClientWebSocketProvider = () => new DefaultClientWebSocket();

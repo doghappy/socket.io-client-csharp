@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using SocketIO.Core;
+using SocketIO.Serializer.Core;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SocketIO.Core;
-using SocketIO.Serializer.Core;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 
 namespace SocketIO.Serializer.NewtonsoftJson
 {
@@ -136,29 +136,34 @@ namespace SocketIO.Serializer.NewtonsoftJson
             return NewSerializedItems(builder, converter.Bytes);
         }
 
-        private (JToken jsonNode, JsonSerializer serializer) GetSerializationData(IMessage message, int index)
+        private Tuple<JToken, JsonSerializer> GetSerializationData(IMessage message, int index)
         {
             var jsonMessage = (JsonMessage)message;
             var item = jsonMessage.JsonArray[index];
             var converter = new ByteArrayConverter();
+
             if (jsonMessage.ReceivedBinary is not null)
             {
                 converter.Bytes.AddRange(jsonMessage.ReceivedBinary);
             }
 
             var options = NewSettings(converter);
-            return (item, JsonSerializer.Create(options));
+            return new Tuple<JToken, JsonSerializer>(item, JsonSerializer.Create(options));
         }
 
         public T Deserialize<T>(IMessage message, int index)
         {
-            var (jsonNode, serializer) = GetSerializationData(message, index);
+            var data = GetSerializationData(message, index);
+            var jsonNode = data.Item1;
+            var serializer = data.Item2;
             return jsonNode.ToObject<T>(serializer);
         }
 
         public object Deserialize(IMessage message, int index, Type returnType)
         {
-            var (jsonNode, serializer) = GetSerializationData(message, index);
+            var data = GetSerializationData(message, index);
+            var jsonNode = data.Item1;
+            var serializer = data.Item2;
             return jsonNode.ToObject(returnType, serializer);
         }
 
