@@ -17,9 +17,8 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
   - [Windows 7 Support](#windows-7-support)
   - [Xamarin](#xamarin)
 - [Breaking changes](#breaking-changes)
-  - [Breaking changes in 4.0.0](#breaking-changes-in-400)
 - [Change log](#change-log)
-- [Sponsors](#Sponsors)
+- [Thank You](#thanks)
 
 # Quick start
 
@@ -200,7 +199,7 @@ Based on the Target Framework you used to install the package, the default json 
 
 | Target Framework | Serializer | Package | Example |
 |------------------|------------|---------|---------|
-| .NET Standard 2.0 | System.Text.Json | `SocketIO.Serializer.NewtonsoftJson` | `client.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });` |
+| .NET Standard 2.0 | System.Text.Json | `SocketIO.Serializer.NewtonsoftJson` | ```client.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions { PropertyNameCaseInsensitive = true });``` |
 | .NET Framework 4.6.2 | Newtonsoft.Json | `SocketIO.Serializer.NewtonsoftJson` | `client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings { ContractResolver = new DefaultContractResolver { NamingStrategy = new CamelCaseNamingStrategy() } });` |
 | .NET Standard 2.0 | Message Pack | `SocketIO.Serializer.MessagePack` | `client.Serializer = new SocketIOMessagePackSerializer();` |
 
