@@ -1,21 +1,13 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SocketIO.Core;
+using SocketIO.Serializer.Tests.Models;
+using SocketIOClient.Transport;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
 using System.Threading.Tasks;
-using SocketIOClient.Transport;
-using SocketIO.Core;
-using SocketIO.Serializer.SystemTextJson;
-using SocketIO.Serializer.Tests.Models;
 
 namespace SocketIOClient.IntegrationTests
 {
