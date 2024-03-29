@@ -14,7 +14,7 @@
       <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="7.0.0" />
       <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="7.0.0" />
       <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
-      <PackageReference Include="YamlDotNet" Version="13.2.0" />
+      <PackageReference Include="YamlDotNet" Version="15.1.2" />
     </ItemGroup>
 
     <ItemGroup>
