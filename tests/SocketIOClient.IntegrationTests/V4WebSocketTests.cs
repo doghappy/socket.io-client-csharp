@@ -125,5 +125,70 @@ namespace SocketIOClient.IntegrationTests
 
             results.Should().Equal(1000, 2000);
         }
+
+        [TestMethod]
+        public async Task Should_not_block_other_events_when_OnAny_handler_is_called()
+        {
+            using var io = CreateSocketIO();
+            var results = new List<int>();
+            string @event = null!;
+            io.OnAny((e, res) =>
+            {
+                @event = e;
+                var n = res.GetValue<int>();
+                Thread.Sleep(n);
+                results.Add(n);
+            });
+
+            await io.ConnectAsync();
+            await io.EmitAsync("1:emit", 2000);
+            await io.EmitAsync("1:emit", 1000);
+            await Task.Delay(3000);
+
+            results.Should().Equal(1000, 2000);
+            @event.Should().Be("1:emit");
+        }
+
+        [TestMethod]
+        public async Task Should_not_block_other_events_when_Ack_Action_handler_is_called()
+        {
+            using var io = CreateSocketIO();
+            var results = new List<int>();
+
+            var callback = (SocketIOResponse res) =>
+            {
+                var n = res.GetValue<int>();
+                Thread.Sleep(n);
+                results.Add(n);
+            };
+
+            await io.ConnectAsync();
+            await io.EmitAsync("1:ack", callback, 2000);
+            await io.EmitAsync("1:ack", callback, 1000);
+            await Task.Delay(3000);
+
+            results.Should().Equal(1000, 2000);
+        }
+
+        [TestMethod]
+        public async Task Should_not_block_other_events_when_Ack_Func_handler_is_called()
+        {
+            using var io = CreateSocketIO();
+            var results = new List<int>();
+
+            var callback = async (SocketIOResponse res) =>
+            {
+                var n = res.GetValue<int>();
+                await Task.Delay(n);
+                results.Add(n);
+            };
+
+            await io.ConnectAsync();
+            await io.EmitAsync("1:ack", callback, 2000);
+            await io.EmitAsync("1:ack", callback, 1000);
+            await Task.Delay(3000);
+
+            results.Should().Equal(1000, 2000);
+        }
     }
 }

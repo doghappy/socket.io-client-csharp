@@ -15,9 +15,9 @@ namespace SocketIOClient.Extensions
             Task.Run(() => handler(response));
         }
 
-        public static Task TryInvoke(this Func<SocketIOResponse, Task> handler, SocketIOResponse response)
+        public static void TryInvoke(this Func<SocketIOResponse, Task> handler, SocketIOResponse response)
         {
-            return handler(response);
+            handler(response);
         }
     }
 }
