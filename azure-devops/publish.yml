@@ -11,8 +11,8 @@ parameters:
     values:
       - SocketIO.Core
       - SocketIO.Serializer.Core
-      - SocketIOClient
-      - SocketIOClient.Windows7
+      - SocketIO.Client
+      - SocketIO.Client.Windows7
       - SocketIO.Serializer.MessagePack
       - SocketIO.Serializer.NewtonsoftJson
       - SocketIO.Serializer.SystemTextJson

@@ -342,6 +342,6 @@ healthchecksdb
 *.snk
 
 # Ignore user config file
-/src/SocketIOClient.Test/user.json
+/src/SocketIO.Client.Test/user.json
 appsettings.user.yml
 *.DS_Store
