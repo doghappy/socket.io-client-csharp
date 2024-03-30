@@ -3,9 +3,9 @@
 An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and has implemented http polling and websocket.
 
 [![Build Status](https://dev.azure.com/doghappy/socket.io-client/_apis/build/status/Unit%20Test%20and%20Integration%20Test?branchName=master)](https://dev.azure.com/doghappy/socket.io-client/_build/latest?definitionId=16&branchName=master)
-[![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
+[![NuGet](https://img.shields.io/badge/NuGet-SocketIO.Client-%23004880)](https://www.nuget.org/packages/SocketIO.Client)
 [![Target Framework](https://img.shields.io/badge/Target%20Framework-.NET%20Standard%202.0-%237014e8)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support)
-[![NuGet](https://img.shields.io/nuget/dt/SocketIOClient)](https://www.nuget.org/packages/SocketIOClient)
+[![NuGet](https://img.shields.io/nuget/dt/SocketIO.Client)](https://www.nuget.org/packages/SocketIO.Client)
 
 # Table of Contents
 
@@ -222,7 +222,7 @@ client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
 
 ## Windows 7 Support
 
-The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIOClient.Windows7` dependency and then change the implementation of ClientWebSocket.
+The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIO.Client.Windows7` dependency and then change the implementation of ClientWebSocket.
 
 ```cs
 client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
