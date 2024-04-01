@@ -9,7 +9,7 @@ namespace SocketIO.Client.IntegrationTests
     [TestClass]
     public abstract class SystemTextJsonTests : SocketIOTests
     {
-        protected override SocketIO CreateSocketIO()
+        protected override SocketIOClient CreateSocketIO()
         {
             var options = new SocketIOOptions
             {
@@ -22,21 +22,21 @@ namespace SocketIO.Client.IntegrationTests
             return CreateSocketIO(options);
         }
 
-        protected override SocketIO CreateSocketIO(SocketIOOptions options)
+        protected override SocketIOClient CreateSocketIO(SocketIOOptions options)
         {
             options.EIO = EIO;
             options.Transport = Transport;
-            return new SocketIO(ServerUrl, options);
+            return new SocketIOClient(ServerUrl, options);
         }
 
-        protected override SocketIO CreateTokenSocketIO(SocketIOOptions options)
+        protected override SocketIOClient CreateTokenSocketIO(SocketIOOptions options)
         {
             options.EIO = EIO;
             options.Transport = Transport;
-            return new SocketIO(ServerTokenUrl, options);
+            return new SocketIOClient(ServerTokenUrl, options);
         }
 
-        protected override void ConfigureSerializerForEmitting1Parameter(SocketIO io)
+        protected override void ConfigureSerializerForEmitting1Parameter(SocketIOClient io)
         {
             io.ConfigureSystemTextJsonSerializerForEmitting1Parameter();
         }

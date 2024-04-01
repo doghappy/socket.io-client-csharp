@@ -9,7 +9,7 @@ namespace SocketIO.Client.IntegrationTests
     [TestClass]
     public abstract class MessagePackTests : SocketIOTests
     {
-        protected override SocketIO CreateSocketIO()
+        protected override SocketIOClient CreateSocketIO()
         {
             var options = new SocketIOOptions
             {
@@ -22,25 +22,25 @@ namespace SocketIO.Client.IntegrationTests
             return CreateSocketIO(options);
         }
 
-        protected override SocketIO CreateSocketIO(SocketIOOptions options)
+        protected override SocketIOClient CreateSocketIO(SocketIOOptions options)
         {
             options.EIO = EIO;
             options.Transport = Transport;
-            var io = new SocketIO(ServerUrl, options);
+            var io = new SocketIOClient(ServerUrl, options);
             io.SetMessagePackSerializer();
             return io;
         }
 
-        protected override SocketIO CreateTokenSocketIO(SocketIOOptions options)
+        protected override SocketIOClient CreateTokenSocketIO(SocketIOOptions options)
         {
             options.EIO = EIO;
             options.Transport = Transport;
-            var io = new SocketIO(ServerTokenUrl, options);
+            var io = new SocketIOClient(ServerTokenUrl, options);
             io.SetMessagePackSerializer();
             return io;
         }
 
-        protected override void ConfigureSerializerForEmitting1Parameter(SocketIO io)
+        protected override void ConfigureSerializerForEmitting1Parameter(SocketIOClient io)
         {
         }
 

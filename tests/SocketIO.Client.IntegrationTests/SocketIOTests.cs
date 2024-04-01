@@ -2,19 +2,11 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
 using System.Threading.Tasks;
 using SocketIO.Client.Transport;
 using SocketIO.Core;
-using SocketIO.Serializer.SystemTextJson;
 using SocketIO.Serializer.Tests.Models;
 
 namespace SocketIO.Client.IntegrationTests
@@ -26,9 +18,9 @@ namespace SocketIO.Client.IntegrationTests
         protected abstract EngineIO EIO { get; }
         protected abstract TransportProtocol Transport { get; }
 
-        protected abstract SocketIO CreateSocketIO();
-        protected abstract SocketIO CreateSocketIO(SocketIOOptions options);
-        protected abstract SocketIO CreateTokenSocketIO(SocketIOOptions options);
+        protected abstract SocketIOClient CreateSocketIO();
+        protected abstract SocketIOClient CreateSocketIO(SocketIOOptions options);
+        protected abstract SocketIOClient CreateTokenSocketIO(SocketIOOptions options);
 
         [ClassInitialize]
         public void InitializeCheck()
@@ -71,7 +63,7 @@ namespace SocketIO.Client.IntegrationTests
                 EIO = EIO,
             });
             int times = 0;
-            io.OnConnected += (s, e) => times++;
+            io.OnConnected += (_, _) => times++;
 
             await io.ConnectAsync();
             // await Task.Delay(200);
@@ -100,7 +92,7 @@ namespace SocketIO.Client.IntegrationTests
             }
         }
 
-        protected abstract void ConfigureSerializerForEmitting1Parameter(SocketIO io);
+        protected abstract void ConfigureSerializerForEmitting1Parameter(SocketIOClient io);
 
         private async Task Should_emit_1_parameter_and_emit_back(
             string eventName,
@@ -176,11 +168,11 @@ namespace SocketIO.Client.IntegrationTests
 
         public static IEnumerable<object[]> Emit2ParameterCases()
         {
-            return PrivateEmit2PrameterCase().Select(x => new[] { x.EventName, x.Data1, x.Data2, x.Expected });
+            return PrivateEmit2ParameterCase().Select(x => new[] { x.EventName, x.Data1, x.Data2, x.Expected });
         }
 
         private static IEnumerable<(string EventName, object Data1, object Data2, string Expected)>
-            PrivateEmit2PrameterCase()
+            PrivateEmit2ParameterCase()
         {
             return new (string EventName, object Data1, object Data2, string Expected)[]
             {
@@ -245,8 +237,8 @@ namespace SocketIO.Client.IntegrationTests
             await io.EmitAsync("client will be sending data to server");
             await Task.Delay(100);
 
-            var test = response!.GetValue<FileDto>();
-            var text = "0x" + BitConverter.ToString(test.Bytes).Replace("-", ", 0x");
+            // var test = response!.GetValue<FileDto>();
+            // var text = "0x" + BitConverter.ToString(test.Bytes).Replace("-", ", 0x");
             response!.GetValue<FileDto>().Should().BeEquivalentTo(FileDto.IndexHtml);
         }
 
@@ -267,7 +259,7 @@ namespace SocketIO.Client.IntegrationTests
                     { "token", "abc" }
                 }
             });
-            io.OnConnected += (s, e) => times++;
+            io.OnConnected += (_, _) => times++;
 
             await io.ConnectAsync();
             await Task.Delay(100);
@@ -351,7 +343,7 @@ namespace SocketIO.Client.IntegrationTests
             var times = 0;
             string? reason = null;
             using var io = CreateSocketIO();
-            io.OnDisconnected += (s, e) =>
+            io.OnDisconnected += (_, e) =>
             {
                 times++;
                 reason = e;
@@ -371,7 +363,7 @@ namespace SocketIO.Client.IntegrationTests
             var times = 0;
             string? reason = null;
             using var io = CreateSocketIO();
-            io.OnDisconnected += (s, e) =>
+            io.OnDisconnected += (_, e) =>
             {
                 times++;
                 reason = e;
@@ -399,8 +391,8 @@ namespace SocketIO.Client.IntegrationTests
             int connectTimes = 0;
             int disconnectTimes = 0;
             using var io = CreateSocketIO();
-            io.OnConnected += (s, e) => connectTimes++;
-            io.OnDisconnected += (s, e) => disconnectTimes++;
+            io.OnConnected += (_, _) => connectTimes++;
+            io.OnDisconnected += (_, _) => disconnectTimes++;
 
             for (int i = 0; i < times; i++)
             {
@@ -423,7 +415,7 @@ namespace SocketIO.Client.IntegrationTests
             int expectedAttempts,
             int expectedErrors)
         {
-            using var io = new SocketIO("http://localhost:4404", new SocketIOOptions
+            using var io = new SocketIOClient("http://localhost:4404", new SocketIOOptions
             {
                 Reconnection = reconnection,
                 ReconnectionAttempts = attempts,
@@ -445,7 +437,7 @@ namespace SocketIO.Client.IntegrationTests
         [TestMethod]
         public virtual async Task Should_keep_trying_to_reconnect()
         {
-            using var io = new SocketIO("http://localhost:4404", new SocketIOOptions
+            using var io = new SocketIOClient("http://localhost:4404", new SocketIOOptions
             {
                 Transport = TransportProtocol.WebSocket,
                 Reconnection = true,
@@ -518,8 +510,8 @@ namespace SocketIO.Client.IntegrationTests
             bool onAnyCalled = false;
             bool onCalled = false;
             using var io = CreateSocketIO();
-            io.OnAny((e, r) => onAnyCalled = true);
-            io.On("1:emit", res => onCalled = true);
+            io.OnAny((_, _) => onAnyCalled = true);
+            io.On("1:emit", _ => onCalled = true);
             io.OffAny(io.ListenersAny()[0]);
 
             await io.ConnectAsync();
@@ -536,8 +528,8 @@ namespace SocketIO.Client.IntegrationTests
             bool onAnyCalled = false;
             bool onCalled = false;
             using var io = CreateSocketIO();
-            io.OnAny((e, r) => onAnyCalled = true);
-            io.On("1:emit", res => onCalled = true);
+            io.OnAny((_, _) => onAnyCalled = true);
+            io.On("1:emit", _ => onCalled = true);
             io.Off("1:emit");
 
             await io.ConnectAsync();
