@@ -2,7 +2,6 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 using MessagePack.Resolvers;
-using SocketIO.Core;
 using SocketIO.Serializer.MessagePack;
 using SocketIO.Serializer.SystemTextJson;
 
@@ -10,17 +9,17 @@ namespace SocketIO.Client.IntegrationTests.Utils;
 
 public static class SerializerHelper
 {
-    public static void SetMessagePackSerializer(this SocketIO io)
+    public static void SetMessagePackSerializer(this SocketIOClient io)
     {
         io.Serializer = new SocketIOMessagePackSerializer(ContractlessStandardResolver.Options);
     }
     
-    public static void ConfigureSystemTextJsonSerializer(this SocketIO io, JsonSerializerOptions options)
+    public static void ConfigureSystemTextJsonSerializer(this SocketIOClient io, JsonSerializerOptions options)
     {
         io.Serializer = new SystemTextJsonSerializer(options);
     }
     
-    public static void ConfigureSystemTextJsonSerializerForEmitting1Parameter(this SocketIO io)
+    public static void ConfigureSystemTextJsonSerializerForEmitting1Parameter(this SocketIOClient io)
     {
         io.ConfigureSystemTextJsonSerializer(new JsonSerializerOptions
         {

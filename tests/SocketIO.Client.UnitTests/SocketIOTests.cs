@@ -16,7 +16,7 @@ public class SocketIOTests
     {
         const int count = 100;
         var seq = new List<int>();
-        using var io = new SocketIO("http://localhost");
+        using var io = new SocketIOClient("http://localhost");
         io.Transport = Substitute.For<ITransport>();
 
         Parallel.For(0, count, i =>
@@ -39,7 +39,7 @@ public class SocketIOTests
     {
         const int count = 100;
         var seq = new List<int>();
-        using var io = new SocketIO("http://localhost");
+        using var io = new SocketIOClient("http://localhost");
         io.Transport = Substitute.For<ITransport>();
 
         Parallel.For(0, count, i =>
