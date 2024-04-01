@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -36,6 +37,25 @@ namespace SocketIO.Client.IntegrationTests.Net472
 
                 actual.Should().Be(value);
             };
+        }
+        
+        [TestMethod]
+        public async Task Should_ignore_SSL_error()
+        {
+            var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+            {
+                EIO = EngineIO.V4,
+                AutoUpgrade = false,
+                Reconnection = false,
+                Transport = TransportProtocol.WebSocket,
+                ConnectionTimeout = TimeSpan.FromSeconds(2),
+                RemoteCertificateValidationCallback = (sender, cert, chain, errs) => true
+            });
+            var connected = false;
+            io.OnConnected += (s, e) => connected = true;
+            await io.ConnectAsync();
+
+            connected.Should().BeTrue();
         }
     }
 }

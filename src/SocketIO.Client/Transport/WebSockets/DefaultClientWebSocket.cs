@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Net.Security;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,9 +34,11 @@ namespace SocketIO.Client.Transport.WebSockets
                 .GetType()
                 .GetProperty("RequestHeaders", BindingFlags.NonPublic | BindingFlags.Instance);
             var headers = property.GetValue(_ws.Options);
-            var hinfoField = headers.GetType().GetField("HInfo", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            var hinfoField =
+ headers.GetType().GetField("HInfo", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             var hinfo = hinfoField.GetValue(null);
-            var hhtField = hinfo.GetType().GetField("HeaderHashTable", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+            var hhtField =
+ hinfo.GetType().GetField("HeaderHashTable", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             var hashTable = hhtField.GetValue(null) as System.Collections.Hashtable;
 
             foreach (string key in hashTable.Keys)
@@ -67,30 +70,43 @@ namespace SocketIO.Client.Transport.WebSockets
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
+        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
+
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
+#if NET6_0_OR_GREATER
+            _ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
+#endif
+#if NET461_OR_GREATER
+            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
+#endif
             await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }
 
         public async Task DisconnectAsync(CancellationToken cancellationToken)
         {
-            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken).ConfigureAwait(false);
+            await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        public async Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage, CancellationToken cancellationToken)
+        public async Task SendAsync(byte[] bytes, TransportMessageType type, bool endOfMessage,
+            CancellationToken cancellationToken)
         {
             var msgType = WebSocketMessageType.Text;
             if (type == TransportMessageType.Binary)
             {
                 msgType = WebSocketMessageType.Binary;
             }
-            await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken).ConfigureAwait(false);
+
+            await _ws.SendAsync(new ArraySegment<byte>(bytes), msgType, endOfMessage, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         public async Task<WebSocketReceiveResult> ReceiveAsync(int bufferSize, CancellationToken cancellationToken)
         {
             var buffer = new byte[bufferSize];
-            var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken).ConfigureAwait(false);
+            var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationToken)
+                .ConfigureAwait(false);
             return new WebSocketReceiveResult
             {
                 Count = result.Count,

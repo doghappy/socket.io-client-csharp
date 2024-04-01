@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Security;
 using SocketIO.Client.Transport;
 using SocketIO.Core;
 
@@ -38,6 +39,7 @@ namespace SocketIO.Client
         public int ReconnectionAttempts { get; set; }
 
         double _randomizationFactor;
+
         public double RandomizationFactor
         {
             get => _randomizationFactor;
@@ -49,7 +51,8 @@ namespace SocketIO.Client
                 }
                 else
                 {
-                    throw new ArgumentException($"{nameof(RandomizationFactor)} should be greater than or equal to 0.0, and less than 1.0.");
+                    throw new ArgumentException(
+                        $"{nameof(RandomizationFactor)} should be greater than or equal to 0.0, and less than 1.0.");
                 }
             }
         }
@@ -64,5 +67,6 @@ namespace SocketIO.Client
 
         public object Auth { get; set; }
         public IWebProxy Proxy { get; set; }
+        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
     }
 }
