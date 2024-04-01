@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2;net462</TargetFrameworks>
+		<TargetFrameworks>netstandard2;net462;net6.0</TargetFrameworks>
 		<Authors>doghappy</Authors>
 		<Description>socket.io-client implemention for .NET</Description>
 		<PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>

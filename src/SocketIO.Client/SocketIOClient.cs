@@ -168,7 +168,12 @@ namespace SocketIO.Client
             Serializer = new SystemTextJsonSerializer();
 
             HttpClient = new DefaultHttpClient();
-            ClientWebSocketProvider = () => new DefaultClientWebSocket();
+            ClientWebSocketProvider = () =>
+            {
+                var ws = new DefaultClientWebSocket();
+                ws.RemoteCertificateValidationCallback = Options.RemoteCertificateValidationCallback;
+                return ws;
+            };
             _expectedExceptions = new List<Type>
             {
                 typeof(TimeoutException),

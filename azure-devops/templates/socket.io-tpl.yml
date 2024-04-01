@@ -10,6 +10,7 @@ steps:
       pm2 start v4/v4-ws-token-mp.js
       pm2 start v4/v4-http-mp.js
       pm2 start v4/v4-http-token-mp.js
+      pm2 start v4/v4-ws-ssl-err.js
       pm2 start v2/v2-ws.js
       pm2 start v2/v2-ws-token.js
       pm2 start v2/v2-http.js
