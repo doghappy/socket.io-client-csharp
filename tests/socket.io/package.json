@@ -4,15 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "v4-ws": "cd v4 && npm run v4-ws",
-    "v4-ws-token": "cd v4 && npm run v4-ws-token",
-    "v4-http": "cd v4 && npm run v4-http",
-    "v4-http-token": "cd v4 && npm run v4-http-token",
-
-    "v4-ws-mp": "cd v4 && npm run v4-ws-mp",
-    "v4-ws-token-mp": "cd v4 && npm run v4-ws-token-mp",
-    "v4-http-mp": "cd v4 && npm run v4-http-mp",
-    "v4-http-token-mp": "cd v4 && npm run v4-http-token-mp",
+    "v4": "cd v4 && npm start",
   
     "v2-ws": "cd v2 && npm run v2-ws",
     "v2-ws-token": "cd v2 && npm run v2-ws-token",
@@ -25,7 +17,7 @@
     "v2-http-token-mp": "cd v2 && npm run v2-http-token-mp",
 
     "install":"cd v4 && npm install && cd ../v2 && npm install",
-    "start": "concurrently \"npm run v4-ws\" \"npm run v4-ws-token\" \"npm run v4-http\" \"npm run v4-http-token\" \"npm run v4-ws-mp\" \"npm run v4-ws-token-mp\" \"npm run v4-http-mp\" \"npm run v4-http-token-mp\" \"npm run v2-ws\" \"npm run v2-ws-token\" \"npm run v2-http\" \"npm run v2-http-token\" \"npm run v2-ws-mp\" \"npm run v2-ws-token-mp\" \"npm run v2-http-mp\" \"npm run v2-http-token-mp\""
+    "start": "concurrently \"npm run v4\" \"npm run v2-ws\" \"npm run v2-ws-token\" \"npm run v2-http\" \"npm run v2-http-token\" \"npm run v2-ws-mp\" \"npm run v2-ws-token-mp\" \"npm run v2-http-mp\" \"npm run v2-http-token-mp\""
   },
   "author": "https://github.com/doghappy",
   "license": "Apache",

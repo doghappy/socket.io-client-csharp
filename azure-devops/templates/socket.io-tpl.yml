@@ -2,15 +2,7 @@ steps:
   - pwsh: |
       npm install pm2 -g
       npm install
-      pm2 start v4/v4-ws.js
-      pm2 start v4/v4-ws-token.js
-      pm2 start v4/v4-http.js
-      pm2 start v4/v4-http-token.js
-      pm2 start v4/v4-ws-mp.js
-      pm2 start v4/v4-ws-token-mp.js
-      pm2 start v4/v4-http-mp.js
-      pm2 start v4/v4-http-token-mp.js
-      pm2 start v4/v4-ws-ssl-err.js
+      pm2 start v4/index.js
       pm2 start v2/v2-ws.js
       pm2 start v2/v2-ws-token.js
       pm2 start v2/v2-http.js
