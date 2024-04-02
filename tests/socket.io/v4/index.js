@@ -124,10 +124,16 @@ const httpServers = [
     }
 ];
 
-const servers = [
+let servers = [
     ...wsServers,
     ...httpServers
 ];
+
+if (process.env.PORT && process.env.NAME){
+    const server = servers.find(s => s.name === process.env.NAME);
+    server.port = process.env.PORT;
+    servers = [server];
+}
 
 for (const server of servers) {
     console.log(`Starting server '${server.name}' on port ${server.port}...`);

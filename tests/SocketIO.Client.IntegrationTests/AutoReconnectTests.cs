@@ -13,10 +13,11 @@ namespace SocketIO.Client.IntegrationTests
     public class AutoReconnectTests
     {
         [TestMethod]
-        [DataRow("v2", "v2-ws.js", 11292, EngineIO.V3, TransportProtocol.WebSocket)]
-        [DataRow("v2", "v2-http.js", 11293, EngineIO.V3, TransportProtocol.Polling)]
-        [DataRow("v4", "v4-ws.js", 11492, EngineIO.V4, TransportProtocol.WebSocket)]
-        [DataRow("v4", "v4-http.js", 11493, EngineIO.V4, TransportProtocol.Polling)]
+        // TODO: need to follow v4 to refactor v2
+        // [DataRow("v2", "v2-ws.js", 11292, EngineIO.V3, TransportProtocol.WebSocket)]
+        // [DataRow("v2", "v2-http.js", 11293, EngineIO.V3, TransportProtocol.Polling)]
+        [DataRow("v4", "v4-ws", 11492, EngineIO.V4, TransportProtocol.WebSocket)]
+        [DataRow("v4", "v4-http", 11493, EngineIO.V4, TransportProtocol.Polling)]
         public async Task Should_reconnect_when_server_shutdown(
             string folder,
             string name,
@@ -24,29 +25,36 @@ namespace SocketIO.Client.IntegrationTests
             EngineIO eio,
             TransportProtocol transport)
         {
+            bool isOpened;
             using var tcpClient = new TcpClient();
+
             try
             {
                 await tcpClient.ConnectAsync("localhost", port);
-                throw new Exception($"Port '{port}' already in use");
+                isOpened = true;
             }
             catch
             {
-                // ignored
+                isOpened = false;
+            }
+
+            if (isOpened)
+            {
+                throw new Exception($"Port '{port}' already in use");
             }
 
             var psi = new ProcessStartInfo("node")
             {
-                Arguments = name,
+                Arguments = "index",
                 EnvironmentVariables =
                 {
-                    ["PORT"] = port.ToString()
+                    ["PORT"] = port.ToString(),
+                    ["NAME"] = name
                 },
                 WorkingDirectory = $"../../../../socket.io/{folder}"
             };
             using var process = Process.Start(psi);
 
-            var isOpened = false;
             for (var i = 0; i < 3; i++)
             {
                 try
@@ -61,7 +69,7 @@ namespace SocketIO.Client.IntegrationTests
                 }
             }
 
-            isOpened.Should().BeTrue("the port '{0}' is not open.", port);
+            isOpened.Should().BeTrue();
 
             var attemptTimes = 0;
             var reconnectedTimes = 0;

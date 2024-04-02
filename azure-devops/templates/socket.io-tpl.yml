@@ -2,7 +2,7 @@ steps:
   - pwsh: |
       npm install pm2 -g
       npm install
-      pm2 start v4/index.js
+      pm2 start v4/index.js --name v4/index.js
       pm2 start v2/v2-ws.js
       pm2 start v2/v2-ws-token.js
       pm2 start v2/v2-http.js
