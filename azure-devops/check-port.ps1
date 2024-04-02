@@ -1,4 +1,4 @@
-$ports = 11400, 11401, 11402, 11403, 11410, 11411, 11412, 11413, 11200, 11201, 11202, 11203, 11210, 11211, 11212, 11213
+$ports = 11400, 11401, 11402, 11403, 11404, 11410, 11411, 11412, 11413, 11200, 11201, 11202, 11203, 11210, 11211, 11212, 11213
 $retry = 10
 $delay = 3
 function Test-SocketIOConnection($Port) {
@@ -20,6 +20,6 @@ function Test-SocketIOConnection($Port) {
 foreach ($port in $ports) {
     $result = Test-SocketIOConnection -Port $port
     if (!$result) {
-        throw "All socket.io erver ports must be open, but port $port is closed"
+        throw "All socket.io server ports must be open, but port $port is closed"
     }
 }
