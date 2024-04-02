@@ -3,16 +3,17 @@
 const https = require('https');
 const socket = require('socket.io');
 const fs = require('fs');
+const path = require('path');
 
 const server = https.createServer({
-    key: fs.readFileSync('cert/private.key'),
-    cert: fs.readFileSync('cert/cert.crt')
+    key: fs.readFileSync(path.join(__dirname, 'cert', 'private.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.crt'))
 }, (req, res) => {
     if (req.method === 'GET' && req.url === '/hello') {
         res.end('Hello World!\n');
     }
 });
-const port = process.env.PORT || 11404;
+const port = 11404;
 
 var io = socket(server, {
     pingInterval: 5000,
