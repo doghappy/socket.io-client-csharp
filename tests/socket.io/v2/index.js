@@ -7,80 +7,48 @@ const template = require('./template');
 
 const wsServers = [
     {
-        name: 'v4-ws',
-        port: 11400,
+        name: 'v2-ws',
+        port: 11200,
         server: () => http.createServer(),
         options: {
             pingInterval: 5000,
             pingTimeout: 10000,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST"]
-            }
         },
         onCreated: template.registerEvents
     },
     {
-        name: 'v4-ws-token',
-        port: 11401,
+        name: 'v2-ws-token',
+        port: 11201,
         server: () => http.createServer(),
         options: {},
         onCreated: template.useAuthMiddlewares
     },
     {
-        name: 'v4-ws-mp',
-        port: 11402,
+        name: 'v2-ws-mp',
+        port: 11202,
         server: () => http.createServer(),
         options: {
             parser: require('socket.io-msgpack-parser'),
             pingInterval: 5000,
             pingTimeout: 10000,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST"]
-            }
         },
         onCreated: template.registerEvents
     },
     {
-        name: 'v4-ws-token-mp',
-        port: 11403,
+        name: 'v2-ws-token-mp',
+        port: 11203,
         server: () => http.createServer(),
         options: {
             parser: require('socket.io-msgpack-parser')
         },
         onCreated: template.useAuthMiddlewares
-    },
-    {
-        name: 'v4-ws-ssl-err',
-        port: 11404,
-        server: () => {
-            const server = https.createServer({
-                key: fs.readFileSync(path.join(__dirname, 'cert', 'private.key')),
-                cert: fs.readFileSync(path.join(__dirname, 'cert', 'cert.crt'))
-            }, (req, res) => {
-                if (req.method === 'GET' && req.url === '/hello') {
-                    res.end('Hello World!\n');
-                }
-            });
-            return server;
-        },
-        options: {
-            pingInterval: 5000,
-            pingTimeout: 10000,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST"]
-            }
-        },
-        onCreated: template.registerEvents
     }
 ];
 
 const httpServers = [
     {
-        name: 'v4-http',
-        port: 11410,
+        name: 'v2-http',
+        port: 11210,
         server: () => http.createServer(),
         options: {
             transports: ["polling"],
@@ -90,8 +58,8 @@ const httpServers = [
         onCreated: template.registerEvents
     },
     {
-        name: 'v4-http-token',
-        port: 11411,
+        name: 'v2-http-token',
+        port: 11211,
         server: () => http.createServer(),
         options: {
             transports: ["polling"]
@@ -99,8 +67,8 @@ const httpServers = [
         onCreated: template.useAuthMiddlewares
     },
     {
-        name: 'v4-http-mp',
-        port: 11412,
+        name: 'v2-http-mp',
+        port: 11212,
         server: () => http.createServer(),
         options: {
             parser: require('socket.io-msgpack-parser'),
@@ -111,8 +79,8 @@ const httpServers = [
         onCreated: template.registerEvents
     },
     {
-        name: 'v4-http-token-mp',
-        port: 11413,
+        name: 'v2-http-token-mp',
+        port: 11213,
         server: () => http.createServer(),
         options: {
             parser: require('socket.io-msgpack-parser'),
