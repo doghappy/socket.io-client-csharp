@@ -13,9 +13,8 @@ namespace SocketIO.Client.IntegrationTests
     public class AutoReconnectTests
     {
         [TestMethod]
-        // TODO: need to follow v4 to refactor v2
-        // [DataRow("v2", "v2-ws.js", 11292, EngineIO.V3, TransportProtocol.WebSocket)]
-        // [DataRow("v2", "v2-http.js", 11293, EngineIO.V3, TransportProtocol.Polling)]
+        [DataRow("v2", "v2-ws", 11292, EngineIO.V3, TransportProtocol.WebSocket)]
+        [DataRow("v2", "v2-http", 11293, EngineIO.V3, TransportProtocol.Polling)]
         [DataRow("v4", "v4-ws", 11492, EngineIO.V4, TransportProtocol.WebSocket)]
         [DataRow("v4", "v4-http", 11493, EngineIO.V4, TransportProtocol.Polling)]
         public async Task Should_reconnect_when_server_shutdown(
