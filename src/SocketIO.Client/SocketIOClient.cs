@@ -636,6 +636,11 @@ namespace SocketIO.Client
             {
                 _eventActionHandlers.Remove(eventName);
             }
+
+            if (_eventFuncHandlers.ContainsKey(eventName)) 
+            {
+                _eventFuncHandlers.Remove(eventName);
+            }
         }
 
         public void OnAny(OnAnyHandler handler)
