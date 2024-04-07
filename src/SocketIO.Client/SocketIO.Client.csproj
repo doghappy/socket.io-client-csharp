@@ -22,11 +22,11 @@
 		<OutputPath>bin\Release\</OutputPath>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(TargetFramework)'=='net462' or '$(TargetFramework)'=='netstandard2.0'">
 		<PackageReference Include="System.Collections" Version="4.3.0" />
 	</ItemGroup>
 
-	<ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+	<ItemGroup Condition="'$(TargetFramework)'=='net462'">
 		<Reference Include="System.Net.Http" />
 	</ItemGroup>
 
