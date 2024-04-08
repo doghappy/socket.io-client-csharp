@@ -14,6 +14,7 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
   - [Ack](#ack)
   - [Binary messages](#binary-messages)
   - [JsonSerializer](#jsonserializer)
+  - [Allowing Untrusted SSL Certificates](#allowing-untrusted-ssl-certificates)
   - [ClientWebSocket Options](#clientwebsocket-options)
   - [Windows 7 Support](#windows-7-support)
   - [Xamarin](#xamarin)
@@ -97,6 +98,7 @@ var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
 | `Transport` | `Polling` | Websocket is used by default, you can change to http polling. |
 | `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
 | `Auth` | `null` | Credentials that are sent when accessing a namespace |
+| `RemoteCertificateValidationCallback` | `null` | Verifies the remote Secure Sockets Layer (SSL) certificate used for authentication. |
 
 ## Ack
 
@@ -220,12 +222,24 @@ client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
 });
 ```
 
+## Allowing Untrusted SSL Certificates
+
+```cs
+var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+{
+    RemoteCertificateValidationCallback = (_, _, _, _) =>
+    {
+        return true;
+    }
+});
+```
+
 ## Windows 7 Support
 
 The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIO.Client.Windows7` dependency and then change the implementation of ClientWebSocket.
 
 ```cs
-client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
+client.ClientWebSocketProvider = () => new ClientWebSocketManaged(...);
 ```
 
 ## Xamarin
@@ -242,7 +256,7 @@ For Xamarin.Android you should add the following code:
             InitializeComponent();
         }
 
-        public SocketIO Socket {get;}
+        public SocketIOClient Socket {get;}
     }
 
     ...
