@@ -4,14 +4,20 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Net.Security;
 
 namespace SocketIO.Client.Transport.Http
 {
     public class DefaultHttpClient : IHttpClient
     {
-        public DefaultHttpClient()
+        public DefaultHttpClient(RemoteCertificateValidationCallback remoteCertificateValidationCallback)
         {
             _handler = new HttpClientHandler();
+            if (remoteCertificateValidationCallback is not null)
+            {
+                _handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                _handler.ServerCertificateCustomValidationCallback = (req, cert, chain, policyErrors) => remoteCertificateValidationCallback(req, cert, chain, policyErrors);
+            }
             _httpClient = new HttpClient(_handler);
         }
 

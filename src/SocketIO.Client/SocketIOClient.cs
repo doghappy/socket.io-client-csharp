@@ -167,11 +167,10 @@ namespace SocketIO.Client
 
             Serializer = new SystemTextJsonSerializer();
 
-            HttpClient = new DefaultHttpClient();
+            HttpClient = new DefaultHttpClient(Options.RemoteCertificateValidationCallback);
             ClientWebSocketProvider = () =>
             {
-                var ws = new DefaultClientWebSocket();
-                ws.RemoteCertificateValidationCallback = Options.RemoteCertificateValidationCallback;
+                var ws = new DefaultClientWebSocket(Options.RemoteCertificateValidationCallback);
                 return ws;
             };
             _expectedExceptions = new List<Type>

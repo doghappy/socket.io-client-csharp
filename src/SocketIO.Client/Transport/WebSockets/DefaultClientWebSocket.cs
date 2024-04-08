@@ -14,8 +14,9 @@ namespace SocketIO.Client.Transport.WebSockets
 {
     public class DefaultClientWebSocket : IClientWebSocket
     {
-        public DefaultClientWebSocket()
+        public DefaultClientWebSocket(RemoteCertificateValidationCallback remoteCertificateValidationCallback)
         {
+            _remoteCertificateValidationCallback = remoteCertificateValidationCallback;
             _ws = new ClientWebSocket();
 #if NET461_OR_GREATER
             AllowHeaders();
@@ -66,19 +67,19 @@ namespace SocketIO.Client.Transport.WebSockets
         }
 #endif
 
-        readonly ClientWebSocket _ws;
+        private readonly ClientWebSocket _ws;
+        private readonly RemoteCertificateValidationCallback _remoteCertificateValidationCallback;
 
         public WebSocketState State => (WebSocketState)_ws.State;
 
-        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
 
         public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
         {
 #if NET6_0_OR_GREATER
-            _ws.Options.RemoteCertificateValidationCallback = RemoteCertificateValidationCallback;
+            _ws.Options.RemoteCertificateValidationCallback = _remoteCertificateValidationCallback;
 #endif
 #if NET461_OR_GREATER
-            ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
+            ServicePointManager.ServerCertificateValidationCallback = _remoteCertificateValidationCallback;
 #endif
             await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         }

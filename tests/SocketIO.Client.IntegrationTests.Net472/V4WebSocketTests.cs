@@ -40,8 +40,9 @@ namespace SocketIO.Client.IntegrationTests.Net472
         }
         
         [TestMethod]
-        public async Task Should_ignore_SSL_error()
+        public async Task Should_ignore_ws_SSL_error()
         {
+            var callback = false;
             var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
             {
                 EIO = EngineIO.V4,
@@ -49,13 +50,43 @@ namespace SocketIO.Client.IntegrationTests.Net472
                 Reconnection = false,
                 Transport = TransportProtocol.WebSocket,
                 ConnectionTimeout = TimeSpan.FromSeconds(2),
-                RemoteCertificateValidationCallback = (sender, cert, chain, errs) => true
+                RemoteCertificateValidationCallback = (sender, cert, chain, errs) =>
+                {
+                    callback = true;
+                    return true;
+                }
             });
             var connected = false;
             io.OnConnected += (s, e) => connected = true;
             await io.ConnectAsync();
 
             connected.Should().BeTrue();
+            callback.Should().BeTrue();
+        }
+        
+        [TestMethod]
+        public async Task Should_ignore_http_SSL_error()
+        {
+            var callback = false;
+            var io = new SocketIOClient("https://localhost:11414", new SocketIOOptions
+            {
+                EIO = EngineIO.V4,
+                AutoUpgrade = false,
+                Reconnection = false,
+                Transport = TransportProtocol.Polling,
+                ConnectionTimeout = TimeSpan.FromSeconds(2),
+                RemoteCertificateValidationCallback = (sender, cert, chain, errs) =>
+                {
+                    callback = true;
+                    return true;
+                }
+            });
+            var connected = false;
+            io.OnConnected += (s, e) => connected = true;
+            await io.ConnectAsync();
+
+            connected.Should().BeTrue();
+            callback.Should().BeTrue();
         }
     }
 }

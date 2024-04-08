@@ -190,5 +190,30 @@ namespace SocketIO.Client.IntegrationTests
 
             results.Should().Equal(1000, 2000);
         }
+        
+        [TestMethod]
+        public async Task Should_ignore_SSL_error()
+        {
+            var callback = false;
+            var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+            {
+                EIO = EngineIO.V4,
+                AutoUpgrade = false,
+                Reconnection = false,
+                Transport = TransportProtocol.WebSocket,
+                ConnectionTimeout = TimeSpan.FromSeconds(2),
+                RemoteCertificateValidationCallback = (_, _, _, _) =>
+                {
+                    callback = true;
+                    return true;
+                }
+            });
+            var connected = false;
+            io.OnConnected += (_, _) => connected = true;
+            await io.ConnectAsync();
+
+            connected.Should().BeTrue();
+            callback.Should().BeTrue();
+        }
     }
 }
