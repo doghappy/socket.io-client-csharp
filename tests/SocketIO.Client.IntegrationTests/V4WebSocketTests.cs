@@ -215,5 +215,27 @@ namespace SocketIO.Client.IntegrationTests
             connected.Should().BeTrue();
             callback.Should().BeTrue();
         }
+        
+        [TestMethod]
+        public async Task Should_remove_FuncHandler_when_calling_Off()
+        {
+            var onAnyCalled = false;
+            var onCalled = false;
+            using var io = CreateSocketIO();
+            io.OnAny((_, _) => onAnyCalled = true);
+            io.On("1:emit", async (_) =>
+            {
+                await Task.Delay(1);
+                onCalled = true;
+            });
+            io.Off("1:emit");
+
+            await io.ConnectAsync();
+            await io.EmitAsync("1:emit", "test");
+            await Task.Delay(100);
+
+            onAnyCalled.Should().BeTrue();
+            onCalled.Should().BeFalse();
+        }
     }
 }
