@@ -15,13 +15,17 @@ using System.Collections.Generic;
 
 namespace SocketIO.Client.Windows7
 {
-    public class SystemNetWebSocketsClientWebSocket : IClientWebSocket
+    public class ClientWebSocketManaged : IClientWebSocket
     {
-        public SystemNetWebSocketsClientWebSocket()
+        public ClientWebSocketManaged()
         {
             _ws = new System.Net.WebSockets.Managed.ClientWebSocket();
+#if NET6_0_OR_GREATER
+            _ws.Options.RemoteCertificateValidationCallback = remoteCertificateValidationCallback;
+#endif
 #if NET461_OR_GREATER
             AllowHeaders();
+            ServicePointManager.ServerCertificateValidationCallback = remoteCertificateValidationCallback;
 #endif
         }
 
