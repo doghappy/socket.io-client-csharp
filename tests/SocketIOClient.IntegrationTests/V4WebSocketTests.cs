@@ -195,7 +195,7 @@ namespace SocketIOClient.IntegrationTests
         public async Task Should_ignore_SSL_error()
         {
             var callback = false;
-            var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+            var io = new SocketIO("https://localhost:11404", new SocketIOOptions
             {
                 EIO = EngineIO.V4,
                 AutoUpgrade = false,

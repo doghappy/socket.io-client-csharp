@@ -24,14 +24,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="System.Collections" Version="4.3.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-		<Reference Include="System.Net.Http" />
-	</ItemGroup>
-
-	<ItemGroup>
 	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
 	  <ProjectReference Include="..\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
 	</ItemGroup>

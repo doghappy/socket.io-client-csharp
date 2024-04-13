@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Security;
-using SocketIO.Client.Transport;
 using SocketIO.Core;
 
 namespace SocketIOClient

@@ -43,7 +43,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         public async Task Should_ignore_ws_SSL_error()
         {
             var callback = false;
-            var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+            var io = new SocketIO("https://localhost:11404", new SocketIOOptions
             {
                 EIO = EngineIO.V4,
                 AutoUpgrade = false,
@@ -68,7 +68,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         public async Task Should_ignore_http_SSL_error()
         {
             var callback = false;
-            var io = new SocketIOClient("https://localhost:11414", new SocketIOOptions
+            var io = new SocketIO("https://localhost:11414", new SocketIOOptions
             {
                 EIO = EngineIO.V4,
                 AutoUpgrade = false,

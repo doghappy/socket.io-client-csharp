@@ -225,7 +225,7 @@ client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
 ## Allowing Untrusted SSL Certificates
 
 ```cs
-var io = new SocketIOClient("https://localhost:11404", new SocketIOOptions
+var io = new SocketIO("https://localhost:11404", new SocketIOOptions
 {
     RemoteCertificateValidationCallback = (_, _, _, _) =>
     {
