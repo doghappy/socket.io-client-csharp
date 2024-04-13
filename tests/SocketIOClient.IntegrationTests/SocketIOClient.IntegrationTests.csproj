@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.2.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.2.2" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
+    <ProjectReference Include="..\..\src\SocketIO.Serializer.MessagePack\SocketIO.Serializer.MessagePack.csproj" />
+    <ProjectReference Include="..\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj" />
+    <ProjectReference Include="..\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj" />
+    <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
+    <None Remove="Transport/**" />
+    <Content Include="appsettings*.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+</Project>

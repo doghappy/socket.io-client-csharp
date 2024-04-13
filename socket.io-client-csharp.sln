@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIO.Client", "src\SocketIO.Client\SocketIO.Client.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient", "src\SocketIOClient\SocketIOClient.csproj", "{FFF33EC4-5BFA-4BC4-BB09-014192A0EA37}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIO.Client.Windows7", "src\SocketIO.Client.Windows7\SocketIO.Client.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.Windows7", "src\SocketIOClient.Windows7\SocketIOClient.Windows7.csproj", "{8EA5705A-16D6-4477-9682-26E819402149}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIO.Client.UnitTests", "tests\SocketIO.Client.UnitTests\SocketIO.Client.UnitTests.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.UnitTests", "tests\SocketIOClient.UnitTests\SocketIOClient.UnitTests.csproj", "{B3A90FB0-5D1C-499C-A2F9-6E4DD331C8E9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIO.Client.IntegrationTests", "tests\SocketIO.Client.IntegrationTests\SocketIO.Client.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SocketIOClient.IntegrationTests", "tests\SocketIOClient.IntegrationTests\SocketIOClient.IntegrationTests.csproj", "{3987863F-026D-4B74-AD7F-E29470DA16A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Client.IntegrationTests.Net472", "tests\SocketIO.Client.IntegrationTests.Net472\SocketIO.Client.IntegrationTests.Net472.csproj", "{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Net472", "tests\SocketIOClient.IntegrationTests.Net472\SocketIOClient.IntegrationTests.Net472.csproj", "{A12339F8-B60D-4296-A61E-A6FFFA4C4A73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Client.IntegrationTests.Common", "tests\SocketIO.Client.IntegrationTests.Common\SocketIO.Client.IntegrationTests.Common.csproj", "{8C62BD1E-9F14-4170-8E19-29A39996AAA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.IntegrationTests.Common", "tests\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj", "{8C62BD1E-9F14-4170-8E19-29A39996AAA2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}"
 EndProject
