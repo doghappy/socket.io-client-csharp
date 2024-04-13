@@ -13,7 +13,7 @@ namespace SocketIO.Client
     {
         private readonly IMessage _message;
 
-        public SocketIOResponse(IMessage message, SocketIOClient socket)
+        public SocketIOResponse(IMessage message, SocketIO socket)
         {
             _message = message;
             _socketIO = socket;
@@ -22,7 +22,7 @@ namespace SocketIO.Client
 
         public List<byte[]> InComingBytes => _message.ReceivedBinary;
 
-        private readonly SocketIOClient _socketIO;
+        private readonly SocketIO _socketIO;
         public int PacketId { get; set; }
 
         public T GetValue<T>(int index = 0)

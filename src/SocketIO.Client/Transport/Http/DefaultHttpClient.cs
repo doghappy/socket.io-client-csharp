@@ -21,13 +21,13 @@ namespace SocketIO.Client.Transport.Http
             _httpClient = new HttpClient(_handler);
         }
 
-        private readonly HttpClientHandler _handler;
+        readonly HttpClientHandler _handler;
         private readonly HttpClient _httpClient;
 
-        private static readonly HashSet<string> AllowedHeaders =
-        [
-            "user-agent"
-        ];
+        private static readonly HashSet<string> allowedHeaders = new HashSet<string>
+        {
+            "user-agent",
+        };
 
         public void AddHeader(string name, string value)
         {
@@ -35,7 +35,7 @@ namespace SocketIO.Client.Transport.Http
             {
                 _httpClient.DefaultRequestHeaders.Remove(name);
             }
-            if (AllowedHeaders.Contains(name.ToLower()))
+            if (allowedHeaders.Contains(name.ToLower()))
             {
                 _httpClient.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
             }

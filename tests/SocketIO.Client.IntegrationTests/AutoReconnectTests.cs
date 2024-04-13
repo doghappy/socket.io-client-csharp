@@ -72,7 +72,7 @@ namespace SocketIO.Client.IntegrationTests
 
             var attemptTimes = 0;
             var reconnectedTimes = 0;
-            using var io = new SocketIOClient($"http://127.0.0.1:{port}", new SocketIOOptions
+            using var io = new SocketIO($"http://127.0.0.1:{port}", new SocketIOOptions
             {
                 Transport = transport,
                 AutoUpgrade = false,

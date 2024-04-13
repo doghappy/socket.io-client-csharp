@@ -26,39 +26,39 @@ namespace SocketIO.Client
     /// <summary>
     /// socket.io client class
     /// </summary>
-    public class SocketIOClient : IDisposable
+    public class SocketIO : IDisposable
     {
         /// <summary>
-        /// Create SocketIOClient object with default options
+        /// Create SocketIO object with default options
         /// </summary>
         /// <param name="uri"></param>
-        public SocketIOClient(string uri) : this(new Uri(uri))
+        public SocketIO(string uri) : this(new Uri(uri))
         {
         }
 
         /// <summary>
-        /// Create SocketIOClient object with options
+        /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
-        public SocketIOClient(Uri uri) : this(uri, new SocketIOOptions())
+        public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
         {
         }
 
         /// <summary>
-        /// Create SocketIOClient object with options
+        /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
         /// <param name="options"></param>
-        public SocketIOClient(string uri, SocketIOOptions options) : this(new Uri(uri), options)
+        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
         {
         }
 
         /// <summary>
-        /// Create SocketIOClient object with options
+        /// Create SocketIO object with options
         /// </summary>
         /// <param name="uri"></param>
         /// <param name="options"></param>
-        public SocketIOClient(Uri uri, SocketIOOptions options)
+        public SocketIO(Uri uri, SocketIOOptions options)
         {
             ServerUri = uri ?? throw new ArgumentNullException("uri");
             Options = options ?? throw new ArgumentNullException("options");
@@ -463,6 +463,7 @@ namespace SocketIO.Client
 
         private void EventMessageHandler(IMessage message)
         {
+            // TODO: run actions in background. eg: Task.Run
             var res = new SocketIOResponse(message, this)
             {
                 PacketId = message.Id
@@ -511,6 +512,7 @@ namespace SocketIO.Client
             };
             foreach (var item in _onAnyHandlers)
             {
+                // TODO: run in background to make sure user logic could not block socket.io's logic
                 item.TryInvoke(message.Event, response);
             }
 
