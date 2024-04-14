@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.Message
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.MessagePack.Tests", "tests\SocketIO.Serializer.MessagePack.Tests\SocketIO.Serializer.MessagePack.Tests.csproj", "{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Issue372", "tests\Issue372\Issue372.csproj", "{D924C69D-7CB6-4A52-9157-4F03175C84FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D924C69D-7CB6-4A52-9157-4F03175C84FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D924C69D-7CB6-4A52-9157-4F03175C84FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D924C69D-7CB6-4A52-9157-4F03175C84FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D924C69D-7CB6-4A52-9157-4F03175C84FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,5 +132,6 @@ Global
 		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{A44203AD-AE22-4C41-9A2C-F1F9C8C5EBCF} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{D924C69D-7CB6-4A52-9157-4F03175C84FB} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal
