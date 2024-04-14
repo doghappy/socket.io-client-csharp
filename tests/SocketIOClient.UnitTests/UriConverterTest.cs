@@ -2,9 +2,6 @@
 using SocketIOClient.UriConverters;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using SocketIO.Core;
 
 namespace SocketIOClient.UnitTests
@@ -18,7 +15,7 @@ namespace SocketIOClient.UnitTests
             var serverUri = new Uri("http://localhost");
             var kvs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("token", "test")
+                new("token", "test")
             };
             var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
@@ -30,7 +27,7 @@ namespace SocketIOClient.UnitTests
             var serverUri = new Uri("http://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("token", "test")
+                new("token", "test")
             };
             var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("http://localhost/socket.io/?EIO=4&transport=polling&token=test", result.ToString());
@@ -42,7 +39,7 @@ namespace SocketIOClient.UnitTests
             var serverUri = new Uri("https://localhost:443");
             var kvs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("token", "test")
+                new("token", "test")
             };
             var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, "/sio", kvs);
             Assert.AreEqual("https://localhost/sio/?EIO=4&transport=polling&token=test", result.ToString());
@@ -63,7 +60,7 @@ namespace SocketIOClient.UnitTests
             var serverUri = new Uri("wss://localhost:443");
             var kvs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("token", "test")
+                new("token", "test")
             };
             var result = UriConverter.GetServerUri(true, serverUri, EngineIO.V4, string.Empty, kvs);
 
@@ -76,7 +73,7 @@ namespace SocketIOClient.UnitTests
             var serverUri = new Uri("https://localhost:80");
             var kvs = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("token", "test")
+                new("token", "test")
             };
             var result = UriConverter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             Assert.AreEqual("https://localhost:80/socket.io/?EIO=4&transport=polling&token=test", result.ToString());

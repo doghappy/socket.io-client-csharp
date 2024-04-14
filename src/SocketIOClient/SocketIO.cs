@@ -100,7 +100,7 @@ namespace SocketIOClient
         public SocketIOOptions Options { get; }
 
         public ISerializer Serializer { get; set; }
-        public ITransport Transport { get; set; }
+        private ITransport Transport { get; set; }
         public IHttpClient HttpClient { get; set; }
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }

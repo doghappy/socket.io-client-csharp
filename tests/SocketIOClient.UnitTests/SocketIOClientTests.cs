@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using SocketIOClient.Transport;
+using SocketIOClient.Transport.Http;
 
 namespace SocketIOClient.UnitTests;
 
@@ -12,13 +11,16 @@ namespace SocketIOClient.UnitTests;
 public class SocketIOTests
 {
     [TestMethod]
-    public void EmitAckAction_InParallel_PacketIdShouldBeThreadSafe()
+    public async Task EmitAckAction_InParallel_PacketIdShouldBeThreadSafe()
     {
         const int count = 100;
         var seq = new List<int>();
         using var io = new SocketIO("http://localhost");
-        io.Transport = Substitute.For<ITransport>();
-
+        io.HttpClient = Substitute.For<IHttpClient>();
+        io.HttpClient.ForE4ConnectAsync();
+        await io.ConnectAsync();
+        
+        io.HttpClient.ForEmitAsync();
         Parallel.For(0, count, i =>
         {
             io.EmitAsync(i.ToString(), _ => seq.Add(i)).GetAwaiter().GetResult();
@@ -40,8 +42,11 @@ public class SocketIOTests
         const int count = 100;
         var seq = new List<int>();
         using var io = new SocketIO("http://localhost");
-        io.Transport = Substitute.For<ITransport>();
+        io.HttpClient = Substitute.For<IHttpClient>();
+        io.HttpClient.ForE4ConnectAsync();
+        await io.ConnectAsync();
 
+        io.HttpClient.ForEmitAsync();
         Parallel.For(0, count, i =>
         {
             io.EmitAsync(i.ToString(), _ =>
