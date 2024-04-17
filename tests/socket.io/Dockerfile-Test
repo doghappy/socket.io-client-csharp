@@ -1,0 +1,5 @@
+# build: docker build -t test-image -f Dockerfile-Test .
+# test: docker run --rm test-image ls /app
+FROM alpine
+COPY . /app
+ 
