@@ -7,7 +7,7 @@
     "v2": "cd v2 && npm start",
     "v4": "cd v4 && npm start",
 
-    "install":"cd v4 && npm install && cd ../v2 && npm install",
+    "install-all":"npm i && cd v4 && npm i && cd ../v2 && npm i",
     "start": "concurrently \"npm run v4\" \"npm run v2\""
   },
   "author": "https://github.com/doghappy",
