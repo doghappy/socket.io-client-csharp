@@ -8,8 +8,17 @@ io.OnPing += (_, _) => WriteLine($"Ping");
 io.OnPong += (_, t) => WriteLine($"OnPong: {t}");
 await io.ConnectAsync();
 
-WriteLine("Press any key to exit.");
-Console.ReadKey();
+while (true)
+{
+    WriteLine("Type 'exit' to exit.");
+    var cmd = Console.ReadLine();
+    if (cmd == "exit")
+    {
+        break;
+    }
+}
+
+WriteLine("Exited");
 return;
 
 void WriteLine(string s)
