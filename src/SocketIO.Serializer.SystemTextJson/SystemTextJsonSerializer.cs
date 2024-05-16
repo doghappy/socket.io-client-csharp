@@ -219,6 +219,14 @@ namespace SocketIO.Serializer.SystemTextJson
                 Text = "2"
             };
         }
+        
+        public SerializedItem SerializeUpgradeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "5"
+            };
+        }
 
         public SerializedItem SerializePongMessage()
         {

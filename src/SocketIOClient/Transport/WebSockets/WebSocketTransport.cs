@@ -141,20 +141,12 @@ namespace SocketIOClient.Transport.WebSockets
             }, cancellationToken);
         }
 
-        public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
         {
-            if (_dirty)
-                throw new InvalidOperationException(DirtyMessage);
-            _dirty = true;
-            try
-            {
-                await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                throw new TransportException($"Could not connect to '{uri}'", e);
-            }
-
+            // if (_dirty)
+            //     throw new InvalidOperationException(DirtyMessage);
+            // _dirty = true;
+            await _ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
             Listen(_listenCancellation.Token);
         }
 

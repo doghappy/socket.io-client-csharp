@@ -55,29 +55,11 @@ namespace SocketIOClient.Transport.Http
             }, TaskCreationOptions.LongRunning);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="cancellationToken"></param>
-        /// <exception cref="InvalidOperationException"></exception>
-        public override async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+        protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
         {
-            if (_dirty)
-                throw new InvalidOperationException(DirtyMessage);
             var req = new HttpRequestMessage(HttpMethod.Get, uri);
             _httpUri = uri.ToString();
-
-            try
-            {
-                await _pollingHandler.SendAsync(req, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                throw new TransportException($"Could not connect to '{uri}'", e);
-            }
-
-            _dirty = true;
+            await _pollingHandler.SendAsync(req, cancellationToken).ConfigureAwait(false);
         }
 
         public override Task DisconnectAsync(CancellationToken cancellationToken)
@@ -98,10 +80,10 @@ namespace SocketIOClient.Transport.Http
 
         public override void SetProxy(IWebProxy proxy)
         {
-            if (_dirty)
-            {
-                throw new InvalidOperationException("Unable to set proxy after connecting");
-            }
+            // if (_dirty)
+            // {
+            //     throw new InvalidOperationException("Unable to set proxy after connecting");
+            // }
 
             _pollingHandler.SetProxy(proxy);
         }
@@ -143,7 +125,11 @@ namespace SocketIOClient.Transport.Http
         {
             _httpUri += "&sid=" + message.Sid;
             _pollingTokenSource = new CancellationTokenSource();
-            StartPolling(_pollingTokenSource.Token);
+            var canUpdate = Options.AutoUpgrade && message.Upgrades.Contains("websocket");
+            if (!canUpdate)
+            {
+                StartPolling(_pollingTokenSource.Token);
+            }
             await base.OpenAsync(message);
         }
     }

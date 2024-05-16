@@ -14,7 +14,7 @@ namespace SocketIOClient.Transport
         Action<Exception> OnError { get; set; }
         string Namespace { get; set; }
         Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
-        Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
+        Task ConnectAsync(CancellationToken cancellationToken);
         Task DisconnectAsync(CancellationToken cancellationToken);
         void AddHeader(string key, string val);
         void SetProxy(IWebProxy proxy);

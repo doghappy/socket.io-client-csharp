@@ -105,8 +105,6 @@ namespace SocketIOClient
 
         public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
 
-        List<IDisposable> _resources = new List<IDisposable>();
-
         List<Type> _expectedExceptions;
 
         int _packetId;
@@ -122,7 +120,6 @@ namespace SocketIOClient
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
 
-        #region Socket.IO event
 
         public event EventHandler OnConnected;
 
@@ -154,7 +151,22 @@ namespace SocketIOClient
         public event EventHandler OnPing;
         public event EventHandler<TimeSpan> OnPong;
 
-        #endregion
+
+        private void InitializeStatus()
+        {
+            Id = null;
+            Connected = false;
+            _packetId = -1;
+            _ackActionHandlers.Clear();
+            _ackFuncHandlers.Clear();
+            _eventActionHandlers.Clear();
+            _eventFuncHandlers.Clear();
+            _onAnyHandlers.Clear();
+            _backgroundException = null;
+            _reconnectionDelay = Options.ReconnectionDelay;
+            _exitFromBackground = false;
+            Transport?.Dispose();
+        }
 
         private void Initialize()
         {
@@ -184,44 +196,66 @@ namespace SocketIOClient
             };
         }
 
-        private async Task InitTransportAsync()
+        private ITransport NewTransport(TransportOptions options)
         {
-            Options.Transport = await GetProtocolAsync();
-            var transportOptions = new TransportOptions
+            ITransport transport = Options.Transport switch
+            {
+                TransportProtocol.Polling => NewHttpTransport(options),
+                TransportProtocol.WebSocket => NewWebSocketTransport(options),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            OnTransportCreated(transport);
+            return transport;
+        }
+
+        private TransportOptions NewTransportOptions()
+        {
+            return new TransportOptions
             {
                 EIO = Options.EIO,
-                Query = Options.Query,
+                Query = Options.Query ?? new List<KeyValuePair<string, string>>(),
                 Auth = Options.Auth,
-                ConnectionTimeout = Options.ConnectionTimeout
+                ServerUri = ServerUri,
+                Path = Options.Path,
+                ConnectionTimeout = Options.ConnectionTimeout,
+                Id = Id,
+                AutoUpgrade = Options.AutoUpgrade
             };
-            if (Options.Transport == TransportProtocol.Polling)
-            {
-                var handler = HttpPollingHandler.CreateHandler(transportOptions.EIO, HttpClient);
-                Transport = new HttpTransport(transportOptions, handler, Serializer);
-            }
-            else
-            {
-                var ws = ClientWebSocketProvider();
-                if (ws is null)
-                {
-                    throw new ArgumentNullException(nameof(ClientWebSocketProvider),
-                        $"{ClientWebSocketProvider} returns a null");
-                }
+        }
 
-                _resources.Add(ws);
-                Transport = new WebSocketTransport(transportOptions, ws, Serializer);
-                SetWebSocketHeaders();
+        private HttpTransport NewHttpTransport(TransportOptions options)
+        {
+            var handler = HttpPollingHandler.CreateHandler(options.EIO, HttpClient);
+            var transport = new HttpTransport(options, handler, Serializer);
+            SetHttpHeaders();
+            return transport;
+        }
+
+        private WebSocketTransport NewWebSocketTransport(TransportOptions options)
+        {
+            var ws = ClientWebSocketProvider();
+            if (ws is null)
+            {
+                throw new ArgumentNullException(nameof(ClientWebSocketProvider),
+                    $"{ClientWebSocketProvider} returns a null");
             }
 
-            _resources.Add(Transport);
-            Transport.Namespace = Namespace;
+            var transport = new WebSocketTransport(options, ws, Serializer);
+            SetWebSocketHeaders();
+            return transport;
+        }
+
+        private void OnTransportCreated(ITransport transport)
+        {
+            transport.Namespace = Namespace;
             if (Options.Proxy != null)
             {
-                Transport.SetProxy(Options.Proxy);
+                transport.SetProxy(Options.Proxy);
             }
 
-            Transport.OnReceived = OnMessageReceived;
-            Transport.OnError = OnErrorReceived;
+            transport.OnReceived = OnMessageReceived;
+            transport.OnError = OnErrorReceived;
         }
 
         private void SetWebSocketHeaders()
@@ -250,64 +284,69 @@ namespace SocketIOClient
             }
         }
 
-        private void DisposeResources()
+        private static async Task ThreadSync()
         {
-            foreach (var item in _resources)
+            await Task.Delay(100).ConfigureAwait(false);
+        }
+        
+        private static async Task ThreadSync(int max, Func<bool> breakCondition)
+        {
+            for (var i = 0; i < max; i++)
             {
-                item.TryDispose();
+                if (breakCondition())
+                {
+                    break;
+                }
+                await ThreadSync();
             }
-
-            _resources.Clear();
         }
 
-        private void ConnectInBackground(CancellationToken cancellationToken)
+        
+#nullable enable
+        private void ConnectInBackground(IMessage? openedMessage, CancellationToken cancellationToken)
+#nullable disable
         {
-            _reconnectionDelay = Options.ReconnectionDelay;
             Task.Factory.StartNew(async () =>
             {
-                _exitFromBackground = false;
-                while (true)
+                InitializeStatus();
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
-                    DisposeResources();
-                    await InitTransportAsync().ConfigureAwait(false);
-                    var serverUri = UriConverter.GetServerUri(
-                        Options.Transport == TransportProtocol.WebSocket,
-                        ServerUri,
-                        Options.EIO,
-                        Options.Path,
-                        Options.Query);
+                    var options = NewTransportOptions();
+                    options.Id = openedMessage?.Sid;
+                    var transport = NewTransport(options);
                     if (_attempts > 0)
                         OnReconnectAttempt.TryInvoke(this, _attempts);
                     try
                     {
-                        using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
-                        await Transport.ConnectAsync(serverUri, cts.Token).ConfigureAwait(false);
+                        await transport.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                        var message = Serializer.SerializeUpgradeMessage();
+                        await transport
+                            .SendAsync(new List<SerializedItem> { message }, cancellationToken)
+                            .ConfigureAwait(false);
+                        Transport = transport;
                         break;
                     }
                     catch (Exception e)
                     {
+                        transport.Dispose();
                         OnReconnectError.TryInvoke(this, e);
-                        var needBreak = await AttemptAsync(e);
-                        if (needBreak)
+                        var failedToAttempt = await AttemptAsync();
+                        if (failedToAttempt)
                         {
                             _exitFromBackground = true;
                             break;
                         }
 
                         var canHandle = CanHandleException(e);
-                        if (!canHandle)
-                        {
-                            _exitFromBackground = true;
-                            throw;
-                        }
+                        if (canHandle) continue;
+                        _exitFromBackground = true;
+                        throw;
                     }
                 }
             }, cancellationToken);
         }
 
-        private async Task<bool> AttemptAsync(Exception e)
+        private async Task<bool> AttemptAsync()
         {
             _attempts++;
             if (_attempts <= Options.ReconnectionAttempts)
@@ -359,36 +398,13 @@ namespace SocketIOClient
             return true;
         }
 
-        private async Task<TransportProtocol> GetProtocolAsync()
-        {
-            SetHttpHeaders();
-            if (Options.Transport == TransportProtocol.Polling && Options.AutoUpgrade)
-            {
-                Uri uri = UriConverter.GetServerUri(false, ServerUri, Options.EIO, Options.Path, Options.Query);
-                try
-                {
-                    string text = await HttpClient.GetStringAsync(uri);
-                    if (text.Contains("websocket"))
-                    {
-                        return TransportProtocol.WebSocket;
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                }
-            }
-
-            return Options.Transport;
-        }
-
-        private readonly SemaphoreSlim _connectingLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _connectingLock = new(1, 1);
         private CancellationTokenSourceWrapper _connCts;
 
-        private void ConnectInBackground()
+        private void ConnectInBackground(IMessage openedMessage = null)
         {
             _connCts = _connCts.Renew();
-            ConnectInBackground(_connCts.Token);
+            ConnectInBackground(openedMessage, _connCts.Token);
         }
 
         public async Task ConnectAsync()
@@ -402,7 +418,7 @@ namespace SocketIOClient
 
                 while (true)
                 {
-                    if (_connCts.IsCancellationRequested)
+                    if (Connected)
                     {
                         break;
                     }
@@ -423,7 +439,7 @@ namespace SocketIOClient
                         throw new ConnectionException($"Cannot connect to server '{ServerUri}'.");
                     }
 
-                    await Task.Delay(100);
+                    await ThreadSync();
                 }
             }
             finally
@@ -442,11 +458,20 @@ namespace SocketIOClient
             OnPong.TryInvoke(this, msg.Duration);
         }
 
+        private void OpenedHandler(IMessage msg)
+        {
+            if (Options.AutoUpgrade && Options.Transport == TransportProtocol.Polling)
+            {
+                Options.Transport = TransportProtocol.WebSocket;
+                ConnectInBackground(msg);
+            }
+        }
+
+
         private void ConnectedHandler(IMessage msg)
         {
             Id = msg.Sid;
             Connected = true;
-            _connCts.Dispose();
             OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
@@ -554,6 +579,9 @@ namespace SocketIOClient
                     case MessageType.Pong:
                         PongHandler(msg);
                         break;
+                    case MessageType.Opened:
+                        OpenedHandler(msg);
+                        break;
                     case MessageType.Connected:
                         ConnectedHandler(msg);
                         break;
@@ -639,7 +667,7 @@ namespace SocketIOClient
                 _eventActionHandlers.Remove(eventName);
             }
 
-            if (_eventFuncHandlers.ContainsKey(eventName)) 
+            if (_eventFuncHandlers.ContainsKey(eventName))
             {
                 _eventFuncHandlers.Remove(eventName);
             }

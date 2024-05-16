@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIO.Serializer.Core;
@@ -85,7 +86,20 @@ namespace SocketIOClient.Transport
             }, TaskCreationOptions.LongRunning);
         }
 
-        public abstract Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
+        protected abstract Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken);
+
+        public async Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            var uri = GetConnectionUri();
+            try
+            {
+                await ConnectCoreAsync(uri, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                throw new TransportException($"Could not connect to '{uri}'", e);
+            }
+        }
 
         public abstract Task DisconnectAsync(CancellationToken cancellationToken);
 
@@ -196,6 +210,49 @@ namespace SocketIOClient.Transport
             OnReceived.TryInvoke(message);
 
             await HandlePingMessage(message).ConfigureAwait(false);
+        }
+
+        private Uri GetConnectionUri()
+        {
+            var builder = new StringBuilder();
+            builder
+                .Append(GetConnectionUriSchema())
+                .Append("://")
+                .Append(Options.ServerUri.Host);
+            if (!Options.ServerUri.IsDefaultPort)
+            {
+                builder.Append(':').Append(Options.ServerUri.Port);
+            }
+
+            builder.Append(string.IsNullOrEmpty(Options.Path) ? "/socket.io" : Options.Path);
+
+            builder
+                .Append("/?EIO=")
+                .Append((int)Options.EIO)
+                .Append("&transport=")
+                .Append(Protocol.ToString().ToLower());
+
+            if (!string.IsNullOrEmpty(Options.Id))
+            {
+                builder.Append("&sid=").Append(Options.Id);
+            }
+
+            foreach (var item in Options.Query)
+            {
+                builder.Append('&').Append(item.Key).Append('=').Append(item.Value);
+            }
+
+            return new Uri(builder.ToString());
+        }
+
+        private string GetConnectionUriSchema()
+        {
+            return Options.ServerUri.Scheme switch
+            {
+                "https" or "wss" => Protocol == TransportProtocol.Polling ? "https" : "wss",
+                "http" or "ws" => Protocol == TransportProtocol.Polling ? "http" : "ws",
+                _ => throw new ArgumentException("Only supports 'http, https, ws, wss' protocol")
+            };
         }
     }
 }
