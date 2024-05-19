@@ -255,11 +255,14 @@ namespace SocketIOClient.IntegrationTests
         #region Query
 
         [TestMethod]
+        // [Timeout(5000)]
         public async Task Should_Connect_Successfully_If_Token_Is_Correct()
         {
             int times = 0;
             using var io = CreateTokenSocketIO(new SocketIOOptions
             {
+                // AutoUpgrade = false,
+                Transport = Transport,
                 Reconnection = false,
                 EIO = EIO,
                 Query = new Dictionary<string, string>
@@ -465,6 +468,7 @@ namespace SocketIOClient.IntegrationTests
         #endregion
 
         [TestMethod]
+        // [Timeout(1000)]
         [DataRow("CustomHeader", "CustomHeader-Value")]
         [DataRow("User-Agent", "dotnet-socketio[client]/socket")]
         [DataRow("user-agent", "dotnet-socketio[client]/socket")]

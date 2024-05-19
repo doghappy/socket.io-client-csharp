@@ -12,7 +12,8 @@ namespace SocketIOClient.Transport
         public TimeSpan ConnectionTimeout { get; set; }
         public Uri ServerUri { get; set; }
         public string Path { get; set; }
-        public string Id { get; set; }
         public bool AutoUpgrade { get; set; }
+        public IMessage OpenedMessage { get; set; }
+        public string Namespace { get; set; }
     }
 }

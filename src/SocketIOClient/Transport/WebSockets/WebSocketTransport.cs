@@ -28,6 +28,7 @@ namespace SocketIOClient.Transport.WebSockets
         readonly CancellationTokenSource _listenCancellation;
         int _sendChunkSize = ChunkSize.Size8K;
         int _receiveChunkSize = ChunkSize.Size8K;
+        // TODO: is it needed?
         bool _dirty;
 
         private async Task SendAsync(TransportMessageType type, byte[] bytes, CancellationToken cancellationToken)

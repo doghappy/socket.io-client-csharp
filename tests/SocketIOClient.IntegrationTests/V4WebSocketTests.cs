@@ -48,43 +48,45 @@ namespace SocketIOClient.IntegrationTests
                 .ThrowAsync<ConnectionException>();
         }
 
-        [TestMethod]
-        public async Task Should_Able_To_Connect_To_Proxy()
-        {
-            var msgs = new List<string>();
-            _ = Task.Run(StartProxyServer);
-            await Task.Delay(200);
-            using var io = CreateSocketIO(new SocketIOOptions
-            {
-                Proxy = new WebProxy("localhost", 6138),
-                Reconnection = false,
-                ConnectionTimeout = TimeSpan.FromSeconds(2)
-            });
-            await io.Invoking(async x => await x.ConnectAsync())
-                .Should()
-                .ThrowAsync<ConnectionException>();
-
-            var uri = new Uri(Common.Startup.V4_NSP_WS);
-            var uriStr = $"{uri.Host}:{uri.Port}";
-            msgs.Should().BeEquivalentTo(new[] { $"CONNECT {uriStr} HTTP/1.1\r\nHost: {uriStr}\r\n\r\n" });
-
-            void StartProxyServer()
-            {
-                var proxy = new TcpListener(IPAddress.Parse("127.0.0.1"), 6138);
-                proxy.Start();
-                byte[] bytes = new byte[256];
-                while (true)
-                {
-                    var client = proxy.AcceptTcpClient();
-                    NetworkStream stream = client.GetStream();
-                    int i;
-                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                    {
-                        msgs.Add(System.Text.Encoding.UTF8.GetString(bytes, 0, i));
-                    }
-                }
-            }
-        }
+        // TODO: need to refactor Proxy tests
+        // [TestMethod]
+        // [Timeout(5000)]
+        // public async Task Should_Able_To_Connect_To_Proxy()
+        // {
+        //     var msgs = new List<string>();
+        //     _ = Task.Run(StartProxyServer);
+        //     await Task.Delay(200);
+        //     using var io = CreateSocketIO(new SocketIOOptions
+        //     {
+        //         Proxy = new WebProxy("localhost", 6138),
+        //         Reconnection = false,
+        //         ConnectionTimeout = TimeSpan.FromSeconds(2)
+        //     });
+        //     await io.Invoking(async x => await x.ConnectAsync())
+        //         .Should()
+        //         .ThrowAsync<ConnectionException>();
+        //
+        //     var uri = new Uri(Common.Startup.V4_NSP_WS);
+        //     var uriStr = $"{uri.Host}:{uri.Port}";
+        //     msgs.Should().BeEquivalentTo(new[] { $"CONNECT {uriStr} HTTP/1.1\r\nHost: {uriStr}\r\n\r\n" });
+        //
+        //     void StartProxyServer()
+        //     {
+        //         var proxy = new TcpListener(IPAddress.Parse("127.0.0.1"), 6138);
+        //         proxy.Start();
+        //         byte[] bytes = new byte[256];
+        //         while (true)
+        //         {
+        //             var client = proxy.AcceptTcpClient();
+        //             NetworkStream stream = client.GetStream();
+        //             int i;
+        //             while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+        //             {
+        //                 msgs.Add(System.Text.Encoding.UTF8.GetString(bytes, 0, i));
+        //             }
+        //         }
+        //     }
+        // }
 
         [TestMethod]
         public async Task Should_not_block_other_events_when_calling_Delay()

@@ -3,15 +3,8 @@ using System.Threading;
 
 namespace SocketIOClient.Extensions
 {
-    class CancellationTokenSourceWrapper : IDisposable
+    class CancellationTokenSourceWrapper(CancellationTokenSource cts) : IDisposable
     {
-        public CancellationTokenSourceWrapper(CancellationTokenSource cts)
-        {
-            _cts = cts;
-        }
-
-        private readonly CancellationTokenSource _cts;
-
         private bool _cancelled;
         private bool _disposed;
 
@@ -21,7 +14,7 @@ namespace SocketIOClient.Extensions
             {
                 return;
             }
-            _cts.Cancel();
+            cts.Cancel();
             _cancelled = true;
         }
 
@@ -31,13 +24,13 @@ namespace SocketIOClient.Extensions
             {
                 return;
             }
-            _cts.Dispose();
+            cts.Dispose();
             _disposed = true;
         }
 
-        public CancellationToken Token => _cts.Token;
+        public CancellationToken Token => cts.Token;
 
-        public bool IsCancellationRequested => _cts.IsCancellationRequested;
+        public bool IsCancellationRequested => cts.IsCancellationRequested;
 
         public void Dispose()
         {

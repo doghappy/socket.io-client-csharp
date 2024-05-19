@@ -12,7 +12,6 @@ namespace SocketIOClient.Transport
     {
         Action<IMessage> OnReceived { get; set; }
         Action<Exception> OnError { get; set; }
-        string Namespace { get; set; }
         Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
         Task ConnectAsync(CancellationToken cancellationToken);
         Task DisconnectAsync(CancellationToken cancellationToken);

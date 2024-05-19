@@ -119,6 +119,7 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
+        private bool _upgrading;
 
 
         public event EventHandler OnConnected;
@@ -156,12 +157,7 @@ namespace SocketIOClient
         {
             Id = null;
             Connected = false;
-            _packetId = -1;
-            _ackActionHandlers.Clear();
-            _ackFuncHandlers.Clear();
-            _eventActionHandlers.Clear();
-            _eventFuncHandlers.Clear();
-            _onAnyHandlers.Clear();
+            _upgrading = false;
             _backgroundException = null;
             _reconnectionDelay = Options.ReconnectionDelay;
             _exitFromBackground = false;
@@ -196,9 +192,9 @@ namespace SocketIOClient
             };
         }
 
-        private ITransport NewTransport(TransportOptions options)
+        private ITransport NewTransport(TransportProtocol protocol, TransportOptions options)
         {
-            ITransport transport = Options.Transport switch
+            ITransport transport = protocol switch
             {
                 TransportProtocol.Polling => NewHttpTransport(options),
                 TransportProtocol.WebSocket => NewWebSocketTransport(options),
@@ -219,8 +215,8 @@ namespace SocketIOClient
                 ServerUri = ServerUri,
                 Path = Options.Path,
                 ConnectionTimeout = Options.ConnectionTimeout,
-                Id = Id,
-                AutoUpgrade = Options.AutoUpgrade
+                AutoUpgrade = Options.AutoUpgrade,
+                Namespace = Namespace
             };
         }
 
@@ -242,13 +238,12 @@ namespace SocketIOClient
             }
 
             var transport = new WebSocketTransport(options, ws, Serializer);
-            SetWebSocketHeaders();
+            SetWebSocketHeaders(transport);
             return transport;
         }
 
         private void OnTransportCreated(ITransport transport)
         {
-            transport.Namespace = Namespace;
             if (Options.Proxy != null)
             {
                 transport.SetProxy(Options.Proxy);
@@ -258,7 +253,7 @@ namespace SocketIOClient
             transport.OnError = OnErrorReceived;
         }
 
-        private void SetWebSocketHeaders()
+        private void SetWebSocketHeaders(ITransport transport)
         {
             if (Options.ExtraHeaders is null)
             {
@@ -267,7 +262,7 @@ namespace SocketIOClient
 
             foreach (var item in Options.ExtraHeaders)
             {
-                Transport.AddHeader(item.Key, item.Value);
+                transport.AddHeader(item.Key, item.Value);
             }
         }
 
@@ -288,23 +283,9 @@ namespace SocketIOClient
         {
             await Task.Delay(100).ConfigureAwait(false);
         }
-        
-        private static async Task ThreadSync(int max, Func<bool> breakCondition)
-        {
-            for (var i = 0; i < max; i++)
-            {
-                if (breakCondition())
-                {
-                    break;
-                }
-                await ThreadSync();
-            }
-        }
 
-        
-#nullable enable
-        private void ConnectInBackground(IMessage? openedMessage, CancellationToken cancellationToken)
-#nullable disable
+
+        private void ConnectInBackground(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {
@@ -312,17 +293,12 @@ namespace SocketIOClient
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var options = NewTransportOptions();
-                    options.Id = openedMessage?.Sid;
-                    var transport = NewTransport(options);
+                    var transport = NewTransport(Options.Transport, options);
                     if (_attempts > 0)
                         OnReconnectAttempt.TryInvoke(this, _attempts);
                     try
                     {
                         await transport.ConnectAsync(cancellationToken).ConfigureAwait(false);
-                        var message = Serializer.SerializeUpgradeMessage();
-                        await transport
-                            .SendAsync(new List<SerializedItem> { message }, cancellationToken)
-                            .ConfigureAwait(false);
                         Transport = transport;
                         break;
                     }
@@ -344,6 +320,35 @@ namespace SocketIOClient
                     }
                 }
             }, cancellationToken);
+        }
+
+        private async Task UpgradeToWebSocket(IMessage openedMessage)
+        {
+            var options = NewTransportOptions();
+            options.OpenedMessage = openedMessage;
+            var transport = NewTransport(TransportProtocol.WebSocket, options);
+            for (var i = 0; i < 3; i++)
+            {
+                using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+                try
+                {
+                    await transport.ConnectAsync(cts.Token).ConfigureAwait(false);
+                    var message = Serializer.SerializeUpgradeMessage();
+                    await transport
+                        .SendAsync(new List<SerializedItem> { message }, cts.Token)
+                        .ConfigureAwait(false);
+                    Transport = transport;
+                    Options.Transport = TransportProtocol.WebSocket;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    var ex = new ConnectionException("Upgrade to websocket failed", e);
+                    OnReconnectError.TryInvoke(this, ex);
+                }
+            }
+
+            _upgrading = false;
         }
 
         private async Task<bool> AttemptAsync()
@@ -401,10 +406,10 @@ namespace SocketIOClient
         private readonly SemaphoreSlim _connectingLock = new(1, 1);
         private CancellationTokenSourceWrapper _connCts;
 
-        private void ConnectInBackground(IMessage openedMessage = null)
+        private void ConnectInBackground()
         {
             _connCts = _connCts.Renew();
-            ConnectInBackground(openedMessage, _connCts.Token);
+            ConnectInBackground(_connCts.Token);
         }
 
         public async Task ConnectAsync()
@@ -418,7 +423,7 @@ namespace SocketIOClient
 
                 while (true)
                 {
-                    if (Connected)
+                    if (_connCts.IsCancellationRequested)
                     {
                         break;
                     }
@@ -460,18 +465,26 @@ namespace SocketIOClient
 
         private void OpenedHandler(IMessage msg)
         {
-            if (Options.AutoUpgrade && Options.Transport == TransportProtocol.Polling)
+            if (Options.AutoUpgrade
+                && Options.Transport == TransportProtocol.Polling
+                && msg.Upgrades.Contains("websocket"))
             {
-                Options.Transport = TransportProtocol.WebSocket;
-                ConnectInBackground(msg);
+                _upgrading = true;
+                _ = UpgradeToWebSocket(msg);
             }
         }
 
 
-        private void ConnectedHandler(IMessage msg)
+        private async Task ConnectedHandler(IMessage msg)
         {
+            while (_upgrading)
+            {
+                await ThreadSync();
+            }
+
             Id = msg.Sid;
             Connected = true;
+            _connCts.Dispose();
             OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
@@ -583,7 +596,7 @@ namespace SocketIOClient
                         OpenedHandler(msg);
                         break;
                     case MessageType.Connected:
-                        ConnectedHandler(msg);
+                        _ = ConnectedHandler(msg);
                         break;
                     case MessageType.Disconnected:
                         DisconnectedHandler();

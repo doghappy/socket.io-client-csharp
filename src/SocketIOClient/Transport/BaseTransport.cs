@@ -11,42 +11,31 @@ using SocketIO.Core;
 
 namespace SocketIOClient.Transport
 {
-    public abstract class BaseTransport : ITransport
+    public abstract class BaseTransport(TransportOptions options, ISerializer serializer) : ITransport
     {
-        protected BaseTransport(TransportOptions options, ISerializer serializer)
-        {
-            Options = options ?? throw new ArgumentNullException(nameof(options));
-            Serializer = serializer;
-        }
-
-        protected const string DirtyMessage = "Invalid object's current state, may need to create a new object.";
-
-        DateTime _pingTime;
-        protected TransportOptions Options { get; }
-        protected ISerializer Serializer { get; }
+        private DateTime _pingTime;
+        protected TransportOptions Options { get; } = options;
+        private ISerializer Serializer { get; } = serializer;
 
         public Action<IMessage> OnReceived { get; set; }
 
         protected abstract TransportProtocol Protocol { get; }
         protected CancellationTokenSource PingTokenSource { get; private set; }
-        protected IMessage OpenedMessage { get; private set; }
-
-        public string Namespace { get; set; }
         public Action<Exception> OnError { get; set; }
 
         public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
 
         protected virtual async Task OpenAsync(IMessage message)
         {
-            OpenedMessage = message;
-            if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Namespace))
+            Options.OpenedMessage = message;
+            if (Options.EIO == EngineIO.V3 && string.IsNullOrEmpty(Options.Namespace))
             {
                 return;
             }
 
             var connectedMessage = Serializer.SerializeConnectedMessage(
                 Options.EIO,
-                Namespace,
+                Options.Namespace,
                 Options.Auth,
                 Options.Query);
 
@@ -62,10 +51,10 @@ namespace SocketIOClient.Transport
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    await Task.Delay(OpenedMessage.PingInterval, cancellationToken);
+                    await Task.Delay(Options.OpenedMessage.PingInterval, cancellationToken);
                     try
                     {
-                        using (var cts = new CancellationTokenSource(OpenedMessage.PingTimeout))
+                        using (var cts = new CancellationTokenSource(Options.OpenedMessage.PingTimeout))
                         {
                             Debug.WriteLine("Ping");
                             await SendAsync(new List<SerializedItem>
@@ -122,7 +111,7 @@ namespace SocketIOClient.Transport
             "/"
         };
 
-        private async Task<bool> HandleEio3Messages(IMessage message)
+        private bool HandleEio3Messages(IMessage message)
         {
             if (Options.EIO != EngineIO.V3) return false;
             if (message.Type == MessageType.Pong)
@@ -131,19 +120,26 @@ namespace SocketIOClient.Transport
             }
             else if (message.Type == MessageType.Connected)
             {
-                var ms = 0;
-                while (OpenedMessage is null)
-                {
-                    await Task.Delay(10);
-                    ms += 10;
-                    if (ms <= Options.ConnectionTimeout.TotalMilliseconds) continue;
-                    OnError.TryInvoke(new TimeoutException());
-                    return true;
-                }
+                // var ms = 0;
+                // while (Options.OpenedMessage is null)
+                // {
+                //     await Task.Delay(10);
+                //     ms += 10;
+                //     if (ms <= Options.ConnectionTimeout.TotalMilliseconds) continue;
+                //     OnError.TryInvoke(new TimeoutException());
+                //     return true;
+                // }
+                // var needToUpgrade = Options.AutoUpgrade
+                //                     && Options.OpenedMessage.Upgrades.Contains("websocket")
+                //                     && Protocol == TransportProtocol.Polling;
+                // if (needToUpgrade)
+                // {
+                //     return true;
+                // }
 
-                message.Sid = OpenedMessage.Sid;
-                if (message.Namespace == Namespace
-                    || (DefaultNamespaces.Contains(Namespace) && DefaultNamespaces.Contains(message.Namespace)))
+                message.Sid = Options.OpenedMessage.Sid;
+                if (message.Namespace == Options.Namespace
+                    || (DefaultNamespaces.Contains(Options.Namespace) && DefaultNamespaces.Contains(message.Namespace)))
                 {
                     PingTokenSource?.Cancel();
 
@@ -205,7 +201,7 @@ namespace SocketIOClient.Transport
                 await OpenAsync(message).ConfigureAwait(false);
             }
 
-            if (await HandleEio3Messages(message)) return;
+            if (HandleEio3Messages(message)) return;
 
             OnReceived.TryInvoke(message);
 
@@ -232,9 +228,9 @@ namespace SocketIOClient.Transport
                 .Append("&transport=")
                 .Append(Protocol.ToString().ToLower());
 
-            if (!string.IsNullOrEmpty(Options.Id))
+            if (Options.OpenedMessage is not null)
             {
-                builder.Append("&sid=").Append(Options.Id);
+                builder.Append("&sid=").Append(Options.OpenedMessage.Sid);
             }
 
             foreach (var item in Options.Query)

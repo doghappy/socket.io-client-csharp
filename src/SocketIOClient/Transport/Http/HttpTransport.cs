@@ -22,7 +22,6 @@ namespace SocketIOClient.Transport.Http
             _sendLock = new SemaphoreSlim(1, 1);
         }
 
-        bool _dirty;
         string _httpUri;
         readonly SemaphoreSlim _sendLock;
         CancellationTokenSource _pollingTokenSource;

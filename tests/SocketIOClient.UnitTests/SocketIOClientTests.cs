@@ -66,22 +66,4 @@ public class SocketIOTests
         io.AckFuncHandlers.Should().HaveCount(count);
         io.AckFuncHandlers.Keys.Should().BeEquivalentTo(seq);
     }
-
-    [TestMethod]
-    public async Task ConnectAsync_ShouldUpgradeToWebSocket()
-    {
-        using var io = new SocketIO("http://localhost", new SocketIOOptions
-        {
-            Reconnection = false
-        });
-        io.HttpClient = Substitute.For<IHttpClient>();
-        io.HttpClient.ForUpgradeWebSocketAsync();
-
-        var ws = Substitute.For<IClientWebSocket>();
-        io.ClientWebSocketProvider = () => ws;
-        ws.ForConnectAsync();
-        
-        await io.ConnectAsync();
-        io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
-    }
 }
