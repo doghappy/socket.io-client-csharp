@@ -10,12 +10,13 @@ using SocketIOClient.Transport.WebSockets;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V2HttpTests : SystemTextJsonTests
+    public class V2HttpStjTests : SystemTextJsonTests
     {
-        protected override EngineIO EIO => EngineIO.V3;
+        protected override EngineIO Eio => EngineIO.V3;
         protected override TransportProtocol Transport => TransportProtocol.Polling;
-        protected override string ServerUrl => Common.Startup.V2_HTTP;
-        protected override string ServerTokenUrl => Common.Startup.V2_HTTP_TOKEN;
+        protected override bool AutoUpgrade => false;
+        protected override string ServerUrl => "http://localhost:11210";
+        protected override string ServerTokenUrl => "http://localhost:11211";
         
         [TestMethod]
         public async Task Should_automatically_upgrade_to_websocket()

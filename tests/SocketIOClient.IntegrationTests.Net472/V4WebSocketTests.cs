@@ -18,7 +18,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         public async Task ExtraHeaders(string key, string value)
         {
             string actual = null;
-            using (var io = new SocketIO(Common.Startup.V4_WS, new SocketIOOptions
+            using (var io = new SocketIO("http://localhost:11400", new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EngineIO.V4,

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -12,17 +11,18 @@ using SocketIOClient.Transport;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V4WebSocketTests : SystemTextJsonTests
+    public class V4WsStjTests : SystemTextJsonTests
     {
-        protected override string ServerUrl => Common.Startup.V4_WS;
-        protected override EngineIO EIO => EngineIO.V4;
-        protected override string ServerTokenUrl => Common.Startup.V4_WS_TOKEN;
+        protected override EngineIO Eio => EngineIO.V4;
+        protected override string ServerUrl => "http://localhost:11400";
+        protected override string ServerTokenUrl => "http://localhost:11401";
         protected override TransportProtocol Transport => TransportProtocol.WebSocket;
+        protected override bool AutoUpgrade => false;
 
         [TestMethod]
         public async Task Should_Be_Work_Even_An_Exception_Thrown_From_Handler()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
             io.On("1:emit", res => results.Add(6 / res.GetValue<int>()));
 
@@ -37,12 +37,9 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_Throw_Exception_If_Proxy_Server_Not_Start()
         {
-            using var io = CreateSocketIO(new SocketIOOptions
-            {
-                Proxy = new WebProxy("localhost", 6138),
-                Reconnection = false,
-                ConnectionTimeout = TimeSpan.FromSeconds(1)
-            });
+            using var io = CreateSocketIO(ServerUrl);
+            io.Options.Proxy = new WebProxy("localhost", 6138);
+            io.Options.ConnectionTimeout = TimeSpan.FromSeconds(1);
             await io.Invoking(async x => await x.ConnectAsync())
                 .Should()
                 .ThrowAsync<ConnectionException>();
@@ -91,7 +88,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_not_block_other_events_when_calling_Delay()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
             io.On("1:emit", async res =>
             {
@@ -111,7 +108,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_not_block_other_events_when_calling_Sleep()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
             io.On("1:emit", res =>
             {
@@ -131,7 +128,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_not_block_other_events_when_OnAny_handler_is_called()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
             string @event = null!;
             io.OnAny((e, res) =>
@@ -154,7 +151,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_not_block_other_events_when_Ack_Action_handler_is_called()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
 
             var callback = (SocketIOResponse res) =>
@@ -175,7 +172,7 @@ namespace SocketIOClient.IntegrationTests
         [TestMethod]
         public async Task Should_not_block_other_events_when_Ack_Func_handler_is_called()
         {
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             var results = new List<int>();
 
             var callback = async (SocketIOResponse res) =>
@@ -223,7 +220,7 @@ namespace SocketIOClient.IntegrationTests
         {
             var onAnyCalled = false;
             var onCalled = false;
-            using var io = CreateSocketIO();
+            using var io = CreateSocketIO(ServerUrl);
             io.OnAny((_, _) => onAnyCalled = true);
             io.On("1:emit", async (_) =>
             {

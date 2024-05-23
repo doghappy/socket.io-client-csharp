@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIO.Serializer.Tests.Models;
 using SocketIOClient.IntegrationTests.Utils;
@@ -9,33 +8,6 @@ namespace SocketIOClient.IntegrationTests
     [TestClass]
     public abstract class SystemTextJsonTests : SocketIOTests
     {
-        protected override SocketIO CreateSocketIO()
-        {
-            var options = new SocketIOOptions
-            {
-                EIO = EIO,
-                AutoUpgrade = false,
-                Reconnection = false,
-                Transport = Transport,
-                ConnectionTimeout = TimeSpan.FromSeconds(2)
-            };
-            return CreateSocketIO(options);
-        }
-
-        protected override SocketIO CreateSocketIO(SocketIOOptions options)
-        {
-            options.EIO = EIO;
-            options.Transport = Transport;
-            return new SocketIO(ServerUrl, options);
-        }
-
-        protected override SocketIO CreateTokenSocketIO(SocketIOOptions options)
-        {
-            options.EIO = EIO;
-            options.Transport = Transport;
-            return new SocketIO(ServerTokenUrl, options);
-        }
-
         protected override void ConfigureSerializerForEmitting1Parameter(SocketIO io)
         {
             io.ConfigureSystemTextJsonSerializerForEmitting1Parameter();

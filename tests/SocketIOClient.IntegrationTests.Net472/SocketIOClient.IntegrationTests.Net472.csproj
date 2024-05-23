@@ -193,7 +193,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Startup.cs" />
     <Compile Include="V4WebSocketTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -209,10 +208,6 @@
     <ProjectReference Include="..\..\src\SocketIO.Core\SocketIO.Core.csproj">
       <Project>{93cdcf52-263c-4ff9-b55a-bbdfe315e1bb}</Project>
       <Name>SocketIO.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SocketIOClient.IntegrationTests.Common\SocketIOClient.IntegrationTests.Common.csproj">
-      <Project>{8c62bd1e-9f14-4170-8e19-29a39996aaa2}</Project>
-      <Name>SocketIOClient.IntegrationTests.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj">
       <Project>{fff33ec4-5bfa-4bc4-bb09-014192a0ea37}</Project>

@@ -10,13 +10,14 @@ using SocketIOClient.Transport.WebSockets;
 namespace SocketIOClient.IntegrationTests
 {
     [TestClass]
-    public class V4HttpTests : SystemTextJsonTests
+    public class V4HttpStjTests : SystemTextJsonTests
     {
-        protected override EngineIO EIO => EngineIO.V4;
-        protected override string ServerUrl => Common.Startup.V4_HTTP;
-        protected override string ServerTokenUrl => Common.Startup.V4_HTTP_TOKEN;
+        protected override EngineIO Eio => EngineIO.V4;
+        protected override string ServerUrl => "http://localhost:11410";
+        protected override string ServerTokenUrl => "http://localhost:11411";
         protected override TransportProtocol Transport => TransportProtocol.Polling;
-        
+        protected override bool AutoUpgrade => false;
+
         [TestMethod]
         public async Task Should_ignore_SSL_error()
         {
