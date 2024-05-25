@@ -55,6 +55,7 @@ namespace SocketIOClient.IntegrationTests
                 ConnectionTimeout = TimeSpan.FromSeconds(2)
             });
             await io.ConnectAsync();
+            await Task.Delay(100);
             var prop = io.GetType().GetProperty("Transport", BindingFlags.Instance | BindingFlags.NonPublic);
             var transport = prop!.GetValue(io);
 
