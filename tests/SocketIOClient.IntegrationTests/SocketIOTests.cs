@@ -9,7 +9,7 @@ using SocketIOClient.Transport;
 using SocketIO.Core;
 using SocketIO.Serializer.Tests.Models;
 
-[assembly: Parallelize(Workers = 8, Scope = ExecutionScope.ClassLevel)]
+// [assembly: Parallelize(Workers = 8, Scope = ExecutionScope.ClassLevel)]
 
 namespace SocketIOClient.IntegrationTests
 {
