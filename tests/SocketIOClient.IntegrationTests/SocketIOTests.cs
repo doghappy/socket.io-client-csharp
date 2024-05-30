@@ -110,6 +110,7 @@ namespace SocketIOClient.IntegrationTests
             string expectedJson,
             IEnumerable<byte[]>? expectedBytes)
         {
+            Console.WriteLine($"/////${GetType().FullName}");
             using var io = CreateSocketIO(ServerUrl);
             // io.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
             // {
