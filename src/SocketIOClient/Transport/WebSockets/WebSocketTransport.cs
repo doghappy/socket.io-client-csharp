@@ -186,6 +186,16 @@ namespace SocketIOClient.Transport.WebSockets
             }
         }
 
+        public void OnUpgraded()
+        {
+            if (Options.EIO == EngineIO.V3)
+            {
+                PingTokenSource?.Cancel();
+                PingTokenSource = new CancellationTokenSource();
+                StartPing(PingTokenSource.Token);   
+            }
+        }
+
         public async Task ChangeSendChunkSizeAsync(int size)
         {
             try

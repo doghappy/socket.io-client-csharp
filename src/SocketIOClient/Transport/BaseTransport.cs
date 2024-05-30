@@ -20,7 +20,7 @@ namespace SocketIOClient.Transport
         public Action<IMessage> OnReceived { get; set; }
 
         protected abstract TransportProtocol Protocol { get; }
-        protected CancellationTokenSource PingTokenSource { get; private set; }
+        protected CancellationTokenSource PingTokenSource { get; set; }
         public Action<Exception> OnError { get; set; }
 
         public abstract Task SendAsync(IList<SerializedItem> items, CancellationToken cancellationToken);
@@ -45,7 +45,7 @@ namespace SocketIOClient.Transport
             }, CancellationToken.None).ConfigureAwait(false);
         }
 
-        private void StartPing(CancellationToken cancellationToken)
+        protected void StartPing(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
             {

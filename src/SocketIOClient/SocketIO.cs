@@ -326,7 +326,7 @@ namespace SocketIOClient
         {
             var options = NewTransportOptions();
             options.OpenedMessage = openedMessage;
-            var transport = NewTransport(TransportProtocol.WebSocket, options);
+            var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
             for (var i = 0; i < 3; i++)
             {
                 using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
@@ -337,8 +337,10 @@ namespace SocketIOClient
                     await transport
                         .SendAsync(new List<SerializedItem> { message }, cts.Token)
                         .ConfigureAwait(false);
+                    Transport.Dispose();
                     Transport = transport;
                     Options.Transport = TransportProtocol.WebSocket;
+                    transport.OnUpgraded();
                     break;
                 }
                 catch (Exception e)
