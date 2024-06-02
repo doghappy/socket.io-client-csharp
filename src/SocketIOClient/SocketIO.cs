@@ -13,7 +13,6 @@ using SocketIOClient.Extensions;
 using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
-using SocketIOClient.UriConverters;
 
 [assembly: InternalsVisibleTo("SocketIOClient.UnitTests, PublicKey=002400000480000094000000060200000024" +
                               "0000525341310004000001000100b18b07d8d9f5f79927b53fb9601562a4986cd90fd64cbb7ccf0bd258" +
@@ -119,8 +118,6 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private bool _upgrading;
-        private bool _opened;
 
 
         public event EventHandler OnConnected;
@@ -158,7 +155,6 @@ namespace SocketIOClient
         {
             Id = null;
             Connected = false;
-            _upgrading = false;
             _backgroundException = null;
             _reconnectionDelay = Options.ReconnectionDelay;
             _exitFromBackground = false;
@@ -284,24 +280,6 @@ namespace SocketIOClient
         {
             await Task.Delay(100).ConfigureAwait(false);
         }
-        
-        private async Task WaitOpenedHandlerExecuted()
-        {
-            while (!_opened)
-            {
-                await ThreadSync();
-            }
-            _opened = true;
-        } 
-        
-        private async Task WaitUpgradeDone()
-        {
-            while (_upgrading)
-            {
-                await ThreadSync();
-            }
-        } 
-
 
         private void ConnectInBackground(CancellationToken cancellationToken)
         {
@@ -368,7 +346,7 @@ namespace SocketIOClient
                 }
             }
 
-            _upgrading = false;
+            // _upgrading = false;
         }
 
         private async Task<bool> AttemptAsync()
@@ -485,26 +463,17 @@ namespace SocketIOClient
 
         private void OpenedHandler(IMessage msg)
         {
-            Console.WriteLine(nameof(OpenedHandler));
             if (Options.AutoUpgrade
                 && Options.Transport == TransportProtocol.Polling
                 && msg.Upgrades.Contains("websocket"))
             {
-                _upgrading = true;
                 _ = UpgradeToWebSocket(msg);
             }
-
-            _opened = true;
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
-            Console.WriteLine(nameof(ConnectedHandler));
-            await WaitOpenedHandlerExecuted();
-            Console.WriteLine(nameof(WaitUpgradeDone));
-            await WaitUpgradeDone();
-
             Id = msg.Sid;
             Connected = true;
             _connCts.Dispose();
@@ -755,7 +724,6 @@ namespace SocketIOClient
         private async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
             var serializedItems = Serializer.Serialize(Options.EIO, eventName, Namespace, data);
-            Console.WriteLine($"==={Transport}");
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
