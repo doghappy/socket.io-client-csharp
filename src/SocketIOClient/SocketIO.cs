@@ -291,6 +291,7 @@ namespace SocketIOClient
             {
                 await ThreadSync();
             }
+            _opened = true;
         } 
         
         private async Task WaitUpgradeDone()
@@ -484,6 +485,7 @@ namespace SocketIOClient
 
         private void OpenedHandler(IMessage msg)
         {
+            Console.WriteLine(nameof(OpenedHandler));
             if (Options.AutoUpgrade
                 && Options.Transport == TransportProtocol.Polling
                 && msg.Upgrades.Contains("websocket"))
@@ -498,7 +500,9 @@ namespace SocketIOClient
 
         private async Task ConnectedHandler(IMessage msg)
         {
+            Console.WriteLine(nameof(ConnectedHandler));
             await WaitOpenedHandlerExecuted();
+            Console.WriteLine(nameof(WaitUpgradeDone));
             await WaitUpgradeDone();
 
             Id = msg.Sid;
