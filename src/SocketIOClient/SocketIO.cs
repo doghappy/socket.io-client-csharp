@@ -734,6 +734,7 @@ namespace SocketIOClient
         private async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
         {
             var serializedItems = Serializer.Serialize(Options.EIO, eventName, Namespace, data);
+            Console.WriteLine($"==={Transport}");
             await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
         }
 
