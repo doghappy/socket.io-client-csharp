@@ -120,6 +120,7 @@ namespace SocketIOClient
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
         private bool _upgrading;
+        private bool _opened;
 
 
         public event EventHandler OnConnected;
@@ -283,6 +284,22 @@ namespace SocketIOClient
         {
             await Task.Delay(100).ConfigureAwait(false);
         }
+        
+        private async Task WaitOpenedHandlerExecuted()
+        {
+            while (!_opened)
+            {
+                await ThreadSync();
+            }
+        } 
+        
+        private async Task WaitUpgradeDone()
+        {
+            while (_upgrading)
+            {
+                await ThreadSync();
+            }
+        } 
 
 
         private void ConnectInBackground(CancellationToken cancellationToken)
@@ -474,15 +491,15 @@ namespace SocketIOClient
                 _upgrading = true;
                 _ = UpgradeToWebSocket(msg);
             }
+
+            _opened = true;
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
-            while (_upgrading)
-            {
-                await ThreadSync();
-            }
+            await WaitOpenedHandlerExecuted();
+            await WaitUpgradeDone();
 
             Id = msg.Sid;
             Connected = true;
