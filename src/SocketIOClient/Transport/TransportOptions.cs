@@ -15,5 +15,6 @@ namespace SocketIOClient.Transport
         public bool AutoUpgrade { get; set; }
         public IMessage OpenedMessage { get; set; }
         public string Namespace { get; set; }
+        public bool Upgrading { get; set; }
     }
 }

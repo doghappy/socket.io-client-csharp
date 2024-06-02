@@ -322,6 +322,7 @@ namespace SocketIOClient
         {
             var options = NewTransportOptions();
             options.OpenedMessage = openedMessage;
+            options.Upgrading = true;
             var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
             for (var i = 0; i < 3; i++)
             {
@@ -346,7 +347,7 @@ namespace SocketIOClient
                 }
             }
 
-            // _upgrading = false;
+            options.Upgrading = false;
         }
 
         private async Task<bool> AttemptAsync()

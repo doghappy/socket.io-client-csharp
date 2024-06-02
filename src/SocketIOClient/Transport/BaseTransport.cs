@@ -121,10 +121,11 @@ namespace SocketIOClient.Transport
             else if (message.Type == MessageType.Connected)
             {
                 var ms = 0;
-                while (Options.OpenedMessage is null)
+                const int delay = 100;
+                while (Options.OpenedMessage is null || Options.Upgrading)
                 {
-                    await Task.Delay(100);
-                    ms += 10;
+                    await Task.Delay(delay);
+                    ms += delay;
                     if (ms <= Options.ConnectionTimeout.TotalMilliseconds) continue;
                     OnError.TryInvoke(new TimeoutException());
                     return true;
