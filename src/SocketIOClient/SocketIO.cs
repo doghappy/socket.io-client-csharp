@@ -118,7 +118,7 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private bool? _opened;
+        private TaskCompletionSource<bool> _openedCompletionSource = new ();
 
         public event EventHandler OnConnected;
 
@@ -281,15 +281,6 @@ namespace SocketIOClient
             await Task.Delay(100).ConfigureAwait(false);
         }
 
-        private async Task WaitForOpened()
-        {
-            while (_opened != true)
-            {
-                await ThreadSync();
-            }
-            _opened = null;
-        }
-
         private void ConnectInBackground(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
@@ -355,7 +346,7 @@ namespace SocketIOClient
                 }
             }
 
-            _opened = true;
+            RenewOpenedCompletionSource(true);
         }
 
         private async Task<bool> AttemptAsync()
@@ -459,6 +450,12 @@ namespace SocketIOClient
                 _connectingLock.Release();
             }
         }
+        
+        private void RenewOpenedCompletionSource(bool result)
+        {
+            _openedCompletionSource.SetResult(result);
+            _openedCompletionSource = new TaskCompletionSource<bool>();
+        }
 
         private void PingHandler()
         {
@@ -479,13 +476,13 @@ namespace SocketIOClient
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
-            _opened = true;
+            RenewOpenedCompletionSource(true);
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
-            await WaitForOpened();
+            await _openedCompletionSource.Task;
 
             Id = msg.Sid;
             Connected = true;
