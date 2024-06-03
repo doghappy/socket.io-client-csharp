@@ -118,7 +118,7 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private bool _opened;
+        private bool? _opened;
 
         public event EventHandler OnConnected;
 
@@ -283,10 +283,11 @@ namespace SocketIOClient
 
         private async Task WaitForOpened()
         {
-            while (!_opened)
+            while (_opened != true)
             {
                 await ThreadSync();
             }
+            _opened = null;
         }
 
         private void ConnectInBackground(CancellationToken cancellationToken)
