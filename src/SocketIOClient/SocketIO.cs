@@ -346,7 +346,7 @@ namespace SocketIOClient
                 }
             }
 
-            RenewOpenedCompletionSource(true);
+            _openedCompletionSource.SetResult(true);
         }
 
         private async Task<bool> AttemptAsync()
@@ -450,12 +450,6 @@ namespace SocketIOClient
                 _connectingLock.Release();
             }
         }
-        
-        private void RenewOpenedCompletionSource(bool result)
-        {
-            _openedCompletionSource.SetResult(result);
-            _openedCompletionSource = new TaskCompletionSource<bool>();
-        }
 
         private void PingHandler()
         {
@@ -476,13 +470,14 @@ namespace SocketIOClient
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
-            RenewOpenedCompletionSource(true);
+            _openedCompletionSource.SetResult(true);
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
             await _openedCompletionSource.Task;
+            _openedCompletionSource = new TaskCompletionSource<bool>();
 
             Id = msg.Sid;
             Connected = true;
