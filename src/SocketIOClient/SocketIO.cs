@@ -118,7 +118,7 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-
+        private bool _opened;
 
         public event EventHandler OnConnected;
 
@@ -281,6 +281,14 @@ namespace SocketIOClient
             await Task.Delay(100).ConfigureAwait(false);
         }
 
+        private async Task WaitForOpened()
+        {
+            while (!_opened)
+            {
+                await ThreadSync();
+            }
+        }
+
         private void ConnectInBackground(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
@@ -322,7 +330,6 @@ namespace SocketIOClient
         {
             var options = NewTransportOptions();
             options.OpenedMessage = openedMessage;
-            options.Upgrading = true;
             var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
             for (var i = 0; i < 3; i++)
             {
@@ -347,7 +354,7 @@ namespace SocketIOClient
                 }
             }
 
-            options.Upgrading = false;
+            _opened = true;
         }
 
         private async Task<bool> AttemptAsync()
@@ -469,12 +476,16 @@ namespace SocketIOClient
                 && msg.Upgrades.Contains("websocket"))
             {
                 _ = UpgradeToWebSocket(msg);
+                return;
             }
+            _opened = true;
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
+            await WaitForOpened();
+
             Id = msg.Sid;
             Connected = true;
             _connCts.Dispose();

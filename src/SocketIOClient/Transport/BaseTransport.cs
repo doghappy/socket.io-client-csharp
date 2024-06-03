@@ -122,7 +122,7 @@ namespace SocketIOClient.Transport
             {
                 var ms = 0;
                 const int delay = 100;
-                while (Options.OpenedMessage is null || Options.Upgrading)
+                while (Options.OpenedMessage is null)
                 {
                     await Task.Delay(delay);
                     ms += delay;
