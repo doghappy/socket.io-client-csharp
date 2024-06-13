@@ -295,7 +295,9 @@ namespace SocketIOClient
                     try
                     {
                         await transport.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                        Debug.WriteLine("ConnectInBackground: Begin set transport");
                         Transport = transport;
+                        Debug.WriteLine("ConnectInBackground: End set transport");
                         break;
                     }
                     catch (Exception e)
@@ -322,9 +324,9 @@ namespace SocketIOClient
         {
             var options = NewTransportOptions();
             options.OpenedMessage = openedMessage;
-            var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
             for (var i = 0; i < 3; i++)
-            {
+            { 
+                var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
                 using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
                 try
                 {
@@ -346,6 +348,7 @@ namespace SocketIOClient
                 catch (Exception e)
                 {
                     Debug.WriteLine(e);
+                    transport.Dispose();
                     var ex = new ConnectionException("Upgrade to websocket failed", e);
                     OnReconnectError.TryInvoke(this, ex);
                 }
