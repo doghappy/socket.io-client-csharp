@@ -334,10 +334,11 @@ namespace SocketIOClient
                         .SendAsync(new List<SerializedItem> { message }, cts.Token)
                         .ConfigureAwait(false);
                     
-                    Debug.WriteLine("Start Set Transport");
+                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Start Set Transport " + Transport.GetType().Namespace);
                     Transport.Dispose();
+                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Transport.Dispose();");
                     Transport = transport;
-                    Debug.WriteLine("End Set Transport");
+                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: End Set Transport");
                     Options.Transport = TransportProtocol.WebSocket;
                     transport.OnUpgraded();
                     break;
@@ -350,7 +351,7 @@ namespace SocketIOClient
             }
 
             _openedCompletionSource.SetResult(true);
-            Debug.WriteLine("Set _openedCompletionSource.Result = true");
+            Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Set _openedCompletionSource.Result = true");
         }
 
         private async Task<bool> AttemptAsync()
@@ -467,25 +468,25 @@ namespace SocketIOClient
 
         private void OpenedHandler(IMessage msg)
         {
-            Debug.WriteLine("Start of ConnectedHandler");
+            Debug.WriteLine("OpenedHandler: Start");
             if (Options.AutoUpgrade
                 && Options.Transport == TransportProtocol.Polling
                 && msg.Upgrades.Contains("websocket"))
             {
-                Debug.WriteLine("Try to upgrade to websocket");
+                Debug.WriteLine("OpenedHandler: Try to upgrade to websocket");
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
             _openedCompletionSource.SetResult(true);
-            Debug.WriteLine("End of ConnectedHandler");
+            Debug.WriteLine("OpenedHandler: End");
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
-            Debug.WriteLine("Waiting _openedCompletionSource.Result");
+            Debug.WriteLine("ConnectedHandler: Waiting _openedCompletionSource.Result");
             await _openedCompletionSource.Task;
-            Debug.WriteLine("Got _openedCompletionSource.Result");
+            Debug.WriteLine("ConnectedHandler: Got _openedCompletionSource.Result");
             _openedCompletionSource = new TaskCompletionSource<bool>();
 
             Id = msg.Sid;
@@ -498,7 +499,7 @@ namespace SocketIOClient
             }
 
             _attempts = 0;
-            Debug.WriteLine("End of ConnectedHandler");
+            Debug.WriteLine("ConnectedHandler: End of ConnectedHandler");
         }
 
         private void DisconnectedHandler()
