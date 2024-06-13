@@ -345,6 +345,7 @@ namespace SocketIOClient
                 }
                 catch (Exception e)
                 {
+                    Debug.WriteLine(e);
                     var ex = new ConnectionException("Upgrade to websocket failed", e);
                     OnReconnectError.TryInvoke(this, ex);
                 }
