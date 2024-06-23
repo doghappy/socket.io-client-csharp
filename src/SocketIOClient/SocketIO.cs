@@ -118,7 +118,8 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private TaskCompletionSource<bool> _openedCompletionSource = new ();
+        private TaskCompletionSource _openedCompletionSource = new ();
+        private TaskCompletionSource _transportCompletionSource = new ();
 
         public event EventHandler OnConnected;
 
@@ -298,6 +299,7 @@ namespace SocketIOClient
                         Debug.WriteLine("ConnectInBackground: Begin set transport");
                         Transport = transport;
                         Debug.WriteLine("ConnectInBackground: End set transport");
+                        _transportCompletionSource.SetResult();
                         break;
                     }
                     catch (Exception e)
@@ -354,7 +356,7 @@ namespace SocketIOClient
                 }
             }
 
-            _openedCompletionSource.SetResult(true);
+            _openedCompletionSource.SetResult();
             Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Set _openedCompletionSource.Result = true");
         }
 
@@ -470,8 +472,10 @@ namespace SocketIOClient
             OnPong.TryInvoke(this, msg.Duration);
         }
 
-        private void OpenedHandler(IMessage msg)
+        private async Task OpenedHandler(IMessage msg)
         {
+            await _transportCompletionSource.Task;
+            _transportCompletionSource = new TaskCompletionSource();
             Debug.WriteLine("OpenedHandler: Start");
             if (Options.AutoUpgrade
                 && Options.Transport == TransportProtocol.Polling
@@ -481,7 +485,7 @@ namespace SocketIOClient
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
-            _openedCompletionSource.SetResult(true);
+            _openedCompletionSource.SetResult();
             Debug.WriteLine("OpenedHandler: End");
         }
 
@@ -491,7 +495,7 @@ namespace SocketIOClient
             Debug.WriteLine("ConnectedHandler: Waiting _openedCompletionSource.Result");
             await _openedCompletionSource.Task;
             Debug.WriteLine("ConnectedHandler: Got _openedCompletionSource.Result");
-            _openedCompletionSource = new TaskCompletionSource<bool>();
+            _openedCompletionSource = new TaskCompletionSource();
 
             Id = msg.Sid;
             Connected = true;
@@ -605,7 +609,7 @@ namespace SocketIOClient
                         PongHandler(msg);
                         break;
                     case MessageType.Opened:
-                        OpenedHandler(msg);
+                        _ = OpenedHandler(msg);
                         break;
                     case MessageType.Connected:
                         _ = ConnectedHandler(msg);
