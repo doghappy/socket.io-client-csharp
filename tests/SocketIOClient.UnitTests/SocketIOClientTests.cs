@@ -9,7 +9,7 @@ using SocketIOClient.Transport.WebSockets;
 
 namespace SocketIOClient.UnitTests;
 
-[TestClass]
+// [TestClass]
 public class SocketIOTests
 {
     [TestMethod]

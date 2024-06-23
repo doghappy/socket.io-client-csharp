@@ -118,8 +118,8 @@ namespace SocketIOClient
         double _reconnectionDelay;
         bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private TaskCompletionSource _openedCompletionSource = new ();
-        private TaskCompletionSource _transportCompletionSource = new ();
+        private TaskCompletionSource<bool> _openedCompletionSource = new ();
+        private TaskCompletionSource<bool> _transportCompletionSource = new ();
 
         public event EventHandler OnConnected;
 
@@ -299,7 +299,7 @@ namespace SocketIOClient
                         Debug.WriteLine("ConnectInBackground: Begin set transport");
                         Transport = transport;
                         Debug.WriteLine("ConnectInBackground: End set transport");
-                        _transportCompletionSource.SetResult();
+                        _transportCompletionSource.SetResult(true);
                         break;
                     }
                     catch (Exception e)
@@ -338,11 +338,8 @@ namespace SocketIOClient
                         .SendAsync(new List<SerializedItem> { message }, cts.Token)
                         .ConfigureAwait(false);
                     
-                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Start Set Transport " + Transport.GetType().Namespace);
                     Transport.Dispose();
-                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Transport.Dispose();");
                     Transport = transport;
-                    Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: End Set Transport");
                     Options.Transport = TransportProtocol.WebSocket;
                     transport.OnUpgraded();
                     break;
@@ -356,8 +353,7 @@ namespace SocketIOClient
                 }
             }
 
-            _openedCompletionSource.SetResult();
-            Debug.WriteLine("OpenedHandler/UpgradeToWebSocket: Set _openedCompletionSource.Result = true");
+            _openedCompletionSource.SetResult(true);
         }
 
         private async Task<bool> AttemptAsync()
@@ -475,27 +471,22 @@ namespace SocketIOClient
         private async Task OpenedHandler(IMessage msg)
         {
             await _transportCompletionSource.Task;
-            _transportCompletionSource = new TaskCompletionSource();
-            Debug.WriteLine("OpenedHandler: Start");
+            _transportCompletionSource = new TaskCompletionSource<bool>();
             if (Options.AutoUpgrade
                 && Options.Transport == TransportProtocol.Polling
                 && msg.Upgrades.Contains("websocket"))
             {
-                Debug.WriteLine("OpenedHandler: Try to upgrade to websocket");
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
-            _openedCompletionSource.SetResult();
-            Debug.WriteLine("OpenedHandler: End");
+            _openedCompletionSource.SetResult(true);
         }
 
 
         private async Task ConnectedHandler(IMessage msg)
         {
-            Debug.WriteLine("ConnectedHandler: Waiting _openedCompletionSource.Result");
             await _openedCompletionSource.Task;
-            Debug.WriteLine("ConnectedHandler: Got _openedCompletionSource.Result");
-            _openedCompletionSource = new TaskCompletionSource();
+            _openedCompletionSource = new TaskCompletionSource<bool>();
 
             Id = msg.Sid;
             Connected = true;
@@ -507,7 +498,6 @@ namespace SocketIOClient
             }
 
             _attempts = 0;
-            Debug.WriteLine("ConnectedHandler: End of ConnectedHandler");
         }
 
         private void DisconnectedHandler()
