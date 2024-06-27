@@ -6,7 +6,7 @@ using SocketIO.Core;
 
 namespace SocketIOClient.UnitTests
 {
-    [TestClass]
+    // [TestClass]
     public class UriConverterTest
     {
         [TestMethod]

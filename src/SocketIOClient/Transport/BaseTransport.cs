@@ -111,7 +111,7 @@ namespace SocketIOClient.Transport
             "/"
         };
 
-        private bool HandleEio3Messages(IMessage message)
+        private async Task<bool> HandleEio3Messages(IMessage message)
         {
             if (Options.EIO != EngineIO.V3) return false;
             if (message.Type == MessageType.Pong)
@@ -120,22 +120,16 @@ namespace SocketIOClient.Transport
             }
             else if (message.Type == MessageType.Connected)
             {
-                // var ms = 0;
-                // while (Options.OpenedMessage is null)
-                // {
-                //     await Task.Delay(10);
-                //     ms += 10;
-                //     if (ms <= Options.ConnectionTimeout.TotalMilliseconds) continue;
-                //     OnError.TryInvoke(new TimeoutException());
-                //     return true;
-                // }
-                // var needToUpgrade = Options.AutoUpgrade
-                //                     && Options.OpenedMessage.Upgrades.Contains("websocket")
-                //                     && Protocol == TransportProtocol.Polling;
-                // if (needToUpgrade)
-                // {
-                //     return true;
-                // }
+                var ms = 0;
+                const int delay = 100;
+                while (Options.OpenedMessage is null)
+                {
+                    await Task.Delay(delay);
+                    ms += delay;
+                    if (ms <= Options.ConnectionTimeout.TotalMilliseconds) continue;
+                    OnError.TryInvoke(new TimeoutException());
+                    return true;
+                }
 
                 message.Sid = Options.OpenedMessage.Sid;
                 if (message.Namespace == Options.Namespace
@@ -201,7 +195,7 @@ namespace SocketIOClient.Transport
                 await OpenAsync(message).ConfigureAwait(false);
             }
 
-            if (HandleEio3Messages(message)) return;
+            if (await HandleEio3Messages(message)) return;
 
             OnReceived.TryInvoke(message);
 
