@@ -455,6 +455,47 @@ namespace SocketIOClient
                 _connectingLock.Release();
             }
         }
+        public async Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            await _connectingLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                if (Connected) return;
+
+                ConnectInBackground(cancellationToken);
+
+                while (true)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (_backgroundException != null)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", _backgroundException);
+                    }
+
+                    if (Options.Reconnection && _attempts > Options.ReconnectionAttempts)
+                    {
+                        throw new ConnectionException(
+                            $"Cannot connect to server '{ServerUri}' after {_attempts} attempts.");
+                    }
+
+                    if (_exitFromBackground)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'.");
+                    }
+
+                    await ThreadSync();
+                }
+            }
+            finally
+            {
+                _connectingLock.Release();
+            }
+        }
 
         private void PingHandler()
         {
