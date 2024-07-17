@@ -189,7 +189,7 @@ namespace SocketIOClient.IntegrationTests
 
             results.Should().Equal(1000, 2000);
         }
-        
+
         [TestMethod]
         public async Task Should_ignore_SSL_error()
         {
@@ -214,7 +214,7 @@ namespace SocketIOClient.IntegrationTests
             connected.Should().BeTrue();
             callback.Should().BeTrue();
         }
-        
+
         [TestMethod]
         public async Task Should_remove_FuncHandler_when_calling_Off()
         {
@@ -235,6 +235,22 @@ namespace SocketIOClient.IntegrationTests
 
             onAnyCalled.Should().BeTrue();
             onCalled.Should().BeFalse();
+        }
+
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task Should_use_cancellation_token_provided_by_client()
+        {
+            using var io = CreateSocketIO(ServerTokenUrl);
+            io.Options.Reconnection = true;
+
+            await io.Invoking(async x =>
+                {
+                    using var userCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                    await x.ConnectAsync(userCts.Token);
+                })
+                .Should()
+                .ThrowAsync<OperationCanceledException>();
         }
     }
 }
