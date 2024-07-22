@@ -408,6 +408,7 @@ namespace SocketIOClient
 
         private readonly SemaphoreSlim _connectingLock = new(1, 1);
         private CancellationTokenSourceWrapper _connCts;
+        private bool isUserManagedCancellationToken = false;
 
         private void ConnectInBackground()
         {
@@ -417,6 +418,8 @@ namespace SocketIOClient
 
         public async Task ConnectAsync()
         {
+            isUserManagedCancellationToken = false;
+
             await _connectingLock.WaitAsync().ConfigureAwait(false);
             try
             {
@@ -430,6 +433,52 @@ namespace SocketIOClient
                     {
                         break;
                     }
+
+                    if (_backgroundException != null)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", _backgroundException);
+                    }
+
+                    if (Options.Reconnection && _attempts > Options.ReconnectionAttempts)
+                    {
+                        throw new ConnectionException(
+                            $"Cannot connect to server '{ServerUri}' after {_attempts} attempts.");
+                    }
+
+                    if (_exitFromBackground)
+                    {
+                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'.");
+                    }
+
+                    await ThreadSync();
+                }
+            }
+            finally
+            {
+                _connectingLock.Release();
+            }
+        }
+
+        public async Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            isUserManagedCancellationToken = true;
+
+            await _connectingLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            try
+            {
+                if (Connected) return;
+
+                ConnectInBackground(cancellationToken);
+
+                while (true)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        throw new OperationCanceledException($"Connection to server '{ServerUri}' was canceled.");
+                    }
+
+                    if (Connected) break;
 
                     if (_backgroundException != null)
                     {
@@ -488,7 +537,10 @@ namespace SocketIOClient
 
             Id = msg.Sid;
             Connected = true;
-            _connCts.Dispose();
+
+            if (!isUserManagedCancellationToken)
+                _connCts.Dispose();
+
             OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
