@@ -116,10 +116,10 @@ namespace SocketIOClient
         private Dictionary<string, Action<SocketIOResponse>> _eventActionHandlers;
         private Dictionary<string, Func<SocketIOResponse, Task>> _eventFuncHandlers;
         double _reconnectionDelay;
-        bool _exitFromBackground;
         readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private TaskCompletionSource<bool> _openedCompletionSource = new ();
-        private TaskCompletionSource<bool> _transportCompletionSource = new ();
+        private TaskCompletionSource<bool> _openedCompletionSource = new();
+        private TaskCompletionSource<bool> _transportCompletionSource = new();
+        private TaskCompletionSource<Exception> _connBackgroundSource = new();
 
         public event EventHandler OnConnected;
 
@@ -158,7 +158,6 @@ namespace SocketIOClient
             Connected = false;
             _backgroundException = null;
             _reconnectionDelay = Options.ReconnectionDelay;
-            _exitFromBackground = false;
             Transport?.Dispose();
         }
 
@@ -277,11 +276,6 @@ namespace SocketIOClient
             }
         }
 
-        private static async Task ThreadSync()
-        {
-            await Task.Delay(100).ConfigureAwait(false);
-        }
-
         private void ConnectInBackground(CancellationToken cancellationToken)
         {
             Task.Factory.StartNew(async () =>
@@ -307,13 +301,15 @@ namespace SocketIOClient
                         var failedToAttempt = await AttemptAsync();
                         if (failedToAttempt)
                         {
-                            _exitFromBackground = true;
+                            _connBackgroundSource.SetResult(
+                                new ConnectionException($"Cannot connect to server '{ServerUri}'."));
                             break;
                         }
 
                         var canHandle = CanHandleException(e);
                         if (canHandle) continue;
-                        _exitFromBackground = true;
+                        _connBackgroundSource.SetResult(
+                            new ConnectionException($"Cannot connect to server '{ServerUri}'", e));
                         throw;
                     }
                 }
@@ -325,7 +321,7 @@ namespace SocketIOClient
             var options = NewTransportOptions();
             options.OpenedMessage = openedMessage;
             for (var i = 0; i < 3; i++)
-            { 
+            {
                 var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
                 using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
                 try
@@ -335,7 +331,7 @@ namespace SocketIOClient
                     await transport
                         .SendAsync(new List<SerializedItem> { message }, cts.Token)
                         .ConfigureAwait(false);
-                    
+
                     Transport.Dispose();
                     Transport = transport;
                     Options.Transport = TransportProtocol.WebSocket;
@@ -407,102 +403,43 @@ namespace SocketIOClient
         }
 
         private readonly SemaphoreSlim _connectingLock = new(1, 1);
-        private CancellationTokenSourceWrapper _connCts;
-        private bool isUserManagedCancellationToken = false;
+        private CancellationTokenSource _connCts = new();
 
-        private void ConnectInBackground()
+        private async Task ConnectCore(CancellationToken cancellationToken)
         {
-            _connCts = _connCts.Renew();
-            ConnectInBackground(_connCts.Token);
-        }
-
-        public async Task ConnectAsync()
-        {
-            isUserManagedCancellationToken = false;
-
-            await _connectingLock.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                if (Connected) return;
-
-                ConnectInBackground();
-
-                while (true)
-                {
-                    if (_connCts.IsCancellationRequested)
-                    {
-                        break;
-                    }
-
-                    if (_backgroundException != null)
-                    {
-                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", _backgroundException);
-                    }
-
-                    if (Options.Reconnection && _attempts > Options.ReconnectionAttempts)
-                    {
-                        throw new ConnectionException(
-                            $"Cannot connect to server '{ServerUri}' after {_attempts} attempts.");
-                    }
-
-                    if (_exitFromBackground)
-                    {
-                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'.");
-                    }
-
-                    await ThreadSync();
-                }
-            }
-            finally
-            {
-                _connectingLock.Release();
-            }
-        }
-
-        public async Task ConnectAsync(CancellationToken cancellationToken)
-        {
-            isUserManagedCancellationToken = true;
-
             await _connectingLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-
             try
             {
                 if (Connected) return;
 
                 ConnectInBackground(cancellationToken);
+                cancellationToken.Register(_connBackgroundSource.SetCanceled);
+                var task = Task
+                    .Run(async () => await _connBackgroundSource.Task.ConfigureAwait(false), cancellationToken);
 
-                while (true)
+                var ex = await task.ConfigureAwait(false);
+                _connBackgroundSource = new TaskCompletionSource<Exception>();
+                if (ex is not null)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        throw new OperationCanceledException($"Connection to server '{ServerUri}' was canceled.");
-                    }
-
-                    if (Connected) break;
-
-                    if (_backgroundException != null)
-                    {
-                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'", _backgroundException);
-                    }
-
-                    if (Options.Reconnection && _attempts > Options.ReconnectionAttempts)
-                    {
-                        throw new ConnectionException(
-                            $"Cannot connect to server '{ServerUri}' after {_attempts} attempts.");
-                    }
-
-                    if (_exitFromBackground)
-                    {
-                        throw new ConnectionException($"Cannot connect to server '{ServerUri}'.");
-                    }
-
-                    await ThreadSync();
+                    throw ex;
                 }
             }
             finally
             {
                 _connectingLock.Release();
             }
+        }
+
+        public async Task ConnectAsync()
+        {
+            await ConnectCore(_connCts.Token).ConfigureAwait(false);
+            _connCts.Dispose();
+            _connCts = new CancellationTokenSource();
+        }
+
+        public async Task ConnectAsync(CancellationToken cancellationToken)
+        {
+            await ConnectCore(cancellationToken).ConfigureAwait(false);
         }
 
         private void PingHandler()
@@ -526,6 +463,7 @@ namespace SocketIOClient
                 _ = UpgradeToWebSocket(msg);
                 return;
             }
+
             _openedCompletionSource.SetResult(true);
         }
 
@@ -538,9 +476,6 @@ namespace SocketIOClient
             Id = msg.Sid;
             Connected = true;
 
-            if (!isUserManagedCancellationToken)
-                _connCts.Dispose();
-
             OnConnected.TryInvoke(this, EventArgs.Empty);
             if (_attempts > 0)
             {
@@ -548,6 +483,7 @@ namespace SocketIOClient
             }
 
             _attempts = 0;
+            _connBackgroundSource.SetResult(null);
         }
 
         private void DisconnectedHandler()
@@ -594,7 +530,6 @@ namespace SocketIOClient
 
         private void ErrorMessageHandler(IMessage msg)
         {
-            _connCts.Dispose();
             OnError.TryInvoke(this, msg.Error);
         }
 
@@ -684,7 +619,6 @@ namespace SocketIOClient
 
         public async Task DisconnectAsync()
         {
-            _connCts.TryDispose();
             // try
             // {
             //     var message = Serializer.SerializeDisconnectionMessage();
@@ -883,7 +817,7 @@ namespace SocketIOClient
                     //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
                     if (Options.Reconnection)
                     {
-                        ConnectInBackground();
+                        ConnectInBackground(_connCts.Token);
                     }
                 }
             }

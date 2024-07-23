@@ -241,9 +241,9 @@ namespace SocketIOClient.IntegrationTests
         [Timeout(5000)]
         public async Task Should_use_cancellation_token_provided_by_client()
         {
-            using var io = CreateSocketIO(ServerTokenUrl);
+            using var io = CreateSocketIO("http://localhost");
             io.Options.Reconnection = true;
-
+            
             await io.Invoking(async x =>
                 {
                     using var userCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));

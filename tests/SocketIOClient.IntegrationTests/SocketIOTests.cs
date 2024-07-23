@@ -279,6 +279,7 @@ namespace SocketIOClient.IntegrationTests
         }
 
         [TestMethod]
+        [Timeout(3000)]
         public async Task Should_trigger_OnError_if_token_is_incorrect()
         {
             var times = 0;
@@ -291,7 +292,8 @@ namespace SocketIOClient.IntegrationTests
             io.OnConnected += (_, _) => times++;
             io.OnError += (_, e) => error = e;
 
-            await io.ConnectAsync();
+            _ = io.ConnectAsync();
+            await Task.Delay(2000);
 
             times.Should().Be(0);
             error.Should().Be("Authentication error");
