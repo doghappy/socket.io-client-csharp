@@ -14,7 +14,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.1.0" />
     <ProjectReference Include="..\..\src\SocketIO.Serializer.MessagePack\SocketIO.Serializer.MessagePack.csproj" />
     <ProjectReference Include="..\SocketIO.Serializer.Tests.Models\SocketIO.Serializer.Tests.Models.csproj" />
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />

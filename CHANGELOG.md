@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2024-08-18
+
+### Added
+
+- [Allowing Untrusted SSL Certificates](./README.md/#allowing-untrusted-ssl-certificates)
+- Auto upgrade to websocket
+- Added a cancellation token for method `ConnectAsync(CancellationToken)`, in most of the case you won't need this overload unless you need to stop the connection for some reason.
+
 ## [3.1.1] - 2023-09-05
 
 ### Added
