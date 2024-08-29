@@ -228,13 +228,13 @@ namespace SocketIO.Serializer.NewtonsoftJson
             };
         }
 
-        // public SerializedItem SerializeDisconnectionMessage()
-        // {
-        //     return new SerializedItem
-        //     {
-        //         Text = "41"
-        //     };
-        // }
+        public SerializedItem SerializeUpgradeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "5"
+            };
+        }
 
         #region Serialize ConnectedMessage
 

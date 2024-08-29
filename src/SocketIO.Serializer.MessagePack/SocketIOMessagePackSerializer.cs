@@ -265,17 +265,13 @@ namespace SocketIO.Serializer.MessagePack
             };
         }
 
-        // public SerializedItem SerializeDisconnectionMessage()
-        // {
-        //     return new SerializedItem
-        //     {
-        //         Type = SerializedMessageType.Binary,
-        //         Binary =  MessagePackSerializer.Serialize(new
-        //         {
-        //             type = PackMessageType.Disconnected
-        //         })
-        //     };
-        // }
+        public SerializedItem SerializeUpgradeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "5"
+            };
+        }
 
         #region Serialize ConnectedMessage
 

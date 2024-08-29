@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2;net462;net6.0</TargetFrameworks>
+		<AssemblyName>SocketIOClient</AssemblyName>
+		<RootNamespace>SocketIOClient</RootNamespace>
+		<Authors>doghappy</Authors>
+		<Description>socket.io-client implemention for .NET</Description>
+		<PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageTags>socket.io-client</PackageTags>
+		<RepositoryType>github</RepositoryType>
+		<Version>3.1.2</Version>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
+		<LangVersion>default</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DocumentationFile>bin\Release\SocketIOClient.xml</DocumentationFile>
+		<OutputPath>bin\Release\</OutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
+	  <ProjectReference Include="..\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
 steps:
   - pwsh: |
       npm install pm2 -g
-      npm install
+      npm run install-all
       pm2 start v2/index.js --name v2/index.js
       pm2 start v4/index.js --name v4/index.js
     displayName: Run socket.io server

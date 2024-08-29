@@ -3,9 +3,9 @@
 An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and has implemented http polling and websocket.
 
 [![Build Status](https://dev.azure.com/doghappy/socket.io-client/_apis/build/status/Unit%20Test%20and%20Integration%20Test?branchName=master)](https://dev.azure.com/doghappy/socket.io-client/_build/latest?definitionId=16&branchName=master)
-[![NuGet](https://img.shields.io/badge/NuGet-SocketIO.Client-%23004880)](https://www.nuget.org/packages/SocketIO.Client)
+[![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
 [![Target Framework](https://img.shields.io/badge/Target%20Framework-.NET%20Standard%202.0-%237014e8)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support)
-[![NuGet](https://img.shields.io/nuget/dt/SocketIO.Client)](https://www.nuget.org/packages/SocketIO.Client)
+[![NuGet](https://img.shields.io/nuget/dt/SocketIOClient)](https://www.nuget.org/packages/SocketIOClient)
 
 # Table of Contents
 
@@ -14,6 +14,7 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
   - [Ack](#ack)
   - [Binary messages](#binary-messages)
   - [JsonSerializer](#jsonserializer)
+  - [Allowing Untrusted SSL Certificates](#allowing-untrusted-ssl-certificates)
   - [ClientWebSocket Options](#clientwebsocket-options)
   - [Windows 7 Support](#windows-7-support)
   - [Xamarin](#xamarin)
@@ -97,6 +98,7 @@ var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
 | `Transport` | `Polling` | Websocket is used by default, you can change to http polling. |
 | `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
 | `Auth` | `null` | Credentials that are sent when accessing a namespace |
+| `RemoteCertificateValidationCallback` | `null` | Verifies the remote Secure Sockets Layer (SSL) certificate used for authentication. |
 
 ## Ack
 
@@ -220,12 +222,24 @@ client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
 });
 ```
 
-## Windows 7 Support
-
-The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIO.Client.Windows7` dependency and then change the implementation of ClientWebSocket.
+## Allowing Untrusted SSL Certificates
 
 ```cs
-client.ClientWebSocketProvider = () => new ClientWebSocketManaged();
+var io = new SocketIO("https://localhost:11404", new SocketIOOptions
+{
+    RemoteCertificateValidationCallback = (_, _, _, _) =>
+    {
+        return true;
+    }
+});
+```
+
+## Windows 7 Support
+
+The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIOClient.Windows7` dependency and then change the implementation of ClientWebSocket.
+
+```cs
+client.ClientWebSocketProvider = () => new ClientWebSocketManaged(...);
 ```
 
 ## Xamarin
@@ -242,7 +256,7 @@ For Xamarin.Android you should add the following code:
             InitializeComponent();
         }
 
-        public SocketIO Socket {get;}
+        public SocketIOClient Socket {get;}
     }
 
     ...

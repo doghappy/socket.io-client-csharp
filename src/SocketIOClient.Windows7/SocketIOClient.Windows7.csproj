@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<Version>3.1.2</Version>
+		<Description>socket.io-client implemention for .NET</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+		<RepositoryType>github</RepositoryType>
+		<PackageTags>socket.io-client</PackageTags>
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>SocketIOClient.Windows7.snk</AssemblyOriginatorKeyFile>
+		<Authors>doghappy</Authors>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="matthid-System.Net.WebSockets.Client.Managed" Version="1.0.1" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\SocketIOClient\SocketIOClient.csproj" />
+	</ItemGroup>
+</Project>

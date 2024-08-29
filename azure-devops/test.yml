@@ -13,9 +13,9 @@ stages:
         displayName: Unit tests
         steps:
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Client.UnitTests
+            displayName: SocketIOClient.UnitTests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Client.UnitTests
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTests
               command: test
           - task: DotNetCoreCLI@2
             displayName: SocketIO.Serializer.SystemTextJson.Tests
@@ -39,7 +39,7 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: Integration tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Client.IntegrationTests
+              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests
               command: test
   - stage: NET_Framework_Tests
     dependsOn: [ ]
@@ -59,5 +59,5 @@ stages:
               restoreNugetPackages: true
           - task: VSTest@2
             inputs:
-              testAssemblyVer2: SocketIO.Client.IntegrationTests.Net472.dll
-              searchFolder: $(Agent.BuildDirectory)/s/tests/SocketIO.Client.IntegrationTests.Net472/bin/Debug
+              testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
+              searchFolder: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
