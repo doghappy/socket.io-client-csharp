@@ -26,7 +26,7 @@ jobs:
           $packageName = Get-ChildItem $(Build.ArtifactStagingDirectory)/${{ parameters.package }}.*.nupkg | Select-Object -First 1 -ExpandProperty Name
           Write-Host "##vso[task.setvariable variable=packageName;]$packageName"
         displayName: dotnet pack
-        workingDirectory: $(Agent.BuildDirectory)/s/src/${{ parameters.package }}
+        workingDirectory: $(System.DefaultWorkingDirectory)/src/${{ parameters.package }}
       - pwsh: |
           dotnet nuget push $(packageName) -k ${env:NUGET_APIKEY} -s nuget.org
         env:

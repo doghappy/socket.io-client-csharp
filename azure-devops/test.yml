@@ -15,22 +15,22 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: SocketIOClient.UnitTests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.UnitTests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
           - task: DotNetCoreCLI@2
             displayName: SocketIO.Serializer.SystemTextJson.Tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.SystemTextJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.SystemTextJson.Tests
               command: test
           - task: DotNetCoreCLI@2
             displayName: SocketIO.Serializer.NewtonsoftJson.Tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.NewtonsoftJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.NewtonsoftJson.Tests
               command: test
           - task: DotNetCoreCLI@2
             displayName: SocketIO.Serializer.MessagePack.Tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIO.Serializer.MessagePack.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.MessagePack.Tests
               command: test
       - job:
         displayName: Integration tests
@@ -39,7 +39,7 @@ stages:
           - task: DotNetCoreCLI@2
             displayName: Integration tests
             inputs:
-              workingDirectory: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
   - stage: NET_Framework_Tests
     dependsOn: [ ]
@@ -52,12 +52,12 @@ stages:
           - template: templates/socket.io-tpl.yml
           - pwsh: dotnet restore
             displayName: dotnet restore
-            workingDirectory: $(Agent.BuildDirectory)/s
+            workingDirectory: $(System.DefaultWorkingDirectory)
           - task: MSBuild@1
             inputs:
-              solution: $(Agent.BuildDirectory)/s/socket.io-client-csharp.sln
+              solution: $(System.DefaultWorkingDirectory)/socket.io-client-csharp.sln
               restoreNugetPackages: true
           - task: VSTest@2
             inputs:
               testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
-              searchFolder: $(Agent.BuildDirectory)/s/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
+              searchFolder: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
