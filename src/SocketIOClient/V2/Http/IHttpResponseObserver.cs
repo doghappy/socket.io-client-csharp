@@ -1,6 +1,6 @@
 namespace SocketIOClient.V2.Http;
 
-public interface IHttpResponseObserver
-{
-    void OnNext(IHttpResponse response);
-}
+// public interface IHttpResponseObserver
+// {
+//     void OnNext(IHttpResponse response);
+// }

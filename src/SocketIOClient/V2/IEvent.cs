@@ -1,6 +1,6 @@
 namespace SocketIOClient.V2;
 
-public interface IProtocolMessage
+public interface IEvent
 {
     
 }

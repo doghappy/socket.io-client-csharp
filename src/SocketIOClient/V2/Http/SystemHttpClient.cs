@@ -36,7 +36,6 @@ public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
                 throw new NotSupportedException();
         }
 
-
         var res = await http.SendAsync(request, cancellationToken);
         return new SystemHttpResponse(res);
     }

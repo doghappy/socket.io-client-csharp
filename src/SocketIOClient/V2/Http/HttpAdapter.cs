@@ -1,21 +1,26 @@
-using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient.V2.Message;
 
 namespace SocketIOClient.V2.Http;
 
-public class HttpAdapter : IHttpAdapter
+public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 {
-    public HttpAdapter(IHttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
+    private readonly List<IMessageObserver> _observers = [];
 
-    IHttpClient _httpClient;
-
-    public Task SendAsync(IProtocolMessage protocolMessage)
+    public async Task SendAsync(IMessage message)
     {
-        throw new System.NotImplementedException();
+        // TODO
+        // 1. Serialize
+        // 2. Send
+        // 3. Deserialize
+        // 4. Notify observers
+        await httpClient.SendAsync(new HttpRequest());
+        foreach (var observer in _observers)
+        {
+            observer.OnNext(new OpenedMessage());
+        }
     }
 
     public Task ConnectAsync(CancellationToken cancellationToken)
@@ -23,8 +28,13 @@ public class HttpAdapter : IHttpAdapter
         throw new System.NotImplementedException();
     }
 
-    public void OnNext(IHttpResponse response)
+    // public void OnNext(IHttpResponse response)
+    // {
+    //     throw new NotImplementedException();
+    // }
+
+    public void Subscribe(IMessageObserver observer)
     {
-        throw new NotImplementedException();
+        _observers.Add(observer);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -80,11 +81,13 @@ public class SystemHttpClientTests
         var bytes = "Test Zip"u8.ToArray();
         _httpMessageHandler
             .When(HttpMethod.Post, "https://www.google.com/test.zip")
+            .WithContent("Download")
             .Respond(HttpStatusCode.OK, new ByteArrayContent(bytes));
 
         var res = await _httpClient.SendAsync(new HttpRequest
         {
             Method = RequestMethod.Post,
+            TextBody = "Download",
             Uri = new Uri("https://www.google.com/test.zip"),
         });
 
