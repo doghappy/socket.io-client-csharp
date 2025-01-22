@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FluentAssertions;
+using SocketIOClient.V2;
 using SocketIOClient.V2.Http;
 using Xunit;
 

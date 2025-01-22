@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.V2.Http;
+namespace SocketIOClient.V2;
 
 public interface IHttpClient
 {

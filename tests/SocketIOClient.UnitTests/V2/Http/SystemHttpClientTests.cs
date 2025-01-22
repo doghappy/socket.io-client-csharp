@@ -1,11 +1,11 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using RichardSzalay.MockHttp;
+using SocketIOClient.V2;
 using SocketIOClient.V2.Http;
 using Xunit;
 
