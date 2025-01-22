@@ -26,11 +26,11 @@ public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
         switch (req.BodyType)
         {
             case RequestBodyType.Text:
-                if (!string.IsNullOrEmpty(req.TextBody))
-                    request.Content = new StringContent(req.TextBody);
+                if (!string.IsNullOrEmpty(req.BodyText))
+                    request.Content = new StringContent(req.BodyText);
                 break;
             case RequestBodyType.Bytes:
-                request.Content = new ByteArrayContent(req.ByteBody);
+                request.Content = new ByteArrayContent(req.BodyBytes);
                 break;
             default:
                 throw new NotSupportedException();

@@ -9,6 +9,6 @@ public class HttpRequest:IHttpRequest
     public RequestMethod Method { get; set; } = RequestMethod.Get;
     public RequestBodyType BodyType { get; set; } = RequestBodyType.Text;
     public Dictionary<string, string> Headers { get; set; } = new();
-    public byte[] ByteBody { get; set; }
-    public string TextBody { get; set; }
+    public byte[] BodyBytes { get; set; }
+    public string BodyText { get; set; }
 }

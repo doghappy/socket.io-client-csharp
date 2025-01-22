@@ -1,25 +1,58 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.V2.Message;
 
 namespace SocketIOClient.V2.Http;
 
 public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 {
-    private readonly List<IMessageObserver> _observers = [];
+    private readonly List<IProtocolMessageObserver> _observers = [];
 
-    public async Task SendAsync(IMessage message)
+    private async Task<IHttpResponse> GetResponseAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
-        // TODO
-        // 1. Serialize
-        // 2. Send
-        // 3. Deserialize
-        // 4. Notify observers
-        await httpClient.SendAsync(new HttpRequest());
+        var req = new HttpRequest
+        {
+            Method = RequestMethod.Post,
+            Uri = new Uri("http://localhost:3000"),
+        };
+        
+        if (message.Type == ProtocolMessageType.Text)
+        {
+            req.BodyText = message.Text;
+            req.BodyType = RequestBodyType.Text;
+        }
+        else
+        {
+            req.BodyBytes = message.Bytes;
+            req.BodyType = RequestBodyType.Bytes;
+        }
+        return await httpClient.SendAsync(req, cancellationToken);
+    }
+
+    private static async Task<ProtocolMessage> GetMessageAsync(IHttpResponse response)
+    {
+        var message = new ProtocolMessage();
+        if (response.MediaType.Equals("application/octet-stream", StringComparison.InvariantCultureIgnoreCase))
+        {
+            message.Type = ProtocolMessageType.Bytes;
+            message.Bytes = await response.ReadAsByteArrayAsync();
+        }
+        else
+        {
+            message.Type = ProtocolMessageType.Text;
+            message.Text = await response.ReadAsStringAsync();
+        }
+        return message;
+    }
+    
+    public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
+    {
+        var response = await GetResponseAsync(message, cancellationToken);
+        var incomingMessage = await GetMessageAsync(response);
         foreach (var observer in _observers)
         {
-            observer.OnNext(new OpenedMessage());
+            observer.OnNext(incomingMessage);
         }
     }
 
@@ -28,12 +61,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         throw new System.NotImplementedException();
     }
 
-    // public void OnNext(IHttpResponse response)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
-    public void Subscribe(IMessageObserver observer)
+    public void Subscribe(IProtocolMessageObserver observer)
     {
         _observers.Add(observer);
     }

@@ -19,8 +19,8 @@ public class HttpRequestTests
                 Method = RequestMethod.Get,
                 Headers = new Dictionary<string, string>(),
                 BodyType = RequestBodyType.Text,
-                ByteBody = null,
-                TextBody = null,
+                BodyBytes = null,
+                BodyText = null,
             });
     }
 }

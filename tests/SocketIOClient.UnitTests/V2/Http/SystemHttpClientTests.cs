@@ -87,7 +87,7 @@ public class SystemHttpClientTests
         var res = await _httpClient.SendAsync(new HttpRequest
         {
             Method = RequestMethod.Post,
-            TextBody = "Download",
+            BodyText = "Download",
             Uri = new Uri("https://www.google.com/test.zip"),
         });
 

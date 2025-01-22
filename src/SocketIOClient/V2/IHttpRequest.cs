@@ -21,6 +21,6 @@ public interface IHttpRequest
     RequestMethod Method { get; }
     RequestBodyType BodyType { get; }
     Dictionary<string, string> Headers { get; }
-    byte[] ByteBody { get; }
-    string TextBody { get; }
+    byte[] BodyBytes { get; }
+    string BodyText { get; }
 }
