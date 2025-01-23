@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SocketIOClient.V2.Http;
+namespace SocketIOClient.V2.Protocol.Http;
 
 public class HttpRequest:IHttpRequest
 {

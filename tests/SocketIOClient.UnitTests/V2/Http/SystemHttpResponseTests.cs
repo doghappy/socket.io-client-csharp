@@ -1,7 +1,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using FluentAssertions;
-using SocketIOClient.V2.Http;
+using SocketIOClient.V2.Protocol.Http;
 using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Http;

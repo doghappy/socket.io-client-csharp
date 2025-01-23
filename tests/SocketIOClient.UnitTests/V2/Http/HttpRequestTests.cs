@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using FluentAssertions;
-using SocketIOClient.V2;
-using SocketIOClient.V2.Http;
+using SocketIOClient.V2.Protocol.Http;
 using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Http;

@@ -1,7 +1,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.V2.Http;
+namespace SocketIOClient.V2.Protocol.Http;
 
 public class SystemHttpResponse(HttpResponseMessage response) : IHttpResponse
 {

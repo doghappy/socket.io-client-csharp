@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.V2;
+namespace SocketIOClient.V2.Protocol;
 
 public interface IProtocolAdapter : IProtocolMessageObservable
 {

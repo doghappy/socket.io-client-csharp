@@ -5,8 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using RichardSzalay.MockHttp;
-using SocketIOClient.V2;
-using SocketIOClient.V2.Http;
+using SocketIOClient.V2.Protocol.Http;
 using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Http;

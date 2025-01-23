@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace SocketIOClient.V2;
+namespace SocketIOClient.V2.Protocol.Http;
 
 public enum RequestMethod
 {

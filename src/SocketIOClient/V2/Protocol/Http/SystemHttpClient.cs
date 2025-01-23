@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SocketIOClient.V2.Http;
+namespace SocketIOClient.V2.Protocol.Http;
 
 public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
 {
