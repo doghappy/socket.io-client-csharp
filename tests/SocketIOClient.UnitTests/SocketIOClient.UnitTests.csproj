@@ -30,4 +30,8 @@
   <ItemGroup>
     <Compile Remove="SystemTextJsonSerializerTest.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="V2\Protocol\" />
+  </ItemGroup>
 </Project>

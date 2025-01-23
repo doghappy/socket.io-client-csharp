@@ -3,7 +3,7 @@ using FluentAssertions;
 using SocketIOClient.V2.Protocol.Http;
 using Xunit;
 
-namespace SocketIOClient.UnitTests.V2.Http;
+namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
 public class HttpRequestTests
 {
