@@ -1,6 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
+using SocketIOClient.V2;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using Xunit;
@@ -21,7 +23,7 @@ public class HttpAdapterTests
     [Fact]
     public async Task SendAsync_WhenCalled_OnNextShouldBeTriggered()
     {
-        var observer = Substitute.For<IProtocolMessageObserver>();
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
         _httpAdapter.Subscribe(observer);
         
         await _httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);

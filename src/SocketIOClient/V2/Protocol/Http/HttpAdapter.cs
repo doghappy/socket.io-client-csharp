@@ -1,13 +1,16 @@
+// using System;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
 public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 {
-    private readonly List<IProtocolMessageObserver> _observers = [];
+    private readonly List<IMyObserver<ProtocolMessage>> _observers = [];
 
     private async Task<IHttpResponse> GetResponseAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
@@ -61,8 +64,12 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         throw new System.NotImplementedException();
     }
 
-    public void Subscribe(IProtocolMessageObserver observer)
+    public void Subscribe(IMyObserver<ProtocolMessage> observer)
     {
+        if (_observers.Contains(observer))
+        {
+            return;
+        }
         _observers.Add(observer);
     }
 }

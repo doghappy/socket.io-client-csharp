@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
-public interface IEngineIOAdapter
+public interface IEngineIOAdapter: IMyAsyncObserver<IHttpResponse>, IMyObservable<string>, IMyObservable<byte[]>
 {
     IHttpRequest ToHttpRequest(ICollection<byte[]> bytes);
 }

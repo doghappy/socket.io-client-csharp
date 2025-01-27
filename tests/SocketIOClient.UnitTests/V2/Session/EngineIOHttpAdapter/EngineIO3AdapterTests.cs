@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using FluentAssertions;
+using NSubstitute;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using Xunit;
@@ -108,5 +111,58 @@ public class EngineIO3AdapterTests
     {
         var req = _adapter.ToHttpRequest(bytes);
         req.Should().BeEquivalentTo(result);
+    }
+    
+    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text1NoBytes = new(
+        "1:2",
+        ["2"],
+        new List<byte[]>());
+    
+    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text12NoBytes = new(
+        "12:hello world!",
+        ["hello world!"],
+        new List<byte[]>());
+    
+    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text1And12NoBytes = new(
+        "1:212:hello world!",
+        ["2", "hello world!"],
+        new List<byte[]>());
+    
+    private static IEnumerable<(string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes)> OnNextAsyncStrongTypeCases
+    {
+        get
+        {
+            yield return Text1NoBytes;
+            yield return Text12NoBytes;
+            yield return Text1And12NoBytes;
+        }
+    }
+    
+    public static IEnumerable<object[]> OnNextAsyncCases =>
+        OnNextAsyncStrongTypeCases.Select(x => new object[] { x.raw, x.texts, x.bytes });
+    
+    [Theory]
+    [MemberData(nameof(OnNextAsyncCases))]
+    public async Task OnNextAsync_WhenCalled_AlwaysPass(string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes)
+    {
+        var capturedTexts = new List<string>();
+        var capturedBytes = new List<byte[]>();
+        var textObserver = Substitute.For<IMyObserver<string>>();
+        textObserver
+            .When(x => x.OnNext(Arg.Any<string>()))
+            .Do(x=> capturedTexts.Add(x.Arg<string>()));
+        _adapter.Subscribe(textObserver);
+        var byteObserver = Substitute.For<IMyObserver<byte[]>>();
+        byteObserver
+            .When(x => x.OnNext(Arg.Any<byte[]>()))
+            .Do(x=> capturedBytes.Add(x.Arg<byte[]>()));
+        _adapter.Subscribe(byteObserver);
+        
+        var response = Substitute.For<IHttpResponse>();
+        response.ReadAsStringAsync().Returns(raw);
+        await _adapter.OnNextAsync(response);
+
+        capturedTexts.Should().Equal(texts);
+        capturedBytes.Should().Equal(bytes);
     }
 }
