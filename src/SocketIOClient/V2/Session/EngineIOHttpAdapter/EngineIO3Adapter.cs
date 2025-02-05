@@ -44,7 +44,21 @@ public class EngineIO3Adapter : IEngineIOAdapter
         req.BodyBytes = list.ToArray();
         return req;
     }
-    
+
+    public IHttpRequest ToHttpRequest(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            throw new ArgumentException("The content cannot be null or empty");
+        }
+        return new HttpRequest
+        {
+            Method = RequestMethod.Post,
+            BodyType = RequestBodyType.Text,
+            BodyText = $"{content.Length}:{content}",
+        };
+    }
+
     private void NotifyTextObservers(string text)
     {
         foreach (var observer in _textObservers)

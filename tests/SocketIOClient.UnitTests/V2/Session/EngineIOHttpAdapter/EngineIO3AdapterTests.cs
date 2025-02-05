@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
+using JetBrains.Annotations;
 using NSubstitute;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
@@ -164,5 +165,26 @@ public class EngineIO3AdapterTests
 
         capturedTexts.Should().Equal(texts);
         capturedBytes.Should().Equal(bytes);
+    }
+    
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string content)
+    {
+        _adapter
+            .Invoking(x => x.ToHttpRequest(content))
+            .Should()
+            .Throw<ArgumentException>()
+            .WithMessage("The content cannot be null or empty");
+    }
+    
+    [Theory]
+    [InlineData(" ", "1: ")]
+    [InlineData("hello, world!", "13:hello, world!")]
+    public void ToHttpRequest_GivenValidContent_ReturnLengthFollowedByItself(string content, string expected)
+    {
+        var req = _adapter.ToHttpRequest(content);
+        req.BodyText.Should().Be(expected);
     }
 }
