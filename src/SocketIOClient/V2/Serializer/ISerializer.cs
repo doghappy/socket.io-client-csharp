@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using SocketIOClient.V2.Protocol;
 
-namespace SocketIOClient.V2;
+namespace SocketIOClient.V2.Serializer;
 
 public interface ISerializer
 {
     EngineIO EngineIO { get; set; }
     string Namespace { get; set; }
-    IEnumerable<ProtocolMessage> Serialize(int packetId, object[] data);
+    IEnumerable<ProtocolMessage> Serialize(object[] data);
 }
