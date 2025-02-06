@@ -5,19 +5,21 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SocketIOClient.V2.Core;
+using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Protocol;
+using SocketIOClient.V2.Serializer.Decapsulation;
 
 namespace SocketIOClient.V2.Serializer.Json;
 
-public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
+public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOptions options) : ISerializer
 {
-    public SystemJsonSerializer():this(new JsonSerializerOptions())
+    public SystemJsonSerializer(IDecapsulable decapsulator) : this(decapsulator, new JsonSerializerOptions())
     {
     }
 
     public EngineIO EngineIO { get; set; }
     public string Namespace { get; set; }
-    
+
     private JsonSerializerOptions NewOptions(JsonConverter converter)
     {
         var newOptions = new JsonSerializerOptions(options);
@@ -39,7 +41,7 @@ public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
         var newOptions = NewOptions(converter);
         var json = JsonSerializer.Serialize(data, newOptions);
         var builder = new StringBuilder(json.Length + 16);
-     
+
         if (converter.Bytes.Count == 0)
         {
             builder.Append("42");
@@ -60,8 +62,35 @@ public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
         // }
 
         builder.Append(json);
-        
+
         return GetSerializeResult(builder.ToString(), converter.Bytes);
+    }
+
+    public IMessage Deserialize(string text)
+    {
+        var result = decapsulator.Decapsulate(text);
+        if (!result.Success)
+        {
+            return null;
+        }
+        
+        return NewMessage(result.Type!.Value, result.Data);
+    }
+    
+    private static IMessage NewMessage(MessageType type, string text)
+    {
+        return type switch
+        {
+            MessageType.Opened => NewOpenedMessage(text),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
+        };
+    }
+    
+    private static OpenedMessage NewOpenedMessage(string text)
+    {
+        var message = new OpenedMessage();
+        message.Sid = "sid";
+        return message;
     }
 
     private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)

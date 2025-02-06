@@ -33,9 +33,25 @@ public class HttpSession : ISession
     private readonly IUriConverter _uriConverter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
 
-    public void OnNext(ProtocolMessage value)
+    public void OnNext(ProtocolMessage protocolMessage)
     {
-        throw new NotImplementedException();
+        if (protocolMessage.Type == ProtocolMessageType.Text)
+        {
+           var message = _serializer.Deserialize(protocolMessage.Text);
+           if (message is null)
+           {
+               return;
+           }
+           NotifyObservers(message);
+        }
+    }
+    
+    private void NotifyObservers(IMessage message)
+    {
+        foreach (var observer in _observers)
+        {
+            observer.OnNext(message);
+        }
     }
 
     public SessionOptions SessionOptions { get; set; }

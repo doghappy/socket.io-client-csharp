@@ -12,6 +12,8 @@ using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer;
+using SocketIOClient.V2.Serializer.Decapsulation;
+using SocketIOClient.V2.Serializer.Json;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
@@ -89,19 +91,38 @@ public class HttpSessionTests
     [Fact]
     public async Task ConnectAsync_HttpAdapterWorks_OpenedMessageWillBePushed()
     {
+        // TODO: reuse this case
+        var captured = new List<IMessage>();
+
         var response = Substitute.For<IHttpResponse>();
-        response.ReadAsStringAsync().Returns("0{\"sid\":\"123\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}");
-        var tuple = GetHttpSessionAdapterHttpClient();
+        response.ReadAsStringAsync().Returns("0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
+        var tuple = GetSubstitutes();
+        tuple.observer
+            .When(x => x.OnNext(Arg.Any<IMessage>()))
+            .Do(call => captured.Add(call.Arg<IMessage>()));
         tuple.httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
 
         await tuple.session.ConnectAsync(CancellationToken.None);
+
+        captured.Should()
+            .BeEquivalentTo(new List<IMessage>
+            {
+                new OpenedMessage
+                {
+                    Sid = "123",
+                    Upgrades = ["websocket"],
+                    PingInterval = 10000,
+                    PingTimeout = 5000,
+                },
+            }, options => options.IncludingAllRuntimeProperties());
     }
 
-    private (HttpSession session, HttpAdapter adapter, IHttpClient httpClient) GetHttpSessionAdapterHttpClient()
+    private (HttpSession session, HttpAdapter adapter, IHttpClient httpClient, IMyObserver<IMessage> observer) GetSubstitutes()
     {
         var httpClient = Substitute.For<IHttpClient>();
         var httpAdapter = new HttpAdapter(httpClient);
-        var session = new HttpSession(_engineIOAdapter, httpAdapter, _serializer, new DefaultUriConverter())
+        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, new DefaultUriConverter())
         {
             SessionOptions = new SessionOptions
             {
@@ -110,6 +131,8 @@ public class HttpSessionTests
                 Query = new List<KeyValuePair<string, string>>(),
             },
         };
-        return (session, httpAdapter, httpClient);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        session.Subscribe(observer);
+        return (session, httpAdapter, httpClient, observer);
     }
 }

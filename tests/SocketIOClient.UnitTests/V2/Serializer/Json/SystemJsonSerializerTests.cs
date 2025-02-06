@@ -4,9 +4,10 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using FluentAssertions;
 using JetBrains.Annotations;
-using SocketIOClient.V2;
-using SocketIOClient.V2.Core;
+using NSubstitute;
+using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Protocol;
+using SocketIOClient.V2.Serializer.Decapsulation;
 using SocketIOClient.V2.Serializer.Json;
 using Xunit;
 
@@ -16,10 +17,11 @@ public class SystemJsonSerializerTests
 {
     public SystemJsonSerializerTests()
     {
-        _serializer = new SystemJsonSerializer();
+        _serializer = new SystemJsonSerializer(_realDecapsulator);
     }
     
     private readonly SystemJsonSerializer _serializer;
+    private readonly Decapsulator _realDecapsulator = new();
     
     [Fact]
     public void Serialize_DataOnlyAndDataIsNull_ThrowArgumentNullException()
@@ -37,7 +39,7 @@ public class SystemJsonSerializerTests
             .Throw<ArgumentException>();
     }
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyNormalEventName = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyNormalEventName = new(
         ["event"],
         [
             new ProtocolMessage
@@ -47,7 +49,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlySpecialEventName = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlySpecialEventName = new(
         ["Ab_@ '\"{}[].?-*/\\"],
         [
             new ProtocolMessage
@@ -57,7 +59,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWithNull = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithNull = new(
         ["event", null],
         [
             new ProtocolMessage
@@ -67,7 +69,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1String = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1String = new(
         ["event", "hello, world!"],
         [
             new ProtocolMessage
@@ -77,7 +79,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1True = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1True = new(
         ["event", true],
         [
             new ProtocolMessage
@@ -87,7 +89,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1False = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1False = new(
         ["event", false],
         [
             new ProtocolMessage
@@ -97,7 +99,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1IntMax = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1IntMax = new(
         ["event", int.MaxValue],
         [
             new ProtocolMessage
@@ -107,7 +109,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1FloatMax = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1FloatMax = new(
         ["event", float.MaxValue],
         [
             new ProtocolMessage
@@ -117,7 +119,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith1Object = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1Object = new(
         ["event", new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
@@ -127,7 +129,7 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWithBytesAndObject = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithBytesAndObject = new(
         ["event",TestFiles.IndexHtml, new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
@@ -143,7 +145,7 @@ public class SystemJsonSerializerTests
         ]);
     
     
-    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith2Bytes = new(
+    private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith2Bytes = new(
         ["event",TestFiles.IndexHtml, TestFiles.NiuB],
         [
             new ProtocolMessage
@@ -163,30 +165,30 @@ public class SystemJsonSerializerTests
             },
         ]);
     
-    private static IEnumerable<(object[] input, IEnumerable<ProtocolMessage> output)> EngineIO3DataOnlyStrongTypeCases
+    private static IEnumerable<(object[] input, IEnumerable<ProtocolMessage> output)> SerializeDataOnlyStrongTypeCases
     {
         get
         {
-            yield return EngineIO3DataOnlyNormalEventName;
-            yield return EngineIO3DataOnlySpecialEventName;
-            yield return EngineIO3DataOnlyWithNull;
-            yield return EngineIO3DataOnlyWith1String;
-            yield return EngineIO3DataOnlyWith1True;
-            yield return EngineIO3DataOnlyWith1False;
-            yield return EngineIO3DataOnlyWith1IntMax;
-            yield return EngineIO3DataOnlyWith1FloatMax;
-            yield return EngineIO3DataOnlyWith1Object;
-            yield return EngineIO3DataOnlyWithBytesAndObject;
-            yield return EngineIO3DataOnlyWith2Bytes;
+            yield return SerializeDataOnlyNormalEventName;
+            yield return SerializeDataOnlySpecialEventName;
+            yield return SerializeDataOnlyWithNull;
+            yield return SerializeDataOnlyWith1String;
+            yield return SerializeDataOnlyWith1True;
+            yield return SerializeDataOnlyWith1False;
+            yield return SerializeDataOnlyWith1IntMax;
+            yield return SerializeDataOnlyWith1FloatMax;
+            yield return SerializeDataOnlyWith1Object;
+            yield return SerializeDataOnlyWithBytesAndObject;
+            yield return SerializeDataOnlyWith2Bytes;
         }
     }
 
-    public static TheoryData<object[], IEnumerable<ProtocolMessage>> EngineIO3DataOnlyCases
+    public static TheoryData<object[], IEnumerable<ProtocolMessage>> SerializeDataOnlyCases
     {
         get
         {
             var data = new TheoryData<object[], IEnumerable<ProtocolMessage>>();
-            foreach (var item in EngineIO3DataOnlyStrongTypeCases)
+            foreach (var item in SerializeDataOnlyStrongTypeCases)
             {
                 data.Add(item.input, item.output);
             }
@@ -195,17 +197,14 @@ public class SystemJsonSerializerTests
     }
     
     [Theory]
-    [MemberData(nameof(EngineIO3DataOnlyCases))]
-    public void Serialize_EngineIO3DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
+    [MemberData(nameof(SerializeDataOnlyCases))]
+    public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
         var options = new JsonSerializerOptions
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        var serializer = new SystemJsonSerializer(options)
-        {
-            EngineIO = EngineIO.V3,
-        };
+        var serializer = new SystemJsonSerializer(_realDecapsulator, options);
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
     }
     
@@ -213,18 +212,10 @@ public class SystemJsonSerializerTests
     [InlineData(null, "42[\"event\"]")]
     [InlineData("", "42[\"event\"]")]
     [InlineData("test", "42test,[\"event\"]")]
-    public void Serialize_EngineIO3NamespaceNoBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
+    public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
     {
-        var options = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        var serializer = new SystemJsonSerializer(options)
-        {
-            EngineIO = EngineIO.V3,
-            Namespace = ns,
-        };
-        var list= serializer.Serialize(["event"]);
+        _serializer.Namespace = ns;
+        var list= _serializer.Serialize(["event"]);
         list[0].Text.Should().Be(expected);
     }
     
@@ -232,18 +223,48 @@ public class SystemJsonSerializerTests
     [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    public void Serialize_EngineIO3NamespaceWithBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
+    public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
     {
-        var options = new JsonSerializerOptions
-        {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
-        var serializer = new SystemJsonSerializer(options)
-        {
-            EngineIO = EngineIO.V3,
-            Namespace = ns,
-        };
-        var list= serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
+        _serializer.Namespace = ns;
+        var list= _serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
         list[0].Text.Should().Be(expected);
+    }
+    
+    private static readonly (string text, IMessage message) DeserializeOpenedMessage = new(
+        "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+        new OpenedMessage
+        {
+            Sid = "123",
+            Upgrades = ["websocket"],
+            PingInterval = 10000,
+            PingTimeout = 5000,
+        });
+
+    public static TheoryData<string, IMessage> DeserializeEio3Cases =>
+        new()
+        {
+            { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
+        };
+
+    [Theory]
+    [MemberData(nameof(DeserializeEio3Cases))]
+    public void Deserialize_EngineIO3Text(string text, IMessage expected)
+    {
+        // TODO: if eio is no need, remove it from name
+        _serializer.Deserialize(text).Should().BeEquivalentTo(expected);
+    }
+    
+    [Fact]
+    public void Deserialize_DecapsulationResultFalse_ReturnNull()
+    {
+        var decapsulator = Substitute.For<IDecapsulable>();
+        decapsulator.Decapsulate(Arg.Any<string>()).Returns(new DecapsulationResult
+        {
+            Success = false,
+        });
+        var serializer = new SystemJsonSerializer(decapsulator);
+        const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
+        
+        serializer.Deserialize(text).Should().BeNull();
     }
 }
