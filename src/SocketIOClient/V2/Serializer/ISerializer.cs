@@ -7,5 +7,5 @@ public interface ISerializer
 {
     EngineIO EngineIO { get; set; }
     string Namespace { get; set; }
-    IEnumerable<ProtocolMessage> Serialize(object[] data);
+    List<ProtocolMessage> Serialize(object[] data);
 }

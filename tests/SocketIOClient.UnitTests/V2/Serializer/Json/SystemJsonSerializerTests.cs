@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using FluentAssertions;
+using JetBrains.Annotations;
 using SocketIOClient.V2;
 using SocketIOClient.V2.Protocol;
-using SocketIOClient.V2.Serializer;
 using SocketIOClient.V2.Serializer.Json;
 using Xunit;
 
@@ -128,7 +127,7 @@ public class SystemJsonSerializerTests
         ]);
     
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWithBytesAndObject = new(
-        ["event",FileDto.IndexHtml, new { id = 1, name = "Alice" }],
+        ["event",TestFiles.IndexHtml, new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
             {
@@ -144,7 +143,7 @@ public class SystemJsonSerializerTests
     
     
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) EngineIO3DataOnlyWith2Bytes = new(
-        ["event",FileDto.IndexHtml, FileDto.NiuB],
+        ["event",TestFiles.IndexHtml, TestFiles.NiuB],
         [
             new ProtocolMessage
             {
@@ -207,5 +206,43 @@ public class SystemJsonSerializerTests
             EngineIO = EngineIO.V3,
         };
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
+    }
+    
+    [Theory]
+    [InlineData(null, "42[\"event\"]")]
+    [InlineData("", "42[\"event\"]")]
+    [InlineData("test", "42test,[\"event\"]")]
+    public void Serialize_EngineIO3NamespaceNoBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
+    {
+        var options = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        var serializer = new SystemJsonSerializer(options)
+        {
+            EngineIO = EngineIO.V3,
+            Namespace = ns,
+        };
+        var list= serializer.Serialize(["event"]);
+        list[0].Text.Should().Be(expected);
+    }
+    
+    [Theory]
+    [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    public void Serialize_EngineIO3NamespaceWithBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
+    {
+        var options = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+        var serializer = new SystemJsonSerializer(options)
+        {
+            EngineIO = EngineIO.V3,
+            Namespace = ns,
+        };
+        var list= serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
+        list[0].Text.Should().Be(expected);
     }
 }

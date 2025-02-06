@@ -24,7 +24,7 @@ public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
         return newOptions;
     }
 
-    public IEnumerable<ProtocolMessage> Serialize(object[] data)
+    public List<ProtocolMessage> Serialize(object[] data)
     {
         if (data is null)
         {
@@ -48,10 +48,10 @@ public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
             builder.Append("45").Append(converter.Bytes.Count).Append('-');
         }
 
-        // if (!string.IsNullOrEmpty(ns))
-        // {
-        //     builder.Append(ns).Append(',');
-        // }
+        if (!string.IsNullOrEmpty(Namespace))
+        {
+            builder.Append(Namespace).Append(',');
+        }
 
         // if (packetId is not null)
         // {
@@ -63,7 +63,7 @@ public class SystemJsonSerializer(JsonSerializerOptions options) : ISerializer
         return GetSerializeResult(builder.ToString(), converter.Bytes);
     }
 
-    private static IEnumerable<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)
+    private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)
     {
         var list = new List<ProtocolMessage>
         {
