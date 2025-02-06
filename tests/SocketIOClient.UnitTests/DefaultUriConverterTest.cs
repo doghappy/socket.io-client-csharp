@@ -50,5 +50,17 @@ namespace SocketIOClient.UnitTests
             var result = _converter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
             result.Should().Be(expected);
         }
+        
+        [Theory]
+        [InlineData(false, "http://localhost","http://localhost/socket.io/?EIO=4&transport=polling")]
+        [InlineData(false, "https://localhost","https://localhost/socket.io/?EIO=4&transport=polling")]
+        [InlineData(true, "ws://localhost","ws://localhost/socket.io/?EIO=4&transport=websocket")]
+        [InlineData(true, "wss://localhost","wss://localhost/socket.io/?EIO=4&transport=websocket")]
+        public void GetServerUri_DifferentProtocol(bool ws,string uri, string expected)
+        {
+            var serverUri = new Uri(uri);
+            var result = _converter.GetServerUri(ws, serverUri, EngineIO.V4, string.Empty, null);
+            result.Should().Be(expected);
+        }
     }
 }
