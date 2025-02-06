@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using FluentAssertions;
 using JetBrains.Annotations;
 using Mono.Collections.Generic;
-using SocketIOClient.V2;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.UriConverter;
 using Xunit;
 

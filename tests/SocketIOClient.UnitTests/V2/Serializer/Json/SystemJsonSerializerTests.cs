@@ -5,6 +5,7 @@ using System.Text.Json;
 using FluentAssertions;
 using JetBrains.Annotations;
 using SocketIOClient.V2;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Serializer.Json;
 using Xunit;

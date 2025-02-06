@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Protocol;
 
 namespace SocketIOClient.V2.Serializer;

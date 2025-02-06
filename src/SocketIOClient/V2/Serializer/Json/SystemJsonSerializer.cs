@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Protocol;
 
 namespace SocketIOClient.V2.Serializer.Json;

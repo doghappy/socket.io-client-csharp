@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SocketIOClient.V2.Core;
 
 namespace SocketIOClient.V2.UriConverter;
 
