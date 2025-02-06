@@ -9,5 +9,5 @@ namespace SocketIOClient.V2.Session;
 public interface ISession : IMyObserver<ProtocolMessage>
 {
     Task SendAsync(IMessage message, CancellationToken cancellationToken);
-    // Task ConnectAsync(CancellationToken cancellationToken);
+    Task ConnectAsync(CancellationToken cancellationToken);
 }
