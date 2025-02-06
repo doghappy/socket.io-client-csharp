@@ -1,5 +1,3 @@
-// using System;
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -57,11 +55,6 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         {
             observer.OnNext(incomingMessage);
         }
-    }
-
-    public Task ConnectAsync(CancellationToken cancellationToken)
-    {
-        throw new System.NotImplementedException();
     }
 
     public void Subscribe(IMyObserver<ProtocolMessage> observer)

@@ -9,11 +9,11 @@ public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
 {
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
-    public async Task<IHttpResponse> SendAsync(IHttpRequest req)
-    {
-        using var cts = new CancellationTokenSource(Timeout);
-        return await SendAsync(req, cts.Token);
-    }
+    // public async Task<IHttpResponse> SendAsync(IHttpRequest req)
+    // {
+    //     using var cts = new CancellationTokenSource(Timeout);
+    //     return await SendAsync(req, cts.Token);
+    // }
 
     public async Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {

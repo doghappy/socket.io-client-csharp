@@ -31,27 +31,11 @@ public class SystemHttpClientTests
         var res = await _httpClient.SendAsync(new HttpRequest
         {
             Uri = new Uri("https://www.google.com"),
-        });
+        }, CancellationToken.None);
 
         res.MediaType.Should().Be("text/plain");
         var body = await res.ReadAsStringAsync();
         body.Should().Be("Hello, Google!");
-    }
-
-    [Fact]
-    public async Task SendAsync_WhenTimeout_ThrowTaskCanceledException()
-    {
-        _httpMessageHandler
-            .When("https://www.google.com")
-            .Respond("text/plain", "Hello, Google!");
-
-        _httpClient.Timeout = TimeSpan.Zero;
-        await _httpClient.Invoking(async x => await x.SendAsync(new HttpRequest
-            {
-                Uri = new Uri("https://www.google.com"),
-            }))
-            .Should()
-            .ThrowAsync<TaskCanceledException>();
     }
 
     [Fact]
@@ -61,15 +45,15 @@ public class SystemHttpClientTests
             .When("https://www.google.com")
             .Respond("text/plain", "Hello, Google!");
 
-        _httpClient.Timeout = TimeSpan.Zero;
-        using var cts = new CancellationTokenSource();
-        cts.Cancel(true);
-        var token = cts.Token;
-
-        await _httpClient.Invoking(async x => await x.SendAsync(new HttpRequest
+        await _httpClient.Invoking(async x =>
             {
-                Uri = new Uri("https://www.google.com"),
-            }, token))
+                using var cts = new CancellationTokenSource();
+                cts.Cancel(true);
+                return await x.SendAsync(new HttpRequest
+                {
+                    Uri = new Uri("https://www.google.com"),
+                }, cts.Token);
+            })
             .Should()
             .ThrowAsync<TaskCanceledException>();
     }
@@ -88,7 +72,7 @@ public class SystemHttpClientTests
             Method = RequestMethod.Post,
             BodyText = "Download",
             Uri = new Uri("https://www.google.com/test.zip"),
-        });
+        }, CancellationToken.None);
 
         res.MediaType.Should().BeNull();
         var textBody = await res.ReadAsStringAsync();
