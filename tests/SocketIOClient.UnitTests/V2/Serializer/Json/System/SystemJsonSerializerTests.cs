@@ -246,9 +246,13 @@ public class SystemJsonSerializerTests
         "40/test,",
         new ConnectedMessage { Namespace = "/test", });
     
-    private static readonly (string text, IMessage message) DeserializeEio3NamespaceAndTokenConnectedMessage = new(
-        "40/test?token=eio3,",
-        new ConnectedMessage { Namespace = "/test", });
+    private static readonly (string text, IMessage message) DeserializeEio4NoNamespaceConnectedMessage = new(
+        "40{\"sid\":\"123\"}",
+        new ConnectedMessage { Sid = "123" });
+    
+    private static readonly (string text, IMessage message) DeserializeEio4NamespaceConnectedMessage = new(
+        "40/test,{\"sid\":\"123\"}",
+        new ConnectedMessage { Sid = "123", Namespace = "/test" });
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
@@ -256,13 +260,14 @@ public class SystemJsonSerializerTests
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
             { DeserializeEio3NoNamespaceConnectedMessage.text, DeserializeEio3NoNamespaceConnectedMessage.message },
             { DeserializeEio3NamespaceConnectedMessage.text, DeserializeEio3NamespaceConnectedMessage.message },
-            { DeserializeEio3NamespaceAndTokenConnectedMessage.text, DeserializeEio3NamespaceAndTokenConnectedMessage.message },
         };
     
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
         new()
         {
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
+            { DeserializeEio4NoNamespaceConnectedMessage.text, DeserializeEio4NoNamespaceConnectedMessage.message },
+            { DeserializeEio4NamespaceConnectedMessage.text, DeserializeEio4NamespaceConnectedMessage.message },
         };
 
     [Theory]
@@ -279,7 +284,7 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeEio4Cases))]
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         _serializer.Deserialize(text)
             .Should()
             .BeEquivalentTo(expected,options => options.IncludingAllRuntimeProperties());
