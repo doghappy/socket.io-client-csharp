@@ -73,7 +73,6 @@ public class HttpSession : ISession
         var uri = _uriConverter.GetServerUri(
             false,
             SessionOptions.ServerUri,
-            SessionOptions.EngineIO,
             SessionOptions.Path,
             SessionOptions.Query);
         var message = new ProtocolMessage

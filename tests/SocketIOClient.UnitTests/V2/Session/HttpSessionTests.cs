@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using SocketIOClient.V2.Core;
+using SocketIOClient.V2;
 using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
@@ -28,12 +28,11 @@ public class HttpSessionTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         _serializer = Substitute.For<ISerializer>();
-        _session = new HttpSession(_engineIOAdapter, _httpAdapter, _serializer, new DefaultUriConverter())
+        _session = new HttpSession(_engineIOAdapter, _httpAdapter, _serializer, new DefaultUriConverter(4))
         {
             SessionOptions = new SessionOptions
             {
                 ServerUri = new Uri("http://localhost:3000"),
-                EngineIO = EngineIO.V4,
                 Query = new List<KeyValuePair<string, string>>(),
             },
         };
@@ -120,12 +119,12 @@ public class HttpSessionTests
         var httpClient = Substitute.For<IHttpClient>();
         var httpAdapter = new HttpAdapter(httpClient);
         var serializer = new SystemJsonSerializer(new Decapsulator());
-        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, new DefaultUriConverter())
+        var uriConverter = new DefaultUriConverter(4);
+        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
         {
             SessionOptions = new SessionOptions
             {
                 ServerUri = new Uri("http://localhost:3000"),
-                EngineIO = EngineIO.V4,
                 Query = new List<KeyValuePair<string, string>>(),
             },
         };

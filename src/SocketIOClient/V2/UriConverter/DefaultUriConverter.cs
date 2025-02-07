@@ -1,25 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using SocketIOClient.V2.Core;
 
 namespace SocketIOClient.V2.UriConverter
 {
-    public class DefaultUriConverter: IUriConverter
+    public class DefaultUriConverter(int eio): IUriConverter
     {
-        public Uri GetServerUri(bool ws, Uri serverUri, EngineIO eio, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
+        public Uri GetServerUri(bool ws, Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
         {
             var builder = new StringBuilder();
             SetSchema(ws, serverUri, builder);
             builder.Append(serverUri.Host);
             if (!serverUri.IsDefaultPort)
             {
-                builder.Append(":").Append(serverUri.Port);
+                builder.Append(':').Append(serverUri.Port);
             }
             builder.Append(string.IsNullOrWhiteSpace(path) ? "/socket.io" : path);
             builder
                 .Append("/?EIO=")
-                .Append((int)eio)
+                .Append(eio)
                 .Append("&transport=")
                 .Append(ws ? "websocket" : "polling");
 

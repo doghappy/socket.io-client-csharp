@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using FluentAssertions;
 using JetBrains.Annotations;
 using Mono.Collections.Generic;
-using SocketIOClient.V2.Core;
 using SocketIOClient.V2.UriConverter;
 using Xunit;
 
@@ -11,8 +10,6 @@ namespace SocketIOClient.UnitTests
 {
     public class DefaultUriConverterTest
     {
-        private readonly DefaultUriConverter _converter = new();
-        
         [Fact]
         public void GetServerUri_GivenQueryParams_AppendAsQueryString()
         {
@@ -21,7 +18,8 @@ namespace SocketIOClient.UnitTests
             {
                 new("token", "test"),
             };
-            var result = _converter.GetServerUri(false, serverUri, EngineIO.V3, string.Empty, kvs);
+            var converter = new DefaultUriConverter(3);
+            var result = converter.GetServerUri(false, serverUri, string.Empty, kvs);
             result.Should().Be("http://localhost/socket.io/?EIO=3&transport=polling&token=test");
         }
         
@@ -34,7 +32,8 @@ namespace SocketIOClient.UnitTests
         public void GetServerUri_AppendPathToUri([CanBeNull] string path, string expected)
         {
             var serverUri = new Uri("http://localhost");
-            var result = _converter.GetServerUri(false, serverUri, EngineIO.V4, path, null);
+            var converter = new DefaultUriConverter(4);
+            var result = converter.GetServerUri(false, serverUri, path, null);
             result.Should().Be(expected);
         }
 
@@ -47,7 +46,8 @@ namespace SocketIOClient.UnitTests
         {
             var serverUri = new Uri(uri);
             var kvs = new ReadOnlyCollection<KeyValuePair<string, string>>(Array.Empty<KeyValuePair<string, string>>());
-            var result = _converter.GetServerUri(false, serverUri, EngineIO.V4, string.Empty, kvs);
+            var converter = new DefaultUriConverter(4);
+            var result = converter.GetServerUri(false, serverUri, string.Empty, kvs);
             result.Should().Be(expected);
         }
         
@@ -59,7 +59,8 @@ namespace SocketIOClient.UnitTests
         public void GetServerUri_DifferentProtocol(bool ws,string uri, string expected)
         {
             var serverUri = new Uri(uri);
-            var result = _converter.GetServerUri(ws, serverUri, EngineIO.V4, string.Empty, null);
+            var converter = new DefaultUriConverter(4);
+            var result = converter.GetServerUri(ws, serverUri, string.Empty, null);
             result.Should().Be(expected);
         }
     }
