@@ -241,12 +241,22 @@ public class SystemJsonSerializerTests
         });
     
     private static readonly (string text, IMessage message) DeserializeEio3NoNamespaceConnectedMessage = new("40", new ConnectedMessage());
+    
+    private static readonly (string text, IMessage message) DeserializeEio3NamespaceConnectedMessage = new(
+        "40/test,",
+        new ConnectedMessage { Namespace = "/test", });
+    
+    private static readonly (string text, IMessage message) DeserializeEio3NamespaceAndTokenConnectedMessage = new(
+        "40/test?token=eio3,",
+        new ConnectedMessage { Namespace = "/test", });
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
         {
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
             { DeserializeEio3NoNamespaceConnectedMessage.text, DeserializeEio3NoNamespaceConnectedMessage.message },
+            { DeserializeEio3NamespaceConnectedMessage.text, DeserializeEio3NamespaceConnectedMessage.message },
+            { DeserializeEio3NamespaceAndTokenConnectedMessage.text, DeserializeEio3NamespaceAndTokenConnectedMessage.message },
         };
     
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
@@ -260,7 +270,9 @@ public class SystemJsonSerializerTests
     public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
-        _serializer.Deserialize(text).Should().BeEquivalentTo(expected);
+        _serializer.Deserialize(text)
+            .Should()
+            .BeEquivalentTo(expected,options => options.IncludingAllRuntimeProperties());
     }
 
     [Theory]
@@ -268,7 +280,9 @@ public class SystemJsonSerializerTests
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
-        _serializer.Deserialize(text).Should().BeEquivalentTo(expected);
+        _serializer.Deserialize(text)
+            .Should()
+            .BeEquivalentTo(expected,options => options.IncludingAllRuntimeProperties());
     }
     
     [Fact]
