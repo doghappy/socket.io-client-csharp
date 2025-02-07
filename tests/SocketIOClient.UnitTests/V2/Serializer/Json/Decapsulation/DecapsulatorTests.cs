@@ -1,9 +1,9 @@
 using FluentAssertions;
 using SocketIOClient.V2.Message;
-using SocketIOClient.V2.Serializer.Decapsulation;
+using SocketIOClient.V2.Serializer.Json.Decapsulation;
 using Xunit;
 
-namespace SocketIOClient.UnitTests.V2.Serializer.Decapsulation;
+namespace SocketIOClient.UnitTests.V2.Serializer.Json.Decapsulation;
 
 public class DecapsulatorTests
 {

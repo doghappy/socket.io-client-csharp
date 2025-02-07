@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SocketIOClient.V2.Serializer.Json;
+namespace SocketIOClient.V2.Serializer.Json.System;
 
 public class SystemByteArrayConverter: JsonConverter<byte[]>
 {

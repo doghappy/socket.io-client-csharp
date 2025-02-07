@@ -5,13 +5,14 @@ using System.Text.Json;
 using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Protocol;
-using SocketIOClient.V2.Serializer.Decapsulation;
-using SocketIOClient.V2.Serializer.Json;
+using SocketIOClient.V2.Serializer.Json.Decapsulation;
+using SocketIOClient.V2.Serializer.Json.System;
 using Xunit;
 
-namespace SocketIOClient.UnitTests.V2.Serializer.Json;
+namespace SocketIOClient.UnitTests.V2.Serializer.Json.System;
 
 public class SystemJsonSerializerTests
 {
@@ -239,8 +240,17 @@ public class SystemJsonSerializerTests
             PingInterval = 10000,
             PingTimeout = 5000,
         });
+    
+    private static readonly (string text, IMessage message) DeserializeEio3NoNamespaceConnectedMessage = new("40", new ConnectedMessage());
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
+        new()
+        {
+            { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
+            { DeserializeEio3NoNamespaceConnectedMessage.text, DeserializeEio3NoNamespaceConnectedMessage.message },
+        };
+    
+    public static TheoryData<string, IMessage> DeserializeEio4Cases =>
         new()
         {
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
@@ -248,9 +258,17 @@ public class SystemJsonSerializerTests
 
     [Theory]
     [MemberData(nameof(DeserializeEio3Cases))]
-    public void Deserialize_EngineIO3Text(string text, IMessage expected)
+    public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        // TODO: if eio is no need, remove it from name
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
+        _serializer.Deserialize(text).Should().BeEquivalentTo(expected);
+    }
+
+    [Theory]
+    [MemberData(nameof(DeserializeEio4Cases))]
+    public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
+    {
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
         _serializer.Deserialize(text).Should().BeEquivalentTo(expected);
     }
     

@@ -1,4 +1,4 @@
-namespace SocketIOClient.V2.Serializer.Decapsulation;
+namespace SocketIOClient.V2.Serializer.Json.Decapsulation;
 
 public interface IDecapsulable
 {

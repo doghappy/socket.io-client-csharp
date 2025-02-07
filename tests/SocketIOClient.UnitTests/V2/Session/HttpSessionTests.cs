@@ -12,8 +12,8 @@ using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer;
-using SocketIOClient.V2.Serializer.Decapsulation;
-using SocketIOClient.V2.Serializer.Json;
+using SocketIOClient.V2.Serializer.Json.Decapsulation;
+using SocketIOClient.V2.Serializer.Json.System;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
@@ -37,7 +37,6 @@ public class HttpSessionTests
                 Query = new List<KeyValuePair<string, string>>(),
             },
         };
-        // _httpAdapter.Subscribe(_session);
     }
 
     private readonly HttpSession _session;
@@ -89,9 +88,8 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public async Task ConnectAsync_HttpAdapterWorks_OpenedMessageWillBePushed()
+    public async Task ConnectAsync_GivenHttpResponse_MessageWillBePushed()
     {
-        // TODO: reuse this case
         var captured = new List<IMessage>();
 
         var response = Substitute.For<IHttpResponse>();

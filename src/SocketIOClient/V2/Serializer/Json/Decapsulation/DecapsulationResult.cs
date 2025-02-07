@@ -1,6 +1,6 @@
 using SocketIOClient.V2.Message;
 
-namespace SocketIOClient.V2.Serializer.Decapsulation;
+namespace SocketIOClient.V2.Serializer.Json.Decapsulation;
 
 public class DecapsulationResult
 {

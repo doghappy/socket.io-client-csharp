@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Protocol;
-using SocketIOClient.V2.Serializer.Decapsulation;
+using SocketIOClient.V2.Serializer.Json.Decapsulation;
 
-namespace SocketIOClient.V2.Serializer.Json;
+namespace SocketIOClient.V2.Serializer.Json.System;
 
 public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOptions options) : ISerializer
 {
@@ -17,7 +16,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
     {
     }
 
-    public EngineIO EngineIO { get; set; }
+    public IEngineIOMessageAdapter EngineIOMessageAdapter { get; set; }
     public string Namespace { get; set; }
 
     private JsonSerializerOptions NewOptions(JsonConverter converter)
@@ -77,20 +76,25 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         return NewMessage(result.Type!.Value, result.Data);
     }
     
-    private static IMessage NewMessage(MessageType type, string text)
+    private IMessage NewMessage(MessageType type, string text)
     {
         return type switch
         {
             MessageType.Opened => NewOpenedMessage(text),
+            MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
     
     private static OpenedMessage NewOpenedMessage(string text)
     {
-        var message = new OpenedMessage();
-        message.Sid = "sid";
-        return message;
+        // TODO: Should deserializing to existing object
+        // But haven't support yet. https://github.com/dotnet/runtime/issues/78556
+        return JsonSerializer.Deserialize<OpenedMessage>(text, new JsonSerializerOptions
+        {
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
     }
 
     private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)
