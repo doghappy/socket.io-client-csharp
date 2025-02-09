@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
@@ -19,10 +20,10 @@ public class SystemJsonSerializerTests
     {
         _serializer = new SystemJsonSerializer(_realDecapsulator);
     }
-    
+
     private readonly SystemJsonSerializer _serializer;
     private readonly Decapsulator _realDecapsulator = new();
-    
+
     [Fact]
     public void Serialize_DataOnlyAndDataIsNull_ThrowArgumentNullException()
     {
@@ -30,7 +31,7 @@ public class SystemJsonSerializerTests
             .Should()
             .Throw<ArgumentNullException>();
     }
-    
+
     [Fact]
     public void Serialize_DataOnlyAndDataIsEmpty_ThrowArgumentException()
     {
@@ -38,133 +39,133 @@ public class SystemJsonSerializerTests
             .Should()
             .Throw<ArgumentException>();
     }
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyNormalEventName = new(
         ["event"],
         [
             new ProtocolMessage
             {
-              Type  = ProtocolMessageType.Text,
-              Text = "42[\"event\"]",
+                Type = ProtocolMessageType.Text,
+                Text = "42[\"event\"]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlySpecialEventName = new(
         ["Ab_@ '\"{}[].?-*/\\"],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"Ab_@ '\\\"{}[].?-*/\\\\\"]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithNull = new(
         ["event", null],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",null]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1String = new(
         ["event", "hello, world!"],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",\"hello, world!\"]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1True = new(
         ["event", true],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",true]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1False = new(
         ["event", false],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",false]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1IntMax = new(
         ["event", int.MaxValue],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",2147483647]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1FloatMax = new(
         ["event", float.MaxValue],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",3.4028235E+38]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith1Object = new(
         ["event", new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "42[\"event\",{\"id\":1,\"name\":\"Alice\"}]",
             },
         ]);
-    
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithBytesAndObject = new(
-        ["event",TestFiles.IndexHtml, new { id = 1, name = "Alice" }],
+        ["event", TestFiles.IndexHtml, new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "451-[\"event\",{\"Size\":1024,\"Name\":\"index.html\",\"Bytes\":{\"_placeholder\":true,\"num\":0}},{\"id\":1,\"name\":\"Alice\"}]",
             },
             new ProtocolMessage
             {
-              Type  = ProtocolMessageType.Bytes,
-              Bytes = "Hello World!"u8.ToArray(),
+                Type = ProtocolMessageType.Bytes,
+                Bytes = "Hello World!"u8.ToArray(),
             },
         ]);
-    
-    
+
+
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith2Bytes = new(
-        ["event",TestFiles.IndexHtml, TestFiles.NiuB],
+        ["event", TestFiles.IndexHtml, TestFiles.NiuB],
         [
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Text,
+                Type = ProtocolMessageType.Text,
                 Text = "452-[\"event\",{\"Size\":1024,\"Name\":\"index.html\",\"Bytes\":{\"_placeholder\":true,\"num\":0}},{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":1}}]",
             },
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Bytes,
+                Type = ProtocolMessageType.Bytes,
                 Bytes = "Hello World!"u8.ToArray(),
             },
             new ProtocolMessage
             {
-                Type  = ProtocolMessageType.Bytes,
+                Type = ProtocolMessageType.Bytes,
                 Bytes = "🐮🍺"u8.ToArray(),
             },
         ]);
-    
+
     private static IEnumerable<(object[] input, IEnumerable<ProtocolMessage> output)> SerializeDataOnlyStrongTypeCases
     {
         get
@@ -195,7 +196,7 @@ public class SystemJsonSerializerTests
             return data;
         }
     }
-    
+
     [Theory]
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
@@ -207,7 +208,7 @@ public class SystemJsonSerializerTests
         var serializer = new SystemJsonSerializer(_realDecapsulator, options);
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
     }
-    
+
     [Theory]
     [InlineData(null, "42[\"event\"]")]
     [InlineData("", "42[\"event\"]")]
@@ -215,10 +216,10 @@ public class SystemJsonSerializerTests
     public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
     {
         _serializer.Namespace = ns;
-        var list= _serializer.Serialize(["event"]);
+        var list = _serializer.Serialize(["event"]);
         list[0].Text.Should().Be(expected);
     }
-    
+
     [Theory]
     [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
@@ -226,10 +227,10 @@ public class SystemJsonSerializerTests
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
     {
         _serializer.Namespace = ns;
-        var list= _serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
+        var list = _serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
         list[0].Text.Should().Be(expected);
     }
-    
+
     private static readonly (string text, IMessage message) DeserializeOpenedMessage = new(
         "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
         new OpenedMessage
@@ -239,20 +240,40 @@ public class SystemJsonSerializerTests
             PingInterval = 10000,
             PingTimeout = 5000,
         });
-    
+
     private static readonly (string text, IMessage message) DeserializeEio3NoNamespaceConnectedMessage = new("40", new ConnectedMessage());
-    
+
     private static readonly (string text, IMessage message) DeserializeEio3NamespaceConnectedMessage = new(
         "40/test,",
         new ConnectedMessage { Namespace = "/test", });
-    
+
     private static readonly (string text, IMessage message) DeserializeEio4NoNamespaceConnectedMessage = new(
         "40{\"sid\":\"123\"}",
         new ConnectedMessage { Sid = "123" });
-    
+
     private static readonly (string text, IMessage message) DeserializeEio4NamespaceConnectedMessage = new(
         "40/test,{\"sid\":\"123\"}",
         new ConnectedMessage { Sid = "123", Namespace = "/test" });
+
+    private static readonly (string text, IMessage message) DeserializeEmptyStringReturnNull = new("", null);
+
+    private static readonly (string text, IMessage message) DeserializeUnsupportedTextReturnNull = new("unsupported text", null);
+
+    private static readonly (string text, IMessage message) DeserializePing = new("2", new TypeOnlyMessage(MessageType.Ping));
+
+    private static readonly (string text, IMessage message) DeserializePong = new("3", new TypeOnlyMessage(MessageType.Pong));
+
+    private static readonly (string text, IMessage message) DeserializeDisconnectedMessage = new("41", new DisconnectedMessage());
+
+    private static readonly (string text, IMessage message) DeserializeNamespaceDisconnectedMessage = new("41/test,", new DisconnectedMessage { Namespace = "/test" });
+    
+    private static readonly (string text, IMessage message) DeserializeEventMessageOnlyEvent = new(
+        "42[\"hello\"]",
+        new SystemJsonEventMessage
+        {
+            Event = "hello",
+            DataItems = [],
+        });
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
@@ -260,14 +281,14 @@ public class SystemJsonSerializerTests
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
             { DeserializeEio3NoNamespaceConnectedMessage.text, DeserializeEio3NoNamespaceConnectedMessage.message },
             { DeserializeEio3NamespaceConnectedMessage.text, DeserializeEio3NamespaceConnectedMessage.message },
-        };
-    
-    public static TheoryData<string, IMessage> DeserializeEio4Cases =>
-        new()
-        {
-            { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
-            { DeserializeEio4NoNamespaceConnectedMessage.text, DeserializeEio4NoNamespaceConnectedMessage.message },
-            { DeserializeEio4NamespaceConnectedMessage.text, DeserializeEio4NamespaceConnectedMessage.message },
+            { DeserializeEmptyStringReturnNull.text, DeserializeEmptyStringReturnNull.message },
+            { DeserializeUnsupportedTextReturnNull.text, DeserializeUnsupportedTextReturnNull.message },
+            { DeserializeUnsupportedTextReturnNull.text, DeserializeUnsupportedTextReturnNull.message },
+            { DeserializePing.text, DeserializePing.message },
+            { DeserializePong.text, DeserializePong.message },
+            { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
+            { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
+            { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
         };
 
     [Theory]
@@ -277,8 +298,23 @@ public class SystemJsonSerializerTests
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
         _serializer.Deserialize(text)
             .Should()
-            .BeEquivalentTo(expected,options => options.IncludingAllRuntimeProperties());
+            .BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
     }
+
+    public static TheoryData<string, IMessage> DeserializeEio4Cases =>
+        new()
+        {
+            { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
+            { DeserializeEio4NoNamespaceConnectedMessage.text, DeserializeEio4NoNamespaceConnectedMessage.message },
+            { DeserializeEio4NamespaceConnectedMessage.text, DeserializeEio4NamespaceConnectedMessage.message },
+            { DeserializeEmptyStringReturnNull.text, DeserializeEmptyStringReturnNull.message },
+            { DeserializeUnsupportedTextReturnNull.text, DeserializeUnsupportedTextReturnNull.message },
+            { DeserializePing.text, DeserializePing.message },
+            { DeserializePong.text, DeserializePong.message },
+            { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
+            { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
+            { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
+        };
 
     [Theory]
     [MemberData(nameof(DeserializeEio4Cases))]
@@ -287,20 +323,21 @@ public class SystemJsonSerializerTests
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         _serializer.Deserialize(text)
             .Should()
-            .BeEquivalentTo(expected,options => options.IncludingAllRuntimeProperties());
+            .BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
     }
-    
+
     [Fact]
     public void Deserialize_DecapsulationResultFalse_ReturnNull()
     {
         var decapsulator = Substitute.For<IDecapsulable>();
-        decapsulator.Decapsulate(Arg.Any<string>()).Returns(new DecapsulationResult
-        {
-            Success = false,
-        });
+        decapsulator.Decapsulate(Arg.Any<string>())
+            .Returns(new DecapsulationResult
+            {
+                Success = false,
+            });
         var serializer = new SystemJsonSerializer(decapsulator);
         const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
-        
+
         serializer.Deserialize(text).Should().BeNull();
     }
 }

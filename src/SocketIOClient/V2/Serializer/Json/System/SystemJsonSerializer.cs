@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Protocol;
@@ -81,7 +82,11 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         return type switch
         {
             MessageType.Opened => NewOpenedMessage(text),
+            MessageType.Ping => new TypeOnlyMessage(MessageType.Ping),
+            MessageType.Pong => new TypeOnlyMessage(MessageType.Pong),
             MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
+            MessageType.Disconnected => NewDisconnectedMessage(text),
+            MessageType.Event => NewEventMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -95,6 +100,33 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         });
+    }
+    
+    private SystemJsonEventMessage NewEventMessage(string text)
+    {
+        var result = decapsulator.DecapsulateEventMessage(text);
+        var message = new SystemJsonEventMessage
+        {
+            Namespace = result.Namespace,
+            Id = result.Id,
+        };
+    
+        var jsonNode = JsonNode.Parse(result.Data)!;
+        var jsonArray = jsonNode.AsArray()!;
+        message.Event = jsonArray[0]!.GetValue<string>();
+        jsonArray.RemoveAt(0);
+        message.DataItems = jsonArray;
+        return message;
+    }
+
+    private static DisconnectedMessage NewDisconnectedMessage(string text)
+    {
+        var message = new DisconnectedMessage();
+        if (!string.IsNullOrEmpty(text))
+        {
+            message.Namespace = text.TrimEnd(',');
+        }
+        return message;
     }
 
     private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)
