@@ -1,3 +1,5 @@
+using System;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using SocketIOClient.V2.Message;
 
@@ -11,9 +13,15 @@ public class SystemJsonEventMessage : IEventMessage
     public string Namespace { get; set; }
     public string Event { get; set; }
     public int Id { get; set; }
-    
+    public JsonSerializerOptions JsonSerializerOptions { get; set; }
+
     public T GetDataValue<T>(int index)
     {
-        return DataItems[index]!.GetValue<T>();
+        return DataItems[index]!.Deserialize<T>(JsonSerializerOptions);
+    }
+
+    public object GetDataValue(Type type, int index)
+    {
+        return DataItems[index]!.Deserialize(type, JsonSerializerOptions);
     }
 }

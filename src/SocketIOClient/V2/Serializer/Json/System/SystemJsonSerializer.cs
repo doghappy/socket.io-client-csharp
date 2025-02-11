@@ -109,6 +109,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         {
             Namespace = result.Namespace,
             Id = result.Id,
+            JsonSerializerOptions = options,
         };
     
         var jsonNode = JsonNode.Parse(result.Data)!;

@@ -1,3 +1,5 @@
+using System;
+
 namespace SocketIOClient.V2.Message;
 
 public interface IEventMessage : IMessage
@@ -7,4 +9,5 @@ public interface IEventMessage : IMessage
     public int Id { get; set; }
 
     T GetDataValue<T>(int index);
+    object GetDataValue(Type type, int index);
 }

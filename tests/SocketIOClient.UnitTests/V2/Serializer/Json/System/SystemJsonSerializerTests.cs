@@ -266,13 +266,21 @@ public class SystemJsonSerializerTests
     private static readonly (string text, IMessage message) DeserializeDisconnectedMessage = new("41", new DisconnectedMessage());
 
     private static readonly (string text, IMessage message) DeserializeNamespaceDisconnectedMessage = new("41/test,", new DisconnectedMessage { Namespace = "/test" });
-    
+
     private static readonly (string text, IMessage message) DeserializeEventMessageOnlyEvent = new(
         "42[\"hello\"]",
         new SystemJsonEventMessage
         {
             Event = "hello",
             DataItems = [],
+        });
+
+    private static readonly (string text, IMessage message) DeserializeEventMessageNull = new(
+        "42[\"hello\",null]",
+        new SystemJsonEventMessage
+        {
+            Event = "hello",
+            DataItems = [null],
         });
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
@@ -289,6 +297,7 @@ public class SystemJsonSerializerTests
             { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
             { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
+            { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
         };
 
     [Theory]
@@ -296,9 +305,11 @@ public class SystemJsonSerializerTests
     public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
-        _serializer.Deserialize(text)
-            .Should()
-            .BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
+        var message = _serializer.Deserialize(text);
+        message.Should()
+            .BeEquivalentTo(expected, options => options
+                .IncludingAllRuntimeProperties()
+                .Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions)));
     }
 
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
@@ -314,6 +325,7 @@ public class SystemJsonSerializerTests
             { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
             { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
+            { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
         };
 
     [Theory]
@@ -321,10 +333,54 @@ public class SystemJsonSerializerTests
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        _serializer.Deserialize(text)
-            .Should()
-            .BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
+        var message = _serializer.Deserialize(text);
+        message.Should()
+            .BeEquivalentTo(expected, options => options
+                .IncludingAllRuntimeProperties()
+                .Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions)));
     }
+
+    private static readonly (string text, object item1) DeserializeEventMessageString = new(
+        "42[\"hello\",\"world\"]", "world");
+
+    private static readonly (string text, object item1) DeserializeEventMessageTrue = new(
+        "42[\"hello\",true]", true);
+
+    private static readonly (string text, object item1) DeserializeEventMessageFalse = new(
+        "42[\"hello\",false]", false);
+
+    private static readonly (string text, object item1) DeserializeEventMessageIntMax = new(
+        "42[\"hello\",2147483647]", int.MaxValue);
+
+    private static readonly (string text, object item1) DeserializeEventMessageFloatMax = new(
+        "42[\"hello\",3.4028235E+38]", float.MaxValue);
+
+    private static readonly (string text, object item1) DeserializeEventMessageObject = new(
+        "42[\"event\",{\"id\":1,\"name\":\"Alice\"}]",
+        new { id = 1, name = "Alice" });
+
+    public static TheoryData<string, object> DeserializeEventMessage1ItemCases =>
+        new()
+        {
+            { DeserializeEventMessageString.text, DeserializeEventMessageString.item1 },
+            { DeserializeEventMessageTrue.text, DeserializeEventMessageTrue.item1 },
+            { DeserializeEventMessageFalse.text, DeserializeEventMessageFalse.item1 },
+            { DeserializeEventMessageIntMax.text, DeserializeEventMessageIntMax.item1 },
+            { DeserializeEventMessageFloatMax.text, DeserializeEventMessageFloatMax.item1 },
+            { DeserializeEventMessageObject.text, DeserializeEventMessageObject.item1 },
+        };
+
+    [Theory]
+    [MemberData(nameof(DeserializeEventMessage1ItemCases))]
+    public void Deserialize_EventMessage_Return1Data(string text, object expected)
+    {
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
+        var message = _serializer.Deserialize(text) as IEventMessage;
+        var item1 = message!.GetDataValue(expected.GetType(), 0);
+        item1.Should().BeEquivalentTo(expected);
+    }
+
+    // TODO: 2 items test cases
 
     [Fact]
     public void Deserialize_DecapsulationResultFalse_ReturnNull()

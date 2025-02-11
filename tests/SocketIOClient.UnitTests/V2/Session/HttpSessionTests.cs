@@ -113,6 +113,10 @@ public class HttpSessionTests
                 },
             }, options => options.IncludingAllRuntimeProperties());
     }
+    
+    // TODO: bytes event message text only
+    // TODO: bytes event message text and binary
+    // TODO: bytes event message 2text and 1binary
 
     private (HttpSession session, HttpAdapter adapter, IHttpClient httpClient, IMyObserver<IMessage> observer) GetSubstitutes()
     {
