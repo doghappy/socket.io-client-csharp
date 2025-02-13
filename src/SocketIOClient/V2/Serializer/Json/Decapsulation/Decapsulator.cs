@@ -3,7 +3,7 @@ using SocketIOClient.V2.Message;
 
 namespace SocketIOClient.V2.Serializer.Json.Decapsulation;
 
-public class Decapsulator: IDecapsulable
+public class Decapsulator : IDecapsulable
 {
     public DecapsulationResult Decapsulate(string text)
     {
@@ -45,6 +45,37 @@ public class Decapsulator: IDecapsulable
             }
         }
         result.Data = text.Substring(index);
+        return result;
+    }
+
+    public BinaryEventMessageResult DecapsulateBinaryEventMessage(string text)
+    {
+        var result = new BinaryEventMessageResult();
+        var index1 = text.IndexOf('-');
+        result.BytesCount = int.Parse(text.Substring(0, index1));
+
+        var index2 = text.IndexOf('[');
+
+        var index3 = text.LastIndexOf(',', index2);
+        if (index3 > -1)
+        {
+            result.Namespace = text.Substring(index1 + 1, index3 - index1 - 1);
+            var idLength = index2 - index3 - 1;
+            if (idLength > 0)
+            {
+                result.Id = int.Parse(text.Substring(index3 + 1, idLength));
+            }
+        }
+        else
+        {
+            var idLength = index2 - index1 - 1;
+            if (idLength > 0)
+            {
+                result.Id = int.Parse(text.Substring(index1 + 1, idLength));
+            }
+        }
+
+        result.Data = text.Substring(index2);
         return result;
     }
 }

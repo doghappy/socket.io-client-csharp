@@ -131,7 +131,7 @@ public class SystemJsonSerializerTests
         ]);
 
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithBytesAndObject = new(
-        ["event", TestFiles.IndexHtml, new { id = 1, name = "Alice" }],
+        ["event", TestFile.IndexHtml, new { id = 1, name = "Alice" }],
         [
             new ProtocolMessage
             {
@@ -147,7 +147,7 @@ public class SystemJsonSerializerTests
 
 
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWith2Bytes = new(
-        ["event", TestFiles.IndexHtml, TestFiles.NiuB],
+        ["event", TestFile.IndexHtml, TestFile.NiuB],
         [
             new ProtocolMessage
             {
@@ -227,7 +227,7 @@ public class SystemJsonSerializerTests
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists([CanBeNull] string ns, string expected)
     {
         _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event", TestFiles.NiuB.Bytes]);
+        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes]);
         list[0].Text.Should().Be(expected);
     }
 
@@ -359,6 +359,10 @@ public class SystemJsonSerializerTests
         "42[\"event\",{\"id\":1,\"name\":\"Alice\"}]",
         new { id = 1, name = "Alice" });
 
+    private static readonly (string text, object item1) DeserializeEventMessageIntArray = new(
+        "42[\"event\",[1,2,3]]",
+        new List<int> { 1, 2, 3 });
+
     public static TheoryData<string, object> DeserializeEventMessage1ItemCases =>
         new()
         {
@@ -368,6 +372,7 @@ public class SystemJsonSerializerTests
             { DeserializeEventMessageIntMax.text, DeserializeEventMessageIntMax.item1 },
             { DeserializeEventMessageFloatMax.text, DeserializeEventMessageFloatMax.item1 },
             { DeserializeEventMessageObject.text, DeserializeEventMessageObject.item1 },
+            { DeserializeEventMessageIntArray.text, DeserializeEventMessageIntArray.item1 },
         };
 
     [Theory]
@@ -380,7 +385,33 @@ public class SystemJsonSerializerTests
         item1.Should().BeEquivalentTo(expected);
     }
 
-    // TODO: 2 items test cases
+    private static readonly (string text, object item1, object item2) DeserializeEventMessage2Strings = new(
+        "42[\"hello\",\"world\", \"test\"]", "world", "test");
+
+    private static readonly (string text, object item1, object item2) DeserializeEventMessageObjectInt = new(
+        "42[\"hello\",{\"id\":1,\"name\":\"Alice\"},-123456]",
+        new { id = 1, name = "Alice" },
+        -123456);
+
+    public static TheoryData<string, object, object> DeserializeEventMessage2ItemsCases =>
+        new()
+        {
+            { DeserializeEventMessage2Strings.text, DeserializeEventMessage2Strings.item1, DeserializeEventMessage2Strings.item2 },
+            { DeserializeEventMessageObjectInt.text, DeserializeEventMessageObjectInt.item1, DeserializeEventMessageObjectInt.item2 },
+        };
+
+    [Theory]
+    [MemberData(nameof(DeserializeEventMessage2ItemsCases))]
+    public void Deserialize_EventMessage_Return2Data(string text, object expected1, object expected2)
+    {
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
+        var message = _serializer.Deserialize(text) as IEventMessage;
+        var item1 = message!.GetDataValue(expected1.GetType(), 0);
+        item1.Should().BeEquivalentTo(expected1);
+
+        var item2 = message!.GetDataValue(expected2.GetType(), 1);
+        item2.Should().BeEquivalentTo(expected2);
+    }
 
     [Fact]
     public void Deserialize_DecapsulationResultFalse_ReturnNull()
@@ -395,5 +426,27 @@ public class SystemJsonSerializerTests
         const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
 
         serializer.Deserialize(text).Should().BeNull();
+    }
+
+    private static readonly (string text, byte[] bytes, object item1) DeserializeBinaryEventMessage = new(
+        "451-[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+        TestFile.NiuB.Bytes,
+        TestFile.NiuB);
+
+    public static TheoryData<string, byte[], object> DeserializeBinaryEventMessage1ItemCases =>
+        new()
+        {
+            { DeserializeBinaryEventMessage.text, DeserializeBinaryEventMessage.bytes, DeserializeBinaryEventMessage.item1 },
+        };
+
+    [Fact]
+    public void Deserialize_BinaryEventMessage_Return1Data()
+    {
+        var text = "451-[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]";
+        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
+        var message = (IBinaryEventMessage)_serializer.Deserialize(text);
+        message.Add(TestFile.NiuB.Bytes);
+        var item1 = message!.GetDataValue<TestFile>(0);
+        item1.Should().BeEquivalentTo(TestFile.NiuB);
     }
 }

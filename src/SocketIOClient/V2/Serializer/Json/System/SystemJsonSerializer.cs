@@ -73,10 +73,10 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         {
             return null;
         }
-        
+
         return NewMessage(result.Type!.Value, result.Data);
     }
-    
+
     private IMessage NewMessage(MessageType type, string text)
     {
         return type switch
@@ -87,13 +87,14 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
             MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
             MessageType.Disconnected => NewDisconnectedMessage(text),
             MessageType.Event => NewEventMessage(text),
+            MessageType.Binary => NewBinaryEventMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
-    
+
     private static OpenedMessage NewOpenedMessage(string text)
     {
-        // TODO: Should deserializing to existing object
+        // Should deserializing to existing object
         // But haven't support yet. https://github.com/dotnet/runtime/issues/78556
         return JsonSerializer.Deserialize<OpenedMessage>(text, new JsonSerializerOptions
         {
@@ -101,22 +102,38 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         });
     }
-    
-    private SystemJsonEventMessage NewEventMessage(string text)
+
+    private static void SetEventMessageProperties(
+        EventMessageResult result,
+        SystemJsonEventMessage message,
+        JsonSerializerOptions options)
     {
-        var result = decapsulator.DecapsulateEventMessage(text);
-        var message = new SystemJsonEventMessage
-        {
-            Namespace = result.Namespace,
-            Id = result.Id,
-            JsonSerializerOptions = options,
-        };
-    
+        message.Namespace = result.Namespace;
+        message.Id = result.Id;
+        message.JsonSerializerOptions = options;
+
         var jsonNode = JsonNode.Parse(result.Data)!;
         var jsonArray = jsonNode.AsArray()!;
         message.Event = jsonArray[0]!.GetValue<string>();
         jsonArray.RemoveAt(0);
         message.DataItems = jsonArray;
+    }
+
+    private SystemJsonEventMessage NewEventMessage(string text)
+    {
+        var result = decapsulator.DecapsulateEventMessage(text);
+        var message = new SystemJsonEventMessage();
+        SetEventMessageProperties(result, message, options);
+        return message;
+    }
+
+    private SystemJsonBinaryEventMessage NewBinaryEventMessage(string text)
+    {
+        var result = decapsulator.DecapsulateBinaryEventMessage(text);
+        var message = new SystemJsonBinaryEventMessage();
+        SetEventMessageProperties(result, message, options);
+        message.BytesCount = result.BytesCount;
+        message.Bytes = new List<byte[]>(message.BytesCount);
         return message;
     }
 

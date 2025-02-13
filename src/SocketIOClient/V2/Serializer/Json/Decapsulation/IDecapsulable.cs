@@ -4,4 +4,5 @@ public interface IDecapsulable
 {
     DecapsulationResult Decapsulate(string text);
     EventMessageResult DecapsulateEventMessage(string text);
+    BinaryEventMessageResult DecapsulateBinaryEventMessage(string text);
 }

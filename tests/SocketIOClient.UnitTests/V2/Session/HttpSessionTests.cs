@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using SocketIOClient.V2;
 using SocketIOClient.V2.Message;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
@@ -113,10 +112,53 @@ public class HttpSessionTests
                 },
             }, options => options.IncludingAllRuntimeProperties());
     }
-    
-    // TODO: bytes event message text only
-    // TODO: bytes event message text and binary
-    // TODO: bytes event message 2text and 1binary
+
+    [Fact]
+    public void OnNext_BinaryMessageIsNotReady_NoMessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryEventMessage
+            {
+                BytesCount = 1,
+            });
+
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        observer.Received(0).OnNext(Arg.Any<IMessage>());
+        _session.PendingDeliveryCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void OnNext_BinaryMessageReady_MessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryEventMessage
+            {
+                BytesCount = 1,
+            });
+
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Bytes,
+        });
+
+        observer.Received(1).OnNext(Arg.Any<IBinaryEventMessage>());
+        _session.PendingDeliveryCount.Should().Be(0);
+    }
 
     private (HttpSession session, HttpAdapter adapter, IHttpClient httpClient, IMyObserver<IMessage> observer) GetSubstitutes()
     {

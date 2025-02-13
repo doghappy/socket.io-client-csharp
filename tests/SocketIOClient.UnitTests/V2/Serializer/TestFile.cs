@@ -1,12 +1,12 @@
 namespace SocketIOClient.UnitTests.V2.Serializer;
 
-public class TestFiles
+public class TestFile
 {
     public int Size { get; set; }
     public string Name { get; set; } = null!;
-    public byte[] Bytes { get; private init; } = null!;
+    public byte[] Bytes { get; set; } = null!;
 
-    public static readonly TestFiles IndexHtml = new()
+    public static readonly TestFile IndexHtml = new()
     {
         Name = "index.html",
         Size = 1024,
@@ -18,7 +18,7 @@ public class TestFiles
     /// It’s like saying "cool," "amazing," or "badass" in English. 
     /// NiuB => 牛B => 🐮🍺
     /// </summary>
-    public static readonly TestFiles NiuB = new()
+    public static readonly TestFile NiuB = new()
     {
         Name = "NiuB",
         Size = 666,

@@ -32,20 +32,46 @@ public class HttpSession : ISession
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
+    private readonly Queue<IBinaryEventMessage> _messageQueue = [];
+
+    public int PendingDeliveryCount => _messageQueue.Count;
 
     public void OnNext(ProtocolMessage protocolMessage)
     {
         if (protocolMessage.Type == ProtocolMessageType.Text)
         {
-           var message = _serializer.Deserialize(protocolMessage.Text);
-           if (message is null)
-           {
-               return;
-           }
-           NotifyObservers(message);
+            OnNextTextMessage(protocolMessage.Text);
+            return;
+        }
+        OnNextBytesMessage(protocolMessage.Bytes);
+    }
+
+    private void OnNextTextMessage(string text)
+    {
+        var message = _serializer.Deserialize(text);
+        if (message is null)
+        {
+            return;
+        }
+        if (message.Type == MessageType.Binary)
+        {
+            _messageQueue.Enqueue((IBinaryEventMessage)message);
+            return;
+        }
+        NotifyObservers(message);
+    }
+
+    private void OnNextBytesMessage(byte[] bytes)
+    {
+        var message = _messageQueue.Peek();
+        message.Add(bytes);
+        if (message.ReadyDelivery)
+        {
+            _messageQueue.Dequeue();
+            NotifyObservers(message);
         }
     }
-    
+
     private void NotifyObservers(IMessage message)
     {
         foreach (var observer in _observers)

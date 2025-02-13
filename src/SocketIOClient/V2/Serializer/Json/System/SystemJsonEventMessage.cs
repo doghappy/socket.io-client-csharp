@@ -9,19 +9,26 @@ public class SystemJsonEventMessage : IEventMessage
 {
     public JsonArray DataItems { get; set; }
     
-    public MessageType Type => MessageType.Event;
+    public virtual MessageType Type => MessageType.Event;
     public string Namespace { get; set; }
     public string Event { get; set; }
     public int Id { get; set; }
-    public JsonSerializerOptions JsonSerializerOptions { get; set; }
+    internal JsonSerializerOptions JsonSerializerOptions { get; set; }
 
-    public T GetDataValue<T>(int index)
+    protected virtual JsonSerializerOptions GetOptions()
     {
-        return DataItems[index]!.Deserialize<T>(JsonSerializerOptions);
+        return JsonSerializerOptions;
     }
 
-    public object GetDataValue(Type type, int index)
+    public virtual T GetDataValue<T>(int index)
     {
-        return DataItems[index]!.Deserialize(type, JsonSerializerOptions);
+        var options = GetOptions();
+        return DataItems[index]!.Deserialize<T>(options);
+    }
+
+    public virtual object GetDataValue(Type type, int index)
+    {
+        var options = GetOptions();
+        return DataItems[index]!.Deserialize(type, options);
     }
 }
