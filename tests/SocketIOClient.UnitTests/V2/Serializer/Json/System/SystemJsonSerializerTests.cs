@@ -276,7 +276,7 @@ public class SystemJsonSerializerTests
             Id = 0,
             Namespace = null,
         });
-    
+
     private static readonly (string text, IEventMessage message) DeserializeIdEventMessage = new(
         "421[\"event\"]",
         new SystemJsonEventMessage
@@ -285,7 +285,7 @@ public class SystemJsonSerializerTests
             Id = 1,
             Namespace = null,
         });
-    
+
     private static readonly (string text, IEventMessage message) DeserializeNamespaceEventMessage = new(
         "42/test,[\"event\"]",
         new SystemJsonEventMessage
@@ -311,7 +311,7 @@ public class SystemJsonSerializerTests
             Event = "hello",
             DataItems = [null],
         });
-    
+
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
         {
