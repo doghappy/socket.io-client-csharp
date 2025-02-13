@@ -435,6 +435,17 @@ public class SystemJsonSerializerTests
             Namespace = null,
         });
 
+    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeIdBinaryEventMessage = new(
+        "451-23[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+        TestFile.NiuB.Bytes,
+        TestFile.NiuB,
+        new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            Id = 23,
+            Namespace = null,
+        });
+
     private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeNamespaceBinaryEventMessage = new(
         "451-/test,[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
         TestFile.NiuB.Bytes,
@@ -443,6 +454,17 @@ public class SystemJsonSerializerTests
         {
             Event = "event",
             Id = 0,
+            Namespace = "/test",
+        });
+
+    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeIdNamespaceBinaryEventMessage = new(
+        "451-/test,30[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+        TestFile.NiuB.Bytes,
+        TestFile.NiuB,
+        new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            Id = 30,
             Namespace = "/test",
         });
 
@@ -456,10 +478,22 @@ public class SystemJsonSerializerTests
                 DeserializeBinaryEventMessage.meta
             },
             {
+                DeserializeIdBinaryEventMessage.text,
+                DeserializeIdBinaryEventMessage.bytes,
+                DeserializeIdBinaryEventMessage.item1,
+                DeserializeIdBinaryEventMessage.meta
+            },
+            {
                 DeserializeNamespaceBinaryEventMessage.text,
                 DeserializeNamespaceBinaryEventMessage.bytes,
                 DeserializeNamespaceBinaryEventMessage.item1,
                 DeserializeNamespaceBinaryEventMessage.meta
+            },
+            {
+                DeserializeIdNamespaceBinaryEventMessage.text,
+                DeserializeIdNamespaceBinaryEventMessage.bytes,
+                DeserializeIdNamespaceBinaryEventMessage.item1,
+                DeserializeIdNamespaceBinaryEventMessage.meta
             },
         };
 
