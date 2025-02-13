@@ -2,3 +2,4 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 dotnet format --verify-no-changes
+dotnet test tests/SocketIOClient.UnitTests
