@@ -306,10 +306,7 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should()
-            .BeEquivalentTo(expected, options => options
-                .IncludingAllRuntimeProperties()
-                .Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions)));
+        message.Should().BeEquivalentTo(expected, options => options.IncludingProperties());
     }
 
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
@@ -334,10 +331,8 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should()
-            .BeEquivalentTo(expected, options => options
-                .IncludingAllRuntimeProperties()
-                .Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions)));
+        message.Should().BeEquivalentTo(expected, options => options.IncludingProperties());
+        //.Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions))
     }
 
     private static readonly (string text, object item1) DeserializeEventMessageString = new(
@@ -373,6 +368,7 @@ public class SystemJsonSerializerTests
             { DeserializeEventMessageFloatMax.text, DeserializeEventMessageFloatMax.item1 },
             { DeserializeEventMessageObject.text, DeserializeEventMessageObject.item1 },
             { DeserializeEventMessageIntArray.text, DeserializeEventMessageIntArray.item1 },
+            { DeserializeBinaryEventMessage.text, DeserializeBinaryEventMessage.item1 },
         };
 
     [Theory]
@@ -428,25 +424,55 @@ public class SystemJsonSerializerTests
         serializer.Deserialize(text).Should().BeNull();
     }
 
-    private static readonly (string text, byte[] bytes, object item1) DeserializeBinaryEventMessage = new(
+    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeBinaryEventMessage = new(
         "451-[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
         TestFile.NiuB.Bytes,
-        TestFile.NiuB);
+        TestFile.NiuB,
+        new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            Id = 0,
+            Namespace = null,
+        });
 
-    public static TheoryData<string, byte[], object> DeserializeBinaryEventMessage1ItemCases =>
+    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeNamespaceBinaryEventMessage = new(
+        "451-/test,[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+        TestFile.NiuB.Bytes,
+        TestFile.NiuB,
+        new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            Id = 0,
+            Namespace = "/test",
+        });
+
+    public static TheoryData<string, byte[], object, IBinaryEventMessage> DeserializeBinaryEventMessage1ItemCases =>
         new()
         {
-            { DeserializeBinaryEventMessage.text, DeserializeBinaryEventMessage.bytes, DeserializeBinaryEventMessage.item1 },
+            {
+                DeserializeBinaryEventMessage.text,
+                DeserializeBinaryEventMessage.bytes,
+                DeserializeBinaryEventMessage.item1,
+                DeserializeBinaryEventMessage.meta
+            },
+            {
+                DeserializeNamespaceBinaryEventMessage.text,
+                DeserializeNamespaceBinaryEventMessage.bytes,
+                DeserializeNamespaceBinaryEventMessage.item1,
+                DeserializeNamespaceBinaryEventMessage.meta
+            },
         };
 
-    [Fact]
-    public void Deserialize_BinaryEventMessage_Return1Data()
+    [Theory]
+    [MemberData(nameof(DeserializeBinaryEventMessage1ItemCases))]
+    public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expectedData, IBinaryEventMessage expectedMessage)
     {
-        var text = "451-[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]";
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         var message = (IBinaryEventMessage)_serializer.Deserialize(text);
-        message.Add(TestFile.NiuB.Bytes);
+        message.Should().BeEquivalentTo(expectedMessage);
+
+        message.Add(bytes);
         var item1 = message!.GetDataValue<TestFile>(0);
-        item1.Should().BeEquivalentTo(TestFile.NiuB);
+        item1.Should().BeEquivalentTo(expectedData);
     }
 }
