@@ -284,6 +284,7 @@ public class SystemJsonSerializerTests
             Event = "event",
             Id = 1,
             Namespace = null,
+            DataItems = [],
         });
 
     private static readonly (string text, IEventMessage message) DeserializeNamespaceEventMessage = new(
@@ -293,6 +294,7 @@ public class SystemJsonSerializerTests
             Event = "event",
             Id = 0,
             Namespace = "/test",
+            DataItems = [],
         });
 
     private static readonly (string text, IEventMessage message) DeserializeIdNamespaceEventMessage = new(
@@ -302,6 +304,7 @@ public class SystemJsonSerializerTests
             Event = "event",
             Id = 2,
             Namespace = "/test",
+            DataItems = [],
         });
 
     private static readonly (string text, IMessage message) DeserializeEventMessageNull = new(
@@ -338,7 +341,7 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should().BeEquivalentTo(expected, options => options.IncludingProperties());
+        message.Should().BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
     }
 
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
@@ -366,7 +369,7 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should().BeEquivalentTo(expected, options => options.IncludingProperties());
+        message.Should().BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
         //.Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions))
     }
 
