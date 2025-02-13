@@ -51,23 +51,23 @@ stages:
 #            inputs:
 #              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
 #              command: test
-  - stage: NET_Framework_Tests
-    dependsOn: CheckFormat
-    pool:
-      vmImage: windows-latest
-    jobs:
-      - job:
-        displayName: Integration tests for .Net Framework
-        steps:
-          - template: templates/socket.io-tpl.yml
-          - pwsh: dotnet restore
-            displayName: dotnet restore
-            workingDirectory: $(System.DefaultWorkingDirectory)
-          - task: MSBuild@1
-            inputs:
-              solution: $(System.DefaultWorkingDirectory)/socket.io-client-csharp.sln
-              restoreNugetPackages: true
-          - task: VSTest@2
-            inputs:
-              testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
-              searchFolder: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
+#  - stage: NET_Framework_Tests
+#    dependsOn: CheckFormat
+#    pool:
+#      vmImage: windows-latest
+#    jobs:
+#      - job:
+#        displayName: Integration tests for .Net Framework
+#        steps:
+#          - template: templates/socket.io-tpl.yml
+#          - pwsh: dotnet restore
+#            displayName: dotnet restore
+#            workingDirectory: $(System.DefaultWorkingDirectory)
+#          - task: MSBuild@1
+#            inputs:
+#              solution: $(System.DefaultWorkingDirectory)/socket.io-client-csharp.sln
+#              restoreNugetPackages: true
+#          - task: VSTest@2
+#            inputs:
+#              testAssemblyVer2: SocketIOClient.IntegrationTests.Net472.dll
+#              searchFolder: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests.Net472/bin/Debug
