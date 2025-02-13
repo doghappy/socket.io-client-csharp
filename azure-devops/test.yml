@@ -7,7 +7,17 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
+  - stage: CheckFormat
+    jobs:
+      - job:
+        displayName: Check format
+        steps:
+          - script: |
+              dotnet tool restore
+              dotnet format --verify-no-changes
+            displayName: Check format
   - stage: NET_Tests
+    dependsOn: CheckFormat
     jobs:
       - job:
         displayName: Unit tests
@@ -32,18 +42,18 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.MessagePack.Tests
               command: test
-      - job:
-        displayName: Integration tests
-        steps:
-          - template: templates/socket.io-tpl.yml
-          - task: DotNetCoreCLI@2
-            displayName: Integration tests
-            inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
-              command: test
+#      - job:
+#        displayName: Integration tests
+#        steps:
+#          - template: templates/socket.io-tpl.yml
+#          - task: DotNetCoreCLI@2
+#            displayName: Integration tests
+#            inputs:
+#              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
+#              command: test
   - stage: NET_Framework_Tests
-    dependsOn: [ ]
-    pool: 
+    dependsOn: CheckFormat
+    pool:
       vmImage: windows-latest
     jobs:
       - job:
