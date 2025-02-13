@@ -8,22 +8,22 @@ public class ObjectDataMessage
 {
     [Key("type")]
     public int Type { get; set; }
-    
+
     [Key("sid")]
     public string Sid { get; set; }
-        
+
     [Key("pingInterval")]
     public int PingInterval { get; set; }
-        
+
     [Key("pingTimeout")]
     public int PingTimeout { get; set; }
-        
+
     [Key("upgrades")]
     public List<string> Upgrades { get; set; }
 
     [Key("nsp")]
     public string Namespace { get; set; }
-        
+
     [Key("data")]
     public object Data { get; set; }
 

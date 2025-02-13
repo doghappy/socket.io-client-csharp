@@ -6,7 +6,7 @@ namespace SocketIO.Serializer.Core
         public string Text { get; set; }
         public byte[] Binary { get; set; }
     }
-    
+
     public enum SerializedMessageType
     {
         Text,

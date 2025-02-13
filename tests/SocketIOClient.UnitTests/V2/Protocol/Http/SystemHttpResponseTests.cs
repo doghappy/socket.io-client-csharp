@@ -25,9 +25,9 @@ public class SystemHttpResponseTests
                 },
             },
         };
-        
+
         var res = new SystemHttpResponse(sysRes);
-        
+
         res.MediaType.Should().Be(mediaType);
     }
 }

@@ -32,7 +32,7 @@ namespace SocketIOClient.IntegrationTests
                 ConnectionTimeout = TimeSpan.FromSeconds(2),
             });
         }
-        
+
         // protected abstract SocketIO CreateSocketIO(string url, SocketIOOptions options);
         // protected abstract SocketIO CreateTokenSocketIO(SocketIOOptions options);
 
@@ -146,7 +146,8 @@ namespace SocketIOClient.IntegrationTests
             object Data,
             string ExpectedJson,
             IEnumerable<byte[]>? ExpectedBytes
-            )> Emit1ParameterTupleCases { get; }
+            )> Emit1ParameterTupleCases
+        { get; }
 
         [TestMethod]
         [Timeout(2000)]
@@ -446,7 +447,7 @@ namespace SocketIOClient.IntegrationTests
             io.Options.Reconnection = true;
             io.Options.ReconnectionDelay = 1000;
             io.Options.RandomizationFactor = 0.5;
-            io.Options.ReconnectionDelayMax =10000;
+            io.Options.ReconnectionDelayMax = 10000;
             io.Options.ReconnectionAttempts = 5;
             var times = 0;
             io.OnReconnectAttempt += (_, _) => times++;

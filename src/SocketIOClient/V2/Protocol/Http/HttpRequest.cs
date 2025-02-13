@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
-public class HttpRequest:IHttpRequest
+public class HttpRequest : IHttpRequest
 {
     public Uri Uri { get; set; }
     public RequestMethod Method { get; set; } = RequestMethod.Get;

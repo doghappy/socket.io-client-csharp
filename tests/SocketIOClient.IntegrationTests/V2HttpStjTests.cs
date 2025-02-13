@@ -17,7 +17,7 @@ namespace SocketIOClient.IntegrationTests
         protected override bool AutoUpgrade => false;
         protected override string ServerUrl => "http://localhost:11210";
         protected override string ServerTokenUrl => "http://localhost:11211";
-        
+
         [TestMethod]
         public async Task Should_automatically_upgrade_to_websocket()
         {
@@ -35,6 +35,6 @@ namespace SocketIOClient.IntegrationTests
 
             io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
             transport.Should().BeOfType<WebSocketTransport>();
-        } 
+        }
     }
 }

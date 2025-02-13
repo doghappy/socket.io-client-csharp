@@ -5,12 +5,12 @@ using System.Text.Json.Serialization;
 
 namespace SocketIOClient.V2.Serializer.Json.System;
 
-public class SystemByteArrayConverter: JsonConverter<byte[]>
+public class SystemByteArrayConverter : JsonConverter<byte[]>
 {
     private const string Placeholder = "_placeholder";
     private const string Num = "num";
     public IList<byte[]> Bytes { get; set; } = [];
-    
+
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject) return null;

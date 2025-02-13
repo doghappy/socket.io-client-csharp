@@ -42,7 +42,7 @@ namespace SocketIOClient.IntegrationTests
             connected.Should().BeTrue();
             callback.Should().BeTrue();
         }
-        
+
         [TestMethod]
         public async Task Should_automatically_upgrade_to_websocket()
         {
@@ -61,6 +61,6 @@ namespace SocketIOClient.IntegrationTests
 
             io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
             transport.Should().BeOfType<WebSocketTransport>();
-        } 
+        }
     }
 }

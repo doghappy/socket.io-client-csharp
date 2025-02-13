@@ -38,7 +38,7 @@ namespace SocketIOClient.IntegrationTests.Net472
                 actual.Should().Be(value);
             };
         }
-        
+
         [TestMethod]
         public async Task Should_ignore_ws_SSL_error()
         {
@@ -63,7 +63,7 @@ namespace SocketIOClient.IntegrationTests.Net472
             connected.Should().BeTrue();
             callback.Should().BeTrue();
         }
-        
+
         [TestMethod]
         public async Task Should_ignore_http_SSL_error()
         {

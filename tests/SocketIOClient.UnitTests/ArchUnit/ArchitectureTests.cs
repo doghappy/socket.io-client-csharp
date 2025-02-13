@@ -15,13 +15,13 @@ public class ArchitectureTests
         // System.Reflection.Assembly.Load("SocketIO.Serializer.MessagePack"),
         // System.Reflection.Assembly.Load("SocketIO.Serializer.NewtonsoftJson"),
         System.Reflection.Assembly.Load("SocketIO.Serializer.SystemTextJson")
-        // System.Reflection.Assembly.Load("SocketIOClient.Windows7")
-        // System.Reflection.Assembly.Load("SocketIOClient"),
-        // System.Reflection.Assembly.Load("SocketIOClient"),
-        // System.Reflection.Assembly.Load("SocketIOClient"),
-        // System.Reflection.Assembly.Load("SocketIOClient.UnitTests")
+    // System.Reflection.Assembly.Load("SocketIOClient.Windows7")
+    // System.Reflection.Assembly.Load("SocketIOClient"),
+    // System.Reflection.Assembly.Load("SocketIOClient"),
+    // System.Reflection.Assembly.Load("SocketIOClient"),
+    // System.Reflection.Assembly.Load("SocketIOClient.UnitTests")
     ).Build();
-    
+
     [Fact]
     public void CycleDependencies_NotExists()
     {

@@ -19,7 +19,7 @@ public class DecapsulatorTests
     {
         var decapsulator = new Decapsulator();
         var result = decapsulator.Decapsulate(text);
-        
+
         result.Should()
             .BeEquivalentTo(new DecapsulationResult
             {

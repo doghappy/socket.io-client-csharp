@@ -8,7 +8,7 @@ namespace SocketIOClient.V2.Serializer.Json.System;
 public class SystemJsonEventMessage : IEventMessage
 {
     public JsonArray DataItems { get; set; }
-    
+
     public virtual MessageType Type => MessageType.Event;
     public string Namespace { get; set; }
     public string Event { get; set; }

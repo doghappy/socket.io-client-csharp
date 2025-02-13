@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SocketIOClient.V2.UriConverter
 {
-    public class DefaultUriConverter(int eio): IUriConverter
+    public class DefaultUriConverter(int eio) : IUriConverter
     {
         public Uri GetServerUri(bool ws, Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
         {

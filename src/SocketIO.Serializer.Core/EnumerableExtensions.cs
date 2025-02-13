@@ -9,12 +9,12 @@ public static class EnumerableExtensions
     {
         return serializedItems.Any(x => x.Type == SerializedMessageType.Binary);
     }
-    
+
     public static string FirstText(this IEnumerable<SerializedItem> serializedItems)
     {
         return serializedItems.First(x => x.Type == SerializedMessageType.Text).Text;
     }
-    
+
     public static List<byte[]> AllBinary(this IEnumerable<SerializedItem> serializedItems)
     {
         return serializedItems

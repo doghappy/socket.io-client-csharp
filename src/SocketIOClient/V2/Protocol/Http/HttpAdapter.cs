@@ -17,7 +17,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
             Method = RequestMethod.Post,
             Uri = new Uri("http://localhost:3000"),
         };
-        
+
         if (message.Type == ProtocolMessageType.Text)
         {
             req.BodyText = message.Text;
@@ -46,7 +46,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         }
         return message;
     }
-    
+
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
         var response = await GetResponseAsync(message, cancellationToken);

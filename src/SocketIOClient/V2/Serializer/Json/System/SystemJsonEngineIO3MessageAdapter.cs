@@ -9,7 +9,7 @@ public class SystemJsonEngineIO3MessageAdapter : IEngineIOMessageAdapter
         var message = new ConnectedMessage();
         if (!string.IsNullOrEmpty(text))
         {
-            message.Namespace = text.TrimEnd(',');    
+            message.Namespace = text.TrimEnd(',');
         }
         return message;
     }

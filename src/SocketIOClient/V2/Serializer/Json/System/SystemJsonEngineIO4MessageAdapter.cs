@@ -8,7 +8,7 @@ public class SystemJsonEngineIO4MessageAdapter : IEngineIOMessageAdapter
     public ConnectedMessage DeserializeConnectedMessage(string text)
     {
         var message = new ConnectedMessage();
-        
+
         var index = text.IndexOf('{');
         if (index > 0)
         {
