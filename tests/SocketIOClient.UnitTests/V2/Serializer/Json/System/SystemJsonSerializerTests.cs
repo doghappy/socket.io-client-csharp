@@ -273,6 +273,35 @@ public class SystemJsonSerializerTests
         {
             Event = "hello",
             DataItems = [],
+            Id = 0,
+            Namespace = null,
+        });
+    
+    private static readonly (string text, IEventMessage message) DeserializeIdEventMessage = new(
+        "421[\"event\"]",
+        new SystemJsonEventMessage
+        {
+            Event = "event",
+            Id = 1,
+            Namespace = null,
+        });
+    
+    private static readonly (string text, IEventMessage message) DeserializeNamespaceEventMessage = new(
+        "42/test,[\"event\"]",
+        new SystemJsonEventMessage
+        {
+            Event = "event",
+            Id = 0,
+            Namespace = "/test",
+        });
+
+    private static readonly (string text, IEventMessage message) DeserializeIdNamespaceEventMessage = new(
+        "42/test,2[\"event\"]",
+        new SystemJsonEventMessage
+        {
+            Event = "event",
+            Id = 2,
+            Namespace = "/test",
         });
 
     private static readonly (string text, IMessage message) DeserializeEventMessageNull = new(
@@ -282,7 +311,7 @@ public class SystemJsonSerializerTests
             Event = "hello",
             DataItems = [null],
         });
-
+    
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
         {
@@ -298,6 +327,9 @@ public class SystemJsonSerializerTests
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
             { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
             { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
+            { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
+            { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
+            { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
         };
 
     [Theory]
@@ -323,6 +355,9 @@ public class SystemJsonSerializerTests
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
             { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
             { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
+            { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
+            { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
+            { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
         };
 
     [Theory]
@@ -368,7 +403,6 @@ public class SystemJsonSerializerTests
             { DeserializeEventMessageFloatMax.text, DeserializeEventMessageFloatMax.item1 },
             { DeserializeEventMessageObject.text, DeserializeEventMessageObject.item1 },
             { DeserializeEventMessageIntArray.text, DeserializeEventMessageIntArray.item1 },
-            { DeserializeBinaryEventMessage.text, DeserializeBinaryEventMessage.item1 },
         };
 
     [Theory]
