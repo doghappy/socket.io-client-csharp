@@ -68,7 +68,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
 
     public IMessage Deserialize(string text)
     {
-        var result = decapsulator.Decapsulate(text);
+        var result = decapsulator.DecapsulateRawText(text);
         if (!result.Success)
         {
             return null;
@@ -87,6 +87,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
             MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
             MessageType.Disconnected => NewDisconnectedMessage(text),
             MessageType.Event => NewEventMessage(text),
+            MessageType.Ack => NewAckMessage(text),
             MessageType.Binary => NewBinaryEventMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
@@ -103,9 +104,9 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         });
     }
 
-    private static void SetEventMessageProperties(
-        EventMessageResult result,
-        SystemJsonEventMessage message,
+    private static void SetAckMessageProperties(
+        MessageResult result,
+        SystemJsonAckMessage message,
         JsonSerializerOptions options)
     {
         message.Namespace = result.Namespace;
@@ -114,9 +115,17 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
 
         var jsonNode = JsonNode.Parse(result.Data)!;
         var jsonArray = jsonNode.AsArray()!;
-        message.Event = jsonArray[0]!.GetValue<string>();
-        jsonArray.RemoveAt(0);
         message.DataItems = jsonArray;
+    }
+
+    private static void SetEventMessageProperties(
+        MessageResult result,
+        SystemJsonEventMessage message,
+        JsonSerializerOptions options)
+    {
+        SetAckMessageProperties(result, message, options);
+        message.Event = message.DataItems[0]!.GetValue<string>();
+        message.DataItems.RemoveAt(0);
     }
 
     private SystemJsonEventMessage NewEventMessage(string text)
@@ -124,6 +133,14 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         var result = decapsulator.DecapsulateEventMessage(text);
         var message = new SystemJsonEventMessage();
         SetEventMessageProperties(result, message, options);
+        return message;
+    }
+
+    private SystemJsonAckMessage NewAckMessage(string text)
+    {
+        var result = decapsulator.DecapsulateAckMessage(text);
+        var message = new SystemJsonAckMessage();
+        SetAckMessageProperties(result, message, options);
         return message;
     }
 

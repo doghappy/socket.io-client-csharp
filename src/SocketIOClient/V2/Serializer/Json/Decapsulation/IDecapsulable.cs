@@ -2,7 +2,8 @@ namespace SocketIOClient.V2.Serializer.Json.Decapsulation;
 
 public interface IDecapsulable
 {
-    DecapsulationResult Decapsulate(string text);
-    EventMessageResult DecapsulateEventMessage(string text);
+    DecapsulationResult DecapsulateRawText(string text);
+    MessageResult DecapsulateAckMessage(string text);
+    MessageResult DecapsulateEventMessage(string text);
     BinaryEventMessageResult DecapsulateBinaryEventMessage(string text);
 }

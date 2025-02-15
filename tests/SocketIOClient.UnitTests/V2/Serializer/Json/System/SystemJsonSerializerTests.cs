@@ -314,7 +314,13 @@ public class SystemJsonSerializerTests
             Event = "hello",
             DataItems = [null],
         });
-    // TODO: Ack messages
+
+    private static readonly (string text, IMessage message) DeserializeAckMessage = new(
+        "431[\"nice\"]",
+        new SystemJsonAckMessage
+        {
+            Id = 1,
+        });
 
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
@@ -334,6 +340,7 @@ public class SystemJsonSerializerTests
             { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
             { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
+            { DeserializeAckMessage.text, DeserializeAckMessage.message },
         };
 
     [Theory]
@@ -342,7 +349,11 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should().BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
+        message.Should()
+            .BeEquivalentTo(expected,
+                options => options
+                    .IncludingAllRuntimeProperties()
+                    .Excluding(p => p.Name == nameof(SystemJsonAckMessage.DataItems)));
     }
 
     public static TheoryData<string, IMessage> DeserializeEio4Cases =>
@@ -362,6 +373,7 @@ public class SystemJsonSerializerTests
             { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
             { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
+            { DeserializeAckMessage.text, DeserializeAckMessage.message },
         };
 
     [Theory]
@@ -370,8 +382,11 @@ public class SystemJsonSerializerTests
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         var message = _serializer.Deserialize(text);
-        message.Should().BeEquivalentTo(expected, options => options.IncludingAllRuntimeProperties());
-        //.Excluding(p => p.Name == nameof(SystemJsonEventMessage.JsonSerializerOptions))
+        message.Should()
+            .BeEquivalentTo(expected,
+                options => options
+                    .IncludingAllRuntimeProperties()
+                    .Excluding(p => p.Name == nameof(SystemJsonAckMessage.DataItems)));
     }
 
     private static readonly (string text, object item1) DeserializeEventMessageString = new(
@@ -397,6 +412,8 @@ public class SystemJsonSerializerTests
         "42[\"event\",[1,2,3]]",
         new List<int> { 1, 2, 3 });
 
+    private static readonly (string text, object item1) DeserializeAckMessageString = new("431[\"nice\"]", "nice");
+
     public static TheoryData<string, object> DeserializeEventMessage1ItemCases =>
         new()
         {
@@ -407,6 +424,7 @@ public class SystemJsonSerializerTests
             { DeserializeEventMessageFloatMax.text, DeserializeEventMessageFloatMax.item1 },
             { DeserializeEventMessageObject.text, DeserializeEventMessageObject.item1 },
             { DeserializeEventMessageIntArray.text, DeserializeEventMessageIntArray.item1 },
+            { DeserializeAckMessageString.text, DeserializeAckMessageString.item1 },
         };
 
     [Theory]
@@ -414,7 +432,7 @@ public class SystemJsonSerializerTests
     public void Deserialize_EventMessage_Return1Data(string text, object expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IEventMessage;
+        var message = _serializer.Deserialize(text) as IAckMessage;
         var item1 = message!.GetDataValue(expected.GetType(), 0);
         item1.Should().BeEquivalentTo(expected);
     }
@@ -451,7 +469,7 @@ public class SystemJsonSerializerTests
     public void Deserialize_DecapsulationResultFalse_ReturnNull()
     {
         var decapsulator = Substitute.For<IDecapsulable>();
-        decapsulator.Decapsulate(Arg.Any<string>())
+        decapsulator.DecapsulateRawText(Arg.Any<string>())
             .Returns(new DecapsulationResult
             {
                 Success = false,

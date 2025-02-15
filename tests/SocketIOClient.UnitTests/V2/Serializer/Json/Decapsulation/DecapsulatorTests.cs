@@ -18,7 +18,7 @@ public class DecapsulatorTests
     public void Decapsulate_WhenCalled_AlwaysPass(string text, bool success, MessageType? type, string data)
     {
         var decapsulator = new Decapsulator();
-        var result = decapsulator.Decapsulate(text);
+        var result = decapsulator.DecapsulateRawText(text);
 
         result.Should()
             .BeEquivalentTo(new DecapsulationResult
