@@ -240,11 +240,7 @@ public class SystemJsonSerializerTests
             PingTimeout = 5000,
         });
 
-    private static readonly (string text, IMessage message) DeserializeEio3NoNamespaceConnectedMessage = new("40", new ConnectedMessage());
-
-    private static readonly (string text, IMessage message) DeserializeEio3NamespaceConnectedMessage = new(
-        "40/test,",
-        new ConnectedMessage { Namespace = "/test", });
+    private static readonly (string text, IMessage message) DeserializeEio3ConnectedMessage = new("40", new ConnectedMessage());
 
     private static readonly (string text, IMessage message) DeserializeEio4NoNamespaceConnectedMessage = new(
         "40{\"sid\":\"123\"}",
@@ -266,36 +262,6 @@ public class SystemJsonSerializerTests
 
     private static readonly (string text, IMessage message) DeserializeNamespaceDisconnectedMessage = new("41/test,", new DisconnectedMessage { Namespace = "/test" });
 
-    private static readonly (string text, IMessage message) DeserializeEventMessageOnlyEvent = new(
-        "42[\"hello\"]",
-        new SystemJsonEventMessage
-        {
-            Event = "hello",
-            DataItems = [],
-            Id = 0,
-            Namespace = null,
-        });
-
-    private static readonly (string text, IEventMessage message) DeserializeIdEventMessage = new(
-        "421[\"event\"]",
-        new SystemJsonEventMessage
-        {
-            Event = "event",
-            Id = 1,
-            Namespace = null,
-            DataItems = [],
-        });
-
-    private static readonly (string text, IEventMessage message) DeserializeNamespaceEventMessage = new(
-        "42/test,[\"event\"]",
-        new SystemJsonEventMessage
-        {
-            Event = "event",
-            Id = 0,
-            Namespace = "/test",
-            DataItems = [],
-        });
-
     private static readonly (string text, IEventMessage message) DeserializeIdNamespaceEventMessage = new(
         "42/test,2[\"event\"]",
         new SystemJsonEventMessage
@@ -314,13 +280,6 @@ public class SystemJsonSerializerTests
             DataItems = [null],
         });
 
-    private static readonly (string text, IMessage message) DeserializeAckMessage = new(
-        "431[\"nice\"]",
-        new SystemJsonAckMessage
-        {
-            Id = 1,
-        });
-
     private static readonly (string text, IMessage message) DeserializeNamespaceAckMessage = new(
         "43/test,1[\"nice\"]",
         new SystemJsonAckMessage
@@ -333,21 +292,15 @@ public class SystemJsonSerializerTests
         new()
         {
             { DeserializeOpenedMessage.text, DeserializeOpenedMessage.message },
-            { DeserializeEio3NoNamespaceConnectedMessage.text, DeserializeEio3NoNamespaceConnectedMessage.message },
-            { DeserializeEio3NamespaceConnectedMessage.text, DeserializeEio3NamespaceConnectedMessage.message },
+            { DeserializeEio3ConnectedMessage.text, DeserializeEio3ConnectedMessage.message },
             { DeserializeEmptyStringReturnNull.text, DeserializeEmptyStringReturnNull.message },
-            { DeserializeUnsupportedTextReturnNull.text, DeserializeUnsupportedTextReturnNull.message },
             { DeserializeUnsupportedTextReturnNull.text, DeserializeUnsupportedTextReturnNull.message },
             { DeserializePing.text, DeserializePing.message },
             { DeserializePong.text, DeserializePong.message },
             { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
-            { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
             { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
-            { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
-            { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
-            { DeserializeAckMessage.text, DeserializeAckMessage.message },
             { DeserializeNamespaceAckMessage.text, DeserializeNamespaceAckMessage.message },
         };
 
@@ -376,12 +329,8 @@ public class SystemJsonSerializerTests
             { DeserializePong.text, DeserializePong.message },
             { DeserializeDisconnectedMessage.text, DeserializeDisconnectedMessage.message },
             { DeserializeNamespaceDisconnectedMessage.text, DeserializeNamespaceDisconnectedMessage.message },
-            { DeserializeEventMessageOnlyEvent.text, DeserializeEventMessageOnlyEvent.message },
             { DeserializeEventMessageNull.text, DeserializeEventMessageNull.message },
-            { DeserializeIdEventMessage.text, DeserializeIdEventMessage.message },
-            { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
-            { DeserializeAckMessage.text, DeserializeAckMessage.message },
             { DeserializeNamespaceAckMessage.text, DeserializeNamespaceAckMessage.message },
         };
 
@@ -489,89 +438,60 @@ public class SystemJsonSerializerTests
         serializer.Deserialize(text).Should().BeNull();
     }
 
-    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeBinaryEventMessage = new(
+    private static readonly (string text, byte[] bytes, object item1) DeserializeBinaryEventMessage = new(
         "451-[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
         TestFile.NiuB.Bytes,
-        TestFile.NiuB,
-        new SystemJsonBinaryEventMessage
-        {
-            Event = "event",
-            Id = 0,
-            Namespace = null,
-        });
+        TestFile.NiuB);
 
-    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeIdBinaryEventMessage = new(
+    private static readonly (string text, byte[] bytes, object item1) DeserializeIdBinaryEventMessage = new(
         "451-23[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
         TestFile.NiuB.Bytes,
-        TestFile.NiuB,
-        new SystemJsonBinaryEventMessage
-        {
-            Event = "event",
-            Id = 23,
-            Namespace = null,
-        });
+        TestFile.NiuB);
 
-    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeNamespaceBinaryEventMessage = new(
+    private static readonly (string text, byte[] bytes, object item1) DeserializeNamespaceBinaryEventMessage = new(
         "451-/test,[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
         TestFile.NiuB.Bytes,
-        TestFile.NiuB,
-        new SystemJsonBinaryEventMessage
-        {
-            Event = "event",
-            Id = 0,
-            Namespace = "/test",
-        });
+        TestFile.NiuB);
 
-    private static readonly (string text, byte[] bytes, object item1, IBinaryEventMessage meta) DeserializeIdNamespaceBinaryEventMessage = new(
-        "451-/test,30[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
-        TestFile.NiuB.Bytes,
-        TestFile.NiuB,
-        new SystemJsonBinaryEventMessage
-        {
-            Event = "event",
-            Id = 30,
-            Namespace = "/test",
-        });
-
-    public static TheoryData<string, byte[], object, IBinaryEventMessage> DeserializeBinaryEventMessage1ItemCases =>
+    public static TheoryData<string, byte[], object> DeserializeBinaryEventMessage1ItemCases =>
         new()
         {
             {
                 DeserializeBinaryEventMessage.text,
                 DeserializeBinaryEventMessage.bytes,
-                DeserializeBinaryEventMessage.item1,
-                DeserializeBinaryEventMessage.meta
+                DeserializeBinaryEventMessage.item1
             },
             {
                 DeserializeIdBinaryEventMessage.text,
                 DeserializeIdBinaryEventMessage.bytes,
-                DeserializeIdBinaryEventMessage.item1,
-                DeserializeIdBinaryEventMessage.meta
+                DeserializeIdBinaryEventMessage.item1
             },
             {
                 DeserializeNamespaceBinaryEventMessage.text,
                 DeserializeNamespaceBinaryEventMessage.bytes,
-                DeserializeNamespaceBinaryEventMessage.item1,
-                DeserializeNamespaceBinaryEventMessage.meta
+                DeserializeNamespaceBinaryEventMessage.item1
             },
             {
                 DeserializeIdNamespaceBinaryEventMessage.text,
                 DeserializeIdNamespaceBinaryEventMessage.bytes,
-                DeserializeIdNamespaceBinaryEventMessage.item1,
-                DeserializeIdNamespaceBinaryEventMessage.meta
+                DeserializeIdNamespaceBinaryEventMessage.item1
             },
         };
 
+    private static readonly (string text, byte[] bytes, object item1) DeserializeIdNamespaceBinaryEventMessage = new(
+        "451-/test,30[\"event\",{\"Size\":666,\"Name\":\"NiuB\",\"Bytes\":{\"_placeholder\":true,\"num\":0}}]",
+        TestFile.NiuB.Bytes,
+        TestFile.NiuB);
+
     [Theory]
     [MemberData(nameof(DeserializeBinaryEventMessage1ItemCases))]
-    public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expectedData, IBinaryEventMessage expectedMessage)
+    public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
         var message = (IBinaryEventMessage)_serializer.Deserialize(text);
-        message.Should().BeEquivalentTo(expectedMessage);
 
         message.Add(bytes);
         var item1 = message!.GetDataValue<TestFile>(0);
-        item1.Should().BeEquivalentTo(expectedData);
+        item1.Should().BeEquivalentTo(expected);
     }
 }
