@@ -322,6 +322,14 @@ public class SystemJsonSerializerTests
             Id = 1,
         });
 
+    private static readonly (string text, IMessage message) DeserializeNamespaceAckMessage = new(
+        "43/test,1[\"nice\"]",
+        new SystemJsonAckMessage
+        {
+            Id = 1,
+            Namespace = "/test",
+        });
+
     public static TheoryData<string, IMessage> DeserializeEio3Cases =>
         new()
         {
@@ -341,6 +349,7 @@ public class SystemJsonSerializerTests
             { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
             { DeserializeAckMessage.text, DeserializeAckMessage.message },
+            { DeserializeNamespaceAckMessage.text, DeserializeNamespaceAckMessage.message },
         };
 
     [Theory]
@@ -374,6 +383,7 @@ public class SystemJsonSerializerTests
             { DeserializeNamespaceEventMessage.text, DeserializeNamespaceEventMessage.message },
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
             { DeserializeAckMessage.text, DeserializeAckMessage.message },
+            { DeserializeNamespaceAckMessage.text, DeserializeNamespaceAckMessage.message },
         };
 
     [Theory]
