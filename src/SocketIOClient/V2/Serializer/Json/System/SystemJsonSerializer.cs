@@ -138,7 +138,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
 
     private SystemJsonAckMessage NewAckMessage(string text)
     {
-        var result = decapsulator.DecapsulateAckMessage(text);
+        var result = decapsulator.DecapsulateEventMessage(text);
         var message = new SystemJsonAckMessage();
         SetAckMessageProperties(result, message, options);
         return message;
