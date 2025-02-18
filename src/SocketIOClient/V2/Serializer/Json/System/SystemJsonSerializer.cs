@@ -88,7 +88,9 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
             MessageType.Disconnected => NewDisconnectedMessage(text),
             MessageType.Event => NewEventMessage(text),
             MessageType.Ack => NewAckMessage(text),
+            MessageType.Error => EngineIOMessageAdapter.DeserializeErrorMessage(text),
             MessageType.Binary => NewBinaryEventMessage(text),
+            MessageType.BinaryAck => NewBinaryAckMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
     }
@@ -106,7 +108,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
 
     private static void SetAckMessageProperties(
         MessageResult result,
-        SystemJsonAckMessage message,
+        ISystemJsonAckMessage message,
         JsonSerializerOptions options)
     {
         message.Namespace = result.Namespace;
@@ -120,7 +122,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
 
     private static void SetEventMessageProperties(
         MessageResult result,
-        SystemJsonEventMessage message,
+        ISystemJsonEventMessage message,
         JsonSerializerOptions options)
     {
         SetAckMessageProperties(result, message, options);
@@ -136,7 +138,7 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         return message;
     }
 
-    private SystemJsonAckMessage NewAckMessage(string text)
+    private ISystemJsonAckMessage NewAckMessage(string text)
     {
         var result = decapsulator.DecapsulateEventMessage(text);
         var message = new SystemJsonAckMessage();
@@ -149,8 +151,22 @@ public class SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOpti
         var result = decapsulator.DecapsulateBinaryEventMessage(text);
         var message = new SystemJsonBinaryEventMessage();
         SetEventMessageProperties(result, message, options);
-        message.BytesCount = result.BytesCount;
-        message.Bytes = new List<byte[]>(message.BytesCount);
+        SetByteProperties(message, result.BytesCount);
+        return message;
+    }
+
+    private static void SetByteProperties(SystemJsonBinaryAckMessage message, int bytesCount)
+    {
+        message.BytesCount = bytesCount;
+        message.Bytes = new List<byte[]>(bytesCount);
+    }
+
+    private ISystemJsonAckMessage NewBinaryAckMessage(string text)
+    {
+        var result = decapsulator.DecapsulateBinaryEventMessage(text);
+        var message = new SystemJsonBinaryAckMessage();
+        SetAckMessageProperties(result, message, options);
+        SetByteProperties(message, result.BytesCount);
         return message;
     }
 

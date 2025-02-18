@@ -5,14 +5,14 @@ using SocketIOClient.V2.Message;
 
 namespace SocketIOClient.V2.Serializer.Json.System;
 
-public class SystemJsonAckMessage : IAckMessage
+public class SystemJsonAckMessage : ISystemJsonAckMessage
 {
     public JsonArray DataItems { get; set; }
 
     public virtual MessageType Type => MessageType.Ack;
     public string Namespace { get; set; }
     public int Id { get; set; }
-    internal JsonSerializerOptions JsonSerializerOptions { get; set; }
+    public JsonSerializerOptions JsonSerializerOptions { get; set; }
 
     protected virtual JsonSerializerOptions GetOptions()
     {

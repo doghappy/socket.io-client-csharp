@@ -17,6 +17,7 @@ public class DecapsulatorTests
     [InlineData("40/test,", true, MessageType.Connected, "/test,")]
     [InlineData("42[\"hello\"]", true, MessageType.Event, "[\"hello\"]")]
     [InlineData("43/test,1[\"hello\"]", true, MessageType.Ack, "/test,1[\"hello\"]")]
+    [InlineData("461-/test,2[]", true, MessageType.BinaryAck, "1-/test,2[]")]
     [InlineData(
         "0{\"sid\":\"123\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}",
         true,

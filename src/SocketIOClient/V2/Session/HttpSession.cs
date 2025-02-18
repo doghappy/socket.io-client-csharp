@@ -32,7 +32,7 @@ public class HttpSession : ISession
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly Queue<IBinaryEventMessage> _messageQueue = [];
+    private readonly Queue<IBinaryMessage> _messageQueue = [];
 
     public int PendingDeliveryCount => _messageQueue.Count;
 
@@ -55,7 +55,7 @@ public class HttpSession : ISession
         }
         if (message.Type == MessageType.Binary)
         {
-            _messageQueue.Enqueue((IBinaryEventMessage)message);
+            _messageQueue.Enqueue((IBinaryMessage)message);
             return;
         }
         NotifyObservers(message);

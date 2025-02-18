@@ -156,7 +156,7 @@ public class HttpSessionTests
             Type = ProtocolMessageType.Bytes,
         });
 
-        observer.Received(1).OnNext(Arg.Any<IBinaryEventMessage>());
+        observer.Received(1).OnNext(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
     }
 
