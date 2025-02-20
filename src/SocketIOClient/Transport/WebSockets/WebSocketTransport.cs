@@ -41,7 +41,7 @@ namespace SocketIOClient.Transport.WebSockets
                 bytes = buffer;
             }
 
-            int pages = (int)Math.Ceiling(bytes.Length * 1.0 / _sendChunkSize);
+            int pages = bytes.Length == 0 ? 1 : (int)Math.Ceiling(bytes.Length * 1.0 / _sendChunkSize);
             for (int i = 0; i < pages; i++)
             {
                 int offset = i * _sendChunkSize;
