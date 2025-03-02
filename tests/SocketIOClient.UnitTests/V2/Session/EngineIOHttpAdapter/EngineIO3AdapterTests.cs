@@ -45,14 +45,7 @@ public class EngineIO3AdapterTests
         new byte[] { 1 },
     }, new HttpRequest
     {
-        BodyBytes =
-        [
-            1,
-            1,
-            255,
-            4,
-            1,
-        ],
+        BodyBytes = [1, 1, 255, 4, 1],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
@@ -66,24 +59,7 @@ public class EngineIO3AdapterTests
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
     }, new HttpRequest
     {
-        BodyBytes =
-        [
-            1,
-            1,
-            0,
-            255,
-            4,
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-        ],
+        BodyBytes = [1, 1, 0, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
@@ -98,29 +74,7 @@ public class EngineIO3AdapterTests
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
     }, new HttpRequest
     {
-        BodyBytes =
-        [
-            1,
-            1,
-            255,
-            4,
-            1,
-            1,
-            1,
-            0,
-            255,
-            4,
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            9,
-        ],
+        BodyBytes = [1, 1, 255, 4, 1, 1, 1, 0, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
