@@ -178,4 +178,53 @@ public class HttpSessionTests
         session.Subscribe(observer);
         return (session, httpAdapter, httpClient, observer);
     }
+
+    [Fact]
+    public void OnNext_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        observer.Received(0).OnNext(Arg.Any<IMessage>());
+        _session.PendingDeliveryCount.Should().Be(1);
+    }
+
+    [Fact]
+    public void OnNext_BinaryAckMessageReady_MessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+        _session.OnNext(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Bytes,
+        });
+
+        observer.Received(1).OnNext(Arg.Any<IBinaryMessage>());
+        _session.PendingDeliveryCount.Should().Be(0);
+    }
 }

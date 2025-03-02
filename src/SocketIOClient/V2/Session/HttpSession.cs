@@ -53,7 +53,7 @@ public class HttpSession : ISession
         {
             return;
         }
-        if (message.Type == MessageType.Binary)
+        if (message.Type is MessageType.Binary or MessageType.BinaryAck)
         {
             _messageQueue.Enqueue((IBinaryMessage)message);
             return;
