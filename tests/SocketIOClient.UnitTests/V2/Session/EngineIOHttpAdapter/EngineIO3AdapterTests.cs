@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
 using JetBrains.Annotations;
-using NSubstitute;
-using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using Xunit;
@@ -104,57 +102,41 @@ public class EngineIO3AdapterTests
         req.Should().BeEquivalentTo(result);
     }
 
-    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text1NoBytes = new(
-        "1:2",
-        ["2"],
-        new List<byte[]>());
+    private static readonly (string raw, IEnumerable<string> textMessages) GetMessagesSinglePing = new("1:2", ["2"]);
 
-    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text12NoBytes = new(
+    private static readonly (string raw, IEnumerable<string> textMessages) GetMessagesSingleHelloWorld = new(
         "12:hello world!",
-        ["hello world!"],
-        new List<byte[]>());
+        ["hello world!"]);
 
-    private static readonly (string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes) Text1And12NoBytes = new(
+    private static readonly (string raw, IEnumerable<string> textMessages) GetMessagesPingAndHelloWorld = new(
         "1:212:hello world!",
-        ["2", "hello world!"],
-        new List<byte[]>());
+        ["2", "hello world!"]);
 
-    private static IEnumerable<(string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes)> OnNextAsyncStrongTypeCases
-    {
-        get
+    public static TheoryData<string, IEnumerable<string>> GetMessagesCases =>
+        new()
         {
-            yield return Text1NoBytes;
-            yield return Text12NoBytes;
-            yield return Text1And12NoBytes;
-        }
-    }
-
-    public static IEnumerable<object[]> OnNextAsyncCases =>
-        OnNextAsyncStrongTypeCases.Select(x => new object[] { x.raw, x.texts, x.bytes });
+            {
+                GetMessagesSinglePing.raw,
+                GetMessagesSinglePing.textMessages
+            },
+            {
+                GetMessagesSingleHelloWorld.raw,
+                GetMessagesSingleHelloWorld.textMessages
+            },
+            {
+                GetMessagesPingAndHelloWorld.raw,
+                GetMessagesPingAndHelloWorld.textMessages
+            },
+        };
 
     [Theory]
-    [MemberData(nameof(OnNextAsyncCases))]
-    public async Task OnNextAsync_WhenCalled_AlwaysPass(string raw, IEnumerable<string> texts, IEnumerable<byte[]> bytes)
+    [MemberData(nameof(GetMessagesCases))]
+    public void GetMessages_WhenCalled_AlwaysPass(string raw, IEnumerable<string> textMessages)
     {
-        var capturedTexts = new List<string>();
-        var capturedBytes = new List<byte[]>();
-        var textObserver = Substitute.For<IMyObserver<string>>();
-        textObserver
-            .When(x => x.OnNext(Arg.Any<string>()))
-            .Do(x => capturedTexts.Add(x.Arg<string>()));
-        _adapter.Subscribe(textObserver);
-        var byteObserver = Substitute.For<IMyObserver<byte[]>>();
-        byteObserver
-            .When(x => x.OnNext(Arg.Any<byte[]>()))
-            .Do(x => capturedBytes.Add(x.Arg<byte[]>()));
-        _adapter.Subscribe(byteObserver);
-
-        var response = Substitute.For<IHttpResponse>();
-        response.ReadAsStringAsync().Returns(raw);
-        await _adapter.OnNextAsync(response);
-
-        capturedTexts.Should().Equal(texts);
-        capturedBytes.Should().Equal(bytes);
+        _adapter.GetMessages(raw)
+            .Select(m => m.Text)
+            .Should()
+            .BeEquivalentTo(textMessages);
     }
 
     [Theory]

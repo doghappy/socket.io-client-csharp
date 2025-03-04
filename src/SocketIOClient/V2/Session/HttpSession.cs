@@ -38,12 +38,28 @@ public class HttpSession : ISession
 
     public void OnNext(ProtocolMessage protocolMessage)
     {
-        if (protocolMessage.Type == ProtocolMessageType.Text)
+        if (protocolMessage.Type == ProtocolMessageType.Bytes)
         {
-            OnNextTextMessage(protocolMessage.Text);
+            OnNextBytesMessage(protocolMessage.Bytes);
             return;
         }
-        OnNextBytesMessage(protocolMessage.Bytes);
+        var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
+        HandleMessages(messages);
+    }
+
+    private void HandleMessages(IEnumerable<ProtocolMessage> messages)
+    {
+        foreach (var message in messages)
+        {
+            if (message.Type == ProtocolMessageType.Bytes)
+            {
+                OnNextBytesMessage(message.Bytes);
+            }
+            else
+            {
+                OnNextTextMessage(message.Text);
+            }
+        }
     }
 
     private void OnNextTextMessage(string text)

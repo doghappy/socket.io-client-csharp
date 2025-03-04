@@ -86,19 +86,39 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public async Task ConnectAsync_GivenHttpResponse_MessageWillBePushed()
+    public async Task Integration_HttpAdapterPushedMessages_MessagesWillBeForwardedToSubscribersOfHttpSession()
     {
-        var captured = new List<IMessage>();
-
+        var httpClient = Substitute.For<IHttpClient>();
+        var httpAdapter = new HttpAdapter(httpClient);
+        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var uriConverter = new DefaultUriConverter(4);
+        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
+        {
+            SessionOptions = new SessionOptions
+            {
+                ServerUri = new Uri("http://localhost:3000"),
+                Query = new List<KeyValuePair<string, string>>(),
+            },
+        };
         var response = Substitute.For<IHttpResponse>();
-        response.ReadAsStringAsync().Returns("0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}");
-        var tuple = GetSubstitutes();
-        tuple.observer
+        response.ReadAsStringAsync().Returns("any text");
+        httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
+                },
+            ]);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        session.Subscribe(observer);
+        var captured = new List<IMessage>();
+        observer
             .When(x => x.OnNext(Arg.Any<IMessage>()))
             .Do(call => captured.Add(call.Arg<IMessage>()));
-        tuple.httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
 
-        await tuple.session.ConnectAsync(CancellationToken.None);
+        await httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
 
         captured.Should()
             .BeEquivalentTo(new List<IMessage>
@@ -124,11 +144,13 @@ public class HttpSessionTests
             {
                 BytesCount = 1,
             });
-
-        _session.OnNext(new ProtocolMessage
+        var protocolMessage = new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
-        });
+        };
+        _engineIOAdapter.GetMessages(Arg.Any<string>()).Returns([protocolMessage]);
+
+        _session.OnNext(protocolMessage);
 
         observer.Received(0).OnNext(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
@@ -147,36 +169,24 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                },
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Bytes,
+                },
+            ]);
         _session.OnNext(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
-        _session.OnNext(new ProtocolMessage
-        {
-            Type = ProtocolMessageType.Bytes,
-        });
 
         observer.Received(1).OnNext(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
-    }
-
-    private (HttpSession session, HttpAdapter adapter, IHttpClient httpClient, IMyObserver<IMessage> observer) GetSubstitutes()
-    {
-        var httpClient = Substitute.For<IHttpClient>();
-        var httpAdapter = new HttpAdapter(httpClient);
-        var serializer = new SystemJsonSerializer(new Decapsulator());
-        var uriConverter = new DefaultUriConverter(4);
-        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
-        {
-            SessionOptions = new SessionOptions
-            {
-                ServerUri = new Uri("http://localhost:3000"),
-                Query = new List<KeyValuePair<string, string>>(),
-            },
-        };
-        var observer = Substitute.For<IMyObserver<IMessage>>();
-        session.Subscribe(observer);
-        return (session, httpAdapter, httpClient, observer);
     }
 
     [Fact]
@@ -192,6 +202,13 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                },
+            ]);
         _session.OnNext(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
@@ -215,6 +232,13 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                },
+            ]);
         _session.OnNext(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
