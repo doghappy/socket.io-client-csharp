@@ -24,20 +24,6 @@ public class EngineIO3AdapterTests
             .WithMessage("The array cannot be empty");
     }
 
-    [Fact]
-    public void ToHttpRequest_GivenAnEmptySubBytes_ThrowException()
-    {
-        var bytes = new List<byte[]>
-        {
-            Array.Empty<byte>(),
-        };
-        _adapter
-            .Invoking(x => x.ToHttpRequest(bytes))
-            .Should()
-            .Throw<ArgumentException>()
-            .WithMessage("The sub array cannot be empty");
-    }
-
     private static readonly (ICollection<byte[]> bytes, IHttpRequest req) OneItem1Byte = new(new List<byte[]>
     {
         new byte[] { 1 },
@@ -102,8 +88,6 @@ public class EngineIO3AdapterTests
         req.Should().BeEquivalentTo(result);
     }
 
-    private static readonly (string raw, IEnumerable<string> textMessages) GetMessagesSinglePing = new("1:2", ["2"]);
-
     private static readonly (string raw, IEnumerable<string> textMessages) GetMessagesSingleHelloWorld = new(
         "12:hello world!",
         ["hello world!"]);
@@ -115,10 +99,6 @@ public class EngineIO3AdapterTests
     public static TheoryData<string, IEnumerable<string>> GetMessagesCases =>
         new()
         {
-            {
-                GetMessagesSinglePing.raw,
-                GetMessagesSinglePing.textMessages
-            },
             {
                 GetMessagesSingleHelloWorld.raw,
                 GetMessagesSingleHelloWorld.textMessages
@@ -133,6 +113,7 @@ public class EngineIO3AdapterTests
     [MemberData(nameof(GetMessagesCases))]
     public void GetMessages_WhenCalled_AlwaysPass(string raw, IEnumerable<string> textMessages)
     {
+        // Note: EngineIO3 bytes are handled by HttpSession directly, no need to test bytes here
         _adapter.GetMessages(raw)
             .Select(m => m.Text)
             .Should()

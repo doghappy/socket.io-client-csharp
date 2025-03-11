@@ -14,10 +14,6 @@ public class EngineIO3Adapter : IEngineIOAdapter
         {
             throw new ArgumentException("The array cannot be empty");
         }
-        if (bytes.Any(b => b.Length == 0))
-        {
-            throw new ArgumentException("The sub array cannot be empty");
-        }
         var req = new HttpRequest
         {
             Method = RequestMethod.Post,
