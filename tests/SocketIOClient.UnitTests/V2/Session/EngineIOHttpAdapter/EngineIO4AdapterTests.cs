@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using FluentAssertions;
 using JetBrains.Annotations;
-using SocketIOClient.V2.Protocol;
+using SocketIOClient.Core;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using Xunit;
@@ -137,7 +136,7 @@ public class EngineIO4AdapterTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string content)
+    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string? content)
     {
         _adapter
             .Invoking(x => x.ToHttpRequest(content))

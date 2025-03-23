@@ -123,7 +123,7 @@ public class EngineIO3AdapterTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string content)
+    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string? content)
     {
         _adapter
             .Invoking(x => x.ToHttpRequest(content))

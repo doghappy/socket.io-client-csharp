@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.V2.Message;
+using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Serializer;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 

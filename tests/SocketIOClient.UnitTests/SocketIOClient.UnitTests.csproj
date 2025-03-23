@@ -6,6 +6,8 @@
     <IsPackable>false</IsPackable>
     <AssemblyOriginatorKeyFile>../../src/SocketIOClient/SocketIOClient.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
+    <LangVersion>default</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

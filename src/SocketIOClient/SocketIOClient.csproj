@@ -24,8 +24,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
+	  <ProjectReference Include="..\..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
 	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
 	  <ProjectReference Include="..\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
+	  <ProjectReference Include="..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
+	  <ProjectReference Include="..\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
+	  <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="V2\Message\" />
 	</ItemGroup>
 
 </Project>

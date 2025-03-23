@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.V2.Message;
+using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 
 namespace SocketIOClient.V2.Session;
 

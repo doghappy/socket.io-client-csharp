@@ -10,16 +10,8 @@ public class ArchitectureTests
 {
     private static readonly Architecture Architecture = new ArchLoader().LoadAssemblies(
         System.Reflection.Assembly.Load("SocketIOClient"),
-        System.Reflection.Assembly.Load("SocketIO.Core"),
-        System.Reflection.Assembly.Load("SocketIO.Serializer.Core"),
-        // System.Reflection.Assembly.Load("SocketIO.Serializer.MessagePack"),
-        // System.Reflection.Assembly.Load("SocketIO.Serializer.NewtonsoftJson"),
-        System.Reflection.Assembly.Load("SocketIO.Serializer.SystemTextJson")
-    // System.Reflection.Assembly.Load("SocketIOClient.Windows7")
-    // System.Reflection.Assembly.Load("SocketIOClient"),
-    // System.Reflection.Assembly.Load("SocketIOClient"),
-    // System.Reflection.Assembly.Load("SocketIOClient"),
-    // System.Reflection.Assembly.Load("SocketIOClient.UnitTests")
+        System.Reflection.Assembly.Load("SocketIOClient.Core"),
+        System.Reflection.Assembly.Load("SocketIOClient.Serializer")
     ).Build();
 
     [Fact]

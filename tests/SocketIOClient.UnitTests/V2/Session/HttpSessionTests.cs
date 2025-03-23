@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using SocketIOClient.V2.Message;
+using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Serializer;
-using SocketIOClient.V2.Serializer.Json.Decapsulation;
-using SocketIOClient.V2.Serializer.Json.System;
+using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
@@ -90,7 +91,7 @@ public class HttpSessionTests
     {
         var httpClient = Substitute.For<IHttpClient>();
         var httpAdapter = new HttpAdapter(httpClient);
-        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var serializer = new SystemJsonSerializer(new Decapsulator(), new JsonSerializerOptions());
         var uriConverter = new DefaultUriConverter(4);
         var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
         {

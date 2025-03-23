@@ -1,9 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
-using SocketIOClient.V2;
+using SocketIOClient.Core;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using Xunit;
 
