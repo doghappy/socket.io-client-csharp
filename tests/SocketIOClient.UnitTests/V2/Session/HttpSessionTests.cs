@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
@@ -55,7 +56,7 @@ public class HttpSessionTests
     public async Task ConnectAsync_HttpAdapterThrowAnyException_SessionThrowConnectionFailedException()
     {
         _httpAdapter
-            .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>())
+            .SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
             .Throws(new HttpRequestException("Server refused connection"));
 
         await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
@@ -67,10 +68,30 @@ public class HttpSessionTests
     }
 
     [Fact]
+    public async Task ConnectAsync_WhenCalled_PassCorrectHttpRequestToAdapter()
+    {
+        var requests = new List<IHttpRequest>();
+        _httpAdapter
+            .When(async a => await a.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()))
+            .Do(callInfo => { requests.Add(callInfo.Arg<IHttpRequest>()); });
+
+        await _session.ConnectAsync(CancellationToken.None);
+
+        requests.Should()
+            .BeEquivalentTo([
+                new HttpRequest
+                {
+                    Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
+                    Method = RequestMethod.Get,
+                },
+            ]);
+    }
+
+    [Fact]
     public async Task ConnectAsync_CancelledToken_ThrowConnectionFailedException()
     {
         _httpAdapter
-            .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
+            .SendAsync(Arg.Any<IHttpRequest>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
             .Throws(new TaskCanceledException("Task was canceled"));
 
         await _session.Invoking(async x =>

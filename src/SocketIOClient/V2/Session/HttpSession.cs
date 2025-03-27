@@ -106,6 +106,8 @@ public class HttpSession : ISession
         }
         // TODO: serialize by message.Type
         // var protocolMessages = serializer.Serialize()
+
+        // _serializer.Serialize()
         await _httpAdapter.SendAsync(null, cancellationToken);
         throw new NotImplementedException();
     }
@@ -117,13 +119,13 @@ public class HttpSession : ISession
             SessionOptions.ServerUri,
             SessionOptions.Path,
             SessionOptions.Query);
-        var message = new ProtocolMessage
+        var req = new HttpRequest
         {
-            Text = string.Empty,
+            Uri = uri,
         };
         try
         {
-            await _httpAdapter.SendAsync(message, cancellationToken);
+            await _httpAdapter.SendAsync(req, cancellationToken);
         }
         catch (Exception e)
         {

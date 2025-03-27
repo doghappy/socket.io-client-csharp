@@ -24,8 +24,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
-	  <ProjectReference Include="..\..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
 	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
 	  <ProjectReference Include="..\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
 	  <ProjectReference Include="..\SocketIOClient.Core\SocketIOClient.Core.csproj" />

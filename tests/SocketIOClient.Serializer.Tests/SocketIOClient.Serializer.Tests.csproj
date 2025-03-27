@@ -7,6 +7,7 @@
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -23,10 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
-      <ProjectReference Include="..\..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
       <ProjectReference Include="..\..\src\SocketIOClient.Core\SocketIOClient.Core.csproj" />
       <ProjectReference Include="..\..\src\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
     </ItemGroup>
-
 </Project>

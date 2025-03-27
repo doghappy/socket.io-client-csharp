@@ -11,7 +11,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 {
     private readonly List<IMyObserver<ProtocolMessage>> _observers = [];
 
-    private async Task<IHttpResponse> GetResponseAsync(ProtocolMessage message, CancellationToken cancellationToken)
+    private async Task<IHttpResponse> SendProtocolMessageAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
         var req = new HttpRequest
         {
@@ -35,7 +35,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
     private static async Task<ProtocolMessage> GetMessageAsync(IHttpResponse response)
     {
         var message = new ProtocolMessage();
-        if (response.MediaType.Equals("application/octet-stream", StringComparison.InvariantCultureIgnoreCase))
+        if (response.MediaType.Equals(MediaTypeNames.Application.Octet, StringComparison.InvariantCultureIgnoreCase))
         {
             message.Type = ProtocolMessageType.Bytes;
             message.Bytes = await response.ReadAsByteArrayAsync();
@@ -50,12 +50,23 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
-        var response = await GetResponseAsync(message, cancellationToken);
+        var response = await SendProtocolMessageAsync(message, cancellationToken);
+        await HandleResponseAsync(response);
+    }
+
+    private async Task HandleResponseAsync(IHttpResponse response)
+    {
         var incomingMessage = await GetMessageAsync(response);
         foreach (var observer in _observers)
         {
             observer.OnNext(incomingMessage);
         }
+    }
+
+    public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
+    {
+        var response = await httpClient.SendAsync(req, cancellationToken);
+        await HandleResponseAsync(response);
     }
 
     public void Subscribe(IMyObserver<ProtocolMessage> observer)
