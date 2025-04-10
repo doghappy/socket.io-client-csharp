@@ -98,18 +98,13 @@ public class HttpSession : ISession
 
     public SessionOptions SessionOptions { get; set; }
 
-    public async Task SendAsync(IMessage message, CancellationToken cancellationToken)
+    public async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
-        if (message is null)
+        var messages = _serializer.Serialize(data);
+        foreach (var message in messages)
         {
-            throw new ArgumentNullException(nameof(message));
+            await _httpAdapter.SendAsync(message, cancellationToken);
         }
-        // TODO: serialize by message.Type
-        // var protocolMessages = serializer.Serialize()
-
-        // _serializer.Serialize()
-        await _httpAdapter.SendAsync(null, cancellationToken);
-        throw new NotImplementedException();
     }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)

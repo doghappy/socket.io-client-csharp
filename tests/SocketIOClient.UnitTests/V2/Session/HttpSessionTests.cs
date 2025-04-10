@@ -45,14 +45,6 @@ public class HttpSessionTests
     private readonly ISerializer _serializer;
 
     [Fact]
-    public async Task SendAsync_GivenANull_ThrowArgumentNullException()
-    {
-        await _session.Invoking(async x => await x.SendAsync(null, CancellationToken.None))
-            .Should()
-            .ThrowAsync<ArgumentNullException>();
-    }
-
-    [Fact]
     public async Task ConnectAsync_HttpAdapterThrowAnyException_SessionThrowConnectionFailedException()
     {
         _httpAdapter
@@ -112,7 +104,7 @@ public class HttpSessionTests
     {
         var httpClient = Substitute.For<IHttpClient>();
         var httpAdapter = new HttpAdapter(httpClient);
-        var serializer = new SystemJsonSerializer(new Decapsulator(), new JsonSerializerOptions());
+        var serializer = new SystemJsonSerializer(new Decapsulator());
         var uriConverter = new DefaultUriConverter(4);
         var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
         {

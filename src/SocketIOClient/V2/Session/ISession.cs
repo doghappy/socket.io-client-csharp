@@ -10,6 +10,6 @@ public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage
 {
     int PendingDeliveryCount { get; }
     SessionOptions SessionOptions { get; set; }
-    Task SendAsync(IMessage message, CancellationToken cancellationToken);
+    Task SendAsync(object[] data, CancellationToken cancellationToken);
     Task ConnectAsync(CancellationToken cancellationToken);
 }
