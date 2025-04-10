@@ -11,17 +11,17 @@ namespace SocketIOClient.V2.Serializer.SystemTextJson;
 
 public class SystemJsonSerializer : BaseJsonSerializer
 {
-    public SystemJsonSerializer(IDecapsulable decapsulator, JsonSerializerOptions options) : base(decapsulator)
+    public SystemJsonSerializer(IDecapsulable decapsulator) : base(decapsulator)
     {
-        _options = options;
+        JsonSerializerOptions = new JsonSerializerOptions();
     }
 
-    private readonly JsonSerializerOptions _options;
+    public JsonSerializerOptions JsonSerializerOptions { get; set; }
     public IEngineIOMessageAdapter EngineIOMessageAdapter { get; set; }
 
     private JsonSerializerOptions NewOptions(JsonConverter converter)
     {
-        var newOptions = new JsonSerializerOptions(_options);
+        var newOptions = new JsonSerializerOptions(JsonSerializerOptions);
         newOptions.Converters.Add(converter);
         return newOptions;
     }
@@ -93,7 +93,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
     {
         var result = Decapsulator.DecapsulateEventMessage(text);
         var message = new SystemJsonEventMessage();
-        SetEventMessageProperties(result, message, _options);
+        SetEventMessageProperties(result, message, JsonSerializerOptions);
         return message;
     }
 
@@ -101,7 +101,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
     {
         var result = Decapsulator.DecapsulateEventMessage(text);
         var message = new SystemJsonAckMessage();
-        SetAckMessageProperties(result, message, _options);
+        SetAckMessageProperties(result, message, JsonSerializerOptions);
         return message;
     }
 
@@ -109,7 +109,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
     {
         var result = Decapsulator.DecapsulateBinaryEventMessage(text);
         var message = new SystemJsonBinaryEventMessage();
-        SetEventMessageProperties(result, message, _options);
+        SetEventMessageProperties(result, message, JsonSerializerOptions);
         SetByteProperties(message, result.BytesCount);
         return message;
     }
@@ -124,7 +124,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
     {
         var result = Decapsulator.DecapsulateBinaryEventMessage(text);
         var message = new SystemJsonBinaryAckMessage();
-        SetAckMessageProperties(result, message, _options);
+        SetAckMessageProperties(result, message, JsonSerializerOptions);
         SetByteProperties(message, result.BytesCount);
         return message;
     }

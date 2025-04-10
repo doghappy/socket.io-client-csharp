@@ -17,7 +17,7 @@ public class SystemJsonSerializerTests
 {
     public SystemJsonSerializerTests()
     {
-        _serializer = new SystemJsonSerializer(_realDecapsulator, new JsonSerializerOptions());
+        _serializer = new SystemJsonSerializer(_realDecapsulator);
     }
 
     private readonly SystemJsonSerializer _serializer;
@@ -34,7 +34,7 @@ public class SystemJsonSerializerTests
     [Fact]
     public void Serialize_DataOnlyAndDataIsEmpty_ThrowArgumentException()
     {
-        _serializer.Invoking(x => x.Serialize(Array.Empty<object>()))
+        _serializer.Invoking(x => x.Serialize([]))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -200,11 +200,13 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
-        var options = new JsonSerializerOptions
+        var serializer = new SystemJsonSerializer(_realDecapsulator)
         {
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            JsonSerializerOptions = new JsonSerializerOptions
+            {
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            },
         };
-        var serializer = new SystemJsonSerializer(_realDecapsulator, options);
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
     }
 
@@ -460,7 +462,7 @@ public class SystemJsonSerializerTests
             {
                 Success = false,
             });
-        var serializer = new SystemJsonSerializer(decapsulator, new JsonSerializerOptions());
+        var serializer = new SystemJsonSerializer(decapsulator);
         const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
 
         serializer.Deserialize(text).Should().BeNull();
