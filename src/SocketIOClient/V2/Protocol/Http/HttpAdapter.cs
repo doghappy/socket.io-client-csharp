@@ -59,7 +59,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         var incomingMessage = await GetMessageAsync(response);
         foreach (var observer in _observers)
         {
-            observer.OnNext(incomingMessage);
+            await observer.OnNextAsync(incomingMessage);
         }
     }
 

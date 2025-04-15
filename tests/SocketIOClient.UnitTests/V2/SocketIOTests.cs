@@ -35,7 +35,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_AckEvent_PacketIdIncrementBy1()
+    public async Task EmitAsync_AckEventAction_PacketIdIncrementBy1()
     {
         await _io.ConnectAsync();
         await _io.EmitAsync("event", _ => { });
@@ -44,7 +44,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_AckEventAndGotResponse_HandlerIsCalled()
+    public async Task EmitAsync_AckEventActionAndGotResponse_HandlerIsCalled()
     {
         var ackCalled = false;
 
@@ -54,7 +54,36 @@ public class SocketIOTests
         {
             Id = _io.PacketId,
         };
-        _io.OnNext(ackMessage);
+        _io.OnNextAsync(ackMessage);
+
+        ackCalled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EmitAsync_AckEventFunc_PacketIdIncrementBy1()
+    {
+        await _io.ConnectAsync();
+        await _io.EmitAsync("event", _ => Task.CompletedTask);
+
+        _io.PacketId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EmitAsync_AckEventFuncAndGotResponse_HandlerIsCalled()
+    {
+        var ackCalled = false;
+
+        await _io.ConnectAsync();
+        await _io.EmitAsync("event", _ =>
+        {
+            ackCalled = true;
+            return Task.CompletedTask;
+        });
+        var ackMessage = new SystemJsonAckMessage
+        {
+            Id = _io.PacketId,
+        };
+        _io.OnNextAsync(ackMessage);
 
         ackCalled.Should().BeTrue();
     }

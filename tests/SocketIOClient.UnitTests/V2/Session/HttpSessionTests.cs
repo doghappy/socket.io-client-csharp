@@ -129,7 +129,7 @@ public class HttpSessionTests
         session.Subscribe(observer);
         var captured = new List<IMessage>();
         observer
-            .When(x => x.OnNext(Arg.Any<IMessage>()))
+            .When(x => x.OnNextAsync(Arg.Any<IMessage>()))
             .Do(call => captured.Add(call.Arg<IMessage>()));
 
         await httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
@@ -164,9 +164,9 @@ public class HttpSessionTests
         };
         _engineIOAdapter.GetMessages(Arg.Any<string>()).Returns([protocolMessage]);
 
-        _session.OnNext(protocolMessage);
+        _session.OnNextAsync(protocolMessage);
 
-        observer.Received(0).OnNext(Arg.Any<IMessage>());
+        observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 
@@ -194,12 +194,12 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Bytes,
                 },
             ]);
-        _session.OnNext(new ProtocolMessage
+        _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
 
-        observer.Received(1).OnNext(Arg.Any<IBinaryMessage>());
+        observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
     }
 
@@ -223,12 +223,12 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Text,
                 },
             ]);
-        _session.OnNext(new ProtocolMessage
+        _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
 
-        observer.Received(0).OnNext(Arg.Any<IMessage>());
+        observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 
@@ -253,16 +253,16 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Text,
                 },
             ]);
-        _session.OnNext(new ProtocolMessage
+        _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
-        _session.OnNext(new ProtocolMessage
+        _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Bytes,
         });
 
-        observer.Received(1).OnNext(Arg.Any<IBinaryMessage>());
+        observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
     }
 }

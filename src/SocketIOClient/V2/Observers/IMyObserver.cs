@@ -1,6 +1,8 @@
+using System.Threading.Tasks;
+
 namespace SocketIOClient.V2.Observers;
 
 public interface IMyObserver<in T>
 {
-    void OnNext(T protocolMessage);
+    Task OnNextAsync(T protocolMessage);
 }

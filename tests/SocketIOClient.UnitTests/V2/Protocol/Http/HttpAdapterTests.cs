@@ -27,7 +27,7 @@ public class HttpAdapterTests
 
         await _httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
 
-        observer.Received().OnNext(Arg.Any<ProtocolMessage>());
+        observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -38,6 +38,6 @@ public class HttpAdapterTests
 
         await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
 
-        observer.Received().OnNext(Arg.Any<ProtocolMessage>());
+        observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 }

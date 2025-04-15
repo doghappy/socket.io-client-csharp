@@ -36,15 +36,16 @@ public class HttpSession : ISession
 
     public int PendingDeliveryCount => _messageQueue.Count;
 
-    public void OnNext(ProtocolMessage protocolMessage)
+    public Task OnNextAsync(ProtocolMessage protocolMessage)
     {
         if (protocolMessage.Type == ProtocolMessageType.Bytes)
         {
             OnNextBytesMessage(protocolMessage.Bytes);
-            return;
+            return Task.CompletedTask;
         }
         var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
         HandleMessages(messages);
+        return Task.CompletedTask;
     }
 
     private void HandleMessages(IEnumerable<ProtocolMessage> messages)
@@ -92,7 +93,7 @@ public class HttpSession : ISession
     {
         foreach (var observer in _observers)
         {
-            observer.OnNext(message);
+            observer.OnNextAsync(message);
         }
     }
 

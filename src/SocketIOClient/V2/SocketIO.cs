@@ -24,7 +24,7 @@ public class SocketIO : ISocketIO
 
 
     private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
-    private readonly Dictionary<int, Func<SocketIOResponse, Task>> _funcHandlers = new();
+    private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
     private readonly SocketIOOptions _options;
 
 
@@ -40,15 +40,6 @@ public class SocketIO : ISocketIO
 
     public SocketIO(string uri) : this(new Uri(uri), new SocketIOOptions())
     {
-    }
-
-    private IEngineIOAdapter NewEnginIOAdapter()
-    {
-        if (_options.EIO == EngineIO.V3)
-        {
-            return new EngineIO3Adapter();
-        }
-        return new EngineIO4Adapter();
     }
 
     public Task ConnectAsync()
@@ -81,12 +72,27 @@ public class SocketIO : ISocketIO
         _ackHandlers.Add(PacketId, ack);
     }
 
-    public void OnNext(IMessage message)
+    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
+    {
+        ThrowIfNotConnected();
+        PacketId++;
+        await _session.SendAsync([eventName], CancellationToken.None);
+        _funcHandlers.Add(PacketId, ack);
+    }
+
+    public async Task OnNextAsync(IMessage message)
     {
         if (message.Type == MessageType.Ack)
         {
             var ackMessage = (IAckMessage)message;
-            _ackHandlers[ackMessage.Id](ackMessage);
+            if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
+            {
+                ack(ackMessage);
+            }
+            else if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
+            {
+                await func(ackMessage);
+            }
         }
     }
 }
