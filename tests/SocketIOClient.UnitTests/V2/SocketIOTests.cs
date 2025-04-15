@@ -54,7 +54,7 @@ public class SocketIOTests
         {
             Id = _io.PacketId,
         };
-        _io.OnNextAsync(ackMessage);
+        await _io.OnNextAsync(ackMessage);
 
         ackCalled.Should().BeTrue();
     }
@@ -83,7 +83,7 @@ public class SocketIOTests
         {
             Id = _io.PacketId,
         };
-        _io.OnNextAsync(ackMessage);
+        await _io.OnNextAsync(ackMessage);
 
         ackCalled.Should().BeTrue();
     }
