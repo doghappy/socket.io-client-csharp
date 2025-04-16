@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
-    <AssemblyOriginatorKeyFile>../../src/SocketIOClient/SocketIOClient.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
+    <IsTestProject>true</IsTestProject>
     <LangVersion>default</LangVersion>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +27,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit"/>
   </ItemGroup>
 
   <ItemGroup>

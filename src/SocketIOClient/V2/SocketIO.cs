@@ -16,21 +16,10 @@ namespace SocketIOClient.V2;
 
 public class SocketIO : ISocketIO
 {
-    public IHttpClient HttpClient { get; set; }
-    public ISessionFactory SessionFactory { get; set; }
-    private ISession _session;
-    public int PacketId { get; private set; }
-    public bool Connected { get; private set; }
-
-
-    private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
-    private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
-    private readonly SocketIOOptions _options;
-
-
     public SocketIO(Uri uri, SocketIOOptions options)
     {
-        _options = options;
+        _serverUri = uri;
+        Options = options;
         SessionFactory = new DefaultSessionFactory();
     }
 
@@ -42,13 +31,65 @@ public class SocketIO : ISocketIO
     {
     }
 
-    public Task ConnectAsync()
+    public IHttpClient HttpClient { get; set; }
+    public ISessionFactory SessionFactory { get; set; }
+    private ISession _session;
+    public int PacketId { get; private set; }
+    public bool Connected { get; private set; }
+    public string Id { get; private set; }
+
+    public string Namespace { get; private set; }
+
+    private Uri _serverUri;
+
+    private Uri ServerUri
     {
-        _session = SessionFactory.New(_options.EIO);
-        // Session.Subscribe(this);
-        Connected = true;
-        return Task.CompletedTask;
+        get => _serverUri;
+        set
+        {
+            if (_serverUri != value)
+            {
+                _serverUri = value;
+                if (value != null && value.AbsolutePath != "/")
+                {
+                    Namespace = value.AbsolutePath;
+                }
+            }
+        }
     }
+
+
+    private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
+    private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
+    public SocketIOOptions Options { get; }
+    public event EventHandler<Exception> OnReconnectError;
+
+    public async Task ConnectAsync()
+    {
+        var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
+        for (int i = 0; i < attempts; i++)
+        {
+            // TODO: IDisposable
+            var session = SessionFactory.New(Options.EIO);
+            using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+            try
+            {
+                await session.ConnectAsync(cts.Token);
+                _session = session;
+                _session.Subscribe(this);
+            }
+            catch (Exception e)
+            {
+                var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
+                OnReconnectError?.Invoke(this, ex);
+                if (i == attempts - 1)
+                {
+                    throw ex;
+                }
+            }
+        }
+    }
+
 
     // public Task EmitAsync(string eventName, Action ack)
     // {
@@ -82,17 +123,35 @@ public class SocketIO : ISocketIO
 
     public async Task OnNextAsync(IMessage message)
     {
-        if (message.Type == MessageType.Ack)
+        switch (message.Type)
         {
-            var ackMessage = (IAckMessage)message;
-            if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
-            {
-                ack(ackMessage);
-            }
-            else if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
-            {
-                await func(ackMessage);
-            }
+            case MessageType.Connected:
+                await HandleConnectedMessage(message);
+                break;
+            case MessageType.Ack:
+                await HandleAckMessage(message);
+                break;
         }
+    }
+
+    private async Task HandleAckMessage(IMessage message)
+    {
+        var ackMessage = (IAckMessage)message;
+        if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
+        {
+            ack(ackMessage);
+        }
+        else if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
+        {
+            await func(ackMessage);
+        }
+    }
+
+    private Task HandleConnectedMessage(IMessage message)
+    {
+        var connectedMessage = (ConnectedMessage)message;
+        Id = connectedMessage.Sid;
+        Connected = true;
+        return Task.CompletedTask;
     }
 }
