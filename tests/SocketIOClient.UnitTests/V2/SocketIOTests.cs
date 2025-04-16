@@ -130,8 +130,6 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsyncCancellationToken_GivenACanceledToken_ThrowConnectionException()
     {
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
-
         await _io
             .Invoking(async x =>
             {
