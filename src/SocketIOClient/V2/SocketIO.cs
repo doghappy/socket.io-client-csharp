@@ -66,9 +66,15 @@ public class SocketIO : ISocketIO
 
     public async Task ConnectAsync()
     {
+        await ConnectAsync(CancellationToken.None);
+    }
+
+    public async Task ConnectAsync(CancellationToken cancellationToken)
+    {
         var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
         for (int i = 0; i < attempts; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             // TODO: IDisposable
             var session = SessionFactory.New(Options.EIO);
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);

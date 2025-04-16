@@ -128,6 +128,22 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task ConnectAsyncCancellationToken_GivenACanceledToken_ThrowConnectionException()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+
+        await _io
+            .Invoking(async x =>
+            {
+                using var cts = new CancellationTokenSource();
+                await cts.CancelAsync();
+                await x.ConnectAsync(cts.Token);
+            })
+            .Should()
+            .ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
     public async Task EmitAsync_AckEventAction_PacketIdIncrementBy1()
     {
         await ConnectAsync();
