@@ -38,7 +38,6 @@ public class SocketIOTests
         io.PacketId.Should().Be(0);
         io.Connected.Should().BeFalse();
         io.Id.Should().BeNull();
-        io.Namespace.Should().BeNull();
         io.SessionFactory.Should().BeOfType<DefaultSessionFactory>();
     }
 

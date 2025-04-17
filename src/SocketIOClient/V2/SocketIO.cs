@@ -40,7 +40,7 @@ public class SocketIO : ISocketIO
     public string Id { get; private set; }
     public IRandom Random { get; set; }
 
-    public string Namespace { get; private set; }
+    private string Namespace { get; set; }
 
     private Uri _serverUri;
 
