@@ -15,14 +15,21 @@ public class SocketIOTests
         _session = Substitute.For<ISession>();
         var sessionFactory = Substitute.For<ISessionFactory>();
         sessionFactory.New(Arg.Any<EngineIO>()).Returns(_session);
+        _random = Substitute.For<IRandom>();
         _io = new SocketIOClient.V2.SocketIO("http://localhost:3000")
         {
             SessionFactory = sessionFactory,
+            Random = _random,
+            Options =
+            {
+                Reconnection = false,
+            },
         };
     }
 
     private readonly SocketIOClient.V2.SocketIO _io;
     private readonly ISession _session;
+    private readonly IRandom _random;
 
     [Fact]
     public void NothingCalled_DefaultValues()
@@ -135,6 +142,23 @@ public class SocketIOTests
             {
                 using var cts = new CancellationTokenSource();
                 await cts.CancelAsync();
+                await x.ConnectAsync(cts.Token);
+            })
+            .Should()
+            .ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task ConnectAsyncCancellationToken_CancelAfter200ms_ThrowConnectionException()
+    {
+        _io.Options.Reconnection = true;
+        _random.Next(Arg.Any<int>()).Returns(10);
+
+        await _io
+            .Invoking(async x =>
+            {
+                using var cts = new CancellationTokenSource();
+                cts.CancelAfter(TimeSpan.FromMilliseconds(100));
                 await x.ConnectAsync(cts.Token);
             })
             .Should()

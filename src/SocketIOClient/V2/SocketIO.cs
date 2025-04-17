@@ -21,6 +21,7 @@ public class SocketIO : ISocketIO
         _serverUri = uri;
         Options = options;
         SessionFactory = new DefaultSessionFactory();
+        Random = new DefaultRandom();
     }
 
     public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
@@ -37,6 +38,7 @@ public class SocketIO : ISocketIO
     public int PacketId { get; private set; }
     public bool Connected { get; private set; }
     public string Id { get; private set; }
+    public IRandom Random { get; set; }
 
     public string Namespace { get; private set; }
 
@@ -92,6 +94,8 @@ public class SocketIO : ISocketIO
                 {
                     throw ex;
                 }
+                var delay = Random.Next(Options.ReconnectionDelayMax);
+                await Task.Delay(delay, CancellationToken.None);
             }
         }
     }

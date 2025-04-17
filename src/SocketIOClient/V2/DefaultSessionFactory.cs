@@ -8,6 +8,11 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;
 
+public interface ISessionFactory
+{
+    ISession New(EngineIO eio);
+}
+
 public class DefaultSessionFactory : ISessionFactory
 {
     public ISession New(EngineIO eio)
