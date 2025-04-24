@@ -135,6 +135,9 @@ public class SocketIO : ISocketIO
     {
         switch (message.Type)
         {
+            case MessageType.Ping:
+                OnPing?.Invoke(this, EventArgs.Empty);
+                break;
             case MessageType.Connected:
                 await HandleConnectedMessage(message);
                 break;
