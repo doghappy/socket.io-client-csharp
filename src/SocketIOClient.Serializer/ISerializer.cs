@@ -10,5 +10,6 @@ namespace SocketIOClient.Serializer
         List<ProtocolMessage> Serialize(object[] data);
         IMessage Deserialize(string text);
         ProtocolMessage NewPingMessage();
+        ProtocolMessage NewPongMessage();
     }
 }

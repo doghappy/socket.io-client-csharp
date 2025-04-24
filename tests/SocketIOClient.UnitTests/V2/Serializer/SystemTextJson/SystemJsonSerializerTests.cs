@@ -516,4 +516,16 @@ public class SystemJsonSerializerTests
                 Text = "2",
             });
     }
+
+    [Fact]
+    public void NewPongMessage_WhenCalled_ReturnPingMessage()
+    {
+        var pong = _serializer.NewPongMessage();
+        pong.Should()
+            .BeEquivalentTo(new ProtocolMessage
+            {
+                Type = ProtocolMessageType.Text,
+                Text = "3",
+            });
+    }
 }

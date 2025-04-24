@@ -2,8 +2,11 @@ using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
 using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2;
 using SocketIOClient.V2.Infrastructure;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
@@ -15,13 +18,22 @@ public class EngineIO4AdapterTests
     public EngineIO4AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
+        _serializer = Substitute.For<ISerializer>();
         _protocolAdapter = Substitute.For<IProtocolAdapter>();
-        _adapter = new EngineIO4Adapter(_stopwatch, _protocolAdapter, TimeSpan.FromSeconds(1));
+        _retryPolicy = Substitute.For<IRetriable>();
+        _adapter = new EngineIO4Adapter(
+            _stopwatch,
+            _serializer,
+            _protocolAdapter,
+            TimeSpan.FromSeconds(1),
+            _retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
+    private readonly ISerializer _serializer;
     private readonly IProtocolAdapter _protocolAdapter;
     private readonly EngineIO4Adapter _adapter;
+    private readonly IRetriable _retryPolicy;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -161,5 +173,19 @@ public class EngineIO4AdapterTests
     {
         var req = _adapter.ToHttpRequest(content);
         req.BodyText.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_PingMessage_NotifyObserverWithDuration()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Subscribe(observer);
+        _stopwatch.Elapsed.Returns(TimeSpan.FromSeconds(1));
+
+        await _adapter.ProcessMessageAsync(new PingMessage());
+
+        await observer
+            .Received(1)
+            .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
     }
 }

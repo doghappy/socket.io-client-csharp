@@ -26,7 +26,7 @@ public class DefaultSessionFactory : ISessionFactory
         var randomDelayRetryPolicy = new RandomDelayRetryPolicy(random);
         IEngineIOAdapter engineIOAdapter = eio == EngineIO.V3
             ? new EngineIO3Adapter(stopwatch, serializer, httpAdapter, options.Timeout, randomDelayRetryPolicy)
-            : new EngineIO4Adapter(stopwatch, httpAdapter, options.Timeout);
+            : new EngineIO4Adapter(stopwatch, serializer, httpAdapter, options.Timeout, randomDelayRetryPolicy);
         return new HttpSession(
             options,
             engineIOAdapter,

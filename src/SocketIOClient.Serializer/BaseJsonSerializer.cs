@@ -70,6 +70,14 @@ public abstract class BaseJsonSerializer : ISerializer
         };
     }
 
+    public ProtocolMessage NewPongMessage()
+    {
+        return new ProtocolMessage
+        {
+            Text = "3",
+        };
+    }
+
     protected abstract IMessage NewMessage(MessageType type, string text);
 
     private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)

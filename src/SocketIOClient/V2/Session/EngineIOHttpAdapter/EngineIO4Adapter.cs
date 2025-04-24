@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
@@ -16,19 +17,25 @@ public class EngineIO4Adapter : IEngineIOAdapter
 {
     public EngineIO4Adapter(
         IStopwatch stopwatch,
+        ISerializer serializer,
         IProtocolAdapter protocolAdapter,
-        TimeSpan timeout)
+        TimeSpan timeout,
+        IRetriable retryPolicy)
     {
         _stopwatch = stopwatch;
+        _serializer = serializer;
         _protocolAdapter = protocolAdapter;
         _timeout = timeout;
+        _retryPolicy = retryPolicy;
     }
 
     private const string Delimiter = "\u001E";
     private readonly IStopwatch _stopwatch;
+    private readonly ISerializer _serializer;
     private readonly IProtocolAdapter _protocolAdapter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly TimeSpan _timeout;
+    private readonly IRetriable _retryPolicy;
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -96,12 +103,13 @@ public class EngineIO4Adapter : IEngineIOAdapter
 
     private async Task HandlePingMessageAsync()
     {
+        var pongProtocolMessage = _serializer.NewPongMessage();
         _stopwatch.Restart();
-        using var cts = new CancellationTokenSource(_timeout);
-        await _protocolAdapter.SendAsync(new ProtocolMessage
+        await _retryPolicy.RetryAsync(3, async () =>
         {
-            Text = "3",
-        }, cts.Token);
+            using var cts = new CancellationTokenSource(_timeout);
+            await _protocolAdapter.SendAsync(pongProtocolMessage, cts.Token);
+        });
         _stopwatch.Stop();
         var pong = new PongMessage
         {
