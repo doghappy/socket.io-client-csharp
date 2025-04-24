@@ -62,6 +62,14 @@ public abstract class BaseJsonSerializer : ISerializer
         return NewMessage(result.Type!.Value, result.Data);
     }
 
+    public ProtocolMessage NewPingMessage()
+    {
+        return new ProtocolMessage
+        {
+            Text = "2",
+        };
+    }
+
     protected abstract IMessage NewMessage(MessageType type, string text);
 
     private static List<ProtocolMessage> GetSerializeResult(string text, IEnumerable<byte[]> bytes)

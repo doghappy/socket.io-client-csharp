@@ -15,18 +15,23 @@ namespace SocketIOClient.V2.Session;
 public class HttpSession : ISession
 {
     public HttpSession(
+        SessionOptions options,
         IEngineIOAdapter engineIOAdapter,
         IHttpAdapter httpAdapter,
         ISerializer serializer,
         IUriConverter uriConverter)
     {
+        _options = options;
         _engineIOAdapter = engineIOAdapter;
         _httpAdapter = httpAdapter;
         _serializer = serializer;
         _uriConverter = uriConverter;
-        httpAdapter.Subscribe(this);
+
+        _engineIOAdapter.Subscribe(this);
+        _httpAdapter.Subscribe(this);
     }
 
+    private readonly SessionOptions _options;
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly IHttpAdapter _httpAdapter;
     private readonly ISerializer _serializer;
@@ -36,34 +41,33 @@ public class HttpSession : ISession
 
     public int PendingDeliveryCount => _messageQueue.Count;
 
-    public Task OnNextAsync(ProtocolMessage protocolMessage)
+    public async Task OnNextAsync(ProtocolMessage protocolMessage)
     {
         if (protocolMessage.Type == ProtocolMessageType.Bytes)
         {
-            OnNextBytesMessage(protocolMessage.Bytes);
-            return Task.CompletedTask;
+            await OnNextBytesMessage(protocolMessage.Bytes);
+            return;
         }
         var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
-        HandleMessages(messages);
-        return Task.CompletedTask;
+        await HandleMessages(messages);
     }
 
-    private void HandleMessages(IEnumerable<ProtocolMessage> messages)
+    private async Task HandleMessages(IEnumerable<ProtocolMessage> messages)
     {
         foreach (var message in messages)
         {
             if (message.Type == ProtocolMessageType.Bytes)
             {
-                OnNextBytesMessage(message.Bytes);
+                await OnNextBytesMessage(message.Bytes);
             }
             else
             {
-                OnNextTextMessage(message.Text);
+                await OnNextTextMessage(message.Text);
             }
         }
     }
 
-    private void OnNextTextMessage(string text)
+    private async Task OnNextTextMessage(string text)
     {
         var message = _serializer.Deserialize(text);
         if (message is null)
@@ -75,29 +79,48 @@ public class HttpSession : ISession
             _messageQueue.Enqueue((IBinaryMessage)message);
             return;
         }
-        NotifyObservers(message);
+        await OnNextAsync(message);
+        // var newMessage= _engineIOAdapter.ProcessMessage(message);
+        // if (newMessage is null)
+        // {
+        //     return;
+        // }
+        // OnNextAsync(newMessage);
+        // var messages = _engineIOAdapter.HandleMessage(message);
+        // if (message.Type is MessageType.Ping)
+        // {
+        //     var lastPing = _dateTimeProvider.Now;
+        //     // TODO: using var cts = new CancellationTokenSource(Timeout);
+        //     _httpAdapter.SendAsync(new ProtocolMessage
+        //     {
+        //         Text = "3",
+        //     }, CancellationToken.None);
+        //     var pong = new PongMessage
+        //     {
+        //         Duration = _dateTimeProvider.Now - lastPing;
+        //     };
+        //     NotifyObservers(pong);
+        // }
     }
 
-    private void OnNextBytesMessage(byte[] bytes)
+    private async Task OnNextBytesMessage(byte[] bytes)
     {
         var message = _messageQueue.Peek();
         message.Add(bytes);
         if (message.ReadyDelivery)
         {
             _messageQueue.Dequeue();
-            NotifyObservers(message);
+            await OnNextAsync(message);
         }
     }
 
-    private void NotifyObservers(IMessage message)
+    public async Task OnNextAsync(IMessage message)
     {
         foreach (var observer in _observers)
         {
-            observer.OnNextAsync(message);
+            await observer.OnNextAsync(message);
         }
     }
-
-    public SessionOptions SessionOptions { get; set; }
 
     public async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
@@ -112,9 +135,9 @@ public class HttpSession : ISession
     {
         var uri = _uriConverter.GetServerUri(
             false,
-            SessionOptions.ServerUri,
-            SessionOptions.Path,
-            SessionOptions.Query);
+            _options.ServerUri,
+            _options.Path,
+            _options.Query);
         var req = new HttpRequest
         {
             Uri = uri,

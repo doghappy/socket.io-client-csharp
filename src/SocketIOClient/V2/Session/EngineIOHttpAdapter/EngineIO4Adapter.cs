@@ -1,14 +1,34 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.V2.Infrastructure;
+using SocketIOClient.V2.Observers;
+using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
 public class EngineIO4Adapter : IEngineIOAdapter
 {
+    public EngineIO4Adapter(
+        IStopwatch stopwatch,
+        IProtocolAdapter protocolAdapter,
+        TimeSpan timeout)
+    {
+        _stopwatch = stopwatch;
+        _protocolAdapter = protocolAdapter;
+        _timeout = timeout;
+    }
+
     private const string Delimiter = "\u001E";
+    private readonly IStopwatch _stopwatch;
+    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly List<IMyObserver<IMessage>> _observers = [];
+    private readonly TimeSpan _timeout;
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -64,5 +84,46 @@ public class EngineIO4Adapter : IEngineIOAdapter
                 };
             }
         }
+    }
+
+    public async Task ProcessMessageAsync(IMessage message)
+    {
+        if (message.Type == MessageType.Ping)
+        {
+            await HandlePingMessageAsync();
+        }
+    }
+
+    private async Task HandlePingMessageAsync()
+    {
+        _stopwatch.Restart();
+        using var cts = new CancellationTokenSource(_timeout);
+        await _protocolAdapter.SendAsync(new ProtocolMessage
+        {
+            Text = "3",
+        }, cts.Token);
+        _stopwatch.Stop();
+        var pong = new PongMessage
+        {
+            Duration = _stopwatch.Elapsed,
+        };
+        await NotifyObserversAsync(pong);
+    }
+
+    private async Task NotifyObserversAsync(IMessage message)
+    {
+        foreach (var observer in _observers)
+        {
+            await observer.OnNextAsync(message);
+        }
+    }
+
+    public void Subscribe(IMyObserver<IMessage> observer)
+    {
+        if (_observers.Contains(observer))
+        {
+            return;
+        }
+        _observers.Add(observer);
     }
 }

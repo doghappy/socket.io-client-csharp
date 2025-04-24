@@ -1,18 +1,27 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FluentAssertions;
 using JetBrains.Annotations;
+using NSubstitute;
 using SocketIOClient.Core;
+using SocketIOClient.V2;
+using SocketIOClient.V2.Infrastructure;
+using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Session.EngineIOHttpAdapter;
 
 public class EngineIO4AdapterTests
 {
-    private readonly EngineIO4Adapter _adapter = new();
+    public EngineIO4AdapterTests()
+    {
+        _stopwatch = Substitute.For<IStopwatch>();
+        _protocolAdapter = Substitute.For<IProtocolAdapter>();
+        _adapter = new EngineIO4Adapter(_stopwatch, _protocolAdapter, TimeSpan.FromSeconds(1));
+    }
+
+    private readonly IStopwatch _stopwatch;
+    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly EngineIO4Adapter _adapter;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()

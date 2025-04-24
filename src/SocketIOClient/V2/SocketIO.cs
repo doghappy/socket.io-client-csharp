@@ -1,15 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
-using SocketIOClient.Serializer.Decapsulation;
-using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Serializer.SystemTextJson;
+using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Session;
-using SocketIOClient.V2.Session.EngineIOHttpAdapter;
-using SocketIOClient.V2.UriConverter;
 using IHttpClient = SocketIOClient.Transport.Http.IHttpClient;
 
 namespace SocketIOClient.V2;
@@ -21,7 +16,7 @@ public class SocketIO : ISocketIO
         _serverUri = uri;
         Options = options;
         SessionFactory = new DefaultSessionFactory();
-        Random = new DefaultRandom();
+        Random = new SystemRandom();
     }
 
     public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
@@ -65,6 +60,8 @@ public class SocketIO : ISocketIO
     private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
     public SocketIOOptions Options { get; }
     public event EventHandler<Exception> OnReconnectError;
+    public event EventHandler OnPing;
+    public event EventHandler<TimeSpan> OnPong;
 
     public async Task ConnectAsync()
     {
@@ -78,7 +75,10 @@ public class SocketIO : ISocketIO
         {
             cancellationToken.ThrowIfCancellationRequested();
             // TODO: IDisposable
-            var session = SessionFactory.New(Options.EIO);
+            var session = SessionFactory.New(Options.EIO, new SessionOptions
+            {
+
+            });
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
             {

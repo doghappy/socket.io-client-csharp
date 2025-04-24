@@ -3,6 +3,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
+using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 
@@ -14,7 +15,7 @@ public class SocketIOTests
     {
         _session = Substitute.For<ISession>();
         var sessionFactory = Substitute.For<ISessionFactory>();
-        sessionFactory.New(Arg.Any<EngineIO>()).Returns(_session);
+        sessionFactory.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()).Returns(_session);
         _random = Substitute.For<IRandom>();
         _io = new SocketIOClient.V2.SocketIO("http://localhost:3000")
         {
@@ -217,4 +218,28 @@ public class SocketIOTests
 
         ackCalled.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()
+    {
+        var called = false;
+        _io.OnPing += (_, _) => called = true;
+        await ConnectAsync();
+
+        await _io.OnNextAsync(new PingMessage());
+
+        called.Should().BeTrue();
+    }
+
+    // [Fact]
+    // public async Task OnPong_PongMessageWasReceived_EventHandlerIsCalled()
+    // {
+    //     TimeSpan? ts = null;
+    //     _io.OnPong+= (_, e) => ts=e;
+    //     await ConnectAsync();
+    //
+    //     await _io.OnNextAsync(new PongMessage());
+    //
+    //     called.Should().BeTrue();
+    // }
 }

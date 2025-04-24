@@ -1,13 +1,8 @@
 using System;
 
-namespace SocketIOClient.V2;
+namespace SocketIOClient.V2.Infrastructure;
 
-public interface IRandom
-{
-    int Next(int max);
-}
-
-public class DefaultRandom : IRandom
+public class SystemRandom : IRandom
 {
     private readonly Random _random = new();
 

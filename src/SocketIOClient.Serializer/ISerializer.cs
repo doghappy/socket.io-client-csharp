@@ -9,5 +9,6 @@ namespace SocketIOClient.Serializer
         string Namespace { get; set; }
         List<ProtocolMessage> Serialize(object[] data);
         IMessage Deserialize(string text);
+        ProtocolMessage NewPingMessage();
     }
 }

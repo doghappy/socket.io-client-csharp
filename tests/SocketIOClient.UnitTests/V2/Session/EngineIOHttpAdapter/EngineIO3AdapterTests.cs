@@ -1,18 +1,40 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FluentAssertions;
 using JetBrains.Annotations;
+using NSubstitute;
+using NSubstitute.ReceivedExtensions;
+using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
+using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.V2.Infrastructure;
+using SocketIOClient.V2.Observers;
+using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Session.EngineIOHttpAdapter;
 
 public class EngineIO3AdapterTests
 {
-    private readonly EngineIO3Adapter _adapter = new();
+    public EngineIO3AdapterTests()
+    {
+        _stopwatch = Substitute.For<IStopwatch>();
+        _serializer = Substitute.For<ISerializer>();
+        _protocolAdapter = Substitute.For<IProtocolAdapter>();
+        _retryPolicy = Substitute.For<IRetriable>();
+        _adapter = new(
+            _stopwatch,
+            _serializer,
+            _protocolAdapter,
+            TimeSpan.FromSeconds(1),
+            _retryPolicy);
+    }
+
+    private readonly IStopwatch _stopwatch;
+    private readonly ISerializer _serializer;
+    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly EngineIO3Adapter _adapter;
+    private readonly IRetriable _retryPolicy;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -139,5 +161,45 @@ public class EngineIO3AdapterTests
     {
         var req = _adapter.ToHttpRequest(content);
         req.BodyText.Should().Be(expected);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ConnectedMessage_PingInBackground()
+    {
+        var ping = new ProtocolMessage
+        {
+            Text = "2",
+        };
+        _serializer.NewPingMessage().Returns(ping);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Subscribe(observer);
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            PingInterval = 10,
+        });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(100);
+
+        var range = Quantity.Within(9, 11);
+        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
+        await observer
+            .Received(range)
+            .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_PongMessage_NotifyObserverWithDuration()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Subscribe(observer);
+        _stopwatch.Elapsed.Returns(TimeSpan.FromSeconds(1));
+
+        await _adapter.ProcessMessageAsync(new PongMessage());
+
+        await observer
+            .Received(1)
+            .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
     }
 }

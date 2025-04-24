@@ -1,5 +1,6 @@
 using System.Net.Http;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
@@ -10,28 +11,27 @@ namespace SocketIOClient.V2;
 
 public interface ISessionFactory
 {
-    ISession New(EngineIO eio);
+    ISession New(EngineIO eio, SessionOptions options);
 }
 
 public class DefaultSessionFactory : ISessionFactory
 {
-    public ISession New(EngineIO eio)
+    public ISession New(EngineIO eio, SessionOptions options)
     {
-        var engineIOAdapter = NewEnginIOAdapter(eio);
         var httpClient = new SystemHttpClient(new HttpClient());
+        var httpAdapter = new HttpAdapter(httpClient);
+        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var stopwatch = new SystemStopwatch();
+        var random = new SystemRandom();
+        var randomDelayRetryPolicy = new RandomDelayRetryPolicy(random);
+        IEngineIOAdapter engineIOAdapter = eio == EngineIO.V3
+            ? new EngineIO3Adapter(stopwatch, serializer, httpAdapter, options.Timeout, randomDelayRetryPolicy)
+            : new EngineIO4Adapter(stopwatch, httpAdapter, options.Timeout);
         return new HttpSession(
+            options,
             engineIOAdapter,
             new HttpAdapter(httpClient),
-            new SystemJsonSerializer(new Decapsulator()),
+            serializer,
             new DefaultUriConverter((int)eio));
-    }
-
-    private static IEngineIOAdapter NewEnginIOAdapter(EngineIO eio)
-    {
-        if (eio == EngineIO.V3)
-        {
-            return new EngineIO3Adapter();
-        }
-        return new EngineIO4Adapter();
     }
 }

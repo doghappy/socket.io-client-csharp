@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -18,7 +11,6 @@ using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Session;
 
@@ -29,14 +21,17 @@ public class HttpSessionTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         _serializer = Substitute.For<ISerializer>();
-        _session = new HttpSession(_engineIOAdapter, _httpAdapter, _serializer, new DefaultUriConverter(4))
+        var sessionOptions = new SessionOptions
         {
-            SessionOptions = new SessionOptions
-            {
-                ServerUri = new Uri("http://localhost:3000"),
-                Query = new List<KeyValuePair<string, string>>(),
-            },
+            ServerUri = new Uri("http://localhost:3000"),
+            Query = new List<KeyValuePair<string, string>>(),
         };
+        _session = new HttpSession(
+            sessionOptions,
+            _engineIOAdapter,
+            _httpAdapter,
+            _serializer,
+            new DefaultUriConverter(4));
     }
 
     private readonly HttpSession _session;
@@ -106,14 +101,12 @@ public class HttpSessionTests
         var httpAdapter = new HttpAdapter(httpClient);
         var serializer = new SystemJsonSerializer(new Decapsulator());
         var uriConverter = new DefaultUriConverter(4);
-        var session = new HttpSession(_engineIOAdapter, httpAdapter, serializer, uriConverter)
+        var sessionOptions = new SessionOptions
         {
-            SessionOptions = new SessionOptions
-            {
-                ServerUri = new Uri("http://localhost:3000"),
-                Query = new List<KeyValuePair<string, string>>(),
-            },
+            ServerUri = new Uri("http://localhost:3000"),
+            Query = new List<KeyValuePair<string, string>>(),
         };
+        var session = new HttpSession(sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
         httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
@@ -148,7 +141,7 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public void OnNext_BinaryMessageIsNotReady_NoMessageWillBePushed()
+    public async Task OnNext_BinaryMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -164,14 +157,14 @@ public class HttpSessionTests
         };
         _engineIOAdapter.GetMessages(Arg.Any<string>()).Returns([protocolMessage]);
 
-        _session.OnNextAsync(protocolMessage);
+        await _session.OnNextAsync(protocolMessage);
 
         observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 
     [Fact]
-    public void OnNext_BinaryMessageReady_MessageWillBePushed()
+    public async Task OnNext_BinaryMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -194,7 +187,7 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Bytes,
                 },
             ]);
-        _session.OnNextAsync(new ProtocolMessage
+        await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
@@ -204,7 +197,7 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public void OnNext_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
+    public async Task OnNext_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -223,17 +216,17 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Text,
                 },
             ]);
-        _session.OnNextAsync(new ProtocolMessage
+        await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
 
-        observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
+        await observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 
     [Fact]
-    public void OnNext_BinaryAckMessageReady_MessageWillBePushed()
+    public async Task OnNext_BinaryAckMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -251,18 +244,19 @@ public class HttpSessionTests
                 new ProtocolMessage
                 {
                     Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
                 },
             ]);
-        _session.OnNextAsync(new ProtocolMessage
+        await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
-        _session.OnNextAsync(new ProtocolMessage
+        await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Bytes,
         });
 
-        observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
+        await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
     }
 }

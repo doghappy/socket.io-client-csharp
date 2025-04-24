@@ -247,9 +247,9 @@ public class NewtonJsonSerializerTests
 
     private static readonly (string text, IMessage message) DeserializeUnsupportedTextReturnNull = new("unsupported text", null!);
 
-    private static readonly (string text, IMessage message) DeserializePing = new("2", new TypeOnlyMessage(MessageType.Ping));
+    private static readonly (string text, IMessage message) DeserializePing = new("2", new PingMessage());
 
-    private static readonly (string text, IMessage message) DeserializePong = new("3", new TypeOnlyMessage(MessageType.Pong));
+    private static readonly (string text, IMessage message) DeserializePong = new("3", new PongMessage());
 
     private static readonly (string text, IMessage message) DeserializeNamespaceDisconnectedMessage = new("41/test,", new DisconnectedMessage { Namespace = "/test" });
 
@@ -492,5 +492,17 @@ public class NewtonJsonSerializerTests
         message.Add(bytes);
         var item1 = message!.GetDataValue<TestFile>(0);
         item1.Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public void NewPingMessage_WhenCalled_ReturnPingMessage()
+    {
+        var ping = _serializer.NewPingMessage();
+        ping.Should()
+            .BeEquivalentTo(new ProtocolMessage
+            {
+                Type = ProtocolMessageType.Text,
+                Text = "2",
+            });
     }
 }

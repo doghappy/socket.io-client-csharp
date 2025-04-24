@@ -43,8 +43,8 @@ public class SystemJsonSerializer : BaseJsonSerializer
         return type switch
         {
             MessageType.Opened => NewOpenedMessage(text),
-            MessageType.Ping => new TypeOnlyMessage(MessageType.Ping),
-            MessageType.Pong => new TypeOnlyMessage(MessageType.Pong),
+            MessageType.Ping => new PingMessage(),
+            MessageType.Pong => new PongMessage(),
             MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
             MessageType.Disconnected => NewDisconnectedMessage(text),
             MessageType.Event => NewEventMessage(text),

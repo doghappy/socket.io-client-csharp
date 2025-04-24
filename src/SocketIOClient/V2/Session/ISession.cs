@@ -6,10 +6,9 @@ using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Session;
 
-public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>
+public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>
 {
     int PendingDeliveryCount { get; }
-    SessionOptions SessionOptions { get; set; }
     Task SendAsync(object[] data, CancellationToken cancellationToken);
     Task ConnectAsync(CancellationToken cancellationToken);
 }
