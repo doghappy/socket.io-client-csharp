@@ -1,6 +1,7 @@
 using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
@@ -201,5 +202,32 @@ public class EngineIO3AdapterTests
         await observer
             .Received(1)
             .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
+    }
+
+    [Fact]
+    public async Task StartPingAsync_ObserverThrowException_ContinuePing()
+    {
+        var ping = new ProtocolMessage
+        {
+            Text = "2",
+        };
+        _serializer.NewPingMessage().Returns(ping);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        observer.OnNextAsync(Arg.Any<IMessage>()).ThrowsAsync(new Exception());
+        _adapter.Subscribe(observer);
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            PingInterval = 10,
+        });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(100);
+
+        var range = Quantity.Within(9, 11);
+        await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
+        await observer
+            .Received(range)
+            .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 }

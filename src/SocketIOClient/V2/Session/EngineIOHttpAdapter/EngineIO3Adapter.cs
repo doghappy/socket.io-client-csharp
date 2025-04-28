@@ -147,7 +147,6 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
                 await _protocolAdapter.SendAsync(ping, cts.Token);
             });
             _stopwatch.Restart();
-            // TODO: add test case to cover this
             _ = NotifyObserversAsync(new PingMessage());
         }
     }
