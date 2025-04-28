@@ -74,7 +74,6 @@ public class SocketIO : ISocketIO
         for (int i = 0; i < attempts; i++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            // TODO: IDisposable
             var session = SessionFactory.New(Options.EIO, new SessionOptions
             {
 

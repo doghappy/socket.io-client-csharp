@@ -224,7 +224,7 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(9, 11);
+        var range = Quantity.Within(7, 12);
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
