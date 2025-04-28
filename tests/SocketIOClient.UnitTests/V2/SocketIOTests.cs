@@ -231,15 +231,18 @@ public class SocketIOTests
         called.Should().BeTrue();
     }
 
-    // [Fact]
-    // public async Task OnPong_PongMessageWasReceived_EventHandlerIsCalled()
-    // {
-    //     TimeSpan? ts = null;
-    //     _io.OnPong+= (_, e) => ts=e;
-    //     await ConnectAsync();
-    //
-    //     await _io.OnNextAsync(new PongMessage());
-    //
-    //     called.Should().BeTrue();
-    // }
+    [Fact]
+    public async Task OnPong_PongMessageWasReceived_EventHandlerIsCalled()
+    {
+        TimeSpan? ts = null;
+        _io.OnPong += (_, e) => ts = e;
+        await ConnectAsync();
+
+        await _io.OnNextAsync(new PongMessage
+        {
+            Duration = TimeSpan.FromSeconds(2),
+        });
+
+        ts.Should().Be(TimeSpan.FromSeconds(2));
+    }
 }

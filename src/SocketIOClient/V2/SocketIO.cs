@@ -138,6 +138,9 @@ public class SocketIO : ISocketIO
             case MessageType.Ping:
                 OnPing?.Invoke(this, EventArgs.Empty);
                 break;
+            case MessageType.Pong:
+                HandlePongMessage(message);
+                break;
             case MessageType.Connected:
                 await HandleConnectedMessage(message);
                 break;
@@ -166,5 +169,11 @@ public class SocketIO : ISocketIO
         Id = connectedMessage.Sid;
         Connected = true;
         return Task.CompletedTask;
+    }
+
+    private void HandlePongMessage(IMessage message)
+    {
+        var pong = (PongMessage)message;
+        OnPong?.Invoke(this, pong.Duration);
     }
 }
