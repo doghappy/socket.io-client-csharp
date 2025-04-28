@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
@@ -6,7 +7,7 @@ using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Session;
 
-public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>
+public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>, IDisposable
 {
     int PendingDeliveryCount { get; }
     Task SendAsync(object[] data, CancellationToken cancellationToken);

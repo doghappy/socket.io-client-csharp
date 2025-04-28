@@ -88,6 +88,7 @@ public class SocketIO : ISocketIO
             }
             catch (Exception e)
             {
+                session.Dispose();
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
                 OnReconnectError?.Invoke(this, ex);
                 if (i == attempts - 1)

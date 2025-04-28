@@ -166,6 +166,19 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task ConnectAsync_FailedToConnect_SessionIsDisposed()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowAsync<ConnectionException>();
+
+        _session.Received().Dispose();
+    }
+
+    [Fact]
     public async Task EmitAsync_AckEventAction_PacketIdIncrementBy1()
     {
         await ConnectAsync();

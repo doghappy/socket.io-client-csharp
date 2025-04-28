@@ -80,27 +80,6 @@ public class HttpSession : ISession
             return;
         }
         await OnNextAsync(message);
-        // var newMessage= _engineIOAdapter.ProcessMessage(message);
-        // if (newMessage is null)
-        // {
-        //     return;
-        // }
-        // OnNextAsync(newMessage);
-        // var messages = _engineIOAdapter.HandleMessage(message);
-        // if (message.Type is MessageType.Ping)
-        // {
-        //     var lastPing = _dateTimeProvider.Now;
-        //     // TODO: using var cts = new CancellationTokenSource(Timeout);
-        //     _httpAdapter.SendAsync(new ProtocolMessage
-        //     {
-        //         Text = "3",
-        //     }, CancellationToken.None);
-        //     var pong = new PongMessage
-        //     {
-        //         Duration = _dateTimeProvider.Now - lastPing;
-        //     };
-        //     NotifyObservers(pong);
-        // }
     }
 
     private async Task OnNextBytesMessage(byte[] bytes)
@@ -159,5 +138,13 @@ public class HttpSession : ISession
             return;
         }
         _observers.Add(observer);
+    }
+
+    public void Dispose()
+    {
+        if (_engineIOAdapter is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
     }
 }
