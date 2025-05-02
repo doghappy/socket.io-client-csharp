@@ -220,6 +220,14 @@ namespace SocketIO.Serializer.SystemTextJson
             };
         }
 
+        public SerializedItem SerializePingProbeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "2probe"
+            };
+        }
+
         public SerializedItem SerializeUpgradeMessage()
         {
             return new SerializedItem
@@ -316,6 +324,7 @@ namespace SocketIO.Serializer.SystemTextJson
                 case MessageType.Ping:
                     break;
                 case MessageType.Pong:
+                    ReadPongMessage(message, text);
                     break;
                 case MessageType.Connected:
                     ReadConnectedMessage(message, text, eio);
@@ -341,6 +350,11 @@ namespace SocketIO.Serializer.SystemTextJson
                 default:
                     throw new ArgumentOutOfRangeException(nameof(message.Type), message.Type, null);
             }
+        }
+
+        private static void ReadPongMessage(IMessage message, string text)
+        {
+            message.ReceivedText = text;
         }
 
         private static void ReadOpenedMessage(IMessage message, string text)

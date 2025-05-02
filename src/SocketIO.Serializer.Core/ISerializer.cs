@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using SocketIO.Core;
 
@@ -19,6 +18,7 @@ namespace SocketIO.Serializer.Core
         SerializedItem SerializeConnectedMessage(EngineIO eio, string ns, object auth, IEnumerable<KeyValuePair<string, string>> queries);
 
         SerializedItem SerializePingMessage();
+        SerializedItem SerializePingProbeMessage();
         SerializedItem SerializePongMessage();
         SerializedItem SerializeUpgradeMessage();
     }

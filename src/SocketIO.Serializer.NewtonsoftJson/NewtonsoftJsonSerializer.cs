@@ -220,6 +220,14 @@ namespace SocketIO.Serializer.NewtonsoftJson
             };
         }
 
+        public SerializedItem SerializePingProbeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "2probe"
+            };
+        }
+
         public SerializedItem SerializePongMessage()
         {
             return new SerializedItem
@@ -309,6 +317,7 @@ namespace SocketIO.Serializer.NewtonsoftJson
                 case MessageType.Ping:
                     break;
                 case MessageType.Pong:
+                    ReadPongMessage(message, text);
                     break;
                 case MessageType.Connected:
                     ReadConnectedMessage(message, text, eio);
@@ -334,6 +343,11 @@ namespace SocketIO.Serializer.NewtonsoftJson
                 default:
                     throw new ArgumentOutOfRangeException(nameof(message.Type), message.Type, null);
             }
+        }
+
+        private static void ReadPongMessage(IMessage message, string text)
+        {
+            message.ReceivedText = text;
         }
 
         private static void ReadOpenedMessage(IMessage message, string text)
