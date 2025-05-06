@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -106,24 +107,26 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsync_SessionSuccessfullyConnected_SessionSubscribeIO()
     {
-        await _io.ConnectAsync();
+        await ConnectAsync();
         _session.Received(1).Subscribe(_io);
-    }
-
-    [Fact]
-    public async Task ConnectAsync_SessionSuccessfullyConnectedButNoConnectedMessage_ConnectedIsFalse()
-    {
-        await _io.ConnectAsync();
-        _io.Connected.Should().BeFalse();
     }
 
     private async Task ConnectAsync()
     {
-        await _io.ConnectAsync();
-        await _io.OnNextAsync(new ConnectedMessage
+        await ConnectAsync(0);
+    }
+
+    private async Task ConnectAsync(int ms)
+    {
+        _ = Task.Run(async () =>
         {
-            Sid = "123",
+            await Task.Delay(ms);
+            await _io.OnNextAsync(new ConnectedMessage
+            {
+                Sid = "123",
+            });
         });
+        await _io.ConnectAsync();
     }
 
     [Fact]
@@ -132,6 +135,18 @@ public class SocketIOTests
         await ConnectAsync();
         _io.Connected.Should().BeTrue();
         _io.Id.Should().Be("123");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ConnectedMessageDelay_ConnectAsyncIsSync()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ConnectAsync(200);
+        stopwatch.Stop();
+
+        stopwatch.ElapsedMilliseconds.Should()
+            .BeGreaterThanOrEqualTo(200)
+            .And.BeLessThan(280);
     }
 
     [Fact]

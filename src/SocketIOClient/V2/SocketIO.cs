@@ -58,6 +58,7 @@ public class SocketIO : ISocketIO
 
     private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
+    private TaskCompletionSource<Exception> _connCompletionSource = new();
     public SocketIOOptions Options { get; }
     public event EventHandler<Exception> OnReconnectError;
     public event EventHandler OnPing;
@@ -65,10 +66,21 @@ public class SocketIO : ISocketIO
 
     public async Task ConnectAsync()
     {
-        await ConnectAsync(CancellationToken.None);
+        await ConnectAsync(CancellationToken.None).ConfigureAwait(false);
     }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
+    {
+        _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
+        var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
+        var ex = await task.ConfigureAwait(false);
+        if (ex != null)
+        {
+            throw ex;
+        }
+    }
+
+    private async Task ConnectCoreAsync(CancellationToken cancellationToken)
     {
         var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
         for (int i = 0; i < attempts; i++)
@@ -81,9 +93,10 @@ public class SocketIO : ISocketIO
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
             {
-                await session.ConnectAsync(cts.Token);
+                await session.ConnectAsync(cts.Token).ConfigureAwait(false);
                 _session = session;
                 _session.Subscribe(this);
+                // _sessionCompletionSource.SetResult(true);
             }
             catch (Exception e)
             {
@@ -92,10 +105,11 @@ public class SocketIO : ISocketIO
                 OnReconnectError?.Invoke(this, ex);
                 if (i == attempts - 1)
                 {
+                    _connCompletionSource.SetResult(ex);
                     throw ex;
                 }
                 var delay = Random.Next(Options.ReconnectionDelayMax);
-                await Task.Delay(delay, CancellationToken.None);
+                await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
@@ -163,12 +177,12 @@ public class SocketIO : ISocketIO
         }
     }
 
-    private Task HandleConnectedMessage(IMessage message)
+    private async Task HandleConnectedMessage(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
-        return Task.CompletedTask;
+        _connCompletionSource.SetResult(null);
     }
 
     private void HandlePongMessage(IMessage message)
