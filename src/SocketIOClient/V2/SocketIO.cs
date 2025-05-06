@@ -190,4 +190,11 @@ public class SocketIO : ISocketIO
         var pong = (PongMessage)message;
         OnPong?.Invoke(this, pong.Duration);
     }
+
+    public async Task DisconnectAsync()
+    {
+        _session?.Dispose();
+        Connected = false;
+        Id = null;
+    }
 }

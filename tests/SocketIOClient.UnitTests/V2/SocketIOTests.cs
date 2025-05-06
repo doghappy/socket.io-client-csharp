@@ -273,4 +273,25 @@ public class SocketIOTests
 
         ts.Should().Be(TimeSpan.FromSeconds(2));
     }
+
+    [Fact]
+    public async Task DisconnectAsync_NeverConnected_ClearStatefulData()
+    {
+        await _io.DisconnectAsync();
+
+        _io.Connected.Should().BeFalse();
+        _io.Id.Should().BeNull();
+        _session.DidNotReceive().Dispose();
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_EverConnected_ClearStatefulData()
+    {
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+
+        _io.Connected.Should().BeFalse();
+        _io.Id.Should().BeNull();
+        _session.Received(1).Dispose();
+    }
 }
