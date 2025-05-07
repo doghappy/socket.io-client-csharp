@@ -59,6 +59,7 @@ public class SocketIO : ISocketIO
     private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
     private TaskCompletionSource<Exception> _connCompletionSource = new();
+    private TaskCompletionSource<Exception> _connCompletionSource;
     public SocketIOOptions Options { get; }
     public event EventHandler<Exception> OnReconnectError;
     public event EventHandler OnPing;
@@ -71,6 +72,7 @@ public class SocketIO : ISocketIO
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
+        _connCompletionSource = new TaskCompletionSource<Exception>();
         _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
         var ex = await task.ConfigureAwait(false);

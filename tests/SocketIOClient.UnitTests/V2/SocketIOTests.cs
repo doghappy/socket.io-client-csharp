@@ -294,4 +294,31 @@ public class SocketIOTests
         _io.Id.Should().BeNull();
         _session.Received(1).Dispose();
     }
+
+    [Fact]
+    public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowAsync<ConnectionException>();
+
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_FirstSuccessThenFailed_ThrowConnectionException()
+    {
+        await ConnectAsync();
+
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowAsync<ConnectionException>();
+    }
 }
