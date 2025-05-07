@@ -15,12 +15,12 @@ public class SocketIOTests
     public SocketIOTests()
     {
         _session = Substitute.For<ISession>();
-        var sessionFactory = Substitute.For<ISessionFactory>();
-        sessionFactory.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()).Returns(_session);
+        _sessionFactory = Substitute.For<ISessionFactory>();
+        _sessionFactory.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()).Returns(_session);
         _random = Substitute.For<IRandom>();
         _io = new SocketIOClient.V2.SocketIO("http://localhost:3000")
         {
-            SessionFactory = sessionFactory,
+            SessionFactory = _sessionFactory,
             Random = _random,
             Options =
             {
@@ -32,6 +32,7 @@ public class SocketIOTests
     private readonly SocketIOClient.V2.SocketIO _io;
     private readonly ISession _session;
     private readonly IRandom _random;
+    private readonly ISessionFactory _sessionFactory;
 
     [Fact]
     public void NothingCalled_DefaultValues()
@@ -113,20 +114,30 @@ public class SocketIOTests
 
     private async Task ConnectAsync()
     {
-        await ConnectAsync(0);
+        await ConnectAsync(_io);
     }
 
     private async Task ConnectAsync(int ms)
     {
+        await ConnectAsync(_io, ms);
+    }
+
+    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
+    {
+        await ConnectAsync(io, 0);
+    }
+
+    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
+    {
         _ = Task.Run(async () =>
         {
             await Task.Delay(ms);
-            await _io.OnNextAsync(new ConnectedMessage
+            await io.OnNextAsync(new ConnectedMessage
             {
                 Sid = "123",
             });
         });
-        await _io.ConnectAsync();
+        await io.ConnectAsync();
     }
 
     [Fact]
@@ -135,6 +146,18 @@ public class SocketIOTests
         await ConnectAsync();
         _io.Connected.Should().BeTrue();
         _io.Id.Should().Be("123");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_FirstSuccess_ConnectAsyncOfSessionIsCalled1Time()
+    {
+        _io.Options.Reconnection = true;
+
+        await ConnectAsync();
+        await Task.Delay(2000);
+
+        await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>());
+        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
     }
 
     [Fact]
@@ -320,5 +343,62 @@ public class SocketIOTests
             .Invoking(async x => await x.ConnectAsync())
             .Should()
             .ThrowAsync<ConnectionException>();
+    }
+
+    [Theory]
+    [InlineData(EngineIO.V3)]
+    [InlineData(EngineIO.V4)]
+    public async Task ConnectAsync_DifferentEngineIO_PassCorrectValueToSessionFactory(EngineIO eio)
+    {
+        var options = new SocketIOClient.V2.SocketIOOptions
+        {
+            EIO = eio,
+        };
+        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
+        {
+            SessionFactory = _sessionFactory,
+            Random = _random,
+        };
+
+        await ConnectAsync(io);
+
+        _sessionFactory.Received(1).New(eio, Arg.Any<SessionOptions>());
+    }
+
+    [Fact]
+    public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
+    {
+        var options = new SocketIOClient.V2.SocketIOOptions
+        {
+            Path = "/chat",
+            ConnectionTimeout = TimeSpan.FromSeconds(30),
+            Query =
+            [
+                new KeyValuePair<string, string>("id", "abc"),
+            ],
+        };
+        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
+        {
+            SessionFactory = _sessionFactory,
+            Random = _random,
+        };
+
+        SessionOptions receivedSessionOptions = null!;
+        _sessionFactory.When(x => x.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()))
+            .Do(info => { receivedSessionOptions = info.Arg<SessionOptions>(); });
+
+        await ConnectAsync(io);
+
+        receivedSessionOptions.Should()
+            .BeEquivalentTo(new SessionOptions
+            {
+                ServerUri = new Uri("http://localhost:3000"),
+                Path = "/chat",
+                Query =
+                [
+                    new KeyValuePair<string, string>("id", "abc"),
+                ],
+                Timeout = TimeSpan.FromSeconds(30),
+            });
     }
 }

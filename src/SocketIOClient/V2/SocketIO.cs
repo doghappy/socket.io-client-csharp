@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
@@ -24,6 +25,10 @@ public class SocketIO : ISocketIO
     }
 
     public SocketIO(string uri) : this(new Uri(uri), new SocketIOOptions())
+    {
+    }
+
+    public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
     {
     }
 
@@ -57,8 +62,11 @@ public class SocketIO : ISocketIO
 
 
     private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
+
     private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
-    private TaskCompletionSource<Exception> _connCompletionSource = new();
+
+    // private TaskCompletionSource<bool> _openedCompletionSource = new();
+    private TaskCompletionSource<bool> _sessionCompletionSource;
     private TaskCompletionSource<Exception> _connCompletionSource;
     public SocketIOOptions Options { get; }
     public event EventHandler<Exception> OnReconnectError;
@@ -72,7 +80,9 @@ public class SocketIO : ISocketIO
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
+        // TODO: concurrent connect
         _connCompletionSource = new TaskCompletionSource<Exception>();
+        _sessionCompletionSource = new TaskCompletionSource<bool>();
         _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
         var ex = await task.ConfigureAwait(false);
@@ -90,7 +100,10 @@ public class SocketIO : ISocketIO
             cancellationToken.ThrowIfCancellationRequested();
             var session = SessionFactory.New(Options.EIO, new SessionOptions
             {
-
+                ServerUri = ServerUri,
+                Path = Options.Path,
+                Query = Options.Query,
+                Timeout = Options.ConnectionTimeout,
             });
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
@@ -98,7 +111,8 @@ public class SocketIO : ISocketIO
                 await session.ConnectAsync(cts.Token).ConfigureAwait(false);
                 _session = session;
                 _session.Subscribe(this);
-                // _sessionCompletionSource.SetResult(true);
+                _sessionCompletionSource.SetResult(true);
+                break;
             }
             catch (Exception e)
             {
@@ -181,6 +195,7 @@ public class SocketIO : ISocketIO
 
     private async Task HandleConnectedMessage(IMessage message)
     {
+        await _sessionCompletionSource.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
@@ -193,10 +208,12 @@ public class SocketIO : ISocketIO
         OnPong?.Invoke(this, pong.Duration);
     }
 
-    public async Task DisconnectAsync()
+    public Task DisconnectAsync()
     {
+        // await _session.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
         _session?.Dispose();
         Connected = false;
         Id = null;
+        return Task.CompletedTask;
     }
 }
