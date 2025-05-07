@@ -83,6 +83,7 @@ public class SocketIO : ISocketIO
         // TODO: concurrent connect
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
+        cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
         _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
         var ex = await task.ConfigureAwait(false);

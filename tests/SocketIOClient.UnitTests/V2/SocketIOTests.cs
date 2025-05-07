@@ -187,7 +187,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsyncCancellationToken_CancelAfter200ms_ThrowConnectionException()
+    public async Task ConnectAsyncCancellationToken_CancelAfter100ms_ThrowOperationCanceledException()
     {
         _io.Options.Reconnection = true;
         _random.Next(Arg.Any<int>()).Returns(10);
