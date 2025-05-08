@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
@@ -80,7 +79,10 @@ public class SocketIO : ISocketIO
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        // TODO: concurrent connect
+        if (Connected)
+        {
+            return;
+        }
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));

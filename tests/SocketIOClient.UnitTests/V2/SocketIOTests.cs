@@ -345,6 +345,15 @@ public class SocketIOTests
             .ThrowAsync<ConnectionException>();
     }
 
+    [Fact]
+    public async Task ConnectAsync_AlreadyConnected_Skip()
+    {
+        await ConnectAsync();
+        await _io.ConnectAsync();
+
+        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
+    }
+
     [Theory]
     [InlineData(EngineIO.V3)]
     [InlineData(EngineIO.V4)]
