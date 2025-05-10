@@ -13,7 +13,7 @@ namespace SocketIOClient.Transport.WebSockets
 {
     public class WebSocketTransport : BaseTransport
     {
-        public WebSocketTransport(TransportOptions options, IClientWebSocket ws, ISerializer serializer) 
+        public WebSocketTransport(TransportOptions options, IClientWebSocket ws, ISerializer serializer)
             : base(options, serializer)
         {
             _ws = ws;
@@ -192,7 +192,7 @@ namespace SocketIOClient.Transport.WebSockets
             {
                 PingTokenSource?.Cancel();
                 PingTokenSource = new CancellationTokenSource();
-                StartPing(PingTokenSource.Token);   
+                StartPing(PingTokenSource.Token);
             }
         }
 

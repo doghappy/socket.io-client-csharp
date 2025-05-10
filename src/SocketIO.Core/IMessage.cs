@@ -17,7 +17,7 @@ namespace SocketIO.Core
 
         string Event { get; }
         string Error { get; set; }
-        
+
         // TODO: move this to sub class
         string ReceivedText { get; set; }
         List<byte[]> ReceivedBinary { get; set; }

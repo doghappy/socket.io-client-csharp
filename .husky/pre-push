@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+dotnet test --no-restore tests/SocketIOClient.UnitTests
+dotnet test --no-restore tests/SocketIOClient.Serializer.Tests
+dotnet test --no-restore tests/SocketIOClient.Serializer.NewtonsoftJson.Tests

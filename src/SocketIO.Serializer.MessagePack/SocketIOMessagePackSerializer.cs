@@ -275,7 +275,7 @@ namespace SocketIO.Serializer.MessagePack
 
         #region Serialize ConnectedMessage
 
-        public SerializedItem SerializeConnectedMessage(EngineIO eio, 
+        public SerializedItem SerializeConnectedMessage(EngineIO eio,
             string ns,
             object auth,
             IEnumerable<KeyValuePair<string, string>> queries)

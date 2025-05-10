@@ -35,6 +35,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.Message
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIO.Serializer.MessagePack.Tests", "tests\SocketIO.Serializer.MessagePack.Tests\SocketIO.Serializer.MessagePack.Tests.csproj", "{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer", "src\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj", "{260AFC53-0BA2-42EC-A7FB-9F768F300A04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Core", "src\SocketIOClient.Core\SocketIOClient.Core.csproj", "{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.NewtonsoftJson", "src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj", "{E7F04687-E32F-49D1-8A22-18328EE327F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.Tests", "tests\SocketIOClient.Serializer.Tests\SocketIOClient.Serializer.Tests.csproj", "{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.NewtonsoftJson.Tests", "tests\SocketIOClient.Serializer.NewtonsoftJson.Tests\SocketIOClient.Serializer.NewtonsoftJson.Tests.csproj", "{0A3E6691-40FD-4010-A764-2B0C538F9B73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +107,26 @@ Global
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{260AFC53-0BA2-42EC-A7FB-9F768F300A04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{260AFC53-0BA2-42EC-A7FB-9F768F300A04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{260AFC53-0BA2-42EC-A7FB-9F768F300A04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{260AFC53-0BA2-42EC-A7FB-9F768F300A04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7F04687-E32F-49D1-8A22-18328EE327F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7F04687-E32F-49D1-8A22-18328EE327F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7F04687-E32F-49D1-8A22-18328EE327F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7F04687-E32F-49D1-8A22-18328EE327F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A3E6691-40FD-4010-A764-2B0C538F9B73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A3E6691-40FD-4010-A764-2B0C538F9B73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A3E6691-40FD-4010-A764-2B0C538F9B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A3E6691-40FD-4010-A764-2B0C538F9B73}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -119,5 +149,10 @@ Global
 		{71F5D56A-9E90-4783-BD6E-10D9B03FE9E4} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{A44203AD-AE22-4C41-9A2C-F1F9C8C5EBCF} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
 		{08B752C2-4C4E-4B69-9D1A-CBFFF3EC183D} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{260AFC53-0BA2-42EC-A7FB-9F768F300A04} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{182DD1C2-ADC7-494D-AA9B-603EEC2C6729} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{E7F04687-E32F-49D1-8A22-18328EE327F7} = {7FFBC536-6E48-400E-AB05-BEAEAE45CAAC}
+		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{0A3E6691-40FD-4010-A764-2B0C538F9B73} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal

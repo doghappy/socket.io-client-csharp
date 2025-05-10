@@ -243,7 +243,7 @@ namespace SocketIOClient.IntegrationTests
         {
             using var io = CreateSocketIO("http://localhost");
             io.Options.Reconnection = true;
-            
+
             await io.Invoking(async x =>
                 {
                     using var userCts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
