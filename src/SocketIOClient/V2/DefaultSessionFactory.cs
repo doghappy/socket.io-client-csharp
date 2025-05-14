@@ -1,4 +1,5 @@
 using System.Net.Http;
+using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
@@ -20,7 +21,10 @@ public class DefaultSessionFactory : ISessionFactory
     {
         var httpClient = new SystemHttpClient(new HttpClient());
         var httpAdapter = new HttpAdapter(httpClient);
-        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var serializer = new SystemJsonSerializer(new Decapsulator())
+        {
+            EngineIOMessageAdapter = NewEngineIOMessageAdapter(eio),
+        };
         var stopwatch = new SystemStopwatch();
         var random = new SystemRandom();
         var randomDelayRetryPolicy = new RandomDelayRetryPolicy(random);
@@ -33,5 +37,15 @@ public class DefaultSessionFactory : ISessionFactory
             new HttpAdapter(httpClient),
             serializer,
             new DefaultUriConverter((int)eio));
+    }
+
+    private static IEngineIOMessageAdapter NewEngineIOMessageAdapter(EngineIO eio)
+    {
+        // TODO: NewtonsoftJson
+        if (eio == EngineIO.V3)
+        {
+            return new SystemJsonEngineIO3MessageAdapter();
+        }
+        return new SystemJsonEngineIO4MessageAdapter();
     }
 }

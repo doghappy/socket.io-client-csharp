@@ -141,7 +141,7 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public async Task OnNext_BinaryMessageIsNotReady_NoMessageWillBePushed()
+    public async Task OnNextAsync_BinaryMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -159,12 +159,12 @@ public class HttpSessionTests
 
         await _session.OnNextAsync(protocolMessage);
 
-        observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
+        await observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 
     [Fact]
-    public async Task OnNext_BinaryMessageReady_MessageWillBePushed()
+    public async Task OnNextAsync_BinaryMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -185,6 +185,7 @@ public class HttpSessionTests
                 new ProtocolMessage
                 {
                     Type = ProtocolMessageType.Bytes,
+                    Bytes = [],
                 },
             ]);
         await _session.OnNextAsync(new ProtocolMessage
@@ -192,12 +193,12 @@ public class HttpSessionTests
             Type = ProtocolMessageType.Text,
         });
 
-        observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
+        await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
     }
 
     [Fact]
-    public async Task OnNext_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
+    public async Task OnNextAsync_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -226,7 +227,7 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public async Task OnNext_BinaryAckMessageReady_MessageWillBePushed()
+    public async Task OnNextAsync_BinaryAckMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _session.Subscribe(observer);
@@ -254,9 +255,60 @@ public class HttpSessionTests
         await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Bytes,
+            Bytes = [],
         });
 
         await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
         _session.PendingDeliveryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_TextMessages_ProcessMessageAsyncOfEngineIOAdapterIsCalled()
+    {
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new ConnectedMessage());
+
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
+                },
+            ]);
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        await _engineIOAdapter.Received(1).ProcessMessageAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
+    public async Task OnNextAsync_ByteMessages_ProcessMessageAsyncOfEngineIOAdapterIsNeverCalled()
+    {
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
+                },
+            ]);
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        await _engineIOAdapter.DidNotReceive().ProcessMessageAsync(Arg.Any<IMessage>());
     }
 }

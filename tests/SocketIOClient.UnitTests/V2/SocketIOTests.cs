@@ -337,7 +337,7 @@ public class SocketIOTests
     public async Task ConnectAsync_FirstSuccessThenFailed_ThrowConnectionException()
     {
         await ConnectAsync();
-
+        await _io.DisconnectAsync();
         _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
         await _io
             .Invoking(async x => await x.ConnectAsync())

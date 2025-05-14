@@ -38,12 +38,12 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         if (response.MediaType.Equals(MediaTypeNames.Application.Octet, StringComparison.InvariantCultureIgnoreCase))
         {
             message.Type = ProtocolMessageType.Bytes;
-            message.Bytes = await response.ReadAsByteArrayAsync();
+            message.Bytes = await response.ReadAsByteArrayAsync().ConfigureAwait(false);
         }
         else
         {
             message.Type = ProtocolMessageType.Text;
-            message.Text = await response.ReadAsStringAsync();
+            message.Text = await response.ReadAsStringAsync().ConfigureAwait(false);
         }
         return message;
     }
@@ -56,17 +56,17 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     private async Task HandleResponseAsync(IHttpResponse response)
     {
-        var incomingMessage = await GetMessageAsync(response);
+        var incomingMessage = await GetMessageAsync(response).ConfigureAwait(false);
         foreach (var observer in _observers)
         {
-            await observer.OnNextAsync(incomingMessage);
+            await observer.OnNextAsync(incomingMessage).ConfigureAwait(false);
         }
     }
 
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
-        var response = await httpClient.SendAsync(req, cancellationToken);
-        await HandleResponseAsync(response);
+        var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
+        await HandleResponseAsync(response).ConfigureAwait(false);
     }
 
     public void Subscribe(IMyObserver<ProtocolMessage> observer)

@@ -83,6 +83,7 @@ public class SocketIO : ISocketIO
         {
             return;
         }
+        // TODO: dispose session
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
@@ -111,10 +112,10 @@ public class SocketIO : ISocketIO
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
             {
+                session.Subscribe(this);
                 await session.ConnectAsync(cts.Token).ConfigureAwait(false);
                 _session = session;
-                _session.Subscribe(this);
-                _sessionCompletionSource.SetResult(true);
+                // _sessionCompletionSource.SetResult(true);
                 break;
             }
             catch (Exception e)
@@ -198,7 +199,7 @@ public class SocketIO : ISocketIO
 
     private async Task HandleConnectedMessage(IMessage message)
     {
-        await _sessionCompletionSource.Task.ConfigureAwait(false);
+        // await _sessionCompletionSource.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;

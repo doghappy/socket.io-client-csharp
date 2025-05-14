@@ -118,6 +118,8 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
                 _openedMessage = (OpenedMessage)message;
                 break;
             case MessageType.Connected:
+                var connectedMessage = (ConnectedMessage)message;
+                connectedMessage.Sid = _openedMessage.Sid;
                 _ = Task.Run(StartPingAsync);
                 break;
             case MessageType.Pong:

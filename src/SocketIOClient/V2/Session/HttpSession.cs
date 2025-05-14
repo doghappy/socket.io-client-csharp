@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
@@ -49,7 +50,7 @@ public class HttpSession : ISession
             return;
         }
         var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
-        await HandleMessages(messages);
+        await HandleMessages(messages).ConfigureAwait(false);
     }
 
     private async Task HandleMessages(IEnumerable<ProtocolMessage> messages)
@@ -58,17 +59,18 @@ public class HttpSession : ISession
         {
             if (message.Type == ProtocolMessageType.Bytes)
             {
-                await OnNextBytesMessage(message.Bytes);
+                await OnNextBytesMessage(message.Bytes).ConfigureAwait(false);
             }
             else
             {
-                await OnNextTextMessage(message.Text);
+                await OnNextTextMessage(message.Text).ConfigureAwait(false);
             }
         }
     }
 
     private async Task OnNextTextMessage(string text)
     {
+        Debug.WriteLine($"[Polling⬇] {text}");
         var message = _serializer.Deserialize(text);
         if (message is null)
         {
@@ -79,17 +81,19 @@ public class HttpSession : ISession
             _messageQueue.Enqueue((IBinaryMessage)message);
             return;
         }
-        await OnNextAsync(message);
+        await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        await OnNextAsync(message).ConfigureAwait(false);
     }
 
     private async Task OnNextBytesMessage(byte[] bytes)
     {
+        Debug.WriteLine($"[Polling⬇] 0️⃣1️⃣0️⃣1️⃣ {bytes.Length}");
         var message = _messageQueue.Peek();
         message.Add(bytes);
         if (message.ReadyDelivery)
         {
             _messageQueue.Dequeue();
-            await OnNextAsync(message);
+            await OnNextAsync(message).ConfigureAwait(false);
         }
     }
 
@@ -97,15 +101,30 @@ public class HttpSession : ISession
     {
         foreach (var observer in _observers)
         {
-            await observer.OnNextAsync(message);
+            await observer.OnNextAsync(message).ConfigureAwait(false);
         }
     }
+
+    // public Task OnNextAsync(IMessage message)
+    // {
+    //     foreach (var observer in _observers)
+    //     {
+    //         observer.OnNextAsync(message);
+    //     }
+    //     return Task.CompletedTask;
+    // }
 
     public async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
         var messages = _serializer.Serialize(data);
         foreach (var message in messages)
         {
+#if DEBUG
+            var text = message.Type == ProtocolMessageType.Text
+                ? message.Text
+                : $"0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
+            Debug.WriteLine($"[Polling⬆] {text}");
+#endif
             await _httpAdapter.SendAsync(message, cancellationToken);
         }
     }
@@ -123,7 +142,7 @@ public class HttpSession : ISession
         };
         try
         {
-            await _httpAdapter.SendAsync(req, cancellationToken);
+            await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)
         {

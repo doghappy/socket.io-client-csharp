@@ -7,13 +7,13 @@ public class SystemHttpResponse(HttpResponseMessage response) : IHttpResponse
 {
     public string MediaType => response.Content.Headers.ContentType?.MediaType;
 
-    public Task<byte[]> ReadAsByteArrayAsync()
+    public async Task<byte[]> ReadAsByteArrayAsync()
     {
-        return response.Content.ReadAsByteArrayAsync();
+        return await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
     }
 
-    public Task<string> ReadAsStringAsync()
+    public async Task<string> ReadAsStringAsync()
     {
-        return response.Content.ReadAsStringAsync();
+        return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
     }
 }

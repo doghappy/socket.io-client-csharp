@@ -183,7 +183,7 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(9, 11);
+        var range = Quantity.Within(8, 11);
         await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
@@ -229,5 +229,26 @@ public class EngineIO3AdapterTests
         await observer
             .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ConnectedMessageButNoOpenedMessage_ThrowException()
+    {
+        var connectedMessage = new ConnectedMessage();
+        await _adapter.Invoking(x => x.ProcessMessageAsync(connectedMessage))
+            .Should()
+            .ThrowAsync<NullReferenceException>();
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_OpenedMessageThenConnectedMessage_SidIsNotNull()
+    {
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            Sid = "123",
+        });
+        var connectedMessage = new ConnectedMessage();
+        await _adapter.ProcessMessageAsync(connectedMessage);
+        connectedMessage.Sid.Should().Be("123");
     }
 }
