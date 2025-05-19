@@ -311,4 +311,32 @@ public class HttpSessionTests
 
         await _engineIOAdapter.DidNotReceive().ProcessMessageAsync(Arg.Any<IMessage>());
     }
+
+    [Fact]
+    public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage(),
+                new ProtocolMessage(),
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SendAsyncDataAndId_SerializerReturn2Messages_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>(), 12)
+            .Returns([
+                new ProtocolMessage(),
+                new ProtocolMessage(),
+            ]);
+
+        await _session.SendAsync([], 12, CancellationToken.None);
+
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
+    }
 }

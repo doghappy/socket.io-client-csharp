@@ -19,7 +19,7 @@ public abstract class BaseJsonSerializer : ISerializer
     public string Namespace { get; set; }
     protected abstract SerializationResult SerializeCore(object[] data);
 
-    public List<ProtocolMessage> Serialize(object[] data)
+    private static void ThrowIfDataIsInvalid(object[] data)
     {
         if (data is null)
         {
@@ -29,25 +29,48 @@ public abstract class BaseJsonSerializer : ISerializer
         {
             throw new ArgumentException("Argument must contain at least 1 item", nameof(data));
         }
-        var result = SerializeCore(data);
-        var builder = new StringBuilder(result.Json.Length + 16);
+    }
 
-        if (result.Bytes.Count == 0)
+    private static StringBuilder NewStringBuilder(int jsonLength)
+    {
+        return new StringBuilder(jsonLength + 16);
+    }
+
+    private void AddPrefix(StringBuilder builder, int bytesCount, string emptyBytesPrefix, string bytesPresentPrefix)
+    {
+        if (bytesCount == 0)
         {
-            builder.Append("42");
+            builder.Append(emptyBytesPrefix);
         }
         else
         {
-            builder.Append("45").Append(result.Bytes.Count).Append('-');
+            builder.Append(bytesPresentPrefix).Append(bytesCount).Append('-');
         }
 
         if (!string.IsNullOrEmpty(Namespace))
         {
             builder.Append(Namespace).Append(',');
         }
+    }
 
+    public List<ProtocolMessage> Serialize(object[] data)
+    {
+        ThrowIfDataIsInvalid(data);
+        var result = SerializeCore(data);
+        var builder = NewStringBuilder(result.Json.Length);
+        AddPrefix(builder, result.Bytes.Count, "42", "45");
         builder.Append(result.Json);
+        return GetSerializeResult(builder.ToString(), result.Bytes);
+    }
 
+    public List<ProtocolMessage> Serialize(object[] data, int packetId)
+    {
+        ThrowIfDataIsInvalid(data);
+        var result = SerializeCore(data);
+        var builder = NewStringBuilder(result.Json.Length);
+        AddPrefix(builder, result.Bytes.Count, "43", "46");
+        builder.Append(packetId);
+        builder.Append(result.Json);
         return GetSerializeResult(builder.ToString(), result.Bytes);
     }
 

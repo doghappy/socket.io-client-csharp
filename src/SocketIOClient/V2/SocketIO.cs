@@ -162,8 +162,9 @@ public class SocketIO : ISocketIO
         ThrowIfNotConnected();
         // ReSharper disable PossibleMultipleEnumeration
         ThrowIfDataIsNull(data);
-        await _session.SendAsync(MergeEventData(eventName, data), cancellationToken).ConfigureAwait(false);
+        var sessionData = MergeEventData(eventName, data);
         // ReSharper restore PossibleMultipleEnumeration
+        await _session.SendAsync(sessionData, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task EmitAsync(string eventName, IEnumerable<object> data)
@@ -178,18 +179,27 @@ public class SocketIO : ISocketIO
         await _session.SendAsync([eventName], CancellationToken.None);
         _ackHandlers.Add(PacketId, ack);
     }
-    //
-    // public async Task EmitAsync(
-    //     string eventName,
-    //     IEnumerable<object> data,
-    //     Action<IAckMessage> ack,
-    //     CancellationToken cancellationToken)
-    // {
-    //     // ThrowIfNotConnected();
-    //     PacketId++;
-    //     await _session.SendAsync([eventName], CancellationToken.None);
-    //     _ackHandlers.Add(PacketId, ack);
-    // }
+
+    public async Task EmitAsync(
+        string eventName,
+        IEnumerable<object> data,
+        Action<IAckMessage> ack,
+        CancellationToken cancellationToken)
+    {
+        ThrowIfNotConnected();
+        PacketId++;
+        var sessionData = MergeEventData(eventName, data);
+        _ackHandlers.Add(PacketId, ack);
+        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(
+        string eventName,
+        IEnumerable<object> data,
+        Action<IAckMessage> ack)
+    {
+        await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
+    }
 
     public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
     {

@@ -117,6 +117,11 @@ public class HttpSession : ISession
     public async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
         var messages = _serializer.Serialize(data);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SendProtocolMessagesAsync(List<ProtocolMessage> messages, CancellationToken cancellationToken)
+    {
         foreach (var message in messages)
         {
 #if DEBUG
@@ -125,8 +130,14 @@ public class HttpSession : ISession
                 : $"0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
             Debug.WriteLine($"[Polling⬆] {text}");
 #endif
-            await _httpAdapter.SendAsync(message, cancellationToken);
+            await _httpAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    public async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    {
+        var messages = _serializer.Serialize(data, packetId);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task ConnectAsync(CancellationToken cancellationToken)

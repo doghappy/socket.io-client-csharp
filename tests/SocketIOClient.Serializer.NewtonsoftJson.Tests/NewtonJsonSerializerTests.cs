@@ -517,4 +517,42 @@ public class NewtonJsonSerializerTests
                 Text = "3",
             });
     }
+
+    [Fact]
+    public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
+    {
+        _serializer.Invoking(x => x.Serialize(null, 1))
+            .Should()
+            .Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void SerializeDataAndId_DataIsEmpty_ThrowArgumentNullException()
+    {
+        _serializer.Invoking(x => x.Serialize([], 1))
+            .Should()
+            .Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null, 1, "431[\"event\"]")]
+    [InlineData("", 2, "432[\"event\"]")]
+    [InlineData("test", 3, "43test,3[\"event\"]")]
+    public void SerializeDataAndId_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
+    {
+        _serializer.Namespace = ns;
+        var list = _serializer.Serialize(["event"], id);
+        list[0].Text.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    public void SerializeDataAndId_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
+    {
+        _serializer.Namespace = ns;
+        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
+        list[0].Text.Should().Be(expected);
+    }
 }

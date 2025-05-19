@@ -323,20 +323,36 @@ public class SocketIOTests
                 Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
                 Arg.Any<CancellationToken>());
     }
-    //
-    // [Fact]
-    // public async Task EmitAsync_ActionAckAndEmptyData_AlwaysPass()
-    // {
-    //     await ConnectAsync();
-    //
-    //     await _io.EmitAsync("event", [], _ => { });
-    //
-    //     await _session.Received()
-    //         .SendAsync(
-    //             Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
-    //             Arg.Any<CancellationToken>());
-    //     _io.PacketId.Should().Be(1);
-    // }
+
+    [Fact]
+    public async Task EmitAsync_ActionAckAndEmptyData_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event", [], _ => { });
+
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>());
+        _io.PacketId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EmitAsync_ActionAckAnd1Data_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event", [1], _ => { }, CancellationToken.None);
+
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
+                Arg.Any<int>(),
+                Arg.Any<CancellationToken>());
+        _io.PacketId.Should().Be(1);
+    }
 
     [Fact]
     public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()
