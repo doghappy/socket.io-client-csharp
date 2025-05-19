@@ -45,9 +45,27 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_NotConnected_ThrowException()
+    public async Task EmitAsync_ActionAckNotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", _ => { }))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
+    }
+
+    [Fact]
+    public async Task EmitAsync_FuncAckNotConnected_ThrowException()
+    {
+        await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
+    }
+
+    [Fact]
+    public async Task EmitAsync_DataNotConnected_ThrowException()
+    {
+        await _io.Invoking(x => x.EmitAsync("event", new List<object>()))
             .Should()
             .ThrowAsync<InvalidOperationException>()
             .WithMessage("SocketIO is not connected.");
@@ -269,6 +287,56 @@ public class SocketIOTests
 
         ackCalled.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task EmitAsync_DataIsNull_ThrowArgumentNullException()
+    {
+        await ConnectAsync();
+
+        IEnumerable<object> data = null!;
+        await _io.Invoking(x => x.EmitAsync("event", data, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ArgumentNullException>()
+            .WithMessage("Value cannot be null. (Parameter 'data')");
+    }
+
+    [Fact]
+    public async Task EmitAsync_DataIsEmpty_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event", new List<object>());
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
+                Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task EmitAsync_DataIsOnly1Item_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event", [1]);
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
+                Arg.Any<CancellationToken>());
+    }
+    //
+    // [Fact]
+    // public async Task EmitAsync_ActionAckAndEmptyData_AlwaysPass()
+    // {
+    //     await ConnectAsync();
+    //
+    //     await _io.EmitAsync("event", [], _ => { });
+    //
+    //     await _session.Received()
+    //         .SendAsync(
+    //             Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
+    //             Arg.Any<CancellationToken>());
+    //     _io.PacketId.Should().Be(1);
+    // }
 
     [Fact]
     public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()

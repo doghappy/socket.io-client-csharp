@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
@@ -134,12 +135,6 @@ public class SocketIO : ISocketIO
         }
     }
 
-
-    // public Task EmitAsync(string eventName, Action ack)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
     private void ThrowIfNotConnected()
     {
         if (Connected)
@@ -149,6 +144,33 @@ public class SocketIO : ISocketIO
         throw new InvalidOperationException("SocketIO is not connected.");
     }
 
+    private static void ThrowIfDataIsNull(IEnumerable<object> data)
+    {
+        if (data is null)
+        {
+            throw new ArgumentNullException(nameof(data));
+        }
+    }
+
+    private static object[] MergeEventData(string eventName, IEnumerable<object> data)
+    {
+        return new[] { eventName }.Concat(data).ToArray();
+    }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        ThrowIfNotConnected();
+        // ReSharper disable PossibleMultipleEnumeration
+        ThrowIfDataIsNull(data);
+        await _session.SendAsync(MergeEventData(eventName, data), cancellationToken).ConfigureAwait(false);
+        // ReSharper restore PossibleMultipleEnumeration
+    }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data)
+    {
+        await EmitAsync(eventName, data, CancellationToken.None).ConfigureAwait(false);
+    }
+
     public async Task EmitAsync(string eventName, Action<IAckMessage> ack)
     {
         ThrowIfNotConnected();
@@ -156,6 +178,18 @@ public class SocketIO : ISocketIO
         await _session.SendAsync([eventName], CancellationToken.None);
         _ackHandlers.Add(PacketId, ack);
     }
+    //
+    // public async Task EmitAsync(
+    //     string eventName,
+    //     IEnumerable<object> data,
+    //     Action<IAckMessage> ack,
+    //     CancellationToken cancellationToken)
+    // {
+    //     // ThrowIfNotConnected();
+    //     PacketId++;
+    //     await _session.SendAsync([eventName], CancellationToken.None);
+    //     _ackHandlers.Add(PacketId, ack);
+    // }
 
     public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
     {
