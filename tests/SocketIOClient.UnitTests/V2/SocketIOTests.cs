@@ -15,6 +15,7 @@ public class SocketIOTests
     public SocketIOTests()
     {
         _session = Substitute.For<ISession>();
+
         _sessionFactory = Substitute.For<ISessionFactory>();
         _sessionFactory.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()).Returns(_session);
         _random = Substitute.For<IRandom>();
@@ -260,6 +261,21 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task EmitAsync_EventAndActionAckAndCancellationToken_TokenIsNotNone()
+    {
+        await ConnectAsync();
+
+        using var cts = new CancellationTokenSource();
+        await _io.EmitAsync("event", _ => { }, cts.Token);
+
+        await _session.Received()
+            .SendAsync(
+                Arg.Any<object[]>(),
+                Arg.Any<int>(),
+                Arg.Is<CancellationToken>(t => t != CancellationToken.None));
+    }
+
+    [Fact]
     public async Task EmitAsync_AckEventFunc_PacketIdIncrementBy1()
     {
         await ConnectAsync();
@@ -289,12 +305,40 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task EmitAsync_EventAndDataAndFuncAck_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event", [1], _ => Task.CompletedTask, CancellationToken.None);
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
+                Arg.Any<int>(),
+                CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task EmitAsync_EventAndFuncAckAndCancellationToken_TokenIsNotNone()
+    {
+        await ConnectAsync();
+
+        using var cts = new CancellationTokenSource();
+        await _io.EmitAsync("event", _ => Task.CompletedTask, cts.Token);
+
+        await _session.Received()
+            .SendAsync(
+                Arg.Any<object[]>(),
+                Arg.Any<int>(),
+                Arg.Is<CancellationToken>(t => t != CancellationToken.None));
+    }
+
+    [Fact]
     public async Task EmitAsync_DataIsNull_ThrowArgumentNullException()
     {
         await ConnectAsync();
 
         IEnumerable<object> data = null!;
-        await _io.Invoking(x => x.EmitAsync("event", data, CancellationToken.None))
+        await _io.Invoking(x => x.EmitAsync("event", data))
             .Should()
             .ThrowAsync<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'data')");
@@ -309,7 +353,7 @@ public class SocketIOTests
         await _session.Received()
             .SendAsync(
                 Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
-                Arg.Any<CancellationToken>());
+                CancellationToken.None);
     }
 
     [Fact]
@@ -321,7 +365,45 @@ public class SocketIOTests
         await _session.Received()
             .SendAsync(
                 Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
-                Arg.Any<CancellationToken>());
+                CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task EmitAsync_EventAndDataAndCancellationToken_TokenIsNotNone()
+    {
+        await ConnectAsync();
+
+        using var cts = new CancellationTokenSource();
+        await _io.EmitAsync("event", new List<object>(), cts.Token);
+        await _session.Received()
+            .SendAsync(
+                Arg.Any<object[]>(),
+                Arg.Is<CancellationToken>(t => t != CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task EmitAsync_OnlyEvent_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        await _io.EmitAsync("event");
+        await _session.Received()
+            .SendAsync(
+                Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
+                CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task EmitAsync_EventAndCancellationToken_TokenIsNotNone()
+    {
+        await ConnectAsync();
+
+        using var cts = new CancellationTokenSource();
+        await _io.EmitAsync("event", cts.Token);
+        await _session.Received()
+            .SendAsync(
+                Arg.Any<object[]>(),
+                Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
     [Fact]
@@ -335,7 +417,7 @@ public class SocketIOTests
             .SendAsync(
                 Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
                 Arg.Any<int>(),
-                Arg.Any<CancellationToken>());
+                CancellationToken.None);
         _io.PacketId.Should().Be(1);
     }
 
@@ -352,6 +434,21 @@ public class SocketIOTests
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>());
         _io.PacketId.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EmitAsync_EventAndDataAndActionAckAndCancellationToken_TokenIsNotNone()
+    {
+        await ConnectAsync();
+
+        using var cts = new CancellationTokenSource();
+        await _io.EmitAsync("event", [], _ => { }, cts.Token);
+
+        await _session.Received()
+            .SendAsync(
+                Arg.Any<object[]>(),
+                Arg.Any<int>(),
+                Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
     [Fact]
@@ -493,5 +590,26 @@ public class SocketIOTests
                 ],
                 Timeout = TimeSpan.FromSeconds(30),
             });
+    }
+
+    [Fact]
+    public async Task OnConnected_ConnectedToServer_EventShouldBeInvoked()
+    {
+        var triggered = false;
+        _io.OnConnected += (_, _) => triggered = true;
+
+        await ConnectAsync();
+
+        triggered.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task OnConnected_ThrowExceptionByUserCode_LibWorkAsExpected()
+    {
+        _io.OnConnected += (_, _) => throw new Exception("Test");
+
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
     }
 }

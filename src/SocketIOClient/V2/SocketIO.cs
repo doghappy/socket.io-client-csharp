@@ -72,6 +72,7 @@ public class SocketIO : ISocketIO
     public event EventHandler<Exception> OnReconnectError;
     public event EventHandler OnPing;
     public event EventHandler<TimeSpan> OnPong;
+    public event EventHandler OnConnected;
 
     public async Task ConnectAsync()
     {
@@ -157,6 +158,8 @@ public class SocketIO : ISocketIO
         return new[] { eventName }.Concat(data).ToArray();
     }
 
+    #region Emit event
+
     public async Task EmitAsync(string eventName, IEnumerable<object> data, CancellationToken cancellationToken)
     {
         ThrowIfNotConnected();
@@ -172,12 +175,28 @@ public class SocketIO : ISocketIO
         await EmitAsync(eventName, data, CancellationToken.None).ConfigureAwait(false);
     }
 
+    public async Task EmitAsync(string eventName, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName)
+    {
+        await EmitAsync(eventName, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region Emit action ack
+
+    public async Task EmitAsync(string eventName, Action<IAckMessage> ack, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task EmitAsync(string eventName, Action<IAckMessage> ack)
     {
-        ThrowIfNotConnected();
-        PacketId++;
-        await _session.SendAsync([eventName], CancellationToken.None);
-        _ackHandlers.Add(PacketId, ack);
+        await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
     }
 
     public async Task EmitAsync(
@@ -193,21 +212,44 @@ public class SocketIO : ISocketIO
         await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(
-        string eventName,
-        IEnumerable<object> data,
-        Action<IAckMessage> ack)
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Action<IAckMessage> ack)
     {
         await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
+    #endregion
+
+    #region Emit func ack
+
+    public async Task EmitAsync(
+        string eventName,
+        IEnumerable<object> data,
+        Func<IAckMessage, Task> ack,
+        CancellationToken cancellationToken)
     {
         ThrowIfNotConnected();
         PacketId++;
-        await _session.SendAsync([eventName], CancellationToken.None);
+        var sessionData = MergeEventData(eventName, data);
+        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
         _funcHandlers.Add(PacketId, ack);
     }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IAckMessage, Task> ack)
+    {
+        await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
+    {
+        await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    #endregion
 
     public async Task OnNextAsync(IMessage message)
     {
@@ -241,13 +283,15 @@ public class SocketIO : ISocketIO
         }
     }
 
-    private async Task HandleConnectedMessage(IMessage message)
+    private Task HandleConnectedMessage(IMessage message)
     {
         // await _sessionCompletionSource.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
+        Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
         _connCompletionSource.SetResult(null);
+        return Task.CompletedTask;
     }
 
     private void HandlePongMessage(IMessage message)
