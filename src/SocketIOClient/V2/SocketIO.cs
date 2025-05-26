@@ -62,8 +62,9 @@ public class SocketIO : ISocketIO
 
 
     private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
-
     private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
+    private readonly Dictionary<string, Action<IAckMessage>> _eventActionHandlers = new();
+    private readonly Dictionary<string, Func<IAckMessage, Task>> _eventFuncHandlers = new();
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
     private TaskCompletionSource<bool> _sessionCompletionSource;
@@ -264,9 +265,26 @@ public class SocketIO : ISocketIO
             case MessageType.Connected:
                 await HandleConnectedMessage(message);
                 break;
+            case MessageType.Event:
+                await HandleEventMessage(message);
+                break;
             case MessageType.Ack:
                 await HandleAckMessage(message);
                 break;
+        }
+    }
+
+    private async Task HandleEventMessage(IMessage message)
+    {
+        var eventMessage = (IEventMessage)message;
+        if (_eventActionHandlers.TryGetValue(eventMessage.Event, out var actionHandler))
+        {
+            actionHandler(eventMessage);
+            return;
+        }
+        if (_eventFuncHandlers.TryGetValue(eventMessage.Event, out var funcHandler))
+        {
+            await funcHandler(eventMessage);
         }
     }
 
@@ -307,5 +325,45 @@ public class SocketIO : ISocketIO
         Connected = false;
         Id = null;
         return Task.CompletedTask;
+    }
+
+    public void On(string eventName, Action<IAckMessage> handler)
+    {
+        ThrowIfInvalidEventHandler(eventName, handler);
+        if (_eventFuncHandlers.ContainsKey(eventName))
+        {
+            throw new ArgumentException("A handler with the same event name already exists");
+        }
+        if (_eventActionHandlers.ContainsKey(eventName))
+        {
+            return;
+        }
+        _eventActionHandlers.Add(eventName, handler);
+    }
+
+    public void On(string eventName, Func<IAckMessage, Task> handler)
+    {
+        ThrowIfInvalidEventHandler(eventName, handler);
+        if (_eventActionHandlers.ContainsKey(eventName))
+        {
+            throw new ArgumentException("A handler with the same event name already exists");
+        }
+        if (_eventFuncHandlers.ContainsKey(eventName))
+        {
+            return;
+        }
+        _eventFuncHandlers.Add(eventName, handler);
+    }
+
+    private static void ThrowIfInvalidEventHandler(string eventName, object handler)
+    {
+        if (string.IsNullOrEmpty(eventName))
+        {
+            throw new ArgumentException("Invalid event name", nameof(eventName));
+        }
+        if (handler is null)
+        {
+            throw new ArgumentNullException(nameof(handler));
+        }
     }
 }

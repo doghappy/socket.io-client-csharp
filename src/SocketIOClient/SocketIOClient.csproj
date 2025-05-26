@@ -32,8 +32,4 @@
 	  <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="V2\Message\" />
-	</ItemGroup>
-
 </Project>
