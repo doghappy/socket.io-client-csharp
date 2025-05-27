@@ -45,32 +45,7 @@ public class SocketIOTests
         io.SessionFactory.Should().BeOfType<DefaultSessionFactory>();
     }
 
-    [Fact]
-    public async Task EmitAsync_ActionAckNotConnected_ThrowException()
-    {
-        await _io.Invoking(x => x.EmitAsync("event", _ => { }))
-            .Should()
-            .ThrowAsync<InvalidOperationException>()
-            .WithMessage("SocketIO is not connected.");
-    }
-
-    [Fact]
-    public async Task EmitAsync_FuncAckNotConnected_ThrowException()
-    {
-        await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
-            .Should()
-            .ThrowAsync<InvalidOperationException>()
-            .WithMessage("SocketIO is not connected.");
-    }
-
-    [Fact]
-    public async Task EmitAsync_DataNotConnected_ThrowException()
-    {
-        await _io.Invoking(x => x.EmitAsync("event", new List<object>()))
-            .Should()
-            .ThrowAsync<InvalidOperationException>()
-            .WithMessage("SocketIO is not connected.");
-    }
+    #region ConnectAsync
 
     [Fact]
     public async Task ConnectAsync_FailedToConnect_ThrowConnectionException()
@@ -129,34 +104,6 @@ public class SocketIOTests
     {
         await ConnectAsync();
         _session.Received(1).Subscribe(_io);
-    }
-
-    private async Task ConnectAsync()
-    {
-        await ConnectAsync(_io);
-    }
-
-    private async Task ConnectAsync(int ms)
-    {
-        await ConnectAsync(_io, ms);
-    }
-
-    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
-    {
-        await ConnectAsync(io, 0);
-    }
-
-    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
-    {
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(ms);
-            await io.OnNextAsync(new ConnectedMessage
-            {
-                Sid = "123",
-            });
-        });
-        await io.ConnectAsync();
     }
 
     [Fact]
@@ -233,6 +180,161 @@ public class SocketIOTests
             .ThrowAsync<ConnectionException>();
 
         _session.Received().Dispose();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowAsync<ConnectionException>();
+
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_FirstSuccessThenFailed_ThrowConnectionException()
+    {
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowAsync<ConnectionException>();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_AlreadyConnected_Skip()
+    {
+        await ConnectAsync();
+        await _io.ConnectAsync();
+
+        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
+    }
+
+    [Theory]
+    [InlineData(EngineIO.V3)]
+    [InlineData(EngineIO.V4)]
+    public async Task ConnectAsync_DifferentEngineIO_PassCorrectValueToSessionFactory(EngineIO eio)
+    {
+        var options = new SocketIOClient.V2.SocketIOOptions
+        {
+            EIO = eio,
+        };
+        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
+        {
+            SessionFactory = _sessionFactory,
+            Random = _random,
+        };
+
+        await ConnectAsync(io);
+
+        _sessionFactory.Received(1).New(eio, Arg.Any<SessionOptions>());
+    }
+
+    [Fact]
+    public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
+    {
+        var options = new SocketIOClient.V2.SocketIOOptions
+        {
+            Path = "/chat",
+            ConnectionTimeout = TimeSpan.FromSeconds(30),
+            Query =
+            [
+                new KeyValuePair<string, string>("id", "abc"),
+            ],
+        };
+        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
+        {
+            SessionFactory = _sessionFactory,
+            Random = _random,
+        };
+
+        SessionOptions receivedSessionOptions = null!;
+        _sessionFactory.When(x => x.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()))
+            .Do(info => { receivedSessionOptions = info.Arg<SessionOptions>(); });
+
+        await ConnectAsync(io);
+
+        receivedSessionOptions.Should()
+            .BeEquivalentTo(new SessionOptions
+            {
+                ServerUri = new Uri("http://localhost:3000"),
+                Path = "/chat",
+                Query =
+                [
+                    new KeyValuePair<string, string>("id", "abc"),
+                ],
+                Timeout = TimeSpan.FromSeconds(30),
+            });
+    }
+    #endregion
+
+    #region Private Methods
+
+    private async Task ConnectAsync()
+    {
+        await ConnectAsync(_io);
+    }
+
+    private async Task ConnectAsync(int ms)
+    {
+        await ConnectAsync(_io, ms);
+    }
+
+    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
+    {
+        await ConnectAsync(io, 0);
+    }
+
+    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
+    {
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(ms);
+            await io.OnNextAsync(new ConnectedMessage
+            {
+                Sid = "123",
+            });
+        });
+        await io.ConnectAsync();
+    }
+
+    #endregion
+
+    #region EmitAsync
+
+    [Fact]
+    public async Task EmitAsync_ActionAckNotConnected_ThrowException()
+    {
+        await _io.Invoking(x => x.EmitAsync("event", _ => { }))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
+    }
+
+    [Fact]
+    public async Task EmitAsync_FuncAckNotConnected_ThrowException()
+    {
+        await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
+    }
+
+    [Fact]
+    public async Task EmitAsync_DataNotConnected_ThrowException()
+    {
+        await _io.Invoking(x => x.EmitAsync("event", new List<object>()))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
     }
 
     [Fact]
@@ -450,7 +552,9 @@ public class SocketIOTests
                 Arg.Any<int>(),
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
+    #endregion
 
+    #region Events
     [Fact]
     public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()
     {
@@ -479,6 +583,30 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task OnConnected_ConnectedToServer_EventShouldBeInvoked()
+    {
+        var triggered = false;
+        _io.OnConnected += (_, _) => triggered = true;
+
+        await ConnectAsync();
+
+        triggered.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task OnConnected_ThrowExceptionByUserCode_LibWorkAsExpected()
+    {
+        _io.OnConnected += (_, _) => throw new Exception("Test");
+
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
+    }
+    #endregion
+
+    #region DisconnectAsync
+
+    [Fact]
     public async Task DisconnectAsync_NeverConnected_ClearStatefulData()
     {
         await _io.DisconnectAsync();
@@ -499,119 +627,9 @@ public class SocketIOTests
         _session.Received(1).Dispose();
     }
 
-    [Fact]
-    public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
-    {
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
-        await _io
-            .Invoking(async x => await x.ConnectAsync())
-            .Should()
-            .ThrowAsync<ConnectionException>();
+    #endregion
 
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
-        await ConnectAsync();
-
-        _io.Connected.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task ConnectAsync_FirstSuccessThenFailed_ThrowConnectionException()
-    {
-        await ConnectAsync();
-        await _io.DisconnectAsync();
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
-        await _io
-            .Invoking(async x => await x.ConnectAsync())
-            .Should()
-            .ThrowAsync<ConnectionException>();
-    }
-
-    [Fact]
-    public async Task ConnectAsync_AlreadyConnected_Skip()
-    {
-        await ConnectAsync();
-        await _io.ConnectAsync();
-
-        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
-    }
-
-    [Theory]
-    [InlineData(EngineIO.V3)]
-    [InlineData(EngineIO.V4)]
-    public async Task ConnectAsync_DifferentEngineIO_PassCorrectValueToSessionFactory(EngineIO eio)
-    {
-        var options = new SocketIOClient.V2.SocketIOOptions
-        {
-            EIO = eio,
-        };
-        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
-        {
-            SessionFactory = _sessionFactory,
-            Random = _random,
-        };
-
-        await ConnectAsync(io);
-
-        _sessionFactory.Received(1).New(eio, Arg.Any<SessionOptions>());
-    }
-
-    [Fact]
-    public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
-    {
-        var options = new SocketIOClient.V2.SocketIOOptions
-        {
-            Path = "/chat",
-            ConnectionTimeout = TimeSpan.FromSeconds(30),
-            Query =
-            [
-                new KeyValuePair<string, string>("id", "abc"),
-            ],
-        };
-        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
-        {
-            SessionFactory = _sessionFactory,
-            Random = _random,
-        };
-
-        SessionOptions receivedSessionOptions = null!;
-        _sessionFactory.When(x => x.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()))
-            .Do(info => { receivedSessionOptions = info.Arg<SessionOptions>(); });
-
-        await ConnectAsync(io);
-
-        receivedSessionOptions.Should()
-            .BeEquivalentTo(new SessionOptions
-            {
-                ServerUri = new Uri("http://localhost:3000"),
-                Path = "/chat",
-                Query =
-                [
-                    new KeyValuePair<string, string>("id", "abc"),
-                ],
-                Timeout = TimeSpan.FromSeconds(30),
-            });
-    }
-
-    [Fact]
-    public async Task OnConnected_ConnectedToServer_EventShouldBeInvoked()
-    {
-        var triggered = false;
-        _io.OnConnected += (_, _) => triggered = true;
-
-        await ConnectAsync();
-
-        triggered.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task OnConnected_ThrowExceptionByUserCode_LibWorkAsExpected()
-    {
-        _io.OnConnected += (_, _) => throw new Exception("Test");
-
-        await ConnectAsync();
-
-        _io.Connected.Should().BeTrue();
-    }
+    #region On
 
     [Theory]
     [InlineData(null)]
@@ -784,4 +802,6 @@ public class SocketIOTests
             .Should()
             .Throw<ArgumentException>();
     }
+
+    #endregion
 }
