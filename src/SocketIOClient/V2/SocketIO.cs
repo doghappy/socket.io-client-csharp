@@ -118,7 +118,7 @@ public class SocketIO : ISocketIO
                 session.Subscribe(this);
                 await session.ConnectAsync(cts.Token).ConfigureAwait(false);
                 _session = session;
-                // _sessionCompletionSource.SetResult(true);
+                _sessionCompletionSource.SetResult(true);
                 break;
             }
             catch (Exception e)
@@ -301,15 +301,14 @@ public class SocketIO : ISocketIO
         }
     }
 
-    private Task HandleConnectedMessage(IMessage message)
+    private async Task HandleConnectedMessage(IMessage message)
     {
-        // await _sessionCompletionSource.Task.ConfigureAwait(false);
+        await _sessionCompletionSource.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
-        Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
+        _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
         _connCompletionSource.SetResult(null);
-        return Task.CompletedTask;
     }
 
     private void HandlePongMessage(IMessage message)

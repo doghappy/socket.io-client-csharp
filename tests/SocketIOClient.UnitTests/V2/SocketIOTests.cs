@@ -274,6 +274,18 @@ public class SocketIOTests
                 Timeout = TimeSpan.FromSeconds(30),
             });
     }
+
+    [Fact]
+    public async Task ConnectAsync_SessionConnectAsyncDelay100_CanEmit()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>())
+            .Returns(async _ => await Task.Delay(100));
+        await ConnectAsync();
+
+        await _io.EmitAsync("event");
+        await _session.Received().SendAsync(Arg.Any<object[]>(), CancellationToken.None);
+    }
+
     #endregion
 
     #region Private Methods
@@ -552,9 +564,11 @@ public class SocketIOTests
                 Arg.Any<int>(),
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
+
     #endregion
 
     #region Events
+
     [Fact]
     public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()
     {
@@ -602,6 +616,7 @@ public class SocketIOTests
 
         _io.Connected.Should().BeTrue();
     }
+
     #endregion
 
     #region DisconnectAsync
