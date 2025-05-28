@@ -1,10 +1,9 @@
-using System.Threading;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using FluentAssertions;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
@@ -27,7 +26,7 @@ public class HttpAdapterTests
 
         await _httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
 
-        observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
+        await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -38,6 +37,20 @@ public class HttpAdapterTests
 
         await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
 
-        observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
+        await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
+    }
+
+    [Fact]
+    public async Task SendHttpRequestAsync_ObserverBlocked100Ms_SendAsyncNotBlockedByObserver()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        observer.OnNextAsync(Arg.Any<ProtocolMessage>()).Returns(async _ => await Task.Delay(100));
+        _httpAdapter.Subscribe(observer);
+
+        var stopwatch = Stopwatch.StartNew();
+        await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
+        stopwatch.Stop();
+
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(20);
     }
 }

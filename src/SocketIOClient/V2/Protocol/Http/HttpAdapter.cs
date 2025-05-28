@@ -66,7 +66,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
-        await HandleResponseAsync(response).ConfigureAwait(false);
+        _ = HandleResponseAsync(response).ConfigureAwait(false);
     }
 
     public void Subscribe(IMyObserver<ProtocolMessage> observer)
