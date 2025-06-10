@@ -82,6 +82,12 @@ public class HttpSession : ISession
             return;
         }
         await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        if (message.Type is MessageType.Opened)
+        {
+            var openedMessage = (OpenedMessage)message;
+            _httpAdapter.Uri = new Uri($"{_httpAdapter.Uri.AbsoluteUri}&sid={openedMessage.Sid}");
+            System.Diagnostics.Debug.WriteLine("=========Set Uri to " + _httpAdapter.Uri.AbsoluteUri);
+        }
         await OnNextAsync(message).ConfigureAwait(false);
     }
 
@@ -147,6 +153,7 @@ public class HttpSession : ISession
             _options.ServerUri,
             _options.Path,
             _options.Query);
+        _httpAdapter.Uri = uri;
         var req = new HttpRequest
         {
             Uri = uri,

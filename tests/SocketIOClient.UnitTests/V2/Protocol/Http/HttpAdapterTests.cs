@@ -53,4 +53,22 @@ public class HttpAdapterTests
 
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(20);
     }
+
+    [Fact]
+    public void IsReadyToSend_UriIsNotSet_ReturnsFalse()
+    {
+        _httpAdapter.IsReadyToSend.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("http://localhost:3000/socket.io/?EIO=4&transport=polling", false)]
+    [InlineData("http://localhost:3000/socket.io/?sidd=4", false)]
+    [InlineData("http://localhost:3000/socket.io/?test=sid", false)]
+    [InlineData("http://localhost:3000/socket.io/?sid=", true)]
+    [InlineData("http://localhost:3000/socket.io/?EIO=4&transport=polling&sid=123", true)]
+    public void IsReadyToSend_ReturnFalseByDefault_ReturnsTrueIfUriContainsSid(string uri, bool isReadyToSend)
+    {
+        _httpAdapter.Uri = new Uri(uri!);
+        _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
+    }
 }

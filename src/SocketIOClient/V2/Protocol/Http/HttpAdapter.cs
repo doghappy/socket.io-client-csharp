@@ -11,12 +11,16 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 {
     private readonly List<IMyObserver<ProtocolMessage>> _observers = [];
 
+    public Uri Uri { get; set; }
+
+    public bool IsReadyToSend => Uri is not null && Uri.Query.Contains("sid=");
+
     private async Task<IHttpResponse> SendProtocolMessageAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
         var req = new HttpRequest
         {
             Method = RequestMethod.Post,
-            Uri = new Uri("http://localhost:3000"),
+            Uri = Uri,
         };
 
         if (message.Type == ProtocolMessageType.Text)
@@ -50,6 +54,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
+        System.Diagnostics.Debug.WriteLine("=========" + Uri.AbsoluteUri);
         var response = await SendProtocolMessageAsync(message, cancellationToken);
         await HandleResponseAsync(response);
     }

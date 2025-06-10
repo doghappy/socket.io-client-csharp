@@ -21,19 +21,19 @@ public class HttpSessionTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         _serializer = Substitute.For<ISerializer>();
-        var sessionOptions = new SessionOptions
-        {
-            ServerUri = new Uri("http://localhost:3000"),
-            Query = new List<KeyValuePair<string, string>>(),
-        };
         _session = new HttpSession(
-            sessionOptions,
+            _sessionOptions,
             _engineIOAdapter,
             _httpAdapter,
             _serializer,
             new DefaultUriConverter(4));
     }
 
+    private readonly SessionOptions _sessionOptions = new()
+    {
+        ServerUri = new Uri("http://localhost:3000"),
+        Query = new List<KeyValuePair<string, string>>(),
+    };
     private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IEngineIOAdapter _engineIOAdapter;
@@ -95,18 +95,20 @@ public class HttpSessionTests
     }
 
     [Fact]
+    public async Task ConnectAsync_WhenCalled_SetAdapterUri()
+    {
+        await _session.ConnectAsync(CancellationToken.None);
+        _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
+    }
+
+    [Fact]
     public async Task Integration_HttpAdapterPushedMessages_MessagesWillBeForwardedToSubscribersOfHttpSession()
     {
         var httpClient = Substitute.For<IHttpClient>();
         var httpAdapter = new HttpAdapter(httpClient);
         var serializer = new SystemJsonSerializer(new Decapsulator());
         var uriConverter = new DefaultUriConverter(4);
-        var sessionOptions = new SessionOptions
-        {
-            ServerUri = new Uri("http://localhost:3000"),
-            Query = new List<KeyValuePair<string, string>>(),
-        };
-        var session = new HttpSession(sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
+        var session = new HttpSession(_sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
         httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
@@ -310,6 +312,31 @@ public class HttpSessionTests
         });
 
         await _engineIOAdapter.DidNotReceive().ProcessMessageAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
+    public async Task OnNextAsync_ConnectedMessage_SetAdapterUriWithSid()
+    {
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new OpenedMessage { Sid = "abc" });
+
+        _engineIOAdapter.GetMessages(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
+                },
+            ]);
+        _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
+
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling&sid=abc"));
     }
 
     [Fact]

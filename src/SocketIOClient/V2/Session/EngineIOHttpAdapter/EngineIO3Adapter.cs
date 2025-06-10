@@ -138,18 +138,40 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     private async Task StartPingAsync()
     {
+        await ThrowIfHttpAdapterIsNotReady();
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(_openedMessage.PingInterval, token);
             var ping = _serializer.NewPingMessage();
             await _retryPolicy.RetryAsync(3, async () =>
             {
                 using var cts = new CancellationTokenSource(_timeout);
+                System.Diagnostics.Debug.WriteLine("=========Ping");
                 await _protocolAdapter.SendAsync(ping, cts.Token);
             });
             _stopwatch.Restart();
             _ = NotifyObserversAsync(new PingMessage());
+            // TODO: PingInterval is 0?
+            await Task.Delay(_openedMessage.PingInterval, token);
+        }
+    }
+
+    private async Task ThrowIfHttpAdapterIsNotReady()
+    {
+        if (_protocolAdapter is IHttpAdapter httpAdapter)
+        {
+            var ms = 0;
+            const int delay = 20;
+            while (ms < _openedMessage.PingInterval)
+            {
+                if (httpAdapter.IsReadyToSend)
+                {
+                    return;
+                }
+                await Task.Delay(delay);
+                ms += delay;
+            }
+            throw new TimeoutException();
         }
     }
 

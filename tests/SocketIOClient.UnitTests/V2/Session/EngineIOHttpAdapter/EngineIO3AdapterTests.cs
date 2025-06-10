@@ -232,6 +232,90 @@ public class EngineIO3AdapterTests
     }
 
     [Fact]
+    public async Task StartPingAsync_WhenCalled_FirstPingThenDelay()
+    {
+        var ping = new ProtocolMessage
+        {
+            Text = "2",
+        };
+        _serializer.NewPingMessage().Returns(ping);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Subscribe(observer);
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            PingInterval = 100,
+        });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(50);
+
+        await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+        await observer
+            .Received()
+            .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
+    }
+
+    [Fact]
+    public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
+    {
+        var httpAdapter = Substitute.For<IHttpAdapter>();
+        var adapter = new EngineIO3Adapter(
+            _stopwatch,
+            _serializer,
+            httpAdapter,
+            TimeSpan.FromSeconds(1),
+            _retryPolicy);
+
+        var ping = new ProtocolMessage
+        {
+            Text = "2",
+        };
+        _serializer.NewPingMessage().Returns(ping);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        adapter.Subscribe(observer);
+
+        await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
+        await adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(100);
+
+        await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task StartPingAsync_IsReadyAfter30ms_StartToPing()
+    {
+        var httpAdapter = Substitute.For<IHttpAdapter>();
+        var adapter = new EngineIO3Adapter(
+            _stopwatch,
+            _serializer,
+            httpAdapter,
+            TimeSpan.FromSeconds(1),
+            _retryPolicy);
+
+        var ping = new ProtocolMessage
+        {
+            Text = "2",
+        };
+        _serializer.NewPingMessage().Returns(ping);
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        adapter.Subscribe(observer);
+
+        await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await adapter.ProcessMessageAsync(new ConnectedMessage());
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(30);
+            httpAdapter.IsReadyToSend.Returns(true);
+        });
+
+        await Task.Delay(100);
+
+        await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
     public async Task ProcessMessageAsync_ConnectedMessageButNoOpenedMessage_ThrowException()
     {
         var connectedMessage = new ConnectedMessage();
