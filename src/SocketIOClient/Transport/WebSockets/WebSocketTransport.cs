@@ -165,7 +165,13 @@ namespace SocketIOClient.Transport.WebSockets
                 if (items[0].Type == SerializedMessageType.Text)
                 {
                     var bytes = Encoding.UTF8.GetBytes(items[0].Text);
-                    await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
+
+                    ///// This causes deadlock on _sendLock.WaitAsync above
+                    //await SendAsync(TransportMessageType.Text, bytes, cancellationToken);
+                    /////// Should be
+                    await SendAsync(TransportMessageType.Text, bytes, cancellationToken).ConfigureAwait(false);
+                    ///////
+
                     Debug.WriteLine($"[WebSocket⬆] {items[0].Text}");
                 }
 
