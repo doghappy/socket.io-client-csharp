@@ -105,7 +105,10 @@ public class HttpSessionTests
     public async Task Integration_HttpAdapterPushedMessages_MessagesWillBeForwardedToSubscribersOfHttpSession()
     {
         var httpClient = Substitute.For<IHttpClient>();
-        var httpAdapter = new HttpAdapter(httpClient);
+        var httpAdapter = new HttpAdapter(httpClient)
+        {
+            Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
+        };
         var serializer = new SystemJsonSerializer(new Decapsulator());
         var uriConverter = new DefaultUriConverter(4);
         var session = new HttpSession(_sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);

@@ -54,7 +54,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
-        System.Diagnostics.Debug.WriteLine("=========" + Uri.AbsoluteUri);
+        System.Diagnostics.Debug.WriteLine("=========" + Uri?.AbsoluteUri);
         var response = await SendProtocolMessageAsync(message, cancellationToken);
         await HandleResponseAsync(response);
     }
