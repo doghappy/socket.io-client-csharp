@@ -126,17 +126,29 @@ public class HttpSession : ISession
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task SendProtocolMessagesAsync(List<ProtocolMessage> messages, CancellationToken cancellationToken)
+    private async Task SendProtocolMessagesAsync(IEnumerable<ProtocolMessage> messages, CancellationToken cancellationToken)
     {
+        var bytes = new List<byte[]>();
         foreach (var message in messages)
         {
+            if (message.Type == ProtocolMessageType.Text)
+            {
+                var request = _engineIOAdapter.ToHttpRequest(message.Text);
 #if DEBUG
-            var text = message.Type == ProtocolMessageType.Text
-                ? message.Text
-                : $"0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
-            Debug.WriteLine($"[Polling⬆] {text}");
+                Debug.WriteLine($"[Polling⬆] {request.BodyText}");
 #endif
-            await _httpAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+                await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+#if DEBUG
+            Debug.WriteLine($"[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}");
+#endif
+            bytes.Add(message.Bytes);
+        }
+        if (bytes.Count > 0)
+        {
+            var request = _engineIOAdapter.ToHttpRequest(bytes);
+            await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
     }
 

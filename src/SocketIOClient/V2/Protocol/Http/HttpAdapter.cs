@@ -70,6 +70,7 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
+        req.Uri ??= Uri;
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
         _ = HandleResponseAsync(response).ConfigureAwait(false);
     }

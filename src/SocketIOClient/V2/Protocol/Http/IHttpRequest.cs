@@ -17,7 +17,7 @@ public enum RequestBodyType
 
 public interface IHttpRequest
 {
-    Uri Uri { get; }
+    Uri Uri { get; set; }
     RequestMethod Method { get; }
     RequestBodyType BodyType { get; }
     Dictionary<string, string> Headers { get; }

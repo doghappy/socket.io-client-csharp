@@ -34,6 +34,7 @@ public class HttpSessionTests
         ServerUri = new Uri("http://localhost:3000"),
         Query = new List<KeyValuePair<string, string>>(),
     };
+
     private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IEngineIOAdapter _engineIOAdapter;
@@ -353,7 +354,7 @@ public class HttpSessionTests
 
         await _session.SendAsync([], CancellationToken.None);
 
-        await _httpAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -367,6 +368,34 @@ public class HttpSessionTests
 
         await _session.SendAsync([], 12, CancellationToken.None);
 
-        await _httpAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SendAsync_1TextMessage1ByteMessage_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage { Type = ProtocolMessageType.Text },
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SendAsync_2ByteMessages_CallAdapter1Time()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _httpAdapter.Received(1).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
     }
 }

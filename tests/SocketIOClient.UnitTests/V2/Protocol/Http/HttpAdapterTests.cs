@@ -55,6 +55,31 @@ public class HttpAdapterTests
     }
 
     [Fact]
+    public async Task SendHttpRequestAsync_UrlIsNotProvided_UseDefault()
+    {
+        _httpAdapter.Uri = new Uri("http://localhost");
+
+        await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
+
+        await _httpClient.Received()
+            .SendAsync(Arg.Is<IHttpRequest>(r => r.Uri == new Uri("http://localhost")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SendHttpRequestAsync_UrlIsProvided_UseProvidedOne()
+    {
+        _httpAdapter.Uri = new Uri("http://localhost");
+
+        await _httpAdapter.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("http://localhost:8080"),
+        }, CancellationToken.None);
+
+        await _httpClient.Received()
+            .SendAsync(Arg.Is<IHttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public void IsReadyToSend_UriIsNotSet_ReturnsFalse()
     {
         _httpAdapter.IsReadyToSend.Should().BeFalse();
@@ -68,7 +93,7 @@ public class HttpAdapterTests
     [InlineData("http://localhost:3000/socket.io/?EIO=4&transport=polling&sid=123", true)]
     public void IsReadyToSend_ReturnFalseByDefault_ReturnsTrueIfUriContainsSid(string uri, bool isReadyToSend)
     {
-        _httpAdapter.Uri = new Uri(uri!);
+        _httpAdapter.Uri = new Uri(uri);
         _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
     }
 }
