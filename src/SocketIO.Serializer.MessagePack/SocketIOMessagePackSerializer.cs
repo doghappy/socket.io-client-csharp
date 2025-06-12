@@ -257,6 +257,14 @@ namespace SocketIO.Serializer.MessagePack
             };
         }
 
+        public SerializedItem SerializePingProbeMessage()
+        {
+            return new SerializedItem
+            {
+                Text = "2probe"
+            };
+        }
+
         public SerializedItem SerializePongMessage()
         {
             return new SerializedItem
