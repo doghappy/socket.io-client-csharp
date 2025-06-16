@@ -34,7 +34,7 @@ public class DefaultSessionFactory : ISessionFactory
         return new HttpSession(
             options,
             engineIOAdapter,
-            new HttpAdapter(httpClient),
+            httpAdapter,
             serializer,
             new DefaultUriConverter((int)eio));
     }
