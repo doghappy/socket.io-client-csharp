@@ -86,7 +86,6 @@ public class HttpSession : ISession
         {
             var openedMessage = (OpenedMessage)message;
             _httpAdapter.Uri = new Uri($"{_httpAdapter.Uri.AbsoluteUri}&sid={openedMessage.Sid}");
-            System.Diagnostics.Debug.WriteLine("=========Set Uri to " + _httpAdapter.Uri.AbsoluteUri);
         }
         await OnNextAsync(message).ConfigureAwait(false);
     }

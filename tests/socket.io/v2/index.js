@@ -54,6 +54,10 @@ const httpServers = [
             transports: ["polling"],
             pingInterval: 5000,
             pingTimeout: 10000,
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"]
+            }
         },
         onCreated: template.registerEvents
     },

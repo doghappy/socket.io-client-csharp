@@ -45,7 +45,7 @@ public class DefaultSessionFactoryTests
         var engineIOAdapter = (EngineIO3Adapter)engineIOAdapterField.GetValue(httpSession)!;
         var httpAdapterOfEngineIOAdapter = engineIOAdapter
             .GetType()
-            .GetField("_protocolAdapter", nonPublicInstance)!
+            .GetField("_httpAdapter", nonPublicInstance)!
             .GetValue(engineIOAdapter)!;
 
         httpAdapterOfSession.Should().BeSameAs(httpAdapterOfEngineIOAdapter);

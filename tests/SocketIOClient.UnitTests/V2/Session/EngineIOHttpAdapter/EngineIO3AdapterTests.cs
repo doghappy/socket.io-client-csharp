@@ -21,19 +21,20 @@ public class EngineIO3AdapterTests
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _serializer = Substitute.For<ISerializer>();
-        _protocolAdapter = Substitute.For<IProtocolAdapter>();
+        _httpAdapter = Substitute.For<IHttpAdapter>();
+        _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
         _adapter = new(
             _stopwatch,
             _serializer,
-            _protocolAdapter,
+            _httpAdapter,
             TimeSpan.FromSeconds(1),
             _retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly ISerializer _serializer;
-    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
 
@@ -191,6 +192,24 @@ public class EngineIO3AdapterTests
     }
 
     [Fact]
+    public async Task ProcessMessageAsync_ConnectedMessage_PollingInBackground()
+    {
+        _httpAdapter
+            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>())
+            .Returns(async _ => await Task.Delay(10));
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(100);
+
+        var range = Quantity.Within(8, 11);
+        await _httpAdapter
+            .Received(range)
+            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task ProcessMessageAsync_PongMessage_NotifyObserverWithDuration()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -232,7 +251,7 @@ public class EngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task StartPingAsync_WhenCalled_FirstPingThenDelay()
+    public async Task StartPingAsync_WhenCalled_FirstDelayThenPing()
     {
         var ping = new ProtocolMessage
         {
@@ -250,9 +269,9 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(50);
 
-        await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+        await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
         await observer
-            .Received()
+            .DidNotReceive()
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -272,8 +291,6 @@ public class EngineIO3AdapterTests
             Text = "2",
         };
         _serializer.NewPingMessage().Returns(ping);
-        var observer = Substitute.For<IMyObserver<IMessage>>();
-        adapter.Subscribe(observer);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());
@@ -299,8 +316,6 @@ public class EngineIO3AdapterTests
             Text = "2",
         };
         _serializer.NewPingMessage().Returns(ping);
-        var observer = Substitute.For<IMyObserver<IMessage>>();
-        adapter.Subscribe(observer);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());
@@ -310,7 +325,7 @@ public class EngineIO3AdapterTests
             httpAdapter.IsReadyToSend.Returns(true);
         });
 
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
@@ -335,4 +350,28 @@ public class EngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(connectedMessage);
         connectedMessage.Sid.Should().Be("123");
     }
+
+    [Fact]
+    public async Task PollingAsync_HttpRequestExceptionOccurred_ContinuePolling()
+    {
+        _httpAdapter
+            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>())
+            .Returns(
+                _ => Task.FromException(new HttpRequestException()),
+                async _ => await Task.Delay(10));
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            PingInterval = 10,
+        });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
+
+        await Task.Delay(100);
+
+        var range = Quantity.Within(8, 12);
+        await _httpAdapter
+            .Received(range)
+            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>());
+    }
+    // TODO: add more cases for polling
 }
