@@ -1,4 +1,4 @@
-namespace SocketIOClient.UnitTests.V2.Serializer;
+﻿namespace SocketIOClient.CommonTestData;
 
 public class TestFile
 {
@@ -15,7 +15,7 @@ public class TestFile
 
     /// <summary>
     /// "NiuB" (牛B) is a slang term in Chinese, often used to describe someone or something that's really impressive or awesome.
-    /// It’s like saying "cool," "amazing," or "badass" in English. 
+    /// It’s like saying "cool," "amazing," or "badass" in English.
     /// NiuB => 牛B => 🐮🍺
     /// </summary>
     public static readonly TestFile NiuB = new()

@@ -35,5 +35,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
+    <ProjectReference Include="..\SocketIOClient.CommonTestData\SocketIOClient.CommonTestData.csproj" />
   </ItemGroup>
 </Project>

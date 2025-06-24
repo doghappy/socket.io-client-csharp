@@ -21,5 +21,6 @@
     <Content Include="appsettings*.yml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <ProjectReference Include="..\SocketIOClient.CommonTestData\SocketIOClient.CommonTestData.csproj" />
   </ItemGroup>
 </Project>

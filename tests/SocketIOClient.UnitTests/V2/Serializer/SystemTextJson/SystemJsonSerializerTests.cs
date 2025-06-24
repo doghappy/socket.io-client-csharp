@@ -5,6 +5,7 @@ using System.Text.Json;
 using FluentAssertions;
 using JetBrains.Annotations;
 using NSubstitute;
+using SocketIOClient.CommonTestData;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer.Decapsulation;

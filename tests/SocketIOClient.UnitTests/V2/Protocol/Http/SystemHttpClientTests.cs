@@ -1,12 +1,7 @@
-using System;
 using System.Net;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using RichardSzalay.MockHttp;
 using SocketIOClient.V2.Protocol.Http;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
@@ -22,7 +17,7 @@ public class SystemHttpClientTests
     private readonly MockHttpMessageHandler _httpMessageHandler;
 
     [Fact]
-    public async Task SendAsync_WhenReturnStringContent_AlwaysPass()
+    public async Task SendAsync_TextPlainWithTextBody_ReadAsStringAsyncReturnsSameBody()
     {
         _httpMessageHandler
             .When("https://www.google.com")
@@ -39,7 +34,7 @@ public class SystemHttpClientTests
     }
 
     [Fact]
-    public async Task SendAsync_WhenPassACanceledToken_ThrowTaskCanceledException()
+    public async Task SendAsync_PassACanceledToken_ThrowTaskCanceledException()
     {
         _httpMessageHandler
             .When("https://www.google.com")
@@ -59,7 +54,7 @@ public class SystemHttpClientTests
     }
 
     [Fact]
-    public async Task SendAsync_WhenResponseByteArrayContent_AlwaysPass()
+    public async Task SendAsync_TextInByteArrayContent_BothMethodCanGetValue()
     {
         var bytes = "Test Zip"u8.ToArray();
         _httpMessageHandler
@@ -79,5 +74,48 @@ public class SystemHttpClientTests
         textBody.Should().Be("Test Zip");
         var byteBody = await res.ReadAsByteArrayAsync();
         byteBody.Should().Equal(bytes);
+    }
+
+    [Theory]
+    [InlineData("Content-Type", "application/json")]
+    [InlineData("User-Agent", "Windows")]
+    public async Task SendAsync_HeadersExist_RequestWithHeaders(string name, string value)
+    {
+        _httpMessageHandler
+            .When("https://www.google.com")
+            .WithHeaders(name, value)
+            .Respond("text/plain", "Hello, Google!");
+
+        await _httpClient.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("https://www.google.com"),
+            Headers = new Dictionary<string, string>
+            {
+                { name, value },
+            },
+        }, CancellationToken.None);
+
+        _httpMessageHandler.VerifyNoOutstandingExpectation();
+    }
+
+    [Theory]
+    [InlineData("content-type")]
+    [InlineData("Content-type")]
+    [InlineData("CONTENT-TYPE")]
+    public async Task SendAsync_InvalidContentTypeName_ThrowException(string name)
+    {
+        await _httpClient.Invoking(x =>
+                x.SendAsync(new HttpRequest
+                {
+                    Uri = new Uri("https://www.google.com"),
+                    BodyText = string.Empty,
+                    Headers = new Dictionary<string, string>
+                    {
+                        { name, "application/json" },
+                    },
+                }, CancellationToken.None))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage($"Misused header name, '{name}'*");
     }
 }

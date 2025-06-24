@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,25 +19,30 @@ public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
     public async Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(new HttpMethod(req.Method.ToString()), req.Uri);
-        foreach (var header in req.Headers)
+        request.Content = req.BodyType switch
         {
-            request.Headers.Add(header.Key, header.Value);
-        }
+            RequestBodyType.Text => new StringContent(req.BodyText ?? string.Empty),
+            RequestBodyType.Bytes => new ByteArrayContent(req.BodyBytes),
+            _ => throw new NotSupportedException(),
+        };
 
-        switch (req.BodyType)
-        {
-            case RequestBodyType.Text:
-                if (!string.IsNullOrEmpty(req.BodyText))
-                    request.Content = new StringContent(req.BodyText);
-                break;
-            case RequestBodyType.Bytes:
-                request.Content = new ByteArrayContent(req.BodyBytes);
-                break;
-            default:
-                throw new NotSupportedException();
-        }
+        SetHeaders(req, request);
 
         var res = await http.SendAsync(request, cancellationToken);
         return new SystemHttpResponse(res);
+    }
+
+    private static void SetHeaders(IHttpRequest req, HttpRequestMessage request)
+    {
+        var content = (ByteArrayContent)request.Content;
+        foreach (var header in req.Headers)
+        {
+            if (HttpHeaders.ContentType.Equals(header.Key))
+            {
+                content.Headers.ContentType = new MediaTypeHeaderValue(header.Value);
+                continue;
+            }
+            request.Headers.Add(header.Key, header.Value);
+        }
     }
 }
