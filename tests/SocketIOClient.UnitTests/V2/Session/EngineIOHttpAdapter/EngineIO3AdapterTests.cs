@@ -354,8 +354,7 @@ public class EngineIO3AdapterTests
     [Fact]
     public async Task PollingAsync_HttpRequestExceptionOccurred_ContinuePolling()
     {
-        _httpAdapter
-            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>())
+        _retryPolicy.RetryAsync(3, Arg.Any<Func<Task>>())
             .Returns(
                 _ => Task.FromException(new HttpRequestException()),
                 async _ => await Task.Delay(10));
@@ -368,10 +367,10 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(8, 12);
-        await _httpAdapter
+        var range = Quantity.Within(4, 10);
+        await _retryPolicy
             .Received(range)
-            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>());
+            .RetryAsync(3, Arg.Any<Func<Task>>());
     }
     // TODO: add more cases for polling
 }

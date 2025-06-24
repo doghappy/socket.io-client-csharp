@@ -171,15 +171,11 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         var token = _pollingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            try
+            var request = new HttpRequest();
+            await _retryPolicy.RetryAsync(3, async () =>
             {
-                var request = new HttpRequest();
                 await _httpAdapter.SendAsync(request, token).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.ToString());
-            }
+            }).ConfigureAwait(false);
         }
     }
 
