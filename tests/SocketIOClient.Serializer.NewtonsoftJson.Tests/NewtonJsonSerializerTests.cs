@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Newtonsoft.Json;
 using NSubstitute;
+using SocketIOClient.CommonTestData;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer.Decapsulation;
-using SocketIOClient.UnitTests.V2.Serializer;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson.Tests;
 
@@ -55,7 +55,7 @@ public class NewtonJsonSerializerTests
         ]);
 
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithNull = new(
-        ["event", null],
+        ["event", null!],
         [
             new ProtocolMessage
             {
@@ -438,7 +438,7 @@ public class NewtonJsonSerializerTests
         var item1 = message!.GetDataValue(expected1.GetType(), 0);
         item1.Should().BeEquivalentTo(expected1);
 
-        var item2 = message!.GetDataValue(expected2.GetType(), 1);
+        var item2 = message.GetDataValue(expected2.GetType(), 1);
         item2.Should().BeEquivalentTo(expected2);
     }
 
@@ -490,7 +490,7 @@ public class NewtonJsonSerializerTests
         var message = (IBinaryAckMessage)_serializer.Deserialize(text);
 
         message.Add(bytes);
-        var item1 = message!.GetDataValue<TestFile>(0);
+        var item1 = message.GetDataValue<TestFile>(0);
         item1.Should().BeEquivalentTo(expected);
     }
 

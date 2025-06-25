@@ -25,12 +25,7 @@
     <ItemGroup>
       <ProjectReference Include="..\..\src\SocketIOClient.Core\SocketIOClient.Core.csproj" />
       <ProjectReference Include="..\..\src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Include="..\SocketIOClient.UnitTests\V2\Serializer\TestFile.cs">
-        <Link>TestFile.cs</Link>
-      </Compile>
+      <ProjectReference Include="..\SocketIOClient.CommonTestData\SocketIOClient.CommonTestData.csproj" />
     </ItemGroup>
 
 </Project>
