@@ -63,7 +63,7 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         foreach (var b in bytes)
         {
             list.Add(1);
-            list.AddRange(b.Length.ToString().Select(c => Convert.ToByte(c - '0')));
+            list.AddRange((b.Length + 1).ToString().Select(c => Convert.ToByte(c - '0')));
             list.Add(byte.MaxValue);
             list.Add(4);
             list.AddRange(b);
@@ -172,7 +172,7 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         while (!token.IsCancellationRequested)
         {
             var request = new HttpRequest();
-            await _retryPolicy.RetryAsync(3, async () =>
+            await _retryPolicy.RetryAsync(2, async () =>
             {
                 await _httpAdapter.SendAsync(request, token).ConfigureAwait(false);
             }).ConfigureAwait(false);

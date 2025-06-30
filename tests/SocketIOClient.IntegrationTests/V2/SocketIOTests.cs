@@ -37,7 +37,7 @@ public class SocketIOTests
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [null]);
 
-        await Task.Delay(1000);
+        await Task.Delay(200);
 
         message.Should().NotBeNull();
         var receivedData = message.GetDataValue<object>(0);
@@ -45,20 +45,42 @@ public class SocketIOTests
     }
 
     [TestMethod]
-    [DataRow(true, true)]
-    public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data, object expectedData)
+    [DataRow(true)]
+    [DataRow(false)]
+    [DataRow(-1234567890)]
+    [DataRow(1234567890)]
+    [DataRow(-1.234567890)]
+    [DataRow(1.234567890)]
+    [DataRow("hello\n世界\n🌍🌎🌏")]
+    public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
         IAckMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [data]);
 
-        await Task.Delay(1000);
+        await Task.Delay(200);
 
         // TODO: json?
         message.Should().NotBeNull();
-        message.GetDataValue(expectedData.GetType(), 0)
+        message.GetDataValue(data.GetType(), 0)
             .Should()
-            .BeEquivalentTo(expectedData);
+            .BeEquivalentTo(data);
+    }
+
+    [TestMethod]
+    public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
+    {
+        IAckMessage message = null!;
+        _socket.On("1:emit", msg => message = msg);
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("1:emit", [TestFile.NiuB]);
+
+        await Task.Delay(200);
+
+        message.Should().NotBeNull();
+        message.GetDataValue<TestFile>(0)
+            .Should()
+            .BeEquivalentTo(TestFile.NiuB);
     }
 }

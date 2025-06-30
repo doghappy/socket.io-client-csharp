@@ -53,7 +53,7 @@ public class EngineIO3AdapterTests
         new byte[] { 1 },
     }, new HttpRequest
     {
-        BodyBytes = [1, 1, 255, 4, 1],
+        BodyBytes = [1, 2, 255, 4, 1],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
@@ -67,7 +67,7 @@ public class EngineIO3AdapterTests
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
     }, new HttpRequest
     {
-        BodyBytes = [1, 1, 0, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        BodyBytes = [1, 1, 1, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
@@ -82,7 +82,7 @@ public class EngineIO3AdapterTests
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
     }, new HttpRequest
     {
-        BodyBytes = [1, 1, 255, 4, 1, 1, 1, 0, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        BodyBytes = [1, 2, 255, 4, 1, 1, 1, 1, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         Method = RequestMethod.Post,
         BodyType = RequestBodyType.Bytes,
         Headers = new Dictionary<string, string>
@@ -194,8 +194,7 @@ public class EngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_ConnectedMessage_PollingInBackground()
     {
-        _httpAdapter
-            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>())
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
             .Returns(async _ => await Task.Delay(10));
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
@@ -204,9 +203,7 @@ public class EngineIO3AdapterTests
         await Task.Delay(100);
 
         var range = Quantity.Within(8, 11);
-        await _httpAdapter
-            .Received(range)
-            .SendAsync(Arg.Is<IHttpRequest>(req => req.Method == RequestMethod.Get), Arg.Any<CancellationToken>());
+        await _retryPolicy.Received(range).RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
     [Fact]
@@ -269,7 +266,7 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(50);
 
-        await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+        await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .DidNotReceive()
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
@@ -352,12 +349,10 @@ public class EngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task PollingAsync_HttpRequestExceptionOccurred_ContinuePolling()
+    public async Task PollingAsync_HttpRequestExceptionOccurred_ThrowHttpRequestException()
     {
-        _retryPolicy.RetryAsync(3, Arg.Any<Func<Task>>())
-            .Returns(
-                _ => Task.FromException(new HttpRequestException()),
-                async _ => await Task.Delay(10));
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
+            .Returns(_ => Task.FromException(new HttpRequestException()));
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
@@ -367,10 +362,9 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(4, 10);
         await _retryPolicy
-            .Received(range)
-            .RetryAsync(3, Arg.Any<Func<Task>>());
+            .Received(1)
+            .RetryAsync(2, Arg.Any<Func<Task>>());
     }
     // TODO: add more cases for polling
 }

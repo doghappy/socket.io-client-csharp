@@ -35,7 +35,10 @@ public class HttpAdapterTests
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
         _httpAdapter.Subscribe(observer);
 
-        await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
+        await _httpAdapter.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("http://localhost"),
+        }, CancellationToken.None);
 
         await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
@@ -48,7 +51,10 @@ public class HttpAdapterTests
         _httpAdapter.Subscribe(observer);
 
         var stopwatch = Stopwatch.StartNew();
-        await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
+        await _httpAdapter.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("http://localhost"),
+        }, CancellationToken.None);
         stopwatch.Stop();
 
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(20);
@@ -57,12 +63,14 @@ public class HttpAdapterTests
     [Fact]
     public async Task SendHttpRequestAsync_UrlIsNotProvided_UseDefault()
     {
-        _httpAdapter.Uri = new Uri("http://localhost");
+        _httpAdapter.Uri = new Uri("http://localhost/?transport=polling");
 
         await _httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
 
         await _httpClient.Received()
-            .SendAsync(Arg.Is<IHttpRequest>(r => r.Uri == new Uri("http://localhost")), Arg.Any<CancellationToken>());
+            .SendAsync(
+                Arg.Is<IHttpRequest>(r => r.Uri.AbsoluteUri.StartsWith("http://localhost/?transport=polling&t=")),
+                Arg.Any<CancellationToken>());
     }
 
     [Fact]

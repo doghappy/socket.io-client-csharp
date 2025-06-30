@@ -69,9 +69,15 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
 
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
-        req.Uri ??= Uri;
+        req.Uri ??= NewUri();
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
         _ = HandleResponseAsync(response).ConfigureAwait(false);
+    }
+
+    private Uri NewUri()
+    {
+        var str = $"{Uri.AbsoluteUri}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        return new Uri(str);
     }
 
     public void Subscribe(IMyObserver<ProtocolMessage> observer)
