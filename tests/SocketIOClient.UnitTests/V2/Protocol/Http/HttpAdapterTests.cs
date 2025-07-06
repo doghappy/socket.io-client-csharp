@@ -104,4 +104,48 @@ public class HttpAdapterTests
         _httpAdapter.Uri = new Uri(uri);
         _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
     }
+
+    [Fact]
+    public async Task SendAsync_ResponseIsText_ObserverCanGetSameText()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _httpAdapter.Subscribe(observer);
+        var httpResponse = Substitute.For<IHttpResponse>();
+        httpResponse.ReadAsStringAsync().Returns("Hello World");
+        _httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
+            .Returns(httpResponse);
+
+        await _httpAdapter.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("http://localhost"),
+        }, CancellationToken.None);
+
+        await observer.Received()
+            .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
+                m.Type == ProtocolMessageType.Text
+                && m.Text == "Hello World"));
+    }
+
+    [Theory]
+    [InlineData("application/octet-stream")]
+    [InlineData("Application/Octet-Stream")]
+    [InlineData("APPLICATION/OCTET-STREAM")]
+    public async Task SendAsync_ResponseIsBytes_ObserverCanGetFormattedBytes(string contentType)
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _httpAdapter.Subscribe(observer);
+        var httpResponse = Substitute.For<IHttpResponse>();
+        httpResponse.MediaType.Returns(contentType);
+        httpResponse.ReadAsByteArrayAsync().Returns([1, 2, 255, 4, 3]);
+        _httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
+            .Returns(httpResponse);
+
+        await _httpAdapter.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("http://localhost"),
+        }, CancellationToken.None);
+
+        await observer.Received()
+            .OnNextAsync(Arg.Is<ProtocolMessage>(m => m.Type == ProtocolMessageType.Bytes));
+    }
 }
