@@ -818,5 +818,21 @@ public class SocketIOTests
             .Throw<ArgumentException>();
     }
 
+    [Fact]
+    public async Task On_BinaryEventReceived_HandlerShouldBeCalled()
+    {
+        var times = 0;
+        _io.On("event", _ => times++);
+
+        var eventMessage = new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await _io.OnNextAsync(eventMessage);
+
+        times.Should().Be(1);
+    }
+
     #endregion
 }

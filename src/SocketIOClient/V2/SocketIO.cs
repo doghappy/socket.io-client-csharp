@@ -266,6 +266,7 @@ public class SocketIO : ISocketIO
                 await HandleConnectedMessage(message);
                 break;
             case MessageType.Event:
+            case MessageType.Binary:
                 await HandleEventMessage(message);
                 break;
             case MessageType.Ack:

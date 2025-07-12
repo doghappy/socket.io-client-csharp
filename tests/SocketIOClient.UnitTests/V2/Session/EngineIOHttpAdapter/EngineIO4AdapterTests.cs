@@ -188,4 +188,12 @@ public class EngineIO4AdapterTests
             .Received(1)
             .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
     }
+
+    [Fact]
+    public void ExtractMessagesFromBytes_WhenCalled_AlwaysReturnEmpty()
+    {
+        _adapter.ExtractMessagesFromBytes([1, 2, 255, 4, 1])
+            .Should()
+            .BeEmpty();
+    }
 }

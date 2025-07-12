@@ -254,6 +254,14 @@ public class HttpSessionTests
                     Text = "EngineIOAdapter Messages",
                 },
             ]);
+        _engineIOAdapter.ExtractMessagesFromBytes(Arg.Any<byte[]>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Bytes,
+                    Bytes = [],
+                },
+            ]);
         await _session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,

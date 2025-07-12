@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +8,6 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
@@ -111,6 +109,53 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
             {
                 break;
             }
+        }
+    }
+
+    public IEnumerable<ProtocolMessage> ExtractMessagesFromBytes(byte[] bytes)
+    {
+        var index = 0;
+        while (index < bytes.Length)
+        {
+            // byte messageType = bytes[index];
+            index++;
+            var payloadLength = 0;
+            var multiplier = 1;
+
+            while (index < bytes.Length && bytes[index] != byte.MaxValue)
+            {
+                payloadLength = payloadLength * multiplier + bytes[index++];
+                multiplier *= 10;
+            }
+
+            index++;
+
+            var data = new byte[payloadLength - 1];
+            Buffer.BlockCopy(bytes, index + 1, data, 0, data.Length);
+            yield return new ProtocolMessage
+            {
+                Type = ProtocolMessageType.Bytes,
+                Bytes = data,
+            };
+            // switch (messageType)
+            // {
+            //     case 0:
+            //         var text = Encoding.UTF8.GetString(bytes, index, payloadLength);
+            //         await OnTextReceived.TryInvokeAsync(text);
+            //         break;
+            //
+            //     case 1:
+            //         if (payloadLength < 1) break;
+            //         var data = new byte[payloadLength - 1];
+            //         Buffer.BlockCopy(bytes, index + 1, data, 0, data.Length);
+            //         await OnBytes(data);
+            //         break;
+            //
+            //     default:
+            //         break;
+            // }
+
+            index += payloadLength;
         }
     }
 

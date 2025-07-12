@@ -93,6 +93,11 @@ public class EngineIO4Adapter : IEngineIOAdapter
         }
     }
 
+    public IEnumerable<ProtocolMessage> ExtractMessagesFromBytes(byte[] bytes)
+    {
+        return new List<ProtocolMessage>();
+    }
+
     public async Task ProcessMessageAsync(IMessage message)
     {
         if (message.Type == MessageType.Ping)

@@ -367,4 +367,64 @@ public class EngineIO3AdapterTests
             .RetryAsync(2, Arg.Any<Func<Task>>());
     }
     // TODO: add more cases for polling
+
+    private static readonly (byte[] rawBytes, IEnumerable<ProtocolMessage> messages) OneMessageLengthLessThan10 = (
+        [1, 2, 255, 4, 1],
+        new List<ProtocolMessage>
+        {
+            new()
+            {
+                Type = ProtocolMessageType.Bytes,
+                Bytes = [1],
+            },
+        });
+
+    private static readonly (byte[] rawBytes, IEnumerable<ProtocolMessage> messages) OneMessageLengthGreaterThan10LessThan100 = (
+        [1, 1, 1, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        new List<ProtocolMessage>
+        {
+            new()
+            {
+                Type = ProtocolMessageType.Bytes,
+                Bytes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            },
+        });
+
+    private static readonly (byte[] rawBytes, IEnumerable<ProtocolMessage> messages) TwoMessagesOfBytes = (
+        [1, 2, 255, 4, 1, 1, 1, 1, 255, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        new List<ProtocolMessage>
+        {
+            new()
+            {
+                Type = ProtocolMessageType.Bytes,
+                Bytes = [1],
+            },
+            new()
+            {
+                Type = ProtocolMessageType.Bytes,
+                Bytes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            },
+        });
+
+    private static IEnumerable<(byte[] rawBytes, IEnumerable<ProtocolMessage> messages)> ExtractMessagesFromBytesStrongTypeCases
+    {
+        get
+        {
+            yield return OneMessageLengthLessThan10;
+            yield return OneMessageLengthGreaterThan10LessThan100;
+            yield return TwoMessagesOfBytes;
+        }
+    }
+
+    public static IEnumerable<object[]> ExtractMessagesFromBytesCases =>
+        ExtractMessagesFromBytesStrongTypeCases.Select(x => new object[] { x.rawBytes, x.messages });
+
+    [Theory]
+    [MemberData(nameof(ExtractMessagesFromBytesCases))]
+    public void ExtractMessagesFromBytes_WhenCalled_AlwaysPass(byte[] rawBytes, IEnumerable<ProtocolMessage> messages)
+    {
+        _adapter.ExtractMessagesFromBytes(rawBytes)
+            .Should()
+            .BeEquivalentTo(messages);
+    }
 }

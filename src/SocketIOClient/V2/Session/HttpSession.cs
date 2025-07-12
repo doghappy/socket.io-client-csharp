@@ -46,7 +46,8 @@ public class HttpSession : ISession
     {
         if (protocolMessage.Type == ProtocolMessageType.Bytes)
         {
-            await OnNextBytesMessage(protocolMessage.Bytes);
+            var bytesMessages = _engineIOAdapter.ExtractMessagesFromBytes(protocolMessage.Bytes);
+            await HandleMessages(bytesMessages).ConfigureAwait(false);
             return;
         }
         var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
