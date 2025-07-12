@@ -68,7 +68,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
         };
     }
 
-    public IEnumerable<ProtocolMessage> GetMessages(string text)
+    public IEnumerable<ProtocolMessage> ExtractMessagesFromText(string text)
     {
         var items = text.Split([Delimiter], StringSplitOptions.RemoveEmptyEntries);
         foreach (var item in items)

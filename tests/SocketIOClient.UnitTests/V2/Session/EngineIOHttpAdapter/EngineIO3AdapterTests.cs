@@ -138,7 +138,7 @@ public class EngineIO3AdapterTests
     public void GetMessages_WhenCalled_AlwaysPass(string raw, IEnumerable<string> textMessages)
     {
         // Note: EngineIO3 bytes are handled by HttpSession directly, no need to test bytes here
-        _adapter.GetMessages(raw)
+        _adapter.ExtractMessagesFromText(raw)
             .Select(m => m.Text)
             .Should()
             .BeEquivalentTo(textMessages);

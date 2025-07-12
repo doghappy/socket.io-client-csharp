@@ -116,7 +116,7 @@ public class HttpSessionTests
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
         httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -161,7 +161,7 @@ public class HttpSessionTests
         {
             Type = ProtocolMessageType.Text,
         };
-        _engineIOAdapter.GetMessages(Arg.Any<string>()).Returns([protocolMessage]);
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>()).Returns([protocolMessage]);
 
         await _session.OnNextAsync(protocolMessage);
 
@@ -182,7 +182,7 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -216,7 +216,7 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -246,7 +246,7 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -283,7 +283,7 @@ public class HttpSessionTests
             .Deserialize(Arg.Any<string>())
             .Returns(new ConnectedMessage());
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -310,7 +310,7 @@ public class HttpSessionTests
                 BytesCount = 1,
             });
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {
@@ -333,7 +333,7 @@ public class HttpSessionTests
             .Deserialize(Arg.Any<string>())
             .Returns(new OpenedMessage { Sid = "abc" });
 
-        _engineIOAdapter.GetMessages(Arg.Any<string>())
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
                 {

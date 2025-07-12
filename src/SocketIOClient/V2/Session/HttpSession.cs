@@ -50,7 +50,7 @@ public class HttpSession : ISession
             await HandleMessages(bytesMessages).ConfigureAwait(false);
             return;
         }
-        var messages = _engineIOAdapter.GetMessages(protocolMessage.Text);
+        var messages = _engineIOAdapter.ExtractMessagesFromText(protocolMessage.Text);
         await HandleMessages(messages).ConfigureAwait(false);
     }
 

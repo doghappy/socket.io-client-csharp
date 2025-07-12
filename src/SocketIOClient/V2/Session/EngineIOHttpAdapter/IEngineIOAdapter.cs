@@ -11,7 +11,7 @@ public interface IEngineIOAdapter : IMyObservable<IMessage>
 {
     IHttpRequest ToHttpRequest(ICollection<byte[]> bytes);
     IHttpRequest ToHttpRequest(string content);
-    IEnumerable<ProtocolMessage> GetMessages(string text);
+    IEnumerable<ProtocolMessage> ExtractMessagesFromText(string text);
     IEnumerable<ProtocolMessage> ExtractMessagesFromBytes(byte[] bytes);
     Task ProcessMessageAsync(IMessage message);
 }

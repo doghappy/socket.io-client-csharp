@@ -149,7 +149,7 @@ public class EngineIO4AdapterTests
     [MemberData(nameof(GetMessagesCases))]
     public void GetMessages_WhenCalled_AlwaysPass(string raw, IEnumerable<ProtocolMessage> messages)
     {
-        _adapter.GetMessages(raw)
+        _adapter.ExtractMessagesFromText(raw)
             .Should()
             .BeEquivalentTo(messages);
     }

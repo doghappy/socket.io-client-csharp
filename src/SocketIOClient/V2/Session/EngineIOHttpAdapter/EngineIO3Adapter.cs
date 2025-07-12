@@ -84,7 +84,7 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         };
     }
 
-    public IEnumerable<ProtocolMessage> GetMessages(string text)
+    public IEnumerable<ProtocolMessage> ExtractMessagesFromText(string text)
     {
         var p = 0;
         while (true)
