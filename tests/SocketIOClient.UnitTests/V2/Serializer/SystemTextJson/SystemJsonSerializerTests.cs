@@ -547,9 +547,9 @@ public class SystemJsonSerializerTests
     }
 
     [Theory]
-    [InlineData(null, 1, "431[\"event\"]")]
-    [InlineData("", 2, "432[\"event\"]")]
-    [InlineData("test", 3, "43test,3[\"event\"]")]
+    [InlineData(null, 1, "421[\"event\"]")]
+    [InlineData("", 2, "422[\"event\"]")]
+    [InlineData("test", 3, "42test,3[\"event\"]")]
     public void SerializeDataAndId_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
@@ -558,9 +558,9 @@ public class SystemJsonSerializerTests
     }
 
     [Theory]
-    [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData(null, 4, "451-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("", 5, "451-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void SerializeDataAndId_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;

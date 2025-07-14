@@ -20,6 +20,7 @@ public class SocketIOTests
     }
 
     private readonly SocketIOClient.V2.SocketIO _socket;
+    public const int DefaultDelay = 200;
 
     [TestMethod]
     public async Task ConnectAsync_ConnectedToServer_ConnectedIsTureIdIsNotNullOrEmpty()
@@ -38,7 +39,7 @@ public class SocketIOTests
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [null]);
 
-        await Task.Delay(200);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         var receivedData = message.GetDataValue<object>(0);
@@ -60,7 +61,7 @@ public class SocketIOTests
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [data]);
 
-        await Task.Delay(200);
+        await Task.Delay(DefaultDelay);
 
         // TODO: json?
         message.Should().NotBeNull();
@@ -77,11 +78,49 @@ public class SocketIOTests
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [TestFile.NiuB]);
 
-        await Task.Delay(200);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetDataValue<TestFile>(0)
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
+    }
+
+    [TestMethod]
+    [DataRow(true, false)]
+    [DataRow(false, 123)]
+    [DataRow(-1234567890, "test")]
+    [DataRow("hello\n世界\n🌍🌎🌏", 199)]
+    public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
+    {
+        IAckMessage message = null!;
+        _socket.On("2:emit", msg => message = msg);
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("2:emit", [item0, item1]);
+
+        await Task.Delay(DefaultDelay);
+
+        message.Should().NotBeNull();
+        message.GetDataValue(item0.GetType(), 0)
+            .Should()
+            .BeEquivalentTo(item0);
+        message.GetDataValue(item1.GetType(), 1)
+            .Should()
+            .BeEquivalentTo(item1);
+    }
+
+    [TestMethod]
+    public async Task EmitAsync_ActionAckWith1Parameter_ReceiveSameParameter()
+    {
+        IAckMessage message = null!;
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("1:ack", ["action"], msg => message = msg);
+
+        await Task.Delay(DefaultDelay);
+
+        message.Should().NotBeNull();
+        message.GetDataValue<string>(0)
+            .Should()
+            .BeEquivalentTo("action");
     }
 }

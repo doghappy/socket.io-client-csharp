@@ -36,15 +36,15 @@ public abstract class BaseJsonSerializer : ISerializer
         return new StringBuilder(jsonLength + 16);
     }
 
-    private void AddPrefix(StringBuilder builder, int bytesCount, string emptyBytesPrefix, string bytesPresentPrefix)
+    private void AddPrefix(StringBuilder builder, int bytesCount)
     {
         if (bytesCount == 0)
         {
-            builder.Append(emptyBytesPrefix);
+            builder.Append("42");
         }
         else
         {
-            builder.Append(bytesPresentPrefix).Append(bytesCount).Append('-');
+            builder.Append("45").Append(bytesCount).Append('-');
         }
 
         if (!string.IsNullOrEmpty(Namespace))
@@ -58,7 +58,7 @@ public abstract class BaseJsonSerializer : ISerializer
         ThrowIfDataIsInvalid(data);
         var result = SerializeCore(data);
         var builder = NewStringBuilder(result.Json.Length);
-        AddPrefix(builder, result.Bytes.Count, "42", "45");
+        AddPrefix(builder, result.Bytes.Count);
         builder.Append(result.Json);
         return GetSerializeResult(builder.ToString(), result.Bytes);
     }
@@ -68,7 +68,7 @@ public abstract class BaseJsonSerializer : ISerializer
         ThrowIfDataIsInvalid(data);
         var result = SerializeCore(data);
         var builder = NewStringBuilder(result.Json.Length);
-        AddPrefix(builder, result.Bytes.Count, "43", "46");
+        AddPrefix(builder, result.Bytes.Count);
         builder.Append(packetId);
         builder.Append(result.Json);
         return GetSerializeResult(builder.ToString(), result.Bytes);
