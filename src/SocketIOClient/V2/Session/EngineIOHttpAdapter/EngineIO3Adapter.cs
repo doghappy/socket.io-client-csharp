@@ -170,17 +170,16 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
                 HandleConnectedMessageAsync(message);
                 break;
             case MessageType.Pong:
-                await HandlePongMessageAsync(message).ConfigureAwait(false);
+                HandlePongMessage(message);
                 break;
         }
     }
 
-    private async Task HandlePongMessageAsync(IMessage message)
+    private void HandlePongMessage(IMessage message)
     {
         _stopwatch.Stop();
         var pongMessage = (PongMessage)message;
         pongMessage.Duration = _stopwatch.Elapsed;
-        await NotifyObserversAsync(pongMessage);
     }
 
     private void HandleConnectedMessageAsync(IMessage message)

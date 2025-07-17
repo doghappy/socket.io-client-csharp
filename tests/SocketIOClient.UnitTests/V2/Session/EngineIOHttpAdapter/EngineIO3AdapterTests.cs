@@ -207,17 +207,18 @@ public class EngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task ProcessMessageAsync_PongMessage_NotifyObserverWithDuration()
+    public async Task ProcessMessageAsync_PongMessage_OnlySetDurationNotNotifyToSubscriber()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _adapter.Subscribe(observer);
         _stopwatch.Elapsed.Returns(TimeSpan.FromSeconds(1));
 
-        await _adapter.ProcessMessageAsync(new PongMessage());
+        var pong = new PongMessage();
+        await _adapter.ProcessMessageAsync(pong);
 
         await observer
-            .Received(1)
-            .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
+            .DidNotReceive()
+            .OnNextAsync(Arg.Any<IMessage>());
     }
 
     [Fact]

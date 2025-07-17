@@ -142,4 +142,22 @@ public class SocketIOTests
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
     }
+
+    [TestMethod]
+    [DataRow(4000, 0, 0)]
+    [DataRow(5900, 1, 1)]
+    [DataRow(14000, 2, 2)]
+    public async Task OnPingAndOnPong_HandlerAreRegistered_WorkAsExpected(int ms, int expectedPingTimes, int expectedPongTimes)
+    {
+        var pingTimes = 0;
+        var pongTimes = 0;
+        _socket.OnPing += (_, _) => pingTimes++;
+        _socket.OnPong += (_, _) => pongTimes++;
+
+        await _socket.ConnectAsync();
+
+        await Task.Delay(ms);
+        pingTimes.Should().Be(expectedPingTimes);
+        pongTimes.Should().Be(expectedPongTimes);
+    }
 }
