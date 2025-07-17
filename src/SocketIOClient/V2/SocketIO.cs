@@ -270,6 +270,7 @@ public class SocketIO : ISocketIO
                 await HandleEventMessage(message);
                 break;
             case MessageType.Ack:
+            case MessageType.BinaryAck:
                 await HandleAckMessage(message);
                 break;
         }

@@ -123,4 +123,23 @@ public class SocketIOTests
             .Should()
             .BeEquivalentTo("action");
     }
+
+    [TestMethod]
+    public async Task EmitAsync_FuncAckWith1Parameter_ReceiveSameParameter()
+    {
+        IAckMessage message = null!;
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("1:ack", [TestFile.NiuB], msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
+
+        await Task.Delay(DefaultDelay);
+
+        message.Should().NotBeNull();
+        message.GetDataValue<TestFile>(0)
+            .Should()
+            .BeEquivalentTo(TestFile.NiuB);
+    }
 }
