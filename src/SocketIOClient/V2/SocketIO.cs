@@ -74,6 +74,7 @@ public class SocketIO : ISocketIO
     public event EventHandler OnPing;
     public event EventHandler<TimeSpan> OnPong;
     public event EventHandler OnConnected;
+    public event EventHandler<string> OnDisconnected;
 
     public async Task ConnectAsync()
     {
@@ -325,6 +326,7 @@ public class SocketIO : ISocketIO
         _session?.Dispose();
         Connected = false;
         Id = null;
+        OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
         return Task.CompletedTask;
     }
 

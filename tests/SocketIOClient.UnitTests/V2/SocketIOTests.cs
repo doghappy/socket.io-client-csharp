@@ -642,6 +642,23 @@ public class SocketIOTests
         _session.Received(1).Dispose();
     }
 
+    [Fact]
+    public async Task DisconnectAsync_WhenCalled_OnDisconnectedWillBeCalled()
+    {
+        var times = 0;
+        string? reason = null;
+        _io.OnDisconnected += (_, e) =>
+        {
+            times++;
+            reason = e;
+        };
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+
+        times.Should().Be(1);
+        reason.Should().Be("io client disconnect");
+    }
+
     #endregion
 
     #region On

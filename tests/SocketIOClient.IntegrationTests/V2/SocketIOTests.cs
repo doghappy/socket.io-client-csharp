@@ -160,4 +160,19 @@ public class SocketIOTests
         pingTimes.Should().Be(expectedPingTimes);
         pongTimes.Should().Be(expectedPongTimes);
     }
+
+    [TestMethod]
+    public async Task ConnectAsync_ConnectAfterDisconnect_OnConnectedTimeIs2()
+    {
+        var times = 0;
+        _socket.OnConnected += (_, _) => times++;
+
+        await _socket.ConnectAsync();
+        await _socket.DisconnectAsync();
+        await _socket.ConnectAsync();
+
+        await Task.Delay(100);
+
+        times.Should().Be(2);
+    }
 }
