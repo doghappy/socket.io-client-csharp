@@ -168,11 +168,6 @@ public class EngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_ConnectedMessage_PingInBackground()
     {
-        var ping = new ProtocolMessage
-        {
-            Text = "2",
-        };
-        _serializer.NewPingMessage().Returns(ping);
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _adapter.Subscribe(observer);
 
@@ -224,11 +219,6 @@ public class EngineIO3AdapterTests
     [Fact]
     public async Task StartPingAsync_ObserverThrowException_ContinuePing()
     {
-        var ping = new ProtocolMessage
-        {
-            Text = "2",
-        };
-        _serializer.NewPingMessage().Returns(ping);
         var observer = Substitute.For<IMyObserver<IMessage>>();
         observer.OnNextAsync(Arg.Any<IMessage>()).ThrowsAsync(new Exception());
         _adapter.Subscribe(observer);
@@ -251,11 +241,6 @@ public class EngineIO3AdapterTests
     [Fact]
     public async Task StartPingAsync_WhenCalled_FirstDelayThenPing()
     {
-        var ping = new ProtocolMessage
-        {
-            Text = "2",
-        };
-        _serializer.NewPingMessage().Returns(ping);
         var observer = Substitute.For<IMyObserver<IMessage>>();
         _adapter.Subscribe(observer);
 
@@ -284,12 +269,6 @@ public class EngineIO3AdapterTests
             TimeSpan.FromSeconds(1),
             _retryPolicy);
 
-        var ping = new ProtocolMessage
-        {
-            Text = "2",
-        };
-        _serializer.NewPingMessage().Returns(ping);
-
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());
 
@@ -308,12 +287,6 @@ public class EngineIO3AdapterTests
             httpAdapter,
             TimeSpan.FromSeconds(1),
             _retryPolicy);
-
-        var ping = new ProtocolMessage
-        {
-            Text = "2",
-        };
-        _serializer.NewPingMessage().Returns(ping);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());

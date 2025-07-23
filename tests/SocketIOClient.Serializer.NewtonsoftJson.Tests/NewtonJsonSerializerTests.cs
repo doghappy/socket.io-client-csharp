@@ -495,30 +495,6 @@ public class NewtonJsonSerializerTests
     }
 
     [Fact]
-    public void NewPingMessage_WhenCalled_ReturnPingMessage()
-    {
-        var ping = _serializer.NewPingMessage();
-        ping.Should()
-            .BeEquivalentTo(new ProtocolMessage
-            {
-                Type = ProtocolMessageType.Text,
-                Text = "2",
-            });
-    }
-
-    [Fact]
-    public void NewPongMessage_WhenCalled_ReturnPingMessage()
-    {
-        var pong = _serializer.NewPongMessage();
-        pong.Should()
-            .BeEquivalentTo(new ProtocolMessage
-            {
-                Type = ProtocolMessageType.Text,
-                Text = "3",
-            });
-    }
-
-    [Fact]
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
         _serializer.Invoking(x => x.Serialize(null, 1))

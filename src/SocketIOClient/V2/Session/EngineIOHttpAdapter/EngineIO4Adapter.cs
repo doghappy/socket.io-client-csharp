@@ -18,13 +18,13 @@ public class EngineIO4Adapter : IEngineIOAdapter
     public EngineIO4Adapter(
         IStopwatch stopwatch,
         ISerializer serializer,
-        IProtocolAdapter protocolAdapter,
+        IHttpAdapter httpAdapter,
         TimeSpan timeout,
         IRetriable retryPolicy)
     {
         _stopwatch = stopwatch;
         _serializer = serializer;
-        _protocolAdapter = protocolAdapter;
+        _httpAdapter = httpAdapter;
         _timeout = timeout;
         _retryPolicy = retryPolicy;
     }
@@ -32,7 +32,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
     private const string Delimiter = "\u001E";
     private readonly IStopwatch _stopwatch;
     private readonly ISerializer _serializer;
-    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly IHttpAdapter _httpAdapter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly TimeSpan _timeout;
     private readonly IRetriable _retryPolicy;
@@ -108,12 +108,12 @@ public class EngineIO4Adapter : IEngineIOAdapter
 
     private async Task HandlePingMessageAsync()
     {
-        var pongProtocolMessage = _serializer.NewPongMessage();
         _stopwatch.Restart();
         await _retryPolicy.RetryAsync(3, async () =>
         {
             using var cts = new CancellationTokenSource(_timeout);
-            await _protocolAdapter.SendAsync(pongProtocolMessage, cts.Token);
+            var pong = ToHttpRequest("3");
+            await _httpAdapter.SendAsync(pong, cts.Token);
         });
         _stopwatch.Stop();
         var pong = new PongMessage

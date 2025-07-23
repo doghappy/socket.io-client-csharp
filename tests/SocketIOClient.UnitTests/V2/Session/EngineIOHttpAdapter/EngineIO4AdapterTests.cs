@@ -19,19 +19,19 @@ public class EngineIO4AdapterTests
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _serializer = Substitute.For<ISerializer>();
-        _protocolAdapter = Substitute.For<IProtocolAdapter>();
+        _httpAdapter = Substitute.For<IHttpAdapter>();
         _retryPolicy = Substitute.For<IRetriable>();
         _adapter = new EngineIO4Adapter(
             _stopwatch,
             _serializer,
-            _protocolAdapter,
+            _httpAdapter,
             TimeSpan.FromSeconds(1),
             _retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly ISerializer _serializer;
-    private readonly IProtocolAdapter _protocolAdapter;
+    private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO4Adapter _adapter;
     private readonly IRetriable _retryPolicy;
 
