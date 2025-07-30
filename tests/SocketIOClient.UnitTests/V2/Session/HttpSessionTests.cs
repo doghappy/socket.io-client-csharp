@@ -40,6 +40,8 @@ public class HttpSessionTests
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
 
+    #region ConnectAsync
+
     [Fact]
     public async Task ConnectAsync_HttpAdapterThrowAnyException_SessionThrowConnectionFailedException()
     {
@@ -100,6 +102,37 @@ public class HttpSessionTests
     {
         await _session.ConnectAsync(CancellationToken.None);
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
+    }
+
+    #endregion
+
+    [Fact]
+    public async Task DisconnectAsync_NoNamespace_SendDisconnectToServer()
+    {
+        var request = new HttpRequest
+        {
+            BodyText = "2:41",
+        };
+        _engineIOAdapter.ToHttpRequest("41").Returns(request);
+
+        await _session.DisconnectAsync(CancellationToken.None);
+
+        await _httpAdapter.Received(1).SendAsync(request, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_HasNamespace_SendDisconnectToServer()
+    {
+        _sessionOptions.Namespace = "/test";
+        var request = new HttpRequest
+        {
+            BodyText = "41/test,",
+        };
+        _engineIOAdapter.ToHttpRequest("41/test,").Returns(request);
+
+        await _session.DisconnectAsync(CancellationToken.None);
+
+        await _httpAdapter.Received(1).SendAsync(request, Arg.Any<CancellationToken>());
     }
 
     [Fact]

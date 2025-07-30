@@ -14,5 +14,5 @@ public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage
     Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken);
 
     Task ConnectAsync(CancellationToken cancellationToken);
-    // Task DisconnectAsync(CancellationToken cancellationToken);
+    Task DisconnectAsync(CancellationToken cancellationToken);
 }

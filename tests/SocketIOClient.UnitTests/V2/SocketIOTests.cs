@@ -659,6 +659,43 @@ public class SocketIOTests
         reason.Should().Be("io client disconnect");
     }
 
+    [Fact]
+    public async Task DisconnectAsync_NeverConnected_DisconnectAsyncOfSessionIsNotCalled()
+    {
+        await _io.DisconnectAsync();
+        await _session.DidNotReceive().DisconnectAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_EverConnected_DisconnectAsyncOfSessionIsNotCalled()
+    {
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        await _session.Received().DisconnectAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_CancellationTokenOverload_DisconnectAsyncOfSessionIsNotCalled()
+    {
+        await ConnectAsync();
+        using var cts = new CancellationTokenSource();
+        await _io.DisconnectAsync(cts.Token);
+        await _session.Received()
+            .DisconnectAsync(Arg.Is<CancellationToken>(t => t != CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_ExceptionOccurredWhileSendingDisconnectMessage_NotThrow()
+    {
+        await ConnectAsync();
+
+        _session.DisconnectAsync(Arg.Any<CancellationToken>()).Throws(new Exception("Test"));
+
+        await _io.Invoking(x => x.DisconnectAsync())
+            .Should()
+            .NotThrowAsync();
+    }
+
     #endregion
 
     #region On

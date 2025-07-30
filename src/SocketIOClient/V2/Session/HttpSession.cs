@@ -180,6 +180,13 @@ public class HttpSession : ISession
         }
     }
 
+    public async Task DisconnectAsync(CancellationToken cancellationToken)
+    {
+        var content = string.IsNullOrEmpty(_options.Namespace) ? "41" : $"41{_options.Namespace},";
+        var req = _engineIOAdapter.ToHttpRequest(content);
+        await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
+    }
+
     public void Subscribe(IMyObserver<IMessage> observer)
     {
         if (_observers.Contains(observer))

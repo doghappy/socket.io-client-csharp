@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -320,14 +321,28 @@ public class SocketIO : ISocketIO
         OnPong?.Invoke(this, pong.Duration);
     }
 
-    public Task DisconnectAsync()
+    public async Task DisconnectAsync()
     {
-        // await _session.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
-        _session?.Dispose();
+        await DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task DisconnectAsync(CancellationToken cancellationToken)
+    {
+        if (_session is not null)
+        {
+            try
+            {
+                await _session.DisconnectAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+            }
+            _session.Dispose();
+        }
         Connected = false;
         Id = null;
         OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
-        return Task.CompletedTask;
     }
 
     public void On(string eventName, Action<IAckMessage> handler)
