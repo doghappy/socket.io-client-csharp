@@ -148,12 +148,18 @@ public class SocketIO : ISocketIO
         throw new InvalidOperationException("SocketIO is not connected.");
     }
 
-    private static void ThrowIfDataIsNull(IEnumerable<object> data)
+    private static void ThrowIfDataIsNull(object data)
     {
         if (data is null)
         {
             throw new ArgumentNullException(nameof(data));
         }
+    }
+
+    private void CheckStatusAndData(object data)
+    {
+        ThrowIfNotConnected();
+        ThrowIfDataIsNull(data);
     }
 
     private static object[] MergeEventData(string eventName, IEnumerable<object> data)
@@ -165,11 +171,8 @@ public class SocketIO : ISocketIO
 
     public async Task EmitAsync(string eventName, IEnumerable<object> data, CancellationToken cancellationToken)
     {
-        ThrowIfNotConnected();
-        // ReSharper disable PossibleMultipleEnumeration
-        ThrowIfDataIsNull(data);
+        CheckStatusAndData(data);
         var sessionData = MergeEventData(eventName, data);
-        // ReSharper restore PossibleMultipleEnumeration
         await _session.SendAsync(sessionData, cancellationToken).ConfigureAwait(false);
     }
 
@@ -208,7 +211,7 @@ public class SocketIO : ISocketIO
         Action<IDataMessage> ack,
         CancellationToken cancellationToken)
     {
-        ThrowIfNotConnected();
+        CheckStatusAndData(data);
         PacketId++;
         var sessionData = MergeEventData(eventName, data);
         _ackHandlers.Add(PacketId, ack);
@@ -230,7 +233,7 @@ public class SocketIO : ISocketIO
         Func<IDataMessage, Task> ack,
         CancellationToken cancellationToken)
     {
-        ThrowIfNotConnected();
+        CheckStatusAndData(data);
         PacketId++;
         var sessionData = MergeEventData(eventName, data);
         await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);

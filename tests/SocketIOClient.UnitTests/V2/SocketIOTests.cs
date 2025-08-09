@@ -323,7 +323,7 @@ public class SocketIOTests
     #region EmitAsync
 
     [Fact]
-    public async Task EmitAsync_ActionAckNotConnected_ThrowException()
+    public async Task EmitAsyncActionAck_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", _ => { }))
             .Should()
@@ -332,7 +332,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_FuncAckNotConnected_ThrowException()
+    public async Task EmitAsyncFuncAck_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
             .Should()
@@ -341,7 +341,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_DataNotConnected_ThrowException()
+    public async Task EmitAsyncData_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", new List<object>()))
             .Should()
@@ -459,6 +459,28 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task EmitAsyncActionAck_WithNullData_ThrowArgumentNullException()
+    {
+        await ConnectAsync();
+
+        await _io.Invoking(x => x.EmitAsync("event", null, _ => { }, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ArgumentNullException>()
+            .WithMessage("Value cannot be null. (Parameter 'data')");
+    }
+
+    [Fact]
+    public async Task EmitAsyncFuncAck_WithNullData_ThrowArgumentNullException()
+    {
+        await ConnectAsync();
+
+        await _io.Invoking(x => x.EmitAsync("event", null, _ => Task.CompletedTask, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ArgumentNullException>()
+            .WithMessage("Value cannot be null. (Parameter 'data')");
+    }
+
+    [Fact]
     public async Task EmitAsync_DataIsEmpty_AlwaysPass()
     {
         await ConnectAsync();
@@ -521,7 +543,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_ActionAckAndEmptyData_AlwaysPass()
+    public async Task EmitAsyncActionAck_AndEmptyData_AlwaysPass()
     {
         await ConnectAsync();
 
@@ -536,7 +558,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_ActionAckAnd1Data_AlwaysPass()
+    public async Task EmitAsyncActionAck_And1Data_AlwaysPass()
     {
         await ConnectAsync();
 
