@@ -421,7 +421,7 @@ public class SystemJsonSerializerTests
     public void Deserialize_EventMessage_Return1Data(string text, object expected)
     {
         _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IAckMessage;
+        var message = _serializer.Deserialize(text) as IDataMessage;
         var item1 = message!.GetDataValue(expected.GetType(), 0);
         item1.Should().BeEquivalentTo(expected);
     }

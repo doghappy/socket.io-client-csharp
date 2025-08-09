@@ -4,7 +4,7 @@ using SocketIOClient.Core.Messages;
 
 namespace SocketIOClient.V2.Serializer.SystemTextJson;
 
-public interface ISystemJsonAckMessage : IAckMessage
+public interface ISystemJsonAckMessage : IDataMessage
 {
     JsonArray DataItems { get; set; }
     JsonSerializerOptions JsonSerializerOptions { get; set; }

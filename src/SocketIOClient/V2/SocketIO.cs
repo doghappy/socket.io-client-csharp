@@ -62,10 +62,10 @@ public class SocketIO : ISocketIO
     }
 
 
-    private readonly Dictionary<int, Action<IAckMessage>> _ackHandlers = new();
-    private readonly Dictionary<int, Func<IAckMessage, Task>> _funcHandlers = new();
-    private readonly Dictionary<string, Action<IAckMessage>> _eventActionHandlers = new();
-    private readonly Dictionary<string, Func<IAckMessage, Task>> _eventFuncHandlers = new();
+    private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
+    private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
+    private readonly Dictionary<string, Action<IDataMessage>> _eventActionHandlers = new();
+    private readonly Dictionary<string, Func<IDataMessage, Task>> _eventFuncHandlers = new();
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
     private TaskCompletionSource<bool> _sessionCompletionSource;
@@ -192,12 +192,12 @@ public class SocketIO : ISocketIO
 
     #region Emit action ack
 
-    public async Task EmitAsync(string eventName, Action<IAckMessage> ack, CancellationToken cancellationToken)
+    public async Task EmitAsync(string eventName, Action<IDataMessage> ack, CancellationToken cancellationToken)
     {
         await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(string eventName, Action<IAckMessage> ack)
+    public async Task EmitAsync(string eventName, Action<IDataMessage> ack)
     {
         await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
     }
@@ -205,7 +205,7 @@ public class SocketIO : ISocketIO
     public async Task EmitAsync(
         string eventName,
         IEnumerable<object> data,
-        Action<IAckMessage> ack,
+        Action<IDataMessage> ack,
         CancellationToken cancellationToken)
     {
         ThrowIfNotConnected();
@@ -215,7 +215,7 @@ public class SocketIO : ISocketIO
         await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(string eventName, IEnumerable<object> data, Action<IAckMessage> ack)
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Action<IDataMessage> ack)
     {
         await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
     }
@@ -227,7 +227,7 @@ public class SocketIO : ISocketIO
     public async Task EmitAsync(
         string eventName,
         IEnumerable<object> data,
-        Func<IAckMessage, Task> ack,
+        Func<IDataMessage, Task> ack,
         CancellationToken cancellationToken)
     {
         ThrowIfNotConnected();
@@ -237,17 +237,17 @@ public class SocketIO : ISocketIO
         _funcHandlers.Add(PacketId, ack);
     }
 
-    public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IAckMessage, Task> ack)
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IDataMessage, Task> ack)
     {
         await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack, CancellationToken cancellationToken)
+    public async Task EmitAsync(string eventName, Func<IDataMessage, Task> ack, CancellationToken cancellationToken)
     {
         await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task EmitAsync(string eventName, Func<IAckMessage, Task> ack)
+    public async Task EmitAsync(string eventName, Func<IDataMessage, Task> ack)
     {
         await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
     }
@@ -294,7 +294,7 @@ public class SocketIO : ISocketIO
 
     private async Task HandleAckMessage(IMessage message)
     {
-        var ackMessage = (IAckMessage)message;
+        var ackMessage = (IDataMessage)message;
         if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
         {
             ack(ackMessage);
@@ -345,7 +345,7 @@ public class SocketIO : ISocketIO
         OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
     }
 
-    public void On(string eventName, Action<IAckMessage> handler)
+    public void On(string eventName, Action<IDataMessage> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventFuncHandlers.ContainsKey(eventName))
@@ -359,7 +359,7 @@ public class SocketIO : ISocketIO
         _eventActionHandlers.Add(eventName, handler);
     }
 
-    public void On(string eventName, Func<IAckMessage, Task> handler)
+    public void On(string eventName, Func<IDataMessage, Task> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventActionHandlers.ContainsKey(eventName))

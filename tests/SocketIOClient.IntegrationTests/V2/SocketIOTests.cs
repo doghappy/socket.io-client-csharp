@@ -31,10 +31,12 @@ public class SocketIOTests
         _socket.Id.Should().NotBeNullOrEmpty();
     }
 
+    #region Emit
+
     [TestMethod]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [null]);
@@ -56,7 +58,7 @@ public class SocketIOTests
     [DataRow("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [data]);
@@ -73,7 +75,7 @@ public class SocketIOTests
     [TestMethod]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [TestFile.NiuB]);
@@ -93,7 +95,7 @@ public class SocketIOTests
     [DataRow("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         _socket.On("2:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("2:emit", [item0, item1]);
@@ -112,7 +114,7 @@ public class SocketIOTests
     [TestMethod]
     public async Task EmitAsync_ActionAckWith1Parameter_ReceiveSameParameter()
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:ack", ["action"], msg => message = msg);
 
@@ -127,7 +129,7 @@ public class SocketIOTests
     [TestMethod]
     public async Task EmitAsync_FuncAckWith1Parameter_ReceiveSameParameter()
     {
-        IAckMessage message = null!;
+        IDataMessage message = null!;
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:ack", [TestFile.NiuB], msg =>
         {
@@ -142,6 +144,7 @@ public class SocketIOTests
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
     }
+    #endregion
 
     [TestMethod]
     [DataRow(4000, 0, 0)]

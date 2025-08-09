@@ -2,7 +2,7 @@ using System;
 
 namespace SocketIOClient.Core.Messages;
 
-public interface IAckMessage : IMessage
+public interface IDataMessage : IMessage
 {
     string Namespace { get; set; }
     public int Id { get; set; }

@@ -1,5 +1,5 @@
 namespace SocketIOClient.Core.Messages;
 
-public interface IBinaryAckMessage : IBinaryMessage, IAckMessage
+public interface IBinaryAckMessage : IBinaryMessage, IDataMessage
 {
 }

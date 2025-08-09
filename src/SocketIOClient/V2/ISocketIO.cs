@@ -13,5 +13,5 @@ public interface ISocketIO : IMyObserver<IMessage>
     ISessionFactory SessionFactory { get; set; }
     int PacketId { get; }
     Task ConnectAsync();
-    Task EmitAsync(string eventName, Action<IAckMessage> ack);
+    Task EmitAsync(string eventName, Action<IDataMessage> ack);
 }

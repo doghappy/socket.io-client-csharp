@@ -4,7 +4,7 @@ using SocketIOClient.Core.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
 
-public interface INewtonJsonAckMessage : IAckMessage
+public interface INewtonJsonAckMessage : IDataMessage
 {
     JArray DataItems { get; set; }
     JsonSerializerSettings JsonSerializerSettings { get; set; }
