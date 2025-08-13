@@ -144,6 +144,7 @@ public class SocketIOTests
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
     }
+
     #endregion
 
     [TestMethod]
@@ -180,7 +181,7 @@ public class SocketIOTests
     }
 
     [TestMethod]
-    public async Task SendAckDataAsync_ClientSendArgs_ServerExecuteCallback()
+    public async Task SendAckDataAsync_ClientSend2Args_ServerExecuteCallback()
     {
         IAckableMessage message = null!;
         _socket.On("ack-on-client", async data =>
@@ -196,5 +197,24 @@ public class SocketIOTests
         message.Should().NotBeNull();
         message.GetDataValue<int>(0).Should().Be(1);
         message.GetDataValue<int>(1).Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task SendAckDataAsync_ClientSendBytes_ServerExecuteCallback()
+    {
+        IAckableMessage message = null!;
+        _socket.On("ack-on-client", async data =>
+        {
+            await data.SendAckDataAsync([TestFile.IndexHtml, "hello"], CancellationToken.None);
+        });
+        _socket.On("end-ack-on-client", msg => message = msg);
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("begin-ack-on-client");
+
+        await Task.Delay(DefaultDelay * 4);
+
+        message.Should().NotBeNull();
+        message.GetDataValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
+        message.GetDataValue<string>(1).Should().Be("hello");
     }
 }
