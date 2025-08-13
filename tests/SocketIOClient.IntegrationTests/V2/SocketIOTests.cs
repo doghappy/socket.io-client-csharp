@@ -36,7 +36,7 @@ public class SocketIOTests
     [TestMethod]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
-        IDataMessage message = null!;
+        IAckableMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [null]);
@@ -58,7 +58,7 @@ public class SocketIOTests
     [DataRow("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
-        IDataMessage message = null!;
+        IAckableMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [data]);
@@ -75,7 +75,7 @@ public class SocketIOTests
     [TestMethod]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
-        IDataMessage message = null!;
+        IAckableMessage message = null!;
         _socket.On("1:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("1:emit", [TestFile.NiuB]);
@@ -95,7 +95,7 @@ public class SocketIOTests
     [DataRow("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
-        IDataMessage message = null!;
+        IAckableMessage message = null!;
         _socket.On("2:emit", msg => message = msg);
         await _socket.ConnectAsync();
         await _socket.EmitAsync("2:emit", [item0, item1]);
@@ -177,5 +177,24 @@ public class SocketIOTests
         await Task.Delay(100);
 
         times.Should().Be(2);
+    }
+
+    [TestMethod]
+    public async Task SendAckDataAsync_ClientSendArgs_ServerExecuteCallback()
+    {
+        IAckableMessage message = null!;
+        _socket.On("ack-on-client", async data =>
+        {
+            await data.SendAckDataAsync([1, 2]);
+        });
+        _socket.On("end-ack-on-client", msg => message = msg);
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("begin-ack-on-client");
+
+        await Task.Delay(DefaultDelay);
+
+        message.Should().NotBeNull();
+        message.GetDataValue<int>(0).Should().Be(1);
+        message.GetDataValue<int>(1).Should().Be(2);
     }
 }

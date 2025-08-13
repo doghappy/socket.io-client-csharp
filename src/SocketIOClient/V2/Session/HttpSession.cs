@@ -158,6 +158,12 @@ public class HttpSession : ISession
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    {
+        var messages = _serializer.SerializeAckData(data, packetId);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         var uri = _uriConverter.GetServerUri(

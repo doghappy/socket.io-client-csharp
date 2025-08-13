@@ -350,7 +350,17 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_AckEventAction_PacketIdIncrementBy1()
+    public async Task SendAckDataAsync_NotConnected_ThrowException()
+    {
+        IInternalSocketIO io = _io;
+        await io.Invoking(x => x.SendAckDataAsync(1, new List<object>()))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("SocketIO is not connected.");
+    }
+
+    [Fact]
+    public async Task EmitAsyncActionAck_WhenCalled_PacketIdIncrementBy1()
     {
         await ConnectAsync();
         await _io.EmitAsync("event", _ => { });
@@ -375,7 +385,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_EventAndActionAckAndCancellationToken_TokenIsNotNone()
+    public async Task EmitAsyncActionAck_EventAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
 
@@ -390,7 +400,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_AckEventFunc_PacketIdIncrementBy1()
+    public async Task EmitAsyncFuncAck_WhenCalled_PacketIdIncrementBy1()
     {
         await ConnectAsync();
         await _io.EmitAsync("event", _ => Task.CompletedTask);
@@ -419,7 +429,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_EventAndDataAndFuncAck_AlwaysPass()
+    public async Task EmitAsyncFuncAck_DataAndCancellationTokenNone_AlwaysPass()
     {
         await ConnectAsync();
 
@@ -432,7 +442,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_EventAndFuncAckAndCancellationToken_TokenIsNotNone()
+    public async Task EmitAsyncFuncAck_WithCustomCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
 
@@ -444,6 +454,20 @@ public class SocketIOTests
                 Arg.Any<object[]>(),
                 Arg.Any<int>(),
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task SendAckDataAsync_DataAndCancellationTokenNone_AlwaysPass()
+    {
+        await ConnectAsync();
+
+        IInternalSocketIO io = _io;
+        await io.SendAckDataAsync(1, [1], CancellationToken.None);
+        await _session.Received()
+            .SendAckDataAsync(
+                Arg.Is<object[]>(x => x.Length == 1 && 1.Equals(x[0])),
+                Arg.Any<int>(),
+                CancellationToken.None);
     }
 
     [Fact]
@@ -475,6 +499,18 @@ public class SocketIOTests
         await ConnectAsync();
 
         await _io.Invoking(x => x.EmitAsync("event", null, _ => Task.CompletedTask, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ArgumentNullException>()
+            .WithMessage("Value cannot be null. (Parameter 'data')");
+    }
+
+    [Fact]
+    public async Task SendAckDataAsync_WithNullData_ThrowArgumentNullException()
+    {
+        await ConnectAsync();
+
+        IInternalSocketIO io = _io;
+        await io.Invoking(x => x.SendAckDataAsync(1, null))
             .Should()
             .ThrowAsync<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'data')");
@@ -745,7 +781,7 @@ public class SocketIOTests
     [Fact]
     public void OnAction_HandlerIsNull_ThrowArgumentNullException()
     {
-        _io.Invoking(x => x.On("abc", (Action<IDataMessage>)null!))
+        _io.Invoking(x => x.On("abc", (Action<IAckableMessage>)null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -753,7 +789,7 @@ public class SocketIOTests
     [Fact]
     public void OnFunc_HandlerIsNull_ThrowArgumentNullException()
     {
-        _io.Invoking(x => x.On("abc", (Func<IDataMessage, Task>)null!))
+        _io.Invoking(x => x.On("abc", (Func<IAckableMessage, Task>)null!))
             .Should()
             .Throw<ArgumentNullException>();
     }

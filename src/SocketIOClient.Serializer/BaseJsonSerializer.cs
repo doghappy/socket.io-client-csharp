@@ -53,6 +53,23 @@ public abstract class BaseJsonSerializer : ISerializer
         }
     }
 
+    private void AddAckPrefix(StringBuilder builder, int bytesCount)
+    {
+        if (bytesCount == 0)
+        {
+            builder.Append("43");
+        }
+        else
+        {
+            builder.Append("46").Append(bytesCount).Append('-');
+        }
+
+        if (!string.IsNullOrEmpty(Namespace))
+        {
+            builder.Append(Namespace).Append(',');
+        }
+    }
+
     public List<ProtocolMessage> Serialize(object[] data)
     {
         ThrowIfDataIsInvalid(data);
@@ -63,15 +80,25 @@ public abstract class BaseJsonSerializer : ISerializer
         return GetSerializeResult(builder.ToString(), result.Bytes);
     }
 
-    public List<ProtocolMessage> Serialize(object[] data, int packetId)
+    private List<ProtocolMessage> Serialize(object[] data, int packetId, Action<StringBuilder, int> prefixHandler)
     {
         ThrowIfDataIsInvalid(data);
         var result = SerializeCore(data);
         var builder = NewStringBuilder(result.Json.Length);
-        AddPrefix(builder, result.Bytes.Count);
+        prefixHandler(builder, result.Bytes.Count);
         builder.Append(packetId);
         builder.Append(result.Json);
         return GetSerializeResult(builder.ToString(), result.Bytes);
+    }
+
+    public List<ProtocolMessage> Serialize(object[] data, int packetId)
+    {
+        return Serialize(data, packetId, AddPrefix);
+    }
+
+    public List<ProtocolMessage> SerializeAckData(object[] data, int packetId)
+    {
+        return Serialize(data, packetId, AddAckPrefix);
     }
 
     public IMessage Deserialize(string text)

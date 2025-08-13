@@ -514,7 +514,7 @@ public class NewtonJsonSerializerTests
     [InlineData(null, 1, "421[\"event\"]")]
     [InlineData("", 2, "422[\"event\"]")]
     [InlineData("test", 3, "42test,3[\"event\"]")]
-    public void SerializeDataAndId_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
+    public void Serialize_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
         var list = _serializer.Serialize(["event"], id);
@@ -525,10 +525,32 @@ public class NewtonJsonSerializerTests
     [InlineData(null, 4, "451-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "451-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    public void SerializeDataAndId_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, int id, string expected)
+    public void Serialize_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
         var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
+        list[0].Text.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(null, 1, "431[1,\"2\"]")]
+    [InlineData("", 2, "432[1,\"2\"]")]
+    [InlineData("test", 3, "43test,3[1,\"2\"]")]
+    public void SerializeAckData_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
+    {
+        _serializer.Namespace = ns;
+        var list = _serializer.SerializeAckData([1, "2"], id);
+        list[0].Text.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    public void SerializeAckData_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
+    {
+        _serializer.Namespace = ns;
+        var list = _serializer.SerializeAckData(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
     }
 }

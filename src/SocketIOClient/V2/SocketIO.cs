@@ -11,7 +11,7 @@ using IHttpClient = SocketIOClient.Transport.Http.IHttpClient;
 
 namespace SocketIOClient.V2;
 
-public class SocketIO : ISocketIO
+public class SocketIO : ISocketIO, IInternalSocketIO
 {
     public SocketIO(Uri uri, SocketIOOptions options)
     {
@@ -64,8 +64,8 @@ public class SocketIO : ISocketIO
 
     private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
-    private readonly Dictionary<string, Action<IDataMessage>> _eventActionHandlers = new();
-    private readonly Dictionary<string, Func<IDataMessage, Task>> _eventFuncHandlers = new();
+    private readonly Dictionary<string, Action<IAckableMessage>> _eventActionHandlers = new();
+    private readonly Dictionary<string, Func<IAckableMessage, Task>> _eventFuncHandlers = new();
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
     private TaskCompletionSource<bool> _sessionCompletionSource;
@@ -257,6 +257,22 @@ public class SocketIO : ISocketIO
 
     #endregion
 
+    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data)
+    {
+        await SendAckDataAsync(packetId, data, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        await SendAckDataAsync(packetId, data, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        CheckStatusAndData(data);
+        await _session.SendAckDataAsync(data.ToArray(), packetId, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task OnNextAsync(IMessage message)
     {
         switch (message.Type)
@@ -281,17 +297,22 @@ public class SocketIO : ISocketIO
         }
     }
 
+    private IAckableMessage ToAckableMessage(IDataMessage message)
+    {
+        return new AckableMessage(message, this);
+    }
+
     private async Task HandleEventMessage(IMessage message)
     {
         var eventMessage = (IEventMessage)message;
         if (_eventActionHandlers.TryGetValue(eventMessage.Event, out var actionHandler))
         {
-            actionHandler(eventMessage);
+            actionHandler(ToAckableMessage(eventMessage));
             return;
         }
         if (_eventFuncHandlers.TryGetValue(eventMessage.Event, out var funcHandler))
         {
-            await funcHandler(eventMessage);
+            await funcHandler(ToAckableMessage(eventMessage));
         }
     }
 
@@ -348,7 +369,7 @@ public class SocketIO : ISocketIO
         OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
     }
 
-    public void On(string eventName, Action<IDataMessage> handler)
+    public void On(string eventName, Action<IAckableMessage> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventFuncHandlers.ContainsKey(eventName))
@@ -362,7 +383,7 @@ public class SocketIO : ISocketIO
         _eventActionHandlers.Add(eventName, handler);
     }
 
-    public void On(string eventName, Func<IDataMessage, Task> handler)
+    public void On(string eventName, Func<IAckableMessage, Task> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventActionHandlers.ContainsKey(eventName))
