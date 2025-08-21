@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using SocketIOClient.V2.Core;
+using SocketIOClient.Core;
 
 namespace SocketIOClient.V2;
 

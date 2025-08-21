@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SocketIOClient.V2.Core;
+using SocketIOClient.Core;
 
 namespace SocketIOClient.UnitTests.V2;
 

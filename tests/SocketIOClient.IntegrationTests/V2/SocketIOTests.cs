@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.CommonTestData;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
-using SocketIOClient.V2.Core;
+using SocketIOClient.Core;
 
 namespace SocketIOClient.IntegrationTests.V2;
 

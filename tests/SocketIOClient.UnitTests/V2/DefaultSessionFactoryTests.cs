@@ -1,7 +1,7 @@
 using System.Reflection;
 using FluentAssertions;
 using SocketIOClient.V2;
-using SocketIOClient.V2.Core;
+using SocketIOClient.Core;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;

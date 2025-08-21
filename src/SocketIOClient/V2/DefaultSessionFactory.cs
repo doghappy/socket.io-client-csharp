@@ -1,7 +1,7 @@
 using System.Net.Http;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
-using SocketIOClient.V2.Core;
+using SocketIOClient.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;

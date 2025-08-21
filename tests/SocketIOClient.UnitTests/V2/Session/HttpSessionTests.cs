@@ -7,7 +7,6 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.Serializer.Decapsulation;
-using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
