@@ -22,10 +22,8 @@ public class DefaultSessionFactory : ISessionFactory
     {
         var httpClient = new SystemHttpClient(new HttpClient());
         var httpAdapter = new HttpAdapter(httpClient);
-        var serializer = new SystemJsonSerializer(new Decapsulator())
-        {
-            EngineIOMessageAdapter = NewEngineIOMessageAdapter(eio),
-        };
+        var engineIOMessageAdapter = NewEngineIOMessageAdapter(eio);
+        var serializer = new SystemJsonSerializer(new Decapsulator(), engineIOMessageAdapter);
         var stopwatch = new SystemStopwatch();
         var random = new SystemRandom();
         var randomDelayRetryPolicy = new RandomDelayRetryPolicy(random);

@@ -145,7 +145,7 @@ public class HttpSessionTests
         {
             Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
         };
-        var serializer = new SystemJsonSerializer(new Decapsulator());
+        var serializer = new SystemJsonSerializer(new Decapsulator(), Substitute.For<IEngineIOMessageAdapter>());
         var uriConverter = new DefaultUriConverter();
         var session = new HttpSession(_sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
         var response = Substitute.For<IHttpResponse>();

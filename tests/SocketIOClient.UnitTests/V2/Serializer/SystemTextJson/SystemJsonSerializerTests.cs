@@ -8,6 +8,7 @@ using NSubstitute;
 using SocketIOClient.CommonTestData;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using Xunit;
@@ -16,18 +17,29 @@ namespace SocketIOClient.UnitTests.V2.Serializer.SystemTextJson;
 
 public class SystemJsonSerializerTests
 {
-    public SystemJsonSerializerTests()
+    // public SystemJsonSerializerTests()
+    // {
+    //     _serializer = new SystemJsonSerializer(_realDecapsulator);
+    // }
+
+    // private readonly SystemJsonSerializer _serializer;
+    private readonly Decapsulator _realDecapsulator = new();
+
+    private SystemJsonSerializer NewSystemJsonSerializer(IEngineIOMessageAdapter engineIOMessageAdapter)
     {
-        _serializer = new SystemJsonSerializer(_realDecapsulator);
+        return NewSystemJsonSerializer(_realDecapsulator, engineIOMessageAdapter);
     }
 
-    private readonly SystemJsonSerializer _serializer;
-    private readonly Decapsulator _realDecapsulator = new();
+    private SystemJsonSerializer NewSystemJsonSerializer(IDecapsulable decapsulator, IEngineIOMessageAdapter engineIOMessageAdapter)
+    {
+        return new SystemJsonSerializer(decapsulator, engineIOMessageAdapter);
+    }
 
     [Fact]
     public void SerializeData_InvalidData_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize(null))
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize(null))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -35,7 +47,8 @@ public class SystemJsonSerializerTests
     [Fact]
     public void SerializeData_DataIsEmpty_ThrowArgumentException()
     {
-        _serializer.Invoking(x => x.Serialize([]))
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize([]))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -61,7 +74,7 @@ public class SystemJsonSerializerTests
         ]);
 
     private static readonly (object[] input, IEnumerable<ProtocolMessage> output) SerializeDataOnlyWithNull = new(
-        ["event", null],
+        ["event", null!],
         [
             new ProtocolMessage
             {
@@ -201,7 +214,7 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
-        var serializer = new SystemJsonSerializer(_realDecapsulator)
+        var serializer = new SystemJsonSerializer(_realDecapsulator, Substitute.For<IEngineIOMessageAdapter>())
         {
             JsonSerializerOptions = new JsonSerializerOptions
             {
@@ -217,8 +230,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", "42test,[\"event\"]")]
     public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event"]);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event"]);
         list[0].Text.Should().Be(expected);
     }
 
@@ -228,8 +242,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes]);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event", TestFile.NiuB.Bytes]);
         list[0].Text.Should().Be(expected);
     }
 
@@ -255,9 +270,9 @@ public class SystemJsonSerializerTests
         "40/test,{\"sid\":\"123\"}",
         new ConnectedMessage { Sid = "123", Namespace = "/test" });
 
-    private static readonly (string text, IMessage message) DeserializeEmptyStringReturnNull = new("", null);
+    private static readonly (string text, IMessage message) DeserializeEmptyStringReturnNull = new("", null!);
 
-    private static readonly (string text, IMessage message) DeserializeUnsupportedTextReturnNull = new("unsupported text", null);
+    private static readonly (string text, IMessage message) DeserializeUnsupportedTextReturnNull = new("unsupported text", null!);
 
     private static readonly (string text, IMessage message) DeserializePing = new("2", new PingMessage());
 
@@ -336,8 +351,8 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeEio3Cases))]
     public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO3MessageAdapter();
-        var message = _serializer.Deserialize(text);
+        var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO3MessageAdapter());
+        var message = serializer.Deserialize(text);
         message.Should()
             .BeEquivalentTo(expected,
                 options => options
@@ -368,8 +383,8 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeEio4Cases))]
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text);
+        var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text);
         message.Should()
             .BeEquivalentTo(expected,
                 options => options
@@ -420,8 +435,8 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeEventMessage1ItemCases))]
     public void Deserialize_EventMessage_Return1Data(string text, object expected)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IDataMessage;
+        var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text) as IDataMessage;
         var item1 = message!.GetDataValue(expected.GetType(), 0);
         item1.Should().BeEquivalentTo(expected);
     }
@@ -445,8 +460,8 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeEventMessage2ItemsCases))]
     public void Deserialize_EventMessage_Return2Data(string text, object expected1, object expected2)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IEventMessage;
+        var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text) as IEventMessage;
         var item1 = message!.GetDataValue(expected1.GetType(), 0);
         item1.Should().BeEquivalentTo(expected1);
 
@@ -463,7 +478,7 @@ public class SystemJsonSerializerTests
             {
                 Success = false,
             });
-        var serializer = new SystemJsonSerializer(decapsulator);
+        var serializer = NewSystemJsonSerializer(decapsulator, new SystemJsonEngineIO4MessageAdapter());
         const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
 
         serializer.Deserialize(text).Should().BeNull();
@@ -498,8 +513,8 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(DeserializeBinaryEventMessage1ItemCases))]
     public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
-        _serializer.EngineIOMessageAdapter = new SystemJsonEngineIO4MessageAdapter();
-        var message = (IBinaryAckMessage)_serializer.Deserialize(text);
+        var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
+        var message = (IBinaryAckMessage)serializer.Deserialize(text);
 
         message.Add(bytes);
         var item1 = message!.GetDataValue<TestFile>(0);
@@ -509,7 +524,8 @@ public class SystemJsonSerializerTests
     [Fact]
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize(null, 1))
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize(null, 1))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -517,7 +533,8 @@ public class SystemJsonSerializerTests
     [Fact]
     public void SerializeDataAndId_DataIsEmpty_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize([], 1))
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize([], 1))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -528,8 +545,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", 3, "42test,3[\"event\"]")]
     public void Serialize_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event"], id);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event"], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -539,8 +557,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -550,8 +569,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", 3, "43test,3[1,\"2\"]")]
     public void SerializeAckData_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.SerializeAckData([1, "2"], id);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.SerializeAckData([1, "2"], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -561,8 +581,9 @@ public class SystemJsonSerializerTests
     [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void SerializeAckData_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.SerializeAckData(["event", TestFile.NiuB.Bytes], id);
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.SerializeAckData(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
     }
 }

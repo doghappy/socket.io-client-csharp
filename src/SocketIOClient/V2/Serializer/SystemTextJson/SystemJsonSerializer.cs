@@ -11,13 +11,14 @@ namespace SocketIOClient.V2.Serializer.SystemTextJson;
 
 public class SystemJsonSerializer : BaseJsonSerializer
 {
-    public SystemJsonSerializer(IDecapsulable decapsulator) : base(decapsulator)
+    public SystemJsonSerializer(IDecapsulable decapsulator, IEngineIOMessageAdapter engineIOMessageAdapter) : base(decapsulator)
     {
+        _engineIOMessageAdapter = engineIOMessageAdapter;
         JsonSerializerOptions = new JsonSerializerOptions();
     }
 
     public JsonSerializerOptions JsonSerializerOptions { get; set; }
-    public IEngineIOMessageAdapter EngineIOMessageAdapter { get; set; }
+    private readonly IEngineIOMessageAdapter _engineIOMessageAdapter;
 
     private JsonSerializerOptions NewOptions(JsonConverter converter)
     {
@@ -45,11 +46,11 @@ public class SystemJsonSerializer : BaseJsonSerializer
             MessageType.Opened => NewOpenedMessage(text),
             MessageType.Ping => new PingMessage(),
             MessageType.Pong => new PongMessage(),
-            MessageType.Connected => EngineIOMessageAdapter.DeserializeConnectedMessage(text),
+            MessageType.Connected => _engineIOMessageAdapter.DeserializeConnectedMessage(text),
             MessageType.Disconnected => NewDisconnectedMessage(text),
             MessageType.Event => NewEventMessage(text),
             MessageType.Ack => NewAckMessage(text),
-            MessageType.Error => EngineIOMessageAdapter.DeserializeErrorMessage(text),
+            MessageType.Error => _engineIOMessageAdapter.DeserializeErrorMessage(text),
             MessageType.Binary => NewBinaryEventMessage(text),
             MessageType.BinaryAck => NewBinaryAckMessage(text),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
