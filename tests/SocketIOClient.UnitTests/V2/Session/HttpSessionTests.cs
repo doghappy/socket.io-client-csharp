@@ -7,6 +7,7 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
@@ -26,13 +27,14 @@ public class HttpSessionTests
             _engineIOAdapter,
             _httpAdapter,
             _serializer,
-            new DefaultUriConverter(4));
+            new DefaultUriConverter());
     }
 
     private readonly SessionOptions _sessionOptions = new()
     {
         ServerUri = new Uri("http://localhost:3000"),
         Query = new List<KeyValuePair<string, string>>(),
+        EngineIO = EngineIO.V4,
     };
 
     private readonly HttpSession _session;
@@ -144,7 +146,7 @@ public class HttpSessionTests
             Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
         };
         var serializer = new SystemJsonSerializer(new Decapsulator());
-        var uriConverter = new DefaultUriConverter(4);
+        var uriConverter = new DefaultUriConverter();
         var session = new HttpSession(_sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");

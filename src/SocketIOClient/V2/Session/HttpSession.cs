@@ -170,7 +170,8 @@ public class HttpSession : ISession
             false,
             _options.ServerUri,
             _options.Path,
-            _options.Query);
+            _options.Query,
+            (int)_options.EngineIO);
         _httpAdapter.Uri = uri;
         var req = new HttpRequest
         {

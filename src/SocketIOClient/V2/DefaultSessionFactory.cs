@@ -1,6 +1,7 @@
 using System.Net.Http;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
@@ -36,7 +37,7 @@ public class DefaultSessionFactory : ISessionFactory
             engineIOAdapter,
             httpAdapter,
             serializer,
-            new DefaultUriConverter((int)eio));
+            new DefaultUriConverter());
     }
 
     private static IEngineIOMessageAdapter NewEngineIOMessageAdapter(EngineIO eio)

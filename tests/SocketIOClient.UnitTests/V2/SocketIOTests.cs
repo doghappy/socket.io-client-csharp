@@ -4,6 +4,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
+using SocketIOClient.V2.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;

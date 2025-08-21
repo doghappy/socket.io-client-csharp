@@ -4,9 +4,10 @@ using System.Text;
 
 namespace SocketIOClient.V2.UriConverter
 {
-    public class DefaultUriConverter(int eio) : IUriConverter
+    public class DefaultUriConverter : IUriConverter
     {
-        public Uri GetServerUri(bool ws, Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams)
+        // TODO: refactor following NpgConnectionBuilder
+        public Uri GetServerUri(bool ws, Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams, int eio)
         {
             var builder = new StringBuilder();
             SetSchema(ws, serverUri, builder);

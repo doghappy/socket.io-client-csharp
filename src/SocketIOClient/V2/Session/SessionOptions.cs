@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SocketIOClient.V2.Core;
 
 namespace SocketIOClient.V2.Session;
 
@@ -10,4 +11,5 @@ public class SessionOptions
     public string Namespace { get; set; }
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
     public TimeSpan Timeout { get; set; }
+    public EngineIO EngineIO { get; set; }
 }
