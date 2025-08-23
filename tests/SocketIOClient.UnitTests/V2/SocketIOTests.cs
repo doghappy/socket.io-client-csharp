@@ -2,6 +2,7 @@ using System.Diagnostics;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using SocketIOClient.Test.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
 using SocketIOClient.Core;

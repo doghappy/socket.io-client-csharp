@@ -45,7 +45,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.NewtonsoftJson.Tests", "tests\SocketIOClient.Serializer.NewtonsoftJson.Tests\SocketIOClient.Serializer.NewtonsoftJson.Tests.csproj", "{0A3E6691-40FD-4010-A764-2B0C538F9B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.CommonTestData", "tests\SocketIOClient.CommonTestData\SocketIOClient.CommonTestData.csproj", "{C2754666-1367-47B2-A234-8E8F42C9BE07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Test.Core", "tests\SocketIOClient.Test.Core\SocketIOClient.Test.Core.csproj", "{C2754666-1367-47B2-A234-8E8F42C9BE07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

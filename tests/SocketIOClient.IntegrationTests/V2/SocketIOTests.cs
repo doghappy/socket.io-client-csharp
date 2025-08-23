@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SocketIOClient.CommonTestData;
+using SocketIOClient.Test.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
 using SocketIOClient.Core;

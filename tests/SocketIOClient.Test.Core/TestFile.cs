@@ -1,4 +1,4 @@
-﻿namespace SocketIOClient.CommonTestData;
+﻿namespace SocketIOClient.Test.Core;
 
 public class TestFile
 {

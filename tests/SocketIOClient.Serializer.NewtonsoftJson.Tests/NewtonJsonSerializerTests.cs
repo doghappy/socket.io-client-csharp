@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Newtonsoft.Json;
 using NSubstitute;
-using SocketIOClient.CommonTestData;
+using SocketIOClient.Test.Core;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer.Decapsulation;
