@@ -14,8 +14,6 @@
 		<RepositoryType>github</RepositoryType>
 		<Version>3.1.2</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>SocketIOClient.snk</AssemblyOriginatorKeyFile>
 		<LangVersion>default</LangVersion>
 	</PropertyGroup>
 
@@ -23,6 +21,12 @@
 		<DocumentationFile>bin\Release\SocketIOClient.xml</DocumentationFile>
 		<OutputPath>bin\Release\</OutputPath>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>SocketIOClient.UnitTests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />

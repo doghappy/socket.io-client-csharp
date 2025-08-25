@@ -14,12 +14,6 @@ using SocketIOClient.Transport;
 using SocketIOClient.Transport.Http;
 using SocketIOClient.Transport.WebSockets;
 
-[assembly: InternalsVisibleTo("SocketIOClient.UnitTests, PublicKey=002400000480000094000000060200000024" +
-                              "0000525341310004000001000100b18b07d8d9f5f79927b53fb9601562a4986cd90fd64cbb7ccf0bd258" +
-                              "dc3f2119a2c7db7bfea28eba76ae4346a125e56a6b6713e920656c598027182f19b54bcd9f9012228b51" +
-                              "93d84c565e54caee24e4fcfa6f0cbe611b4bc631578fb4aa5f7dabf5beacbe8df27716a5a1849b5d124e" +
-                              "5924161577424002142ba1ade29d089c")]
-
 namespace SocketIOClient
 {
     /// <summary>
