@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
@@ -16,22 +17,24 @@ namespace SocketIOClient.V2.Session;
 public class HttpSession : ISession
 {
     public HttpSession(
+        ILogger<HttpSession> logger,
         SessionOptions options,
         IEngineIOAdapter engineIOAdapter,
         IHttpAdapter httpAdapter,
         ISerializer serializer,
         IUriConverter uriConverter)
     {
+        _logger = logger;
         _options = options;
         _engineIOAdapter = engineIOAdapter;
         _httpAdapter = httpAdapter;
         _serializer = serializer;
         _uriConverter = uriConverter;
-
         _engineIOAdapter.Subscribe(this);
         _httpAdapter.Subscribe(this);
     }
 
+    private readonly ILogger<HttpSession> _logger;
     private readonly SessionOptions _options;
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly IHttpAdapter _httpAdapter;
@@ -71,7 +74,7 @@ public class HttpSession : ISession
 
     private async Task OnNextTextMessage(string text)
     {
-        Debug.WriteLine($"[Polling⬇] {text}");
+        _logger.LogDebug("[Polling⬇] {Text}", text);
         var message = _serializer.Deserialize(text);
         if (message is null)
         {
@@ -105,6 +108,7 @@ public class HttpSession : ISession
 
     public async Task OnNextAsync(IMessage message)
     {
+        _logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
         foreach (var observer in _observers)
         {
             await observer.OnNextAsync(message).ConfigureAwait(false);

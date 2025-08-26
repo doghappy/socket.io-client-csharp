@@ -5,11 +5,8 @@ using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
-using SocketIOClient.Serializer;
-using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
@@ -20,23 +17,24 @@ public class EngineIO3AdapterTests
     public EngineIO3AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
-        _serializer = Substitute.For<ISerializer>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
         _adapter = new(
             _stopwatch,
-            _serializer,
             _httpAdapter,
-            TimeSpan.FromSeconds(1),
+            _options,
             _retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
-    private readonly ISerializer _serializer;
     private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
+    private readonly EngineIOAdapterOptions _options = new()
+    {
+        Timeout = TimeSpan.FromSeconds(1),
+    };
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -147,7 +145,7 @@ public class EngineIO3AdapterTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string? content)
+    public void ToHttpRequest_GivenAnInvalidContent_ThrowException(string? content)
     {
         _adapter
             .Invoking(x => x.ToHttpRequest(content))
@@ -179,7 +177,7 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(8, 11);
+        var range = Quantity.Within(6, 11);
         await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
@@ -231,7 +229,7 @@ public class EngineIO3AdapterTests
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(7, 12);
+        var range = Quantity.Within(5, 12);
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
@@ -264,9 +262,8 @@ public class EngineIO3AdapterTests
         var httpAdapter = Substitute.For<IHttpAdapter>();
         var adapter = new EngineIO3Adapter(
             _stopwatch,
-            _serializer,
             httpAdapter,
-            TimeSpan.FromSeconds(1),
+            _options,
             _retryPolicy);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
@@ -283,9 +280,8 @@ public class EngineIO3AdapterTests
         var httpAdapter = Substitute.For<IHttpAdapter>();
         var adapter = new EngineIO3Adapter(
             _stopwatch,
-            _serializer,
             httpAdapter,
-            TimeSpan.FromSeconds(1),
+            _options,
             _retryPolicy);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });

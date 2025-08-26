@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Session;
@@ -13,12 +15,17 @@ namespace SocketIOClient.V2;
 
 public class SocketIO : ISocketIO, IInternalSocketIO
 {
-    public SocketIO(Uri uri, SocketIOOptions options)
+    public SocketIO(Uri uri, SocketIOOptions options, Action<IServiceCollection> configure = null)
     {
         _serverUri = uri;
         Options = options;
-        SessionFactory = new DefaultSessionFactory();
-        Random = new SystemRandom();
+        _serviceProvider = ServicesInitializer.BuildServiceProvider(_services, configure);
+        _logger = _serviceProvider.GetRequiredService<ILogger<SocketIO>>();
+        _random = _serviceProvider.GetRequiredService<IRandom>();
+    }
+
+    public SocketIO(Uri uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
+    {
     }
 
     public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
@@ -29,17 +36,26 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
     }
 
-    public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
+    public SocketIO(string uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
     {
     }
 
+    public SocketIO(string uri, SocketIOOptions options, Action<IServiceCollection> configure = null) : this(new Uri(uri), options, configure)
+    {
+    }
+
+    private readonly ServiceCollection _services = new();
+
     public IHttpClient HttpClient { get; set; }
-    public ISessionFactory SessionFactory { get; set; }
+
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<SocketIO> _logger;
+    private readonly IRandom _random;
+
     private ISession _session;
     public int PacketId { get; private set; }
     public bool Connected { get; private set; }
     public string Id { get; private set; }
-    public IRandom Random { get; set; }
 
     private string Namespace { get; set; }
 
@@ -93,8 +109,10 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
         _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Waiting for _connCompletionSource...");
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
         var ex = await task.ConfigureAwait(false);
+        _logger.LogDebug("_connCompletionSource is done");
         if (ex != null)
         {
             throw ex;
@@ -106,14 +124,20 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
         for (int i = 0; i < attempts; i++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var session = SessionFactory.New(Options.EIO, new SessionOptions
+            // TODO: dispose old session
+            ISession session;
+            try
             {
-                ServerUri = ServerUri,
-                Path = Options.Path,
-                Query = Options.Query,
-                Timeout = Options.ConnectionTimeout,
-            });
+                _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", i + 1, attempts);
+                cancellationToken.ThrowIfCancellationRequested();
+                session = NewSession();
+            }
+            catch (Exception ex)
+            {
+                _connCompletionSource.SetResult(ex);
+                throw;
+            }
+
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
             {
@@ -121,10 +145,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 await session.ConnectAsync(cts.Token).ConfigureAwait(false);
                 _session = session;
                 _sessionCompletionSource.SetResult(true);
+                _logger.LogDebug("Set _sessionCompletionSource to true");
                 break;
             }
             catch (Exception e)
             {
+                _logger.LogDebug(e, e.Message);
                 session.Dispose();
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
                 OnReconnectError?.Invoke(this, ex);
@@ -133,10 +159,26 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                     _connCompletionSource.SetResult(ex);
                     throw ex;
                 }
-                var delay = Random.Next(Options.ReconnectionDelayMax);
+                var delay = _random.Next(Options.ReconnectionDelayMax);
                 await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
             }
         }
+    }
+
+    private ISession NewSession()
+    {
+        var sessionFactory = _serviceProvider.GetRequiredService<ISessionFactory>();
+        _logger.LogDebug("Creating session...");
+        var session = sessionFactory.Create(new SessionOptions
+        {
+            ServerUri = ServerUri,
+            Path = Options.Path,
+            Query = Options.Query,
+            Timeout = Options.ConnectionTimeout,
+            EngineIO = Options.EIO,
+        });
+        _logger.LogDebug("Session created: {Type}", session.GetType().Name);
+        return session;
     }
 
     private void ThrowIfNotConnected()

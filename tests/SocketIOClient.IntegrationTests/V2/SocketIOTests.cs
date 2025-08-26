@@ -1,30 +1,55 @@
 using System.Threading;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Test.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
 using SocketIOClient.Core;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.IntegrationTests.V2;
 
-[TestClass]
+// TODO: to xUnit
+// [TestClass]
 public class SocketIOTests
 {
-    public SocketIOTests()
+    private readonly ITestOutputHelper _output;
+
+    public SocketIOTests(ITestOutputHelper output)
     {
-        _socket = new SocketIOClient.V2.SocketIO("http://localhost:11210", new SocketIOClient.V2.SocketIOOptions
+        _output = output;
+        // localhost.charlesproxy.com
+        _socket = NewSocketIO("http://localhost:11210");
+    }
+
+    private readonly SocketIOClient.V2.SocketIOOptions _options = new()
+    {
+        EIO = EngineIO.V3,
+        Reconnection = false,
+    };
+
+    private readonly SocketIOClient.V2.SocketIO _socket;
+    private const int DefaultDelay = 200;
+    private const string TokenUrl = "http://localhost:11211";
+
+    private SocketIOClient.V2.SocketIO NewSocketIO(string url)
+    {
+        return new SocketIOClient.V2.SocketIO(url, _options, services =>
         {
-            EIO = EngineIO.V3,
-            Reconnection = false,
+            services.AddLogging(builder =>
+            {
+                builder.SetMinimumLevel(LogLevel.Trace);
+                builder.AddProvider(new XUnitLoggerProvider(_output));
+            });
         });
     }
 
-    private readonly SocketIOClient.V2.SocketIO _socket;
-    public const int DefaultDelay = 200;
-
-    [TestMethod]
+    [Fact]
     public async Task ConnectAsync_ConnectedToServer_ConnectedIsTureIdIsNotNullOrEmpty()
     {
         await _socket.ConnectAsync();
@@ -218,5 +243,20 @@ public class SocketIOTests
         message.Should().NotBeNull();
         message.GetDataValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
         message.GetDataValue<string>(1).Should().Be("hello");
+    }
+
+    [TestMethod]
+    [Timeout(2000)]
+    public async Task ConnectAsync_WithQuery_SuccessConnect()
+    {
+        var io = NewSocketIO(TokenUrl);
+        io.Options.Query =
+        [
+            new KeyValuePair<string, string>("token", "abc123"),
+        ];
+
+        await io.ConnectAsync();
+
+        io.Connected.Should().BeTrue();
     }
 }

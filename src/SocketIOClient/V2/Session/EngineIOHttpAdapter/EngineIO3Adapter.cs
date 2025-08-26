@@ -16,29 +16,25 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 {
     public EngineIO3Adapter(
         IStopwatch stopwatch,
-        ISerializer serializer,
         IHttpAdapter httpAdapter,
-        TimeSpan timeout,
+        EngineIOAdapterOptions options,
         IRetriable retryPolicy)
     {
         _stopwatch = stopwatch;
-        _serializer = serializer;
         _httpAdapter = httpAdapter;
-        _timeout = timeout;
+        _options = options;
         _retryPolicy = retryPolicy;
     }
 
     private readonly IStopwatch _stopwatch;
 
-    // TODO: no need?
-    private readonly ISerializer _serializer;
     private readonly IHttpAdapter _httpAdapter;
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
     private OpenedMessage _openedMessage;
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly TimeSpan _timeout;
+    private readonly EngineIOAdapterOptions _options;
     private readonly IRetriable _retryPolicy;
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
@@ -201,7 +197,7 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
             var request = ToHttpRequest("2");
             await _retryPolicy.RetryAsync(3, async () =>
             {
-                using var cts = new CancellationTokenSource(_timeout);
+                using var cts = new CancellationTokenSource(_options.Timeout);
                 await _httpAdapter.SendAsync(request, cts.Token);
             });
             _stopwatch.Restart();

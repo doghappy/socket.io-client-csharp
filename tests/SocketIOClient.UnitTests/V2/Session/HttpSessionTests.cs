@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core;
@@ -21,7 +22,9 @@ public class HttpSessionTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         _serializer = Substitute.For<ISerializer>();
+        _logger = Substitute.For<ILogger<HttpSession>>();
         _session = new HttpSession(
+            _logger,
             _sessionOptions,
             _engineIOAdapter,
             _httpAdapter,
@@ -40,6 +43,7 @@ public class HttpSessionTests
     private readonly IHttpAdapter _httpAdapter;
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
+    private readonly ILogger<HttpSession> _logger;
 
     #region ConnectAsync
 
@@ -146,7 +150,7 @@ public class HttpSessionTests
         };
         var serializer = new SystemJsonSerializer(new Decapsulator(), Substitute.For<IEngineIOMessageAdapter>());
         var uriConverter = new DefaultUriConverter();
-        var session = new HttpSession(_sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
+        var session = new HttpSession(_logger, _sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
         httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);

@@ -3,11 +3,8 @@ using JetBrains.Annotations;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
-using SocketIOClient.Serializer;
-using SocketIOClient.V2;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
@@ -18,22 +15,23 @@ public class EngineIO4AdapterTests
     public EngineIO4AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
-        _serializer = Substitute.For<ISerializer>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _retryPolicy = Substitute.For<IRetriable>();
         _adapter = new EngineIO4Adapter(
             _stopwatch,
-            _serializer,
             _httpAdapter,
-            TimeSpan.FromSeconds(1),
+            _options,
             _retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
-    private readonly ISerializer _serializer;
     private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO4Adapter _adapter;
     private readonly IRetriable _retryPolicy;
+    private readonly EngineIOAdapterOptions _options = new()
+    {
+        Timeout = TimeSpan.FromSeconds(1),
+    };
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()

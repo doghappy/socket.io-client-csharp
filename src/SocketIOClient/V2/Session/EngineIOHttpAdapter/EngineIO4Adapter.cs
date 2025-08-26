@@ -17,24 +17,21 @@ public class EngineIO4Adapter : IEngineIOAdapter
 {
     public EngineIO4Adapter(
         IStopwatch stopwatch,
-        ISerializer serializer,
         IHttpAdapter httpAdapter,
-        TimeSpan timeout,
+        EngineIOAdapterOptions options,
         IRetriable retryPolicy)
     {
         _stopwatch = stopwatch;
-        _serializer = serializer;
         _httpAdapter = httpAdapter;
-        _timeout = timeout;
+        _options = options;
         _retryPolicy = retryPolicy;
     }
 
     private const string Delimiter = "\u001E";
     private readonly IStopwatch _stopwatch;
-    private readonly ISerializer _serializer;
     private readonly IHttpAdapter _httpAdapter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly TimeSpan _timeout;
+    private readonly EngineIOAdapterOptions _options;
     private readonly IRetriable _retryPolicy;
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
@@ -111,7 +108,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
         _stopwatch.Restart();
         await _retryPolicy.RetryAsync(3, async () =>
         {
-            using var cts = new CancellationTokenSource(_timeout);
+            using var cts = new CancellationTokenSource(_options.Timeout);
             var pong = ToHttpRequest("3");
             await _httpAdapter.SendAsync(pong, cts.Token);
         });

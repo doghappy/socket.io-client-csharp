@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Test.Core;
@@ -9,22 +12,28 @@ using SocketIOClient.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2;
 
 public class SocketIOTests
 {
-    public SocketIOTests()
+    public SocketIOTests(ITestOutputHelper output)
     {
         _session = Substitute.For<ISession>();
-
         _sessionFactory = Substitute.For<ISessionFactory>();
-        _sessionFactory.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()).Returns(_session);
+        _sessionFactory.Create(Arg.Any<SessionOptions>()).Returns(_session);
         _random = Substitute.For<IRandom>();
-        _io = new SocketIOClient.V2.SocketIO("http://localhost:3000")
+        _io = new SocketIOClient.V2.SocketIO("http://localhost:3000", services =>
         {
-            SessionFactory = _sessionFactory,
-            Random = _random,
+            services.AddLogging(builder =>
+            {
+                builder.AddProvider(new XUnitLoggerProvider(output));
+            });
+            services.Replace(ServiceDescriptor.Singleton(_sessionFactory));
+            services.Replace(ServiceDescriptor.Singleton(_random));
+        })
+        {
             Options =
             {
                 Reconnection = false,
@@ -44,7 +53,6 @@ public class SocketIOTests
         io.PacketId.Should().Be(0);
         io.Connected.Should().BeFalse();
         io.Id.Should().BeNull();
-        io.SessionFactory.Should().BeOfType<DefaultSessionFactory>();
     }
 
     #region ConnectAsync
@@ -64,7 +72,33 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_ReconnectionIsFalseAttempsIs2_OnReconnectErrorInvoked1Time()
+    public async Task ConnectAsync_CancellationTokenIsCanceled_ThrowConnectionException()
+    {
+        await _io
+            .Invoking(async x =>
+            {
+                using var cts = new CancellationTokenSource();
+                await cts.CancelAsync();
+                await x.ConnectAsync(cts.Token);
+            })
+            .Should()
+            .ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_SessionFactoryThrowException_PassThroughException()
+    {
+        _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Test"));
+
+        await _io
+            .Invoking(async x => await x.ConnectAsync())
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("Test");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ReconnectionIsFalseAttemptsIs2_OnReconnectErrorInvoked1Time()
     {
         _io.Options.Reconnection = false;
         _io.Options.ReconnectionAttempts = 2;
@@ -125,7 +159,7 @@ public class SocketIOTests
         await Task.Delay(2000);
 
         await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>());
-        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
+        _sessionFactory.Received(1).Create(Arg.Any<SessionOptions>());
     }
 
     [Fact]
@@ -187,13 +221,13 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
     {
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+        _session.ConnectAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new Exception("Test")), Task.CompletedTask);
         await _io
             .Invoking(async x => await x.ConnectAsync())
             .Should()
             .ThrowAsync<ConnectionException>();
 
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
         await ConnectAsync();
 
         _io.Connected.Should().BeTrue();
@@ -212,12 +246,12 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_AlreadyConnected_Skip()
+    public async Task ConnectAsync_AlreadyConnected_SessionCreatedOnce()
     {
         await ConnectAsync();
         await _io.ConnectAsync();
 
-        _sessionFactory.Received(1).New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>());
+        _sessionFactory.Received(1).Create(Arg.Any<SessionOptions>());
     }
 
     [Theory]
@@ -225,44 +259,28 @@ public class SocketIOTests
     [InlineData(EngineIO.V4)]
     public async Task ConnectAsync_DifferentEngineIO_PassCorrectValueToSessionFactory(EngineIO eio)
     {
-        var options = new SocketIOClient.V2.SocketIOOptions
-        {
-            EIO = eio,
-        };
-        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
-        {
-            SessionFactory = _sessionFactory,
-            Random = _random,
-        };
+        _io.Options.EIO = eio;
 
-        await ConnectAsync(io);
+        await ConnectAsync();
 
-        _sessionFactory.Received(1).New(eio, Arg.Any<SessionOptions>());
+        _sessionFactory.Received(1).Create(Arg.Is<SessionOptions>(o => o.EngineIO == eio));
     }
 
     [Fact]
     public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
     {
-        var options = new SocketIOClient.V2.SocketIOOptions
-        {
-            Path = "/chat",
-            ConnectionTimeout = TimeSpan.FromSeconds(30),
-            Query =
-            [
-                new KeyValuePair<string, string>("id", "abc"),
-            ],
-        };
-        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000", options)
-        {
-            SessionFactory = _sessionFactory,
-            Random = _random,
-        };
+        _io.Options.Path = "/chat";
+        _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(30);
+        _io.Options.Query =
+        [
+            new KeyValuePair<string, string>("id", "abc"),
+        ];
 
         SessionOptions receivedSessionOptions = null!;
-        _sessionFactory.When(x => x.New(Arg.Any<EngineIO>(), Arg.Any<SessionOptions>()))
-            .Do(info => { receivedSessionOptions = info.Arg<SessionOptions>(); });
+        _sessionFactory.When(x => x.Create(Arg.Any<SessionOptions>()))
+            .Do(info => receivedSessionOptions = info.Arg<SessionOptions>());
 
-        await ConnectAsync(io);
+        await ConnectAsync();
 
         receivedSessionOptions.Should()
             .BeEquivalentTo(new SessionOptions
@@ -274,6 +292,7 @@ public class SocketIOTests
                     new KeyValuePair<string, string>("id", "abc"),
                 ],
                 Timeout = TimeSpan.FromSeconds(30),
+                EngineIO = EngineIO.V4,
             });
     }
 
