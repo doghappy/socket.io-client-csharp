@@ -60,7 +60,7 @@ public class SocketIOTests
 
     #region Emit
 
-    [TestMethod]
+    [Fact]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
         IAckableMessage message = null!;
@@ -75,14 +75,14 @@ public class SocketIOTests
         receivedData.Should().BeNull();
     }
 
-    [TestMethod]
-    [DataRow(true)]
-    [DataRow(false)]
-    [DataRow(-1234567890)]
-    [DataRow(1234567890)]
-    [DataRow(-1.234567890)]
-    [DataRow(1.234567890)]
-    [DataRow("hello\n世界\n🌍🌎🌏")]
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    [InlineData(-1234567890)]
+    [InlineData(1234567890)]
+    [InlineData(-1.234567890)]
+    [InlineData(1.234567890)]
+    [InlineData("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
         IAckableMessage message = null!;
@@ -99,7 +99,7 @@ public class SocketIOTests
             .BeEquivalentTo(data);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
         IAckableMessage message = null!;
@@ -115,11 +115,11 @@ public class SocketIOTests
             .BeEquivalentTo(TestFile.NiuB);
     }
 
-    [TestMethod]
-    [DataRow(true, false)]
-    [DataRow(false, 123)]
-    [DataRow(-1234567890, "test")]
-    [DataRow("hello\n世界\n🌍🌎🌏", 199)]
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, 123)]
+    [InlineData(-1234567890, "test")]
+    [InlineData("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
         IAckableMessage message = null!;
@@ -138,7 +138,7 @@ public class SocketIOTests
             .BeEquivalentTo(item1);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task EmitAsync_ActionAckWith1Parameter_ReceiveSameParameter()
     {
         IDataMessage message = null!;
@@ -153,7 +153,7 @@ public class SocketIOTests
             .BeEquivalentTo("action");
     }
 
-    [TestMethod]
+    [Fact]
     public async Task EmitAsync_FuncAckWith1Parameter_ReceiveSameParameter()
     {
         IDataMessage message = null!;
@@ -174,10 +174,10 @@ public class SocketIOTests
 
     #endregion
 
-    [TestMethod]
-    [DataRow(4000, 0, 0)]
-    [DataRow(5900, 1, 1)]
-    [DataRow(14000, 2, 2)]
+    [Theory]
+    [InlineData(4000, 0, 0)]
+    [InlineData(5900, 1, 1)]
+    [InlineData(14000, 2, 2)]
     public async Task OnPingAndOnPong_HandlerAreRegistered_WorkAsExpected(int ms, int expectedPingTimes, int expectedPongTimes)
     {
         var pingTimes = 0;
@@ -192,7 +192,7 @@ public class SocketIOTests
         pongTimes.Should().Be(expectedPongTimes);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task ConnectAsync_ConnectAfterDisconnect_OnConnectedTimeIs2()
     {
         var times = 0;
@@ -207,7 +207,7 @@ public class SocketIOTests
         times.Should().Be(2);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task SendAckDataAsync_ClientSend2Args_ServerExecuteCallback()
     {
         IAckableMessage message = null!;
@@ -226,7 +226,7 @@ public class SocketIOTests
         message.GetDataValue<int>(1).Should().Be(2);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task SendAckDataAsync_ClientSendBytes_ServerExecuteCallback()
     {
         IAckableMessage message = null!;
@@ -245,8 +245,7 @@ public class SocketIOTests
         message.GetDataValue<string>(1).Should().Be("hello");
     }
 
-    [TestMethod]
-    [Timeout(2000)]
+    [Fact]
     public async Task ConnectAsync_WithQuery_SuccessConnect()
     {
         var io = NewSocketIO(TokenUrl);
