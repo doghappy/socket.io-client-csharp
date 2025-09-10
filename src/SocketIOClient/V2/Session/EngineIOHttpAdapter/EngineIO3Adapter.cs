@@ -5,14 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
-using SocketIOClient.Serializer;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
-public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
+public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 {
     public EngineIO3Adapter(
         IStopwatch stopwatch,
@@ -160,7 +159,7 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         switch (message.Type)
         {
             case MessageType.Opened:
-                _openedMessage = (OpenedMessage)message;
+                HandleOpenedMessage(message);
                 break;
             case MessageType.Connected:
                 HandleConnectedMessageAsync(message);
@@ -178,12 +177,17 @@ public class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         pongMessage.Duration = _stopwatch.Elapsed;
     }
 
+    private void HandleOpenedMessage(IMessage message)
+    {
+        _openedMessage = (OpenedMessage)message;
+        _ = Task.Run(PollingAsync);
+    }
+
     private void HandleConnectedMessageAsync(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
         connectedMessage.Sid = _openedMessage.Sid;
         _ = Task.Run(StartPingAsync);
-        _ = Task.Run(PollingAsync);
     }
 
     private async Task StartPingAsync()
