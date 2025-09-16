@@ -72,20 +72,6 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_CancellationTokenIsCanceled_ThrowConnectionException()
-    {
-        await _io
-            .Invoking(async x =>
-            {
-                using var cts = new CancellationTokenSource();
-                await cts.CancelAsync();
-                await x.ConnectAsync(cts.Token);
-            })
-            .Should()
-            .ThrowAsync<OperationCanceledException>();
-    }
-
-    [Fact]
     public async Task ConnectAsync_SessionFactoryThrowException_PassThroughException()
     {
         _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Test"));
@@ -175,7 +161,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsyncCancellationToken_GivenACanceledToken_ThrowConnectionException()
+    public async Task ConnectAsync_CancellationTokenIsCanceled_TaskCanceledException()
     {
         await _io
             .Invoking(async x =>
@@ -185,11 +171,11 @@ public class SocketIOTests
                 await x.ConnectAsync(cts.Token);
             })
             .Should()
-            .ThrowAsync<OperationCanceledException>();
+            .ThrowExactlyAsync<TaskCanceledException>();
     }
 
     [Fact]
-    public async Task ConnectAsyncCancellationToken_CancelAfter100ms_ThrowOperationCanceledException()
+    public async Task ConnectAsync_CancelAfter100ms_ThrowTaskCanceledException()
     {
         _io.Options.Reconnection = true;
         _random.Next(Arg.Any<int>()).Returns(10);
@@ -202,7 +188,37 @@ public class SocketIOTests
                 await x.ConnectAsync(cts.Token);
             })
             .Should()
-            .ThrowAsync<OperationCanceledException>();
+            .ThrowExactlyAsync<TaskCanceledException>();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_SessionFactoryCreateThrow_PassThroughToClient()
+    {
+        _io.Options.Reconnection = true;
+        _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Unable to create session"));
+        await _io
+            .Invoking(async x =>
+            {
+                await x.ConnectAsync(CancellationToken.None);
+            })
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("Unable to create session");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_SessionConnectAsyncThrow_ThrowConnectionException()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>())
+            .Throws(new InvalidOperationException("Unknown error"));
+        await _io
+            .Invoking(async x =>
+            {
+                await x.ConnectAsync(CancellationToken.None);
+            })
+            .Should()
+            .ThrowExactlyAsync<ConnectionException>()
+            .WithMessage($"Cannot connect to server 'http://localhost:3000/'");
     }
 
     [Fact]
