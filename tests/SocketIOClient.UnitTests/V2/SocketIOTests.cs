@@ -28,6 +28,7 @@ public class SocketIOTests
         {
             services.AddLogging(builder =>
             {
+                builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new XUnitLoggerProvider(output));
             });
             services.Replace(ServiceDescriptor.Singleton(_sessionFactory));
@@ -197,10 +198,7 @@ public class SocketIOTests
         _io.Options.Reconnection = true;
         _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Unable to create session"));
         await _io
-            .Invoking(async x =>
-            {
-                await x.ConnectAsync(CancellationToken.None);
-            })
+            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
             .Should()
             .ThrowExactlyAsync<Exception>()
             .WithMessage("Unable to create session");
@@ -212,13 +210,40 @@ public class SocketIOTests
         _session.ConnectAsync(Arg.Any<CancellationToken>())
             .Throws(new InvalidOperationException("Unknown error"));
         await _io
-            .Invoking(async x =>
-            {
-                await x.ConnectAsync(CancellationToken.None);
-            })
+            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
             .Should()
             .ThrowExactlyAsync<ConnectionException>()
             .WithMessage($"Cannot connect to server 'http://localhost:3000/'");
+    }
+
+    private static async Task OnNextAsync(SocketIOClient.V2.SocketIO io, IMessage message)
+    {
+        IInternalSocketIO internalSocketIO = io;
+        await internalSocketIO.OnNextAsync(message);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ReceiveAnErrorEvent_OnErrorIsInvoked()
+    {
+        _io.Options.Reconnection = true;
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(50);
+            await OnNextAsync(_io, new ErrorMessage
+            {
+                Error = "Invalid QueryString",
+            });
+        });
+        var errors = new List<string>();
+        _io.OnError += (_, err) => errors.Add(err);
+
+        await _io
+            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+            .Should()
+            .ThrowExactlyAsync<ConnectionException>()
+            .WithMessage("Invalid QueryString");
+
+        errors.Should().Equal("Invalid QueryString");
     }
 
     [Fact]
@@ -337,17 +362,17 @@ public class SocketIOTests
         await ConnectAsync(_io, ms);
     }
 
-    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
+    private async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
     {
         await ConnectAsync(io, 0);
     }
 
-    private static async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
+    private async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
     {
         _ = Task.Run(async () =>
         {
             await Task.Delay(ms);
-            await io.OnNextAsync(new ConnectedMessage
+            await OnNextAsync(io, new ConnectedMessage
             {
                 Sid = "123",
             });
@@ -416,7 +441,7 @@ public class SocketIOTests
         {
             Id = _io.PacketId,
         };
-        await _io.OnNextAsync(ackMessage);
+        await OnNextAsync(_io, ackMessage);
 
         ackCalled.Should().BeTrue();
     }
@@ -460,7 +485,7 @@ public class SocketIOTests
         {
             Id = _io.PacketId,
         };
-        await _io.OnNextAsync(ackMessage);
+        await OnNextAsync(_io, ackMessage);
 
         ackCalled.Should().BeTrue();
     }
@@ -671,7 +696,7 @@ public class SocketIOTests
         _io.OnPing += (_, _) => called = true;
         await ConnectAsync();
 
-        await _io.OnNextAsync(new PingMessage());
+        await OnNextAsync(_io, new PingMessage());
 
         called.Should().BeTrue();
     }
@@ -683,7 +708,7 @@ public class SocketIOTests
         _io.OnPong += (_, e) => ts = e;
         await ConnectAsync();
 
-        await _io.OnNextAsync(new PongMessage
+        await OnNextAsync(_io, new PongMessage
         {
             Duration = TimeSpan.FromSeconds(2),
         });
@@ -826,7 +851,8 @@ public class SocketIOTests
     [Fact]
     public void OnFunc_HandlerIsNull_ThrowArgumentNullException()
     {
-        _io.Invoking(x => x.On("abc", (Func<IAckableMessage, Task>)null!))
+        Func<IAckableMessage, Task> handler = null!;
+        _io.Invoking(x => x.On("abc", handler))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -842,7 +868,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         times.Should().Be(1);
     }
@@ -862,7 +888,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         times.Should().Be(1);
     }
@@ -878,7 +904,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         times.Should().Be(0);
     }
@@ -898,7 +924,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         times.Should().Be(0);
     }
@@ -916,7 +942,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         handler1Called.Should().BeTrue();
         handler2Called.Should().BeFalse();
@@ -943,7 +969,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         handler1Called.Should().BeTrue();
         handler2Called.Should().BeFalse();
@@ -978,7 +1004,7 @@ public class SocketIOTests
             Event = "event",
             DataItems = [],
         };
-        await _io.OnNextAsync(eventMessage);
+        await OnNextAsync(_io, eventMessage);
 
         times.Should().Be(1);
     }

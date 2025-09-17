@@ -2,12 +2,10 @@ using System;
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Transport.Http;
-using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Session;
 
 namespace SocketIOClient.V2;
 
-public interface ISocketIO : IMyObserver<IMessage>
+public interface ISocketIO
 {
     IHttpClient HttpClient { get; set; }
     int PacketId { get; }

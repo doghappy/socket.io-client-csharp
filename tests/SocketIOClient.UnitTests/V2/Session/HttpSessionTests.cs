@@ -144,7 +144,8 @@ public class HttpSessionTests
     public async Task Integration_HttpAdapterPushedMessages_MessagesWillBeForwardedToSubscribersOfHttpSession()
     {
         var httpClient = Substitute.For<IHttpClient>();
-        var httpAdapter = new HttpAdapter(httpClient)
+        var logger = Substitute.For<ILogger<HttpAdapter>>();
+        var httpAdapter = new HttpAdapter(httpClient, logger)
         {
             Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
         };

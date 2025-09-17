@@ -246,15 +246,38 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_WithQuery_SuccessConnect()
+    public async Task ConnectAsync_InvalidQueryValue_InvokeOnError()
     {
+        var errors = new List<string>();
         var io = NewSocketIO(TokenUrl);
+        io.Options.Reconnection = false;
         io.Options.Query =
         [
-            new KeyValuePair<string, string>("token", "abc123"),
+            new KeyValuePair<string, string>("token", "invalid_token"),
+        ];
+        io.OnError += (_, err) => errors.Add(err);
+
+        await io
+            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+            .Should()
+            .ThrowExactlyAsync<ConnectionException>()
+            .WithMessage("Authentication error");
+
+        io.Connected.Should().BeFalse();
+        errors.Should().Equal("Authentication error");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ValidQueryValue_ConnectSuccess()
+    {
+        var io = NewSocketIO(TokenUrl);
+        io.Options.Reconnection = false;
+        io.Options.Query =
+        [
+            new KeyValuePair<string, string>("token", "abc"),
         ];
 
-        await io.ConnectAsync();
+        await io.ConnectAsync(CancellationToken.None);
 
         io.Connected.Should().BeTrue();
     }

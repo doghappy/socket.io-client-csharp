@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Session;
 using IHttpClient = SocketIOClient.Transport.Http.IHttpClient;
 
@@ -92,6 +93,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     public event EventHandler<TimeSpan> OnPong;
     public event EventHandler OnConnected;
     public event EventHandler<string> OnDisconnected;
+    public event EventHandler<string> OnError;
 
     public async Task ConnectAsync()
     {
@@ -315,7 +317,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         await _session.SendAckDataAsync(data.ToArray(), packetId, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task OnNextAsync(IMessage message)
+    async Task IMyObserver<IMessage>.OnNextAsync(IMessage message)
+    {
+        await OnNextAsync(message).ConfigureAwait(false);
+    }
+
+    private async Task OnNextAsync(IMessage message)
     {
         switch (message.Type)
         {
@@ -335,6 +342,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             case MessageType.Ack:
             case MessageType.BinaryAck:
                 await HandleAckMessage(message);
+                break;
+            case MessageType.Error:
+                HandleErrorMessage(message);
                 break;
         }
     }
@@ -385,6 +395,13 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         var pong = (PongMessage)message;
         OnPong?.Invoke(this, pong.Duration);
+    }
+
+    private void HandleErrorMessage(IMessage message)
+    {
+        var err = (ErrorMessage)message;
+        _connCompletionSource.SetResult(new ConnectionException(err.Error));
+        OnError?.Invoke(this, err.Error);
     }
 
     public async Task DisconnectAsync()

@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
-public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
+public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : IHttpAdapter
 {
     private readonly List<IMyObserver<ProtocolMessage>> _observers = [];
 
@@ -52,12 +53,6 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         return message;
     }
 
-    public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
-    {
-        var response = await SendProtocolMessageAsync(message, cancellationToken);
-        await HandleResponseAsync(response);
-    }
-
     private async Task HandleResponseAsync(IHttpResponse response)
     {
         var incomingMessage = await GetMessageAsync(response).ConfigureAwait(false);
@@ -67,10 +62,20 @@ public class HttpAdapter(IHttpClient httpClient) : IHttpAdapter
         }
     }
 
+    public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
+    {
+        var response = await SendProtocolMessageAsync(message, cancellationToken);
+        await HandleResponseAsync(response);
+    }
+
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
         req.Uri ??= NewUri();
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
+#if DEBUG
+        var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
+        logger.LogDebug("[Http⬆] {Body}", body);
+#endif
         _ = HandleResponseAsync(response).ConfigureAwait(false);
     }
 

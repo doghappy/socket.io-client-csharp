@@ -57,6 +57,15 @@ public class HttpSession : ISession
         await HandleMessages(messages).ConfigureAwait(false);
     }
 
+    public async Task OnNextAsync(IMessage message)
+    {
+        _logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
+        foreach (var observer in _observers)
+        {
+            await observer.OnNextAsync(message).ConfigureAwait(false);
+        }
+    }
+
     private async Task HandleMessages(IEnumerable<ProtocolMessage> messages)
     {
         foreach (var message in messages)
@@ -106,27 +115,15 @@ public class HttpSession : ISession
         }
     }
 
-    public async Task OnNextAsync(IMessage message)
-    {
-        _logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
-        foreach (var observer in _observers)
-        {
-            await observer.OnNextAsync(message).ConfigureAwait(false);
-        }
-    }
-
-    // public Task OnNextAsync(IMessage message)
-    // {
-    //     foreach (var observer in _observers)
-    //     {
-    //         observer.OnNextAsync(message);
-    //     }
-    //     return Task.CompletedTask;
-    // }
-
     public async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
         var messages = _serializer.Serialize(data);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    {
+        var messages = _serializer.Serialize(data, packetId);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
@@ -154,12 +151,6 @@ public class HttpSession : ISession
             var request = _engineIOAdapter.ToHttpRequest(bytes);
             await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
-    }
-
-    public async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
-    {
-        var messages = _serializer.Serialize(data, packetId);
-        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)

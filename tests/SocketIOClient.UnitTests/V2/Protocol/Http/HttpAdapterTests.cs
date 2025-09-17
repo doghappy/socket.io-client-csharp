@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.V2.Observers;
@@ -12,7 +13,8 @@ public class HttpAdapterTests
     public HttpAdapterTests()
     {
         _httpClient = Substitute.For<IHttpClient>();
-        _httpAdapter = new HttpAdapter(_httpClient);
+        var logger = Substitute.For<ILogger<HttpAdapter>>();
+        _httpAdapter = new HttpAdapter(_httpClient, logger);
     }
 
     private readonly HttpAdapter _httpAdapter;
