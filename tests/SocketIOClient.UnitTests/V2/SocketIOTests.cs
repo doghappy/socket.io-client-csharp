@@ -816,6 +816,22 @@ public class SocketIOTests
             .NotThrowAsync();
     }
 
+    [Fact]
+    public async Task DisconnectAsync_TriggeredByServer_OnDisconnectedWillBeCalled()
+    {
+        string reason = null!;
+        _io.OnDisconnected += (_, r) => reason = r;
+
+        await ConnectAsync();
+        await OnNextAsync(_io, new DisconnectedMessage());
+        await Task.Delay(50);
+
+        _io.Connected.Should().BeFalse();
+        _io.Id.Should().BeNull();
+        _session.Received(1).Dispose();
+        reason.Should().Be("io server disconnect");
+    }
+
     #endregion
 
     #region On

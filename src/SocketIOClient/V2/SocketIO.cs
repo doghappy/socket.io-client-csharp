@@ -333,15 +333,18 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 HandlePongMessage(message);
                 break;
             case MessageType.Connected:
-                await HandleConnectedMessage(message);
+                await HandleConnectedMessage(message).ConfigureAwait(false);
+                break;
+            case MessageType.Disconnected:
+                await HandleDisconnectedMessageAsync().ConfigureAwait(false);
                 break;
             case MessageType.Event:
             case MessageType.Binary:
-                await HandleEventMessage(message);
+                await HandleEventMessage(message).ConfigureAwait(false);
                 break;
             case MessageType.Ack:
             case MessageType.BinaryAck:
-                await HandleAckMessage(message);
+                await HandleAckMessage(message).ConfigureAwait(false);
                 break;
             case MessageType.Error:
                 HandleErrorMessage(message);
@@ -391,6 +394,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _connCompletionSource.SetResult(null);
     }
 
+    private async Task HandleDisconnectedMessageAsync()
+    {
+        OnDisconnected?.Invoke(this, DisconnectReason.IOServerDisconnect);
+        await DisconnectCoreAsync(CancellationToken.None);
+    }
+
     private void HandlePongMessage(IMessage message)
     {
         var pong = (PongMessage)message;
@@ -411,6 +420,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
+        await DisconnectCoreAsync(cancellationToken).ConfigureAwait(false);
+        OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
+    }
+
+    private async Task DisconnectCoreAsync(CancellationToken cancellationToken)
+    {
         if (_session is not null)
         {
             try
@@ -425,7 +440,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
         Connected = false;
         Id = null;
-        OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
     }
 
     public void On(string eventName, Action<IAckableMessage> handler)

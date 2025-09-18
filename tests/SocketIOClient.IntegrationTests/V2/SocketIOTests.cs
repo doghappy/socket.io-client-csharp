@@ -281,4 +281,45 @@ public class SocketIOTests
 
         io.Connected.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task DisconnectAsync_CalledByClient_OnDisconnectIsInvoked()
+    {
+        var times = 0;
+        string? reason = null;
+        _socket.OnDisconnected += (_, e) =>
+        {
+            times++;
+            reason = e;
+        };
+
+        await _socket.ConnectAsync();
+        await _socket.DisconnectAsync();
+
+        times.Should().Be(1);
+        reason.Should().Be(DisconnectReason.IOClientDisconnect);
+        _socket.Id.Should().BeNull();
+        _socket.Connected.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_CalledByServer_OnDisconnectIsInvoked()
+    {
+        var times = 0;
+        string? reason = null;
+        _socket.OnDisconnected += (_, e) =>
+        {
+            times++;
+            reason = e;
+        };
+
+        await _socket.ConnectAsync();
+        await _socket.EmitAsync("disconnect", [false]);
+        await Task.Delay(100);
+
+        times.Should().Be(1);
+        reason.Should().Be(DisconnectReason.IOServerDisconnect);
+        _socket.Id.Should().BeNull();
+        _socket.Connected.Should().BeFalse();
+    }
 }
