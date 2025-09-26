@@ -24,7 +24,7 @@ public static class ServicesInitializer
         services.AddSingleton<IDecapsulable, Decapsulator>();
         services.AddSingleton<IHttpClient, SystemHttpClient>();
         services.AddSingleton<IRetriable, RandomDelayRetryPolicy>();
-        services.AddSingleton<IHttpAdapter, HttpAdapter>();
+        services.AddTransient<IHttpAdapter, HttpAdapter>();
         services.AddSingleton<IUriConverter>(new DefaultUriConverter());
 
         // SystemTextJson or NewtonsoftJson

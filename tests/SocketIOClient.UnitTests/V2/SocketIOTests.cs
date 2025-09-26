@@ -1026,4 +1026,28 @@ public class SocketIOTests
     }
 
     #endregion
+
+    #region Reconnect
+
+    [Theory]
+    [InlineData(3)]
+    [InlineData(7)]
+    public async Task Reconnect_Manually_OnConnectedAndOnDisconnectedAreWorks(int times)
+    {
+        var connectTimes = 0;
+        var disconnectTimes = 0;
+        _io.OnConnected += (_, _) => connectTimes++;
+        _io.OnDisconnected += (_, _) => disconnectTimes++;
+
+        for (var i = 0; i < times; i++)
+        {
+            await ConnectAsync();
+            await _io.DisconnectAsync();
+        }
+
+        connectTimes.Should().Be(times);
+        disconnectTimes.Should().Be(times);
+    }
+
+    #endregion
 }
