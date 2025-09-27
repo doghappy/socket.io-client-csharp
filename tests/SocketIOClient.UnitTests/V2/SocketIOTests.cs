@@ -123,6 +123,27 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task OnReconnectError_ThrowException_NotBlocked()
+    {
+        _io.Options.Reconnection = true;
+        _io.Options.ReconnectionAttempts = 2;
+        _session.ConnectAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new Exception("Test")), Task.CompletedTask);
+
+        var times = 0;
+        _io.OnReconnectError += (_, _) =>
+        {
+            times++;
+            throw new InvalidOperationException();
+        };
+
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
+        times.Should().Be(1);
+    }
+
+    [Fact]
     public async Task ConnectAsync_SessionSuccessfullyConnected_SessionSubscribeIO()
     {
         await ConnectAsync();
@@ -735,6 +756,57 @@ public class SocketIOTests
         await ConnectAsync();
 
         _io.Connected.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task OnReconnectAttempt_ReconnectionIsFalse_InvokeOnce()
+    {
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new TimeoutException());
+        var attempts = 0;
+        _io.OnReconnectAttempt += (_, _) => attempts++;
+
+        var func = async () => await ConnectAsync();
+
+        await func.Should().ThrowAsync<ConnectionException>();
+        attempts.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    [InlineData(7)]
+    public async Task OnReconnectAttempt_ReconnectionIsTrue_InvokeExactTimes(int attempts)
+    {
+        _io.Options.Reconnection = true;
+        _io.Options.ReconnectionAttempts = attempts;
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new TimeoutException());
+        var times = 0;
+        _io.OnReconnectAttempt += (_, _) => times++;
+
+        var func = async () => await ConnectAsync();
+
+        await func.Should().ThrowAsync<ConnectionException>();
+        times.Should().Be(attempts);
+    }
+
+    [Fact]
+    public async Task OnReconnectAttempt_ThrowException_NotBlocked()
+    {
+        _io.Options.Reconnection = true;
+        _io.Options.ReconnectionAttempts = 2;
+        _session.ConnectAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new TimeoutException()), Task.CompletedTask);
+        var times = 0;
+        _io.OnReconnectAttempt += (_, t) =>
+        {
+            times = t;
+            throw new InvalidOperationException();
+        };
+
+        await ConnectAsync();
+
+        _io.Connected.Should().BeTrue();
+        times.Should().Be(2);
     }
 
     #endregion

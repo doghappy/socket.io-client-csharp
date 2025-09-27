@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Extensions;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Session;
@@ -94,6 +95,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     public event EventHandler OnConnected;
     public event EventHandler<string> OnDisconnected;
     public event EventHandler<string> OnError;
+    public event EventHandler<int> OnReconnectAttempt;
 
     public async Task ConnectAsync()
     {
@@ -126,28 +128,14 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
         for (int i = 0; i < attempts; i++)
         {
+            ReconnectAttempt(i, attempts);
             // TODO: dispose old session
-            ISession session;
-            try
-            {
-                _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", i + 1, attempts);
-                cancellationToken.ThrowIfCancellationRequested();
-                session = NewSession();
-            }
-            catch (Exception ex)
-            {
-                _connCompletionSource.SetResult(ex);
-                throw;
-            }
+            var session = NewSessionWithCancellationToken(cancellationToken);
 
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
             try
             {
-                session.Subscribe(this);
-                await session.ConnectAsync(cts.Token).ConfigureAwait(false);
-                _session = session;
-                _sessionCompletionSource.SetResult(true);
-                _logger.LogDebug("Set _sessionCompletionSource to true");
+                await TryConnectAsync(session, cts).ConfigureAwait(false);
                 break;
             }
             catch (Exception e)
@@ -155,7 +143,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 _logger.LogDebug(e, e.Message);
                 session.Dispose();
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
-                OnReconnectError?.Invoke(this, ex);
+                OnReconnectError.RunInBackground(this, ex);
                 if (i == attempts - 1)
                 {
                     _connCompletionSource.SetResult(ex);
@@ -165,6 +153,38 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
             }
         }
+    }
+
+    private void ReconnectAttempt(int i, int attempts)
+    {
+        var times = i + 1;
+        _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", times, attempts);
+        OnReconnectAttempt.RunInBackground(this, times);
+    }
+
+    private async Task TryConnectAsync(ISession session, CancellationTokenSource cts)
+    {
+        session.Subscribe(this);
+        await session.ConnectAsync(cts.Token).ConfigureAwait(false);
+        _session = session;
+        _sessionCompletionSource.SetResult(true);
+        _logger.LogDebug("Set _sessionCompletionSource to true");
+    }
+
+    private ISession NewSessionWithCancellationToken(CancellationToken cancellationToken)
+    {
+        ISession session;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            session = NewSession();
+        }
+        catch (Exception ex)
+        {
+            _connCompletionSource.SetResult(ex);
+            throw;
+        }
+        return session;
     }
 
     private ISession NewSession()

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SocketIOClient.Extensions
@@ -27,6 +28,15 @@ namespace SocketIOClient.Extensions
                 return;
             }
             await func(arg1).ConfigureAwait(false);
+        }
+
+        public static void RunInBackground<T>(this EventHandler<T> handler, object sender, T args)
+        {
+            if (handler is null)
+            {
+                return;
+            }
+            _ = Task.Run(() => handler(sender, args), CancellationToken.None).ConfigureAwait(false);
         }
     }
 }
