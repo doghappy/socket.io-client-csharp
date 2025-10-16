@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
@@ -16,13 +17,13 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     public EngineIO3Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
-        EngineIOAdapterOptions options,
-        IRetriable retryPolicy)
+        IRetriable retryPolicy,
+        ILogger<EngineIO3Adapter> logger)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
-        _options = options;
         _retryPolicy = retryPolicy;
+        _logger = logger;
     }
 
     private readonly IStopwatch _stopwatch;
@@ -33,8 +34,10 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private OpenedMessage _openedMessage;
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly EngineIOAdapterOptions _options;
     private readonly IRetriable _retryPolicy;
+    private readonly ILogger<EngineIO3Adapter> _logger;
+
+    public TimeSpan Timeout { get; set; }
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -201,7 +204,7 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
             var request = ToHttpRequest("2");
             await _retryPolicy.RetryAsync(3, async () =>
             {
-                using var cts = new CancellationTokenSource(_options.Timeout);
+                using var cts = new CancellationTokenSource(Timeout);
                 await _httpAdapter.SendAsync(request, cts.Token);
             });
             _stopwatch.Restart();
@@ -236,7 +239,9 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
             await Task.Delay(delay).ConfigureAwait(false);
             ms += delay;
         }
-        throw new TimeoutException();
+        var ex = new TimeoutException();
+        _logger.LogError(ex, "Wait HttpAdapter ready timeout");
+        throw ex;
     }
 
     private async Task NotifyObserversAsync(IMessage message)

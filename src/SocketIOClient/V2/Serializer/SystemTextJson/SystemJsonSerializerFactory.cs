@@ -9,8 +9,7 @@ public class SystemJsonSerializerFactory(IServiceProvider serviceProvider) : ISe
 {
     public ISerializer Create(EngineIO engineIO)
     {
-        var factory = serviceProvider.GetRequiredService<IEngineIOMessageAdapterFactory>();
-        var adapter = factory.Create(engineIO);
+        var adapter = serviceProvider.GetRequiredKeyedService<IEngineIOMessageAdapter>(engineIO);
         return ActivatorUtilities.CreateInstance<SystemJsonSerializer>(serviceProvider, adapter);
     }
 }

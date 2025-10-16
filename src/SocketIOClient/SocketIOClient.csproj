@@ -14,7 +14,7 @@
 		<RepositoryType>github</RepositoryType>
 		<Version>3.1.2</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<LangVersion>default</LangVersion>
+		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

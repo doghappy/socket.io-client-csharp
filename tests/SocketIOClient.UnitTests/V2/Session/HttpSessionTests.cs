@@ -20,16 +20,22 @@ public class HttpSessionTests
     public HttpSessionTests()
     {
         _httpAdapter = Substitute.For<IHttpAdapter>();
+        _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
+        _engineIOAdapterFactory
+            .Create(Arg.Any<EngineIO>())
+            .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
+        _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
         _logger = Substitute.For<ILogger<HttpSession>>();
         _session = new HttpSession(
             _logger,
-            _sessionOptions,
-            _engineIOAdapter,
+            _engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
+            _engineIOMessageAdapterFactory,
             new DefaultUriConverter());
+        _session.Options = _sessionOptions;
     }
 
     private readonly SessionOptions _sessionOptions = new()
@@ -41,8 +47,10 @@ public class HttpSessionTests
 
     private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
+    private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
+    private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly ILogger<HttpSession> _logger;
 
     #region ConnectAsync
@@ -149,9 +157,10 @@ public class HttpSessionTests
         {
             Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
         };
-        var serializer = new SystemJsonSerializer(new Decapsulator(), Substitute.For<IEngineIOMessageAdapter>());
+        var serializer = new SystemJsonSerializer(new Decapsulator());
         var uriConverter = new DefaultUriConverter();
-        var session = new HttpSession(_logger, _sessionOptions, _engineIOAdapter, httpAdapter, serializer, uriConverter);
+        var session = new HttpSession(_logger, _engineIOAdapterFactory, httpAdapter, serializer, _engineIOMessageAdapterFactory, uriConverter);
+        session.Options = _sessionOptions;
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
         httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
@@ -444,5 +453,13 @@ public class HttpSessionTests
         await _session.SendAsync([], CancellationToken.None);
 
         await _httpAdapter.Received(1).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public void Options_SetAnyValue_InitializationMethodsWereCalled()
+    {
+        _serializer.Received(1).SetEngineIOMessageAdapter(Arg.Any<IEngineIOMessageAdapter>());
+        _engineIOAdapter.Received(1).Subscribe(Arg.Any<HttpSession>());
+        _engineIOAdapter.Timeout.Should().Be(_sessionOptions.Timeout);
     }
 }

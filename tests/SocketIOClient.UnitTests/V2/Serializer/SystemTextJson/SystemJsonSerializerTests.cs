@@ -17,12 +17,6 @@ namespace SocketIOClient.UnitTests.V2.Serializer.SystemTextJson;
 
 public class SystemJsonSerializerTests
 {
-    // public SystemJsonSerializerTests()
-    // {
-    //     _serializer = new SystemJsonSerializer(_realDecapsulator);
-    // }
-
-    // private readonly SystemJsonSerializer _serializer;
     private readonly Decapsulator _realDecapsulator = new();
 
     private SystemJsonSerializer NewSystemJsonSerializer(IEngineIOMessageAdapter engineIOMessageAdapter)
@@ -30,9 +24,13 @@ public class SystemJsonSerializerTests
         return NewSystemJsonSerializer(_realDecapsulator, engineIOMessageAdapter);
     }
 
-    private SystemJsonSerializer NewSystemJsonSerializer(IDecapsulable decapsulator, IEngineIOMessageAdapter engineIOMessageAdapter)
+    private static SystemJsonSerializer NewSystemJsonSerializer(
+        IDecapsulable decapsulator,
+        IEngineIOMessageAdapter engineIOMessageAdapter)
     {
-        return new SystemJsonSerializer(decapsulator, engineIOMessageAdapter);
+        var serializer = new SystemJsonSerializer(decapsulator);
+        serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+        return serializer;
     }
 
     [Fact]
@@ -214,7 +212,7 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
-        var serializer = new SystemJsonSerializer(_realDecapsulator, Substitute.For<IEngineIOMessageAdapter>())
+        var serializer = new SystemJsonSerializer(_realDecapsulator)
         {
             JsonSerializerOptions = new JsonSerializerOptions
             {

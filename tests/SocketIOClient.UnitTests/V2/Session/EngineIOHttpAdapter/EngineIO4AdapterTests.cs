@@ -20,7 +20,6 @@ public class EngineIO4AdapterTests
         _adapter = new EngineIO4Adapter(
             _stopwatch,
             _httpAdapter,
-            _options,
             _retryPolicy);
     }
 
@@ -28,10 +27,6 @@ public class EngineIO4AdapterTests
     private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO4Adapter _adapter;
     private readonly IRetriable _retryPolicy;
-    private readonly EngineIOAdapterOptions _options = new()
-    {
-        Timeout = TimeSpan.FromSeconds(1),
-    };
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()

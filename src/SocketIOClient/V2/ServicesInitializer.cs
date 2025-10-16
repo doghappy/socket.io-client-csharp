@@ -24,7 +24,7 @@ public static class ServicesInitializer
         services.AddSingleton<IDecapsulable, Decapsulator>();
         services.AddSingleton<IHttpClient, SystemHttpClient>();
         services.AddSingleton<IRetriable, RandomDelayRetryPolicy>();
-        services.AddTransient<IHttpAdapter, HttpAdapter>();
+        services.AddScoped<IHttpAdapter, HttpAdapter>();
         services.AddSingleton<IUriConverter>(new DefaultUriConverter());
 
         // SystemTextJson or NewtonsoftJson
@@ -32,9 +32,14 @@ public static class ServicesInitializer
         // Polling or WebSocket
         AddSystemTextJson(services);
 
-        services.AddSingleton<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
+        services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
+        services.AddKeyedScoped<IEngineIOAdapter, EngineIO3Adapter>(EngineIO.V3);
+        services.AddKeyedScoped<IEngineIOAdapter, EngineIO4Adapter>(EngineIO.V4);
+
+        // TODO: Microsoft.Extensions.Http .AddHttpClient()
         services.AddSingleton<HttpMessageInvoker, HttpClient>();
-        services.AddTransient<ISessionFactory, HttpSessionFactory>();
+        // services.AddScoped<ISessionFactory, HttpSessionFactory>();
+        services.AddScoped<ISession, HttpSession>();
 
         configure?.Invoke(services);
 
@@ -46,6 +51,19 @@ public static class ServicesInitializer
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO3MessageAdapter>(EngineIO.V3);
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO4MessageAdapter>(EngineIO.V4);
         services.AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
-        services.AddSingleton<ISerializerFactory, SystemJsonSerializerFactory>();
+        // TODO: Should be Scoped, need to add test cases to cover it
+        services.AddSingleton<ISerializer, SystemJsonSerializer>();
     }
+}
+
+public record ProtocolOptions
+{
+    public ProtocolOptions(TransportProtocol protocol, EngineIO engineIO)
+    {
+        Protocol = protocol;
+        EngineIO = engineIO;
+    }
+
+    public TransportProtocol Protocol { get; }
+    public EngineIO EngineIO { get; }
 }

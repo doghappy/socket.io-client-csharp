@@ -18,12 +18,10 @@ public class EngineIO4Adapter : IEngineIOAdapter
     public EngineIO4Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
-        EngineIOAdapterOptions options,
         IRetriable retryPolicy)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
-        _options = options;
         _retryPolicy = retryPolicy;
     }
 
@@ -31,8 +29,9 @@ public class EngineIO4Adapter : IEngineIOAdapter
     private readonly IStopwatch _stopwatch;
     private readonly IHttpAdapter _httpAdapter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly EngineIOAdapterOptions _options;
     private readonly IRetriable _retryPolicy;
+
+    public TimeSpan Timeout { get; set; }
 
     public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -108,7 +107,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
         _stopwatch.Restart();
         await _retryPolicy.RetryAsync(3, async () =>
         {
-            using var cts = new CancellationTokenSource(_options.Timeout);
+            using var cts = new CancellationTokenSource(Timeout);
             var pong = ToHttpRequest("3");
             await _httpAdapter.SendAsync(pong, cts.Token);
         });

@@ -16,8 +16,14 @@ public abstract class BaseJsonSerializer : ISerializer
     }
 
     protected IDecapsulable Decapsulator { get; }
+    protected IEngineIOMessageAdapter EngineIOMessageAdapter { get; private set; }
     public string Namespace { get; set; }
     protected abstract SerializationResult SerializeCore(object[] data);
+
+    public void SetEngineIOMessageAdapter(IEngineIOMessageAdapter adapter)
+    {
+        EngineIOMessageAdapter = adapter;
+    }
 
     private static void ThrowIfDataIsInvalid(object[] data)
     {

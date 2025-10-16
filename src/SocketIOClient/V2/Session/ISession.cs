@@ -10,6 +10,7 @@ namespace SocketIOClient.V2.Session;
 public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>, IDisposable
 {
     int PendingDeliveryCount { get; }
+    SessionOptions Options { get; set; }
     Task SendAsync(object[] data, CancellationToken cancellationToken);
     Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken);
     Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken);

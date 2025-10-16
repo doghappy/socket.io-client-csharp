@@ -1,5 +1,5 @@
 using FluentAssertions;
-using JetBrains.Annotations;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
@@ -20,21 +20,19 @@ public class EngineIO3AdapterTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
+        _logger = Substitute.For<ILogger<EngineIO3Adapter>>();
         _adapter = new(
             _stopwatch,
             _httpAdapter,
-            _options,
-            _retryPolicy);
+            _retryPolicy,
+            _logger);
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly IHttpAdapter _httpAdapter;
     private readonly EngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
-    private readonly EngineIOAdapterOptions _options = new()
-    {
-        Timeout = TimeSpan.FromSeconds(1),
-    };
+    private readonly ILogger<EngineIO3Adapter> _logger;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -262,8 +260,8 @@ public class EngineIO3AdapterTests
         var adapter = new EngineIO3Adapter(
             _stopwatch,
             httpAdapter,
-            _options,
-            _retryPolicy);
+            _retryPolicy,
+            _logger);
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());

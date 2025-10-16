@@ -55,6 +55,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly IRandom _random;
 
     private ISession _session;
+    private IServiceScope _scope;
     public int PacketId { get; private set; }
     public bool Connected { get; private set; }
     public string Id { get; private set; }
@@ -189,16 +190,18 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private ISession NewSession()
     {
-        var sessionFactory = _serviceProvider.GetRequiredService<ISessionFactory>();
+        // TODO: dispose old scope
+        _scope = _serviceProvider.CreateScope();
         _logger.LogDebug("Creating session...");
-        var session = sessionFactory.Create(new SessionOptions
+        var session = _scope.ServiceProvider.GetRequiredService<ISession>();
+        session.Options = new SessionOptions
         {
             ServerUri = ServerUri,
             Path = Options.Path,
             Query = Options.Query,
             Timeout = Options.ConnectionTimeout,
             EngineIO = Options.EIO,
-        });
+        };
         _logger.LogDebug("Session created: {Type}", session.GetType().Name);
         return session;
     }

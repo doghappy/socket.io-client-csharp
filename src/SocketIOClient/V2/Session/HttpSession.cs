@@ -14,36 +14,51 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
-public class HttpSession : ISession
+public sealed class HttpSession : ISession
 {
     public HttpSession(
         ILogger<HttpSession> logger,
-        SessionOptions options,
-        IEngineIOAdapter engineIOAdapter,
+        IEngineIOAdapterFactory engineIOAdapterFactory,
         IHttpAdapter httpAdapter,
         ISerializer serializer,
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
         IUriConverter uriConverter)
     {
         _logger = logger;
-        _options = options;
-        _engineIOAdapter = engineIOAdapter;
+        _engineIOAdapterFactory = engineIOAdapterFactory;
         _httpAdapter = httpAdapter;
         _serializer = serializer;
+        _engineIOMessageAdapterFactory = engineIOMessageAdapterFactory;
         _uriConverter = uriConverter;
-        _engineIOAdapter.Subscribe(this);
         _httpAdapter.Subscribe(this);
     }
 
     private readonly ILogger<HttpSession> _logger;
-    private readonly SessionOptions _options;
-    private readonly IEngineIOAdapter _engineIOAdapter;
+    private IEngineIOAdapter _engineIOAdapter;
+    private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly IHttpAdapter _httpAdapter;
     private readonly ISerializer _serializer;
+    private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly IUriConverter _uriConverter;
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly Queue<IBinaryMessage> _messageQueue = [];
 
     public int PendingDeliveryCount => _messageQueue.Count;
+
+    private SessionOptions _options;
+    public SessionOptions Options
+    {
+        get => _options;
+        set
+        {
+            _options = value;
+            _engineIOAdapter = _engineIOAdapterFactory.Create(value.EngineIO);
+            _engineIOAdapter.Timeout = _options.Timeout;
+            _engineIOAdapter.Subscribe(this);
+            var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(value.EngineIO);
+            _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+        }
+    }
 
     public async Task OnNextAsync(ProtocolMessage protocolMessage)
     {
@@ -163,10 +178,10 @@ public class HttpSession : ISession
     {
         var uri = _uriConverter.GetServerUri(
             false,
-            _options.ServerUri,
-            _options.Path,
-            _options.Query,
-            (int)_options.EngineIO);
+            Options.ServerUri,
+            Options.Path,
+            Options.Query,
+            (int)Options.EngineIO);
         _httpAdapter.Uri = uri;
         var req = new HttpRequest
         {
@@ -184,7 +199,7 @@ public class HttpSession : ISession
 
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
-        var content = string.IsNullOrEmpty(_options.Namespace) ? "41" : $"41{_options.Namespace},";
+        var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
         var req = _engineIOAdapter.ToHttpRequest(content);
         await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
     }

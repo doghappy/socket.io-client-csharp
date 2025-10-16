@@ -6,12 +6,8 @@ namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
 
 public class EngineIOAdapterFactory(IServiceProvider serviceProvider) : IEngineIOAdapterFactory
 {
-    public IEngineIOAdapter Create(EngineIO engineIO, EngineIOAdapterOptions options)
+    public IEngineIOAdapter Create(EngineIO engineIO)
     {
-        if (engineIO == EngineIO.V3)
-        {
-            return ActivatorUtilities.CreateInstance<EngineIO3Adapter>(serviceProvider, options);
-        }
-        return ActivatorUtilities.CreateInstance<EngineIO4Adapter>(serviceProvider, options);
+        return serviceProvider.GetRequiredKeyedService<IEngineIOAdapter>(engineIO);
     }
 }

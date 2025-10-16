@@ -21,8 +21,6 @@ public class SocketIOTests
     public SocketIOTests(ITestOutputHelper output)
     {
         _session = Substitute.For<ISession>();
-        _sessionFactory = Substitute.For<ISessionFactory>();
-        _sessionFactory.Create(Arg.Any<SessionOptions>()).Returns(_session);
         _random = Substitute.For<IRandom>();
         _io = new SocketIOClient.V2.SocketIO("http://localhost:3000", services =>
         {
@@ -31,7 +29,7 @@ public class SocketIOTests
                 builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new XUnitLoggerProvider(output));
             });
-            services.Replace(ServiceDescriptor.Singleton(_sessionFactory));
+            services.Replace(ServiceDescriptor.Singleton(_session));
             services.Replace(ServiceDescriptor.Singleton(_random));
         })
         {
@@ -45,7 +43,6 @@ public class SocketIOTests
     private readonly SocketIOClient.V2.SocketIO _io;
     private readonly ISession _session;
     private readonly IRandom _random;
-    private readonly ISessionFactory _sessionFactory;
 
     [Fact]
     public void NothingCalled_DefaultValues()
@@ -70,18 +67,6 @@ public class SocketIOTests
             .Should()
             .ThrowAsync<ConnectionException>()
             .WithMessage("Cannot connect to server 'http://localhost:3000/'");
-    }
-
-    [Fact]
-    public async Task ConnectAsync_SessionFactoryThrowException_PassThroughException()
-    {
-        _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Test"));
-
-        await _io
-            .Invoking(async x => await x.ConnectAsync())
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("Test");
     }
 
     [Fact]
@@ -167,7 +152,6 @@ public class SocketIOTests
         await Task.Delay(2000);
 
         await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>());
-        _sessionFactory.Received(1).Create(Arg.Any<SessionOptions>());
     }
 
     [Fact]
@@ -211,18 +195,6 @@ public class SocketIOTests
             })
             .Should()
             .ThrowExactlyAsync<TaskCanceledException>();
-    }
-
-    [Fact]
-    public async Task ConnectAsync_SessionFactoryCreateThrow_PassThroughToClient()
-    {
-        _io.Options.Reconnection = true;
-        _sessionFactory.Create(Arg.Any<SessionOptions>()).Throws(new Exception("Unable to create session"));
-        await _io
-            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("Unable to create session");
     }
 
     [Fact]
@@ -308,24 +280,27 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_AlreadyConnected_SessionCreatedOnce()
+    public async Task ConnectAsync_AlreadyConnected_FastRetrun()
     {
         await ConnectAsync();
-        await _io.ConnectAsync();
 
-        _sessionFactory.Received(1).Create(Arg.Any<SessionOptions>());
+        var stopWatch = Stopwatch.StartNew();
+        await _io.ConnectAsync();
+        stopWatch.Stop();
+
+        stopWatch.ElapsedMilliseconds.Should().BeLessThan(10);
     }
 
     [Theory]
     [InlineData(EngineIO.V3)]
     [InlineData(EngineIO.V4)]
-    public async Task ConnectAsync_DifferentEngineIO_PassCorrectValueToSessionFactory(EngineIO eio)
+    public async Task ConnectAsync_SessionOptionsEngine_SameAsOptionsEIO(EngineIO eio)
     {
         _io.Options.EIO = eio;
 
         await ConnectAsync();
 
-        _sessionFactory.Received(1).Create(Arg.Is<SessionOptions>(o => o.EngineIO == eio));
+        _session.Options.EngineIO.Should().Be(eio);
     }
 
     [Fact]
@@ -338,13 +313,9 @@ public class SocketIOTests
             new KeyValuePair<string, string>("id", "abc"),
         ];
 
-        SessionOptions receivedSessionOptions = null!;
-        _sessionFactory.When(x => x.Create(Arg.Any<SessionOptions>()))
-            .Do(info => receivedSessionOptions = info.Arg<SessionOptions>());
-
         await ConnectAsync();
 
-        receivedSessionOptions.Should()
+        _session.Options.Should()
             .BeEquivalentTo(new SessionOptions
             {
                 ServerUri = new Uri("http://localhost:3000"),
