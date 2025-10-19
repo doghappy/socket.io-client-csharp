@@ -306,7 +306,7 @@ namespace SocketIO.Serializer.SystemTextJson
 
         #region Read Message
 
-        private static void ReadMessage(IMessage message, EngineIO eio, string text)
+        private void ReadMessage(IMessage message, EngineIO eio, string text)
         {
             switch (message.Type)
             {
@@ -343,11 +343,11 @@ namespace SocketIO.Serializer.SystemTextJson
             }
         }
 
-        private static void ReadOpenedMessage(IMessage message, string text)
+        private void ReadOpenedMessage(IMessage message, string text)
         {
             // TODO: Should deserializing to existing object
             // But haven't support yet. https://github.com/dotnet/runtime/issues/78556
-            var newMessage = JsonSerializer.Deserialize<JsonMessage>(text, new JsonSerializerOptions
+            var newMessage = JsonSerializer.Deserialize<JsonMessage>(text, new JsonSerializerOptions(_options)
             {
                 NumberHandling = JsonNumberHandling.AllowReadingFromString,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
