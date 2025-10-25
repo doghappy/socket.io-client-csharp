@@ -36,6 +36,7 @@ public class SocketIOTests
             Options =
             {
                 Reconnection = false,
+                ConnectionTimeout = TimeSpan.FromSeconds(1),
             },
         };
     }
@@ -207,6 +208,15 @@ public class SocketIOTests
             .Should()
             .ThrowExactlyAsync<ConnectionException>()
             .WithMessage($"Cannot connect to server 'http://localhost:3000/'");
+    }
+
+    [Fact]
+    public async Task ConnectAsync_GetSocketIOConnectionResultTimeout_ThrowTimeoutException()
+    {
+        await _io
+            .Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+            .Should()
+            .ThrowExactlyAsync<TimeoutException>();
     }
 
     private static async Task OnNextAsync(SocketIOClient.V2.SocketIO io, IMessage message)

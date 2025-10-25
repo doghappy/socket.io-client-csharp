@@ -56,6 +56,12 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     private async Task HandleResponseAsync(IHttpResponse response)
     {
         var incomingMessage = await GetMessageAsync(response).ConfigureAwait(false);
+#if DEBUG
+        var body = incomingMessage.Type == ProtocolMessageType.Text
+            ? incomingMessage.Text
+            : $"0️⃣1️⃣0️⃣1️⃣ {incomingMessage.Bytes!.Length}";
+        logger.LogDebug("[Http⬇] {Body}", body);
+#endif
         foreach (var observer in _observers)
         {
             await observer.OnNextAsync(incomingMessage).ConfigureAwait(false);

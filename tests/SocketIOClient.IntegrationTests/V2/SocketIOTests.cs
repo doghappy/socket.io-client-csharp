@@ -1,10 +1,10 @@
+using System;
 using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SocketIOClient.Test.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2;
@@ -31,6 +31,7 @@ public class SocketIOTests
     {
         EIO = EngineIO.V3,
         Reconnection = false,
+        ConnectionTimeout = TimeSpan.FromSeconds(5),
     };
 
     private readonly SocketIOClient.V2.SocketIO _io;

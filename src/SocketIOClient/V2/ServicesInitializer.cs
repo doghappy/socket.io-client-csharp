@@ -56,14 +56,14 @@ public static class ServicesInitializer
     }
 }
 
-public record ProtocolOptions
-{
-    public ProtocolOptions(TransportProtocol protocol, EngineIO engineIO)
-    {
-        Protocol = protocol;
-        EngineIO = engineIO;
-    }
-
-    public TransportProtocol Protocol { get; }
-    public EngineIO EngineIO { get; }
-}
+// public record ProtocolOptions
+// {
+//     public ProtocolOptions(TransportProtocol protocol, EngineIO engineIO)
+//     {
+//         Protocol = protocol;
+//         EngineIO = engineIO;
+//     }
+//
+//     public TransportProtocol Protocol { get; }
+//     public EngineIO EngineIO { get; }
+// }

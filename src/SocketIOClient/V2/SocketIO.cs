@@ -112,12 +112,19 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         // TODO: dispose session
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
+        using var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
+        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
+
         cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
-        _ = ConnectCoreAsync(cancellationToken).ConfigureAwait(false);
-        _logger.LogDebug("Waiting for _connCompletionSource...");
-        var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), cancellationToken);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+        var ctsToken = cts.Token;
+
+        _ = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
+        _logger.LogDebug("Waiting for socket.io connection result...");
+        var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), ctsToken);
         var ex = await task.ConfigureAwait(false);
-        _logger.LogDebug("_connCompletionSource is done");
+        _logger.LogDebug("Got socket.io connection result");
         if (ex != null)
         {
             throw ex;
@@ -166,10 +173,11 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private async Task TryConnectAsync(ISession session, CancellationTokenSource cts)
     {
         session.Subscribe(this);
+        _logger.LogDebug("Session connecting...");
         await session.ConnectAsync(cts.Token).ConfigureAwait(false);
         _session = session;
         _sessionCompletionSource.SetResult(true);
-        _logger.LogDebug("Set _sessionCompletionSource to true");
+        _logger.LogDebug("Session connected");
     }
 
     private ISession NewSessionWithCancellationToken(CancellationToken cancellationToken)
