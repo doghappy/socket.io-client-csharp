@@ -6,8 +6,7 @@
   "scripts": {
     "v2": "cd v2 && npm start",
     "v4": "cd v4 && npm start",
-
-    "install-all":"npm i && cd v4 && npm i && cd ../v2 && npm i",
+    "install-all":"npm ci && cd v4 && npm ci && cd ../v2 && npm ci",
     "start": "concurrently \"npm run v4\" \"npm run v2\""
   },
   "author": "https://github.com/doghappy",
