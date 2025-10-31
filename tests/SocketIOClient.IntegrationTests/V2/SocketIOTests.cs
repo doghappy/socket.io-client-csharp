@@ -343,4 +343,27 @@ public class SocketIOTests
         connectTimes.Should().Be(times);
         disconnectTimes.Should().Be(times);
     }
+
+    [Theory]
+    [InlineData("X-Custom-Header", "CustomHeader-Value")]
+    [InlineData("User-Agent", "dotnet-socketio[client]/socket")]
+    [InlineData("user-agent", "dotnet-socketio[client]/socket")]
+    public async Task ExtraHeaders_UserGivenHeaders_PassThroughToServer(string key, string value)
+    {
+        string? actual = null;
+        _io.Options.ExtraHeaders = new Dictionary<string, string>
+        {
+            { key, value },
+        };
+
+        await _io.ConnectAsync();
+        var lowerCaseKey = key.ToLowerInvariant(); // limited by server
+        await _io.EmitAsync("get_header", [lowerCaseKey], res =>
+        {
+            actual = res.GetDataValue<string>(0);
+        });
+        await Task.Delay(100);
+
+        actual.Should().Be(value);
+    }
 }

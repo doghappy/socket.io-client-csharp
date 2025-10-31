@@ -79,7 +79,7 @@ public class SystemHttpClientTests
     [Theory]
     [InlineData("Content-Type", "application/json")]
     [InlineData("User-Agent", "Windows")]
-    public async Task SendAsync_HeadersExist_RequestWithHeaders(string name, string value)
+    public async Task SendAsync_CustomHeader_PassThroughToServer(string name, string value)
     {
         _httpMessageHandler
             .When("https://www.google.com")
@@ -102,7 +102,7 @@ public class SystemHttpClientTests
     [InlineData("content-type")]
     [InlineData("Content-type")]
     [InlineData("CONTENT-TYPE")]
-    public async Task SendAsync_InvalidContentTypeName_ThrowException(string name)
+    public async Task SendAsync_SetReservedHeader_ThrowException(string name)
     {
         await _httpClient.Invoking(x =>
                 x.SendAsync(new HttpRequest
@@ -117,5 +117,25 @@ public class SystemHttpClientTests
             .Should()
             .ThrowAsync<InvalidOperationException>()
             .WithMessage($"Misused header name, '{name}'*");
+    }
+
+    [Theory]
+    [InlineData("X-Custom-Header", "CustomHeader-Value")]
+    [InlineData("User-Agent", "dotnet-socketio[client]/socket")]
+    [InlineData("user-agent", "dotnet-socketio[client]/socket")]
+    public async Task SetDefaultHeader_CustomHeaderName_PassThroughToServer(string name, string value)
+    {
+        _httpMessageHandler
+            .When("https://www.google.com")
+            .WithHeaders(name, value)
+            .Respond("text/plain", "Hello, Google!");
+
+        _httpClient.SetDefaultHeader(name, value);
+        await _httpClient.SendAsync(new HttpRequest
+        {
+            Uri = new Uri("https://www.google.com"),
+        }, CancellationToken.None);
+
+        _httpMessageHandler.VerifyNoOutstandingExpectation();
     }
 }

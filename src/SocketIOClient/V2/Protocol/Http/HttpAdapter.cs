@@ -99,4 +99,6 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         }
         _observers.Add(observer);
     }
+
+    public void SetDefaultHeader(string name, string value) => httpClient.SetDefaultHeader(name, value);
 }

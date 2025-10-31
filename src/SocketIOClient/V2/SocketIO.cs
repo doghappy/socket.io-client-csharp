@@ -209,6 +209,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             Query = Options.Query,
             Timeout = Options.ConnectionTimeout,
             EngineIO = Options.EIO,
+            ExtraHeaders = Options.ExtraHeaders,
         };
         _logger.LogDebug("Session created: {Type}", session.GetType().Name);
         return session;

@@ -117,6 +117,21 @@ public class HttpSessionTests
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
     }
 
+    [Fact]
+    public async Task ConnectAsync_2ExtraHeaders_SetDefaultHeaderTwice()
+    {
+        _sessionOptions.ExtraHeaders = new Dictionary<string, string>
+        {
+            { "key1", "value1" },
+            { "key2", "value2" },
+        };
+
+        await _session.ConnectAsync(CancellationToken.None);
+
+        _httpAdapter.Received(1).SetDefaultHeader("key1", "value1");
+        _httpAdapter.Received(1).SetDefaultHeader("key2", "value2");
+    }
+
     #endregion
 
     [Fact]

@@ -7,6 +7,6 @@ namespace SocketIOClient.V2.Protocol.Http;
 public interface IHttpClient
 {
     TimeSpan Timeout { get; set; }
-    // Task<IHttpResponse> SendAsync(IHttpRequest req);
+    void SetDefaultHeader(string name, string value);
     Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken);
 }

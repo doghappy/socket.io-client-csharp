@@ -189,6 +189,13 @@ public sealed class HttpSession : ISession
         };
         try
         {
+            if (_options.ExtraHeaders is not null)
+            {
+                foreach (var header in _options.ExtraHeaders)
+                {
+                    _httpAdapter.SetDefaultHeader(header.Key, header.Value);
+                }
+            }
             await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)

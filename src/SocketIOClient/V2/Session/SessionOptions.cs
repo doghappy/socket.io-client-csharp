@@ -12,4 +12,5 @@ public class SessionOptions
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
     public TimeSpan Timeout { get; set; }
     public EngineIO EngineIO { get; set; }
+    public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
 }

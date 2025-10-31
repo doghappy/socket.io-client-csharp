@@ -6,6 +6,7 @@ namespace SocketIOClient.V2.Protocol.Http;
 
 public interface IHttpAdapter : IProtocolAdapter // TODO: seems no need IProtocolAdapter.SendAsync(pm)
 {
+    void SetDefaultHeader(string name, string value);
     Task SendAsync(IHttpRequest req, CancellationToken cancellationToken);
     Uri Uri { get; set; }
     bool IsReadyToSend { get; }

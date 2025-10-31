@@ -318,10 +318,11 @@ public class SocketIOTests
     {
         _io.Options.Path = "/chat";
         _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(30);
-        _io.Options.Query =
-        [
-            new KeyValuePair<string, string>("id", "abc"),
-        ];
+        _io.Options.Query = [new KeyValuePair<string, string>("id", "abc"),];
+        _io.Options.ExtraHeaders = new Dictionary<string, string>
+        {
+            ["User-Agent"] = "Hello World!",
+        };
 
         await ConnectAsync();
 
@@ -330,10 +331,11 @@ public class SocketIOTests
             {
                 ServerUri = new Uri("http://localhost:3000"),
                 Path = "/chat",
-                Query =
-                [
-                    new KeyValuePair<string, string>("id", "abc"),
-                ],
+                Query = [new KeyValuePair<string, string>("id", "abc")],
+                ExtraHeaders = new Dictionary<string, string>
+                {
+                    ["User-Agent"] = "Hello World!",
+                },
                 Timeout = TimeSpan.FromSeconds(30),
                 EngineIO = EngineIO.V4,
             });

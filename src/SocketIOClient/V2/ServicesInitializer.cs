@@ -37,7 +37,7 @@ public static class ServicesInitializer
         services.AddKeyedScoped<IEngineIOAdapter, EngineIO4Adapter>(EngineIO.V4);
 
         // TODO: Microsoft.Extensions.Http .AddHttpClient()
-        services.AddSingleton<HttpMessageInvoker, HttpClient>();
+        services.AddSingleton<HttpClient>();
         // services.AddScoped<ISessionFactory, HttpSessionFactory>();
         services.AddScoped<ISession, HttpSession>();
 

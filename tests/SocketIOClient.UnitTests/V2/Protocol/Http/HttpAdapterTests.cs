@@ -150,4 +150,12 @@ public class HttpAdapterTests
         await observer.Received()
             .OnNextAsync(Arg.Is<ProtocolMessage>(m => m.Type == ProtocolMessageType.Bytes));
     }
+
+    [Fact]
+    public void SetDefaultHeader_WhenCalled_AlwaysCallHttpClientSetDefaultHeader()
+    {
+        _httpAdapter.SetDefaultHeader("name", "value");
+
+        _httpClient.Received().SetDefaultHeader("name", "value");
+    }
 }

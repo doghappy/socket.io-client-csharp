@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
-public class SystemHttpClient(HttpMessageInvoker http) : IHttpClient
+public class SystemHttpClient(HttpClient http) : IHttpClient
 {
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 
-    // public async Task<IHttpResponse> SendAsync(IHttpRequest req)
-    // {
-    //     using var cts = new CancellationTokenSource(Timeout);
-    //     return await SendAsync(req, cts.Token);
-    // }
+    public void SetDefaultHeader(string name, string value)
+    {
+        http.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
+    }
 
     public async Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {

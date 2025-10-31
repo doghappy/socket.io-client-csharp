@@ -14,4 +14,5 @@ public class SocketIOOptions
     public int ReconnectionDelayMax { get; set; } = 5000;
     public string Path { get; set; } = "/socket.io";
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
+    public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
 }
