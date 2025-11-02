@@ -64,7 +64,7 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("1:emit", msg => message = msg);
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [null]);
@@ -86,7 +86,7 @@ public class SocketIOTests
     [InlineData("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("1:emit", msg => message = msg);
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [data]);
@@ -103,7 +103,7 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("1:emit", msg => message = msg);
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [TestFile.NiuB]);
@@ -123,7 +123,7 @@ public class SocketIOTests
     [InlineData("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("2:emit", msg => message = msg);
         await _io.ConnectAsync();
         await _io.EmitAsync("2:emit", [item0, item1]);
@@ -211,7 +211,7 @@ public class SocketIOTests
     [Fact]
     public async Task SendAckDataAsync_ClientSend2Args_ServerExecuteCallback()
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("ack-on-client", async data =>
         {
             await data.SendAckDataAsync([1, 2]);
@@ -230,7 +230,7 @@ public class SocketIOTests
     [Fact]
     public async Task SendAckDataAsync_ClientSendBytes_ServerExecuteCallback()
     {
-        IAckableMessage message = null!;
+        IEventContext message = null!;
         _io.On("ack-on-client", async data =>
         {
             await data.SendAckDataAsync([TestFile.IndexHtml, "hello"], CancellationToken.None);

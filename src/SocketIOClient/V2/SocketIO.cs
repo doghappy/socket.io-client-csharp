@@ -83,8 +83,8 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
-    private readonly Dictionary<string, Action<IAckableMessage>> _eventActionHandlers = new();
-    private readonly Dictionary<string, Func<IAckableMessage, Task>> _eventFuncHandlers = new();
+    private readonly Dictionary<string, Action<IEventContext>> _eventActionHandlers = new();
+    private readonly Dictionary<string, Func<IEventContext, Task>> _eventFuncHandlers = new();
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
     private TaskCompletionSource<bool> _sessionCompletionSource;
@@ -384,9 +384,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
     }
 
-    private IAckableMessage ToAckableMessage(IDataMessage message)
+    private IEventContext ToEventContext(IDataMessage message)
     {
-        return new AckableMessage(message, this);
+        return new EventContext(message, this);
     }
 
     private async Task HandleEventMessage(IMessage message)
@@ -394,12 +394,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         var eventMessage = (IEventMessage)message;
         if (_eventActionHandlers.TryGetValue(eventMessage.Event, out var actionHandler))
         {
-            actionHandler(ToAckableMessage(eventMessage));
+            actionHandler(ToEventContext(eventMessage));
             return;
         }
         if (_eventFuncHandlers.TryGetValue(eventMessage.Event, out var funcHandler))
         {
-            await funcHandler(ToAckableMessage(eventMessage));
+            await funcHandler(ToEventContext(eventMessage));
         }
     }
 
@@ -474,7 +474,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         Id = null;
     }
 
-    public void On(string eventName, Action<IAckableMessage> handler)
+    public void On(string eventName, Action<IEventContext> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventFuncHandlers.ContainsKey(eventName))
@@ -488,7 +488,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _eventActionHandlers.Add(eventName, handler);
     }
 
-    public void On(string eventName, Func<IAckableMessage, Task> handler)
+    public void On(string eventName, Func<IEventContext, Task> handler)
     {
         ThrowIfInvalidEventHandler(eventName, handler);
         if (_eventActionHandlers.ContainsKey(eventName))

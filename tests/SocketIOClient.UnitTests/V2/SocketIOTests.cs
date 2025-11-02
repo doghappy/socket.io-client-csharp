@@ -914,7 +914,7 @@ public class SocketIOTests
     [Fact]
     public void OnAction_HandlerIsNull_ThrowArgumentNullException()
     {
-        _io.Invoking(x => x.On("abc", (Action<IAckableMessage>)null!))
+        _io.Invoking(x => x.On("abc", (Action<IEventContext>)null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -922,7 +922,7 @@ public class SocketIOTests
     [Fact]
     public void OnFunc_HandlerIsNull_ThrowArgumentNullException()
     {
-        Func<IAckableMessage, Task> handler = null!;
+        Func<IEventContext, Task> handler = null!;
         _io.Invoking(x => x.On("abc", handler))
             .Should()
             .Throw<ArgumentNullException>();

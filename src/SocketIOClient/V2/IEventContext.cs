@@ -6,7 +6,7 @@ using SocketIOClient.Core.Messages;
 
 namespace SocketIOClient.V2;
 
-public interface IAckableMessage
+public interface IEventContext
 {
     T GetDataValue<T>(int index);
     object GetDataValue(Type type, int index);
@@ -14,7 +14,7 @@ public interface IAckableMessage
     Task SendAckDataAsync(IEnumerable<object> data, CancellationToken cancellationToken);
 }
 
-public class AckableMessage(IDataMessage message, IInternalSocketIO io) : IAckableMessage
+public class EventContext(IDataMessage message, IInternalSocketIO io) : IEventContext
 {
     public async Task SendAckDataAsync(IEnumerable<object> data, CancellationToken cancellationToken)
     {
