@@ -85,6 +85,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
     private readonly Dictionary<string, Action<IEventContext>> _eventActionHandlers = new();
     private readonly Dictionary<string, Func<IEventContext, Task>> _eventFuncHandlers = new();
+    private readonly List<Func<string, IEventContext, Task>> _onAnyHandlers = [];
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
     private TaskCompletionSource<bool> _sessionCompletionSource;
@@ -392,14 +393,36 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private async Task HandleEventMessage(IMessage message)
     {
         var eventMessage = (IEventMessage)message;
+        var ctx = ToEventContext(eventMessage);
+
+        foreach (var handler in _onAnyHandlers)
+        {
+            try
+            {
+                await handler(eventMessage.Event, ctx).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured in one of the OnAny handlers");
+            }
+        }
+
+        // TODO: remove _eventActionHandlers
         if (_eventActionHandlers.TryGetValue(eventMessage.Event, out var actionHandler))
         {
-            actionHandler(ToEventContext(eventMessage));
+            actionHandler(ctx);
             return;
         }
         if (_eventFuncHandlers.TryGetValue(eventMessage.Event, out var funcHandler))
         {
-            await funcHandler(ToEventContext(eventMessage));
+            try
+            {
+                await funcHandler(ctx).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured in the event handler, event name: '{Event}'", eventMessage.Event);
+            }
         }
     }
 
@@ -512,5 +535,15 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             throw new ArgumentNullException(nameof(handler));
         }
+    }
+
+    // TODO: integration test
+    public void OnAny(Func<string, IEventContext, Task> handler)
+    {
+        if (handler is null)
+        {
+            return;
+        }
+        _onAnyHandlers.Add(handler);
     }
 }

@@ -1082,6 +1082,150 @@ public class SocketIOTests
 
     #endregion
 
+    #region OnAny
+
+    [Fact]
+    public async Task OnAny_EventReceived_HandlerShouldBeCalled()
+    {
+        var times = 0;
+        string eventName = null!;
+        IEventContext? context = null;
+        _io.OnAny((e, ctx) =>
+        {
+            times++;
+            eventName = e;
+            context = ctx;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [1],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(1);
+        eventName.Should().Be("event");
+        context.Should().NotBeNull();
+        context.GetDataValue<int>(0).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task OnAny_2Handlers_Invoked2Times()
+    {
+        var times = 0;
+        _io.OnAny((_, _) =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+        _io.OnAny((_, _) =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task OnAny_FirstHandlerThrows_SecondHandlerStillWorks()
+    {
+        string handler = null!;
+        _io.OnAny((_, _) => throw new InvalidOperationException());
+        _io.OnAny((_, _) =>
+        {
+            handler = "Second";
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        handler.Should().Be("Second");
+    }
+
+    [Fact]
+    public async Task OnAny_OnAnyHandlerThrows_OnHandlerStillWorks()
+    {
+        string handler = null!;
+        _io.OnAny((_, _) => throw new InvalidOperationException());
+        _io.On("event", _ =>
+        {
+            handler = "OnHandler";
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        handler.Should().Be("OnHandler");
+    }
+
+    [Fact]
+    public async Task OnAny_OnHandlerThrows_OnAnyHandlerStillWorks()
+    {
+        string handler = null!;
+        _io.OnAny((_, _) =>
+        {
+            handler = "OnAnyHandler";
+            return Task.CompletedTask;
+        });
+        _io.On("event", _ => throw new InvalidOperationException());
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        handler.Should().Be("OnAnyHandler");
+    }
+
+    [Fact]
+    public async Task OnAny_2Handlers_ExecutionIsOrdered()
+    {
+        List<string> list = [];
+        _io.OnAny(async (_, _) =>
+        {
+            await Task.Delay(20);
+            list.Add("Handler1");
+        });
+        _io.OnAny((_, _) =>
+        {
+            list.Add("Handler2");
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        list.Should().Equal("Handler1", "Handler2");
+    }
+
+    #endregion
+
     #region Reconnect
 
     [Theory]
