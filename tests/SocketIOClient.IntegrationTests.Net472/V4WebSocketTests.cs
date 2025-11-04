@@ -36,7 +36,7 @@ namespace SocketIOClient.IntegrationTests.Net472
                 await Task.Delay(100);
 
                 actual.Should().Be(value);
-            };
+            }
         }
 
         [TestMethod]
