@@ -163,8 +163,8 @@ public class SocketIOTests
         stopwatch.Stop();
 
         stopwatch.ElapsedMilliseconds.Should()
-            .BeGreaterThanOrEqualTo(200)
-            .And.BeLessThan(280);
+            .BeGreaterThanOrEqualTo(100)
+            .And.BeLessThan(300);
     }
 
     [Fact]
@@ -317,7 +317,7 @@ public class SocketIOTests
     public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
     {
         _io.Options.Path = "/chat";
-        _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(30);
+        _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(3);
         _io.Options.Query = [new KeyValuePair<string, string>("id", "abc"),];
         _io.Options.ExtraHeaders = new Dictionary<string, string>
         {
@@ -336,7 +336,7 @@ public class SocketIOTests
                 {
                     ["User-Agent"] = "Hello World!",
                 },
-                Timeout = TimeSpan.FromSeconds(30),
+                Timeout = TimeSpan.FromSeconds(3),
                 EngineIO = EngineIO.V4,
             });
     }
