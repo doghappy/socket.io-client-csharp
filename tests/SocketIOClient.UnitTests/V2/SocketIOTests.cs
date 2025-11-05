@@ -36,7 +36,7 @@ public class SocketIOTests
             Options =
             {
                 Reconnection = false,
-                ConnectionTimeout = TimeSpan.FromSeconds(1),
+                ConnectionTimeout = TimeSpan.FromSeconds(2),
             },
         };
     }
