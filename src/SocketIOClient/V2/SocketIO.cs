@@ -113,7 +113,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         // TODO: dispose session
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
-        using var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
+        var timeout = (int)(Options.ConnectionTimeout.TotalMilliseconds * 1.02);
+        if (Options.Reconnection)
+        {
+            timeout *= Options.ReconnectionAttempts;
+        }
+        using var timeoutCts = new CancellationTokenSource(timeout);
         timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
 
         cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
