@@ -5,22 +5,28 @@ using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.EngineIOHttpAdapter;
 
 public class EngineIO3AdapterTests
 {
-    public EngineIO3AdapterTests()
+    public EngineIO3AdapterTests(ITestOutputHelper output)
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
-        _logger = Substitute.For<ILogger<EngineIO3Adapter>>();
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ =>
+        {
+            await Task.Delay(50);
+        });
+        _logger = output.CreateLogger<EngineIO3Adapter>();
         _adapter = new(
             _stopwatch,
             _httpAdapter,

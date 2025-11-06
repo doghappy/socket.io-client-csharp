@@ -195,18 +195,22 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     private async Task StartPingAsync()
     {
+        _logger.LogDebug("Waiting for HttpAdapter ready...");
         await WaitHttpAdapterReady().ConfigureAwait(false);
+        _logger.LogDebug("HttpAdapter is ready");
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
             // TODO: PingInterval is 0?
             await Task.Delay(_openedMessage.PingInterval, token);
             var request = ToHttpRequest("2");
+            _logger.LogDebug("Sending Ping request...");
             await _retryPolicy.RetryAsync(3, async () =>
             {
                 using var cts = new CancellationTokenSource(Timeout);
                 await _httpAdapter.SendAsync(request, cts.Token);
             });
+            _logger.LogDebug("Sent Ping request");
             _stopwatch.Restart();
             _ = NotifyObserversAsync(new PingMessage());
         }
