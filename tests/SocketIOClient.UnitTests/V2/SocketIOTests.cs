@@ -1229,10 +1229,11 @@ public class SocketIOTests
 
         for (var i = 0; i < times; i++)
         {
-            await ConnectAsync(100);
+            await ConnectAsync();
             await _io.DisconnectAsync();
         }
 
+        await Task.Delay(50);
         connectTimes.Should().Be(times);
         disconnectTimes.Should().Be(times);
     }
