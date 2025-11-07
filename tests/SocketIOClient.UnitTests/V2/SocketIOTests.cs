@@ -1229,7 +1229,7 @@ public class SocketIOTests
 
         for (var i = 0; i < times; i++)
         {
-            await ConnectAsync();
+            await ConnectAsync(100);
             await _io.DisconnectAsync();
         }
 
