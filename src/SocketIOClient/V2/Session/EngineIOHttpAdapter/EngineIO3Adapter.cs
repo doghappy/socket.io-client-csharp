@@ -195,9 +195,9 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     private async Task StartPingAsync()
     {
-        _logger.LogDebug("Waiting for HttpAdapter ready...");
+        _logger.LogDebug("[StartPingAsync] Waiting for HttpAdapter ready...");
         await WaitHttpAdapterReady().ConfigureAwait(false);
-        _logger.LogDebug("HttpAdapter is ready");
+        _logger.LogDebug("[StartPingAsync] HttpAdapter is ready");
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
@@ -218,15 +218,19 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     private async Task PollingAsync()
     {
+        _logger.LogDebug("[PollingAsync] Waiting for HttpAdapter ready...");
         await WaitHttpAdapterReady().ConfigureAwait(false);
+        _logger.LogDebug("[PollingAsync] HttpAdapter is ready");
         var token = _pollingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
             var request = new HttpRequest();
+            _logger.LogDebug("Send Polling request...");
             await _retryPolicy.RetryAsync(2, async () =>
             {
                 await _httpAdapter.SendAsync(request, token).ConfigureAwait(false);
             }).ConfigureAwait(false);
+            _logger.LogDebug("Sent Polling request");
         }
     }
 
