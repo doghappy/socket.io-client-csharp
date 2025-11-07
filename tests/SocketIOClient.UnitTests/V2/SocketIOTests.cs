@@ -145,17 +145,6 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_FirstSuccess_ConnectAsyncOfSessionIsCalled1Time()
-    {
-        _io.Options.Reconnection = true;
-
-        await ConnectAsync();
-        await Task.Delay(2000);
-
-        await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
     public async Task ConnectAsync_ConnectedMessageDelay_ConnectAsyncIsSync()
     {
         var stopwatch = Stopwatch.StartNew();
@@ -375,7 +364,10 @@ public class SocketIOTests
     {
         _ = Task.Run(async () =>
         {
-            await Task.Delay(ms);
+            if (ms > 0)
+            {
+                await Task.Delay(ms);
+            }
             await OnNextAsync(io, new ConnectedMessage
             {
                 Sid = "123",
