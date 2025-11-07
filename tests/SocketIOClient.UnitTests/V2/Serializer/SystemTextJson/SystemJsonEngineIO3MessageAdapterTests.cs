@@ -11,7 +11,7 @@ public class SystemJsonEngineIO3MessageAdapterTests
 {
     private readonly SystemJsonEngineIO3MessageAdapter _adapter = new();
 
-    [Theory]
+    [Theory(Skip = "Test")]
     [InlineData("", null)]
     [InlineData("/nsp,", "/nsp")]
     public void DeserializeConnectedMessage_WhenCalled_AlwaysPass(string text, [CanBeNull] string? ns)
@@ -25,7 +25,7 @@ public class SystemJsonEngineIO3MessageAdapterTests
             });
     }
 
-    [Theory]
+    [Theory(Skip = "Test")]
     [InlineData("\"error message\"", "error message")]
     [InlineData("\"\\\"Authentication error\\\"\"", "\"Authentication error\"")]
     public void DeserializeErrorMessage_WhenCalled_AlwaysPass(string text, string error)

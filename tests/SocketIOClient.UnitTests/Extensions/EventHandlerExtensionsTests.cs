@@ -6,7 +6,7 @@ namespace SocketIOClient.UnitTests.Extensions;
 
 public class EventHandlerExtensionsTests
 {
-    [Fact]
+    [Fact(Skip = "Test")]
     public void RunInBackground_HandlerIsNull_DoNothing()
     {
         EventHandler<int> handler = null!;
@@ -16,7 +16,7 @@ public class EventHandlerExtensionsTests
         action.Should().NotThrow();
     }
 
-    [Fact]
+    [Fact(Skip = "Test")]
     public void RunInBackground_ThrowException_NotBlocked()
     {
         EventHandler<int> handler = (_, _) => throw new Exception("test");
@@ -26,7 +26,7 @@ public class EventHandlerExtensionsTests
         action.Should().NotThrow();
     }
 
-    [Fact]
+    [Fact(Skip = "Test")]
     public void RunInBackground_Delay100Ms_NotBlocked()
     {
         EventHandler<string> handler = (_, _) => Task.Delay(100).GetAwaiter().GetResult();

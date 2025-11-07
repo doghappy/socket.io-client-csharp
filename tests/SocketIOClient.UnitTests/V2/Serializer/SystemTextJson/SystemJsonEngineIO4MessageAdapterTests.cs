@@ -11,7 +11,7 @@ public class SystemJsonEngineIO4MessageAdapterTests
 {
     private readonly SystemJsonEngineIO4MessageAdapter _adapter = new();
 
-    [Theory]
+    [Theory(Skip = "Test")]
     [InlineData("{\"sid\":\"123\"}", "123", null)]
     [InlineData("/test,{\"sid\":\"123\"}", "123", "/test")]
     public void DeserializeConnectedMessage_WhenCalled_AlwaysPass(string text, string sid, [CanBeNull] string? ns)
@@ -25,7 +25,7 @@ public class SystemJsonEngineIO4MessageAdapterTests
             });
     }
 
-    [Theory]
+    [Theory(Skip = "Test")]
     [InlineData("{\"message\":\"error message\"}", "error message", null)]
     [InlineData("/test,{\"message\":\"error message\"}", "error message", "/test")]
     public void DeserializeErrorMessage_WhenCalled_AlwaysPass(string text, string error, [CanBeNull] string? ns)

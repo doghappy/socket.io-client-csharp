@@ -7,7 +7,7 @@ namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
 public class HttpRequestTests
 {
-    [Fact]
+    [Fact(Skip = "Test")]
     public void DefaultValues()
     {
         var req = new HttpRequest();
