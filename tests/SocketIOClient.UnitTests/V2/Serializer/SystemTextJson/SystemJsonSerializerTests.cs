@@ -33,7 +33,7 @@ public class SystemJsonSerializerTests
         return serializer;
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void SerializeData_InvalidData_ThrowArgumentNullException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -42,7 +42,7 @@ public class SystemJsonSerializerTests
             .Throw<ArgumentNullException>();
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void SerializeData_DataIsEmpty_ThrowArgumentException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -208,7 +208,7 @@ public class SystemJsonSerializerTests
         }
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
@@ -222,7 +222,7 @@ public class SystemJsonSerializerTests
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, "42[\"event\"]")]
     [InlineData("", "42[\"event\"]")]
     [InlineData("test", "42test,[\"event\"]")]
@@ -234,7 +234,7 @@ public class SystemJsonSerializerTests
         list[0].Text.Should().Be(expected);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
@@ -345,7 +345,7 @@ public class SystemJsonSerializerTests
             { DeserializeBinaryAckMessage.text, DeserializeBinaryAckMessage.message },
         };
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(DeserializeEio3Cases))]
     public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
@@ -377,7 +377,7 @@ public class SystemJsonSerializerTests
             { DeserializeBinaryAckMessage.text, DeserializeBinaryAckMessage.message },
         };
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(DeserializeEio4Cases))]
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
@@ -429,7 +429,7 @@ public class SystemJsonSerializerTests
             { DeserializeAckMessageString.text, DeserializeAckMessageString.item1 },
         };
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(DeserializeEventMessage1ItemCases))]
     public void Deserialize_EventMessage_Return1Data(string text, object expected)
     {
@@ -454,7 +454,7 @@ public class SystemJsonSerializerTests
             { DeserializeEventMessageObjectInt.text, DeserializeEventMessageObjectInt.item1, DeserializeEventMessageObjectInt.item2 },
         };
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(DeserializeEventMessage2ItemsCases))]
     public void Deserialize_EventMessage_Return2Data(string text, object expected1, object expected2)
     {
@@ -467,7 +467,7 @@ public class SystemJsonSerializerTests
         item2.Should().BeEquivalentTo(expected2);
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void Deserialize_DecapsulationResultFalse_ReturnNull()
     {
         var decapsulator = Substitute.For<IDecapsulable>();
@@ -507,7 +507,7 @@ public class SystemJsonSerializerTests
         TestFile.NiuB.Bytes,
         TestFile.NiuB);
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(DeserializeBinaryEventMessage1ItemCases))]
     public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
@@ -519,7 +519,7 @@ public class SystemJsonSerializerTests
         item1.Should().BeEquivalentTo(expected);
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -528,7 +528,7 @@ public class SystemJsonSerializerTests
             .Throw<ArgumentNullException>();
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void SerializeDataAndId_DataIsEmpty_ThrowArgumentNullException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -537,7 +537,7 @@ public class SystemJsonSerializerTests
             .Throw<ArgumentException>();
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, 1, "421[\"event\"]")]
     [InlineData("", 2, "422[\"event\"]")]
     [InlineData("test", 3, "42test,3[\"event\"]")]
@@ -549,7 +549,7 @@ public class SystemJsonSerializerTests
         list[0].Text.Should().Be(expected);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, 4, "451-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "451-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
@@ -561,7 +561,7 @@ public class SystemJsonSerializerTests
         list[0].Text.Should().Be(expected);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, 1, "431[1,\"2\"]")]
     [InlineData("", 2, "432[1,\"2\"]")]
     [InlineData("test", 3, "43test,3[1,\"2\"]")]
@@ -573,7 +573,7 @@ public class SystemJsonSerializerTests
         list[0].Text.Should().Be(expected);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]

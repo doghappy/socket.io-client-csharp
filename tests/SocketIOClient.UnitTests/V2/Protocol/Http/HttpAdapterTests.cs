@@ -20,7 +20,7 @@ public class HttpAdapterTests
     private readonly HttpAdapter _httpAdapter;
     private readonly IHttpClient _httpClient;
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendProtocolMessageAsync_WhenCalled_OnNextShouldBeTriggered()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -31,7 +31,7 @@ public class HttpAdapterTests
         await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendHttpRequestAsync_WhenCalled_OnNextShouldBeTriggered()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -45,7 +45,7 @@ public class HttpAdapterTests
         await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendHttpRequestAsync_ObserverBlocked100Ms_SendAsyncNotBlockedByObserver()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -62,7 +62,7 @@ public class HttpAdapterTests
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(20);
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendHttpRequestAsync_UrlIsNotProvided_UseDefault()
     {
         _httpAdapter.Uri = new Uri("http://localhost/?transport=polling");
@@ -75,7 +75,7 @@ public class HttpAdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendHttpRequestAsync_UrlIsProvided_UseProvidedOne()
     {
         _httpAdapter.Uri = new Uri("http://localhost");
@@ -89,13 +89,13 @@ public class HttpAdapterTests
             .SendAsync(Arg.Is<IHttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void IsReadyToSend_UriIsNotSet_ReturnsFalse()
     {
         _httpAdapter.IsReadyToSend.Should().BeFalse();
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("http://localhost:3000/socket.io/?EIO=4&transport=polling", false)]
     [InlineData("http://localhost:3000/socket.io/?sidd=4", false)]
     [InlineData("http://localhost:3000/socket.io/?test=sid", false)]
@@ -107,7 +107,7 @@ public class HttpAdapterTests
         _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendAsync_ResponseIsText_ObserverCanGetSameText()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -128,7 +128,7 @@ public class HttpAdapterTests
                 && m.Text == "Hello World"));
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("application/octet-stream")]
     [InlineData("Application/Octet-Stream")]
     [InlineData("APPLICATION/OCTET-STREAM")]
@@ -151,7 +151,7 @@ public class HttpAdapterTests
             .OnNextAsync(Arg.Is<ProtocolMessage>(m => m.Type == ProtocolMessageType.Bytes));
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void SetDefaultHeader_WhenCalled_AlwaysCallHttpClientSetDefaultHeader()
     {
         _httpAdapter.SetDefaultHeader("name", "value");

@@ -8,7 +8,7 @@ namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
 public class SystemHttpResponseTests
 {
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("text/plain")]
     [InlineData("text/html")]
     [InlineData("application/json")]

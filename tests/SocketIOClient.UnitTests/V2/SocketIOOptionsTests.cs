@@ -12,7 +12,7 @@ public class SocketIOOptionsTests
 
     private readonly SocketIOClient.V2.SocketIOOptions _options;
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void DefaultValues()
     {
         _options.Should()

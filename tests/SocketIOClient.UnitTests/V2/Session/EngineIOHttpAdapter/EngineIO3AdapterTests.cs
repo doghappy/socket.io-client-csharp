@@ -40,7 +40,7 @@ public class EngineIO3AdapterTests
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<EngineIO3Adapter> _logger;
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
     {
         _adapter
@@ -106,7 +106,7 @@ public class EngineIO3AdapterTests
     public static IEnumerable<object[]> ToHttpRequestCases =>
         ToHttpRequestStrongTypeCases.Select(x => new object[] { x.bytes, x.req });
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(ToHttpRequestCases))]
     public void ToHttpRequest_WhenCalled_AlwaysPass(ICollection<byte[]> bytes, IHttpRequest result)
     {
@@ -135,7 +135,7 @@ public class EngineIO3AdapterTests
             },
         };
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(GetMessagesCases))]
     public void GetMessages_WhenCalled_AlwaysPass(string raw, IEnumerable<string> textMessages)
     {
@@ -146,7 +146,7 @@ public class EngineIO3AdapterTests
             .BeEquivalentTo(textMessages);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     public void ToHttpRequest_GivenAnInvalidContent_ThrowException(string? content)
@@ -158,7 +158,7 @@ public class EngineIO3AdapterTests
             .WithMessage("The content cannot be null or empty");
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData(" ", "1: ")]
     [InlineData("hello, world!", "13:hello, world!")]
     public void ToHttpRequest_GivenValidContent_ReturnLengthFollowedByItself(string content, string expected)
@@ -167,7 +167,7 @@ public class EngineIO3AdapterTests
         req.BodyText.Should().Be(expected);
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_ConnectedMessage_PingInBackground()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -188,7 +188,7 @@ public class EngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_OpenedMessage_PollingInBackground()
     {
         _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
@@ -202,7 +202,7 @@ public class EngineIO3AdapterTests
         await _retryPolicy.Received(range).RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_PongMessage_OnlySetDurationNotNotifyToSubscriber()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -217,7 +217,7 @@ public class EngineIO3AdapterTests
             .OnNextAsync(Arg.Any<IMessage>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task StartPingAsync_ObserverThrowException_ContinuePing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -239,7 +239,7 @@ public class EngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task StartPingAsync_WhenCalled_FirstDelayThenPing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -259,7 +259,7 @@ public class EngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
     {
         var httpAdapter = Substitute.For<IHttpAdapter>();
@@ -277,7 +277,7 @@ public class EngineIO3AdapterTests
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_IsReadyAfter30ms_PingIsWorking()
     {
         _httpAdapter.IsReadyToSend.Returns(false);
@@ -295,7 +295,7 @@ public class EngineIO3AdapterTests
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task StartPingAsync_DisposeIsCalled_NeverPing()
     {
         _adapter.Dispose();
@@ -308,7 +308,7 @@ public class EngineIO3AdapterTests
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_ConnectedMessageButNoOpenedMessage_ThrowException()
     {
         var connectedMessage = new ConnectedMessage();
@@ -317,7 +317,7 @@ public class EngineIO3AdapterTests
             .ThrowAsync<NullReferenceException>();
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task ProcessMessageAsync_OpenedMessageThenConnectedMessage_SidIsNotNull()
     {
         await _adapter.ProcessMessageAsync(new OpenedMessage
@@ -329,7 +329,7 @@ public class EngineIO3AdapterTests
         connectedMessage.Sid.Should().Be("123");
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task PollingAsync_HttpRequestExceptionOccurred_ThrowHttpRequestException()
     {
         _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
@@ -364,7 +364,7 @@ public class EngineIO3AdapterTests
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task PollingAsync_DisposeIsCalled_NeverPolling()
     {
         _adapter.Dispose();
@@ -427,7 +427,7 @@ public class EngineIO3AdapterTests
     public static IEnumerable<object[]> ExtractMessagesFromBytesCases =>
         ExtractMessagesFromBytesStrongTypeCases.Select(x => new object[] { x.rawBytes, x.messages });
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [MemberData(nameof(ExtractMessagesFromBytesCases))]
     public void ExtractMessagesFromBytes_WhenCalled_AlwaysPass(byte[] rawBytes, IEnumerable<ProtocolMessage> messages)
     {

@@ -16,7 +16,7 @@ public class SystemHttpClientTests
     private readonly SystemHttpClient _httpClient;
     private readonly MockHttpMessageHandler _httpMessageHandler;
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendAsync_TextPlainWithTextBody_ReadAsStringAsyncReturnsSameBody()
     {
         _httpMessageHandler
@@ -33,7 +33,7 @@ public class SystemHttpClientTests
         body.Should().Be("Hello, Google!");
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendAsync_PassACanceledToken_ThrowTaskCanceledException()
     {
         _httpMessageHandler
@@ -53,7 +53,7 @@ public class SystemHttpClientTests
             .ThrowAsync<TaskCanceledException>();
     }
 
-    [Fact(Skip = "Test")]
+    [Fact]
     public async Task SendAsync_TextInByteArrayContent_BothMethodCanGetValue()
     {
         var bytes = "Test Zip"u8.ToArray();
@@ -76,7 +76,7 @@ public class SystemHttpClientTests
         byteBody.Should().Equal(bytes);
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("Content-Type", "application/json")]
     [InlineData("User-Agent", "Windows")]
     public async Task SendAsync_CustomHeader_PassThroughToServer(string name, string value)
@@ -98,7 +98,7 @@ public class SystemHttpClientTests
         _httpMessageHandler.VerifyNoOutstandingExpectation();
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("content-type")]
     [InlineData("Content-type")]
     [InlineData("CONTENT-TYPE")]
@@ -119,7 +119,7 @@ public class SystemHttpClientTests
             .WithMessage($"Misused header name, '{name}'*");
     }
 
-    [Theory(Skip = "Test")]
+    [Theory]
     [InlineData("X-Custom-Header", "CustomHeader-Value")]
     [InlineData("User-Agent", "dotnet-socketio[client]/socket")]
     [InlineData("user-agent", "dotnet-socketio[client]/socket")]
