@@ -27,7 +27,7 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
-              arguments: -- xunit.MaxParallelThreads=1
+              # arguments: -- xunit.MaxParallelThreads=1
           - task: DotNetCoreCLI@2
             displayName: SocketIO.Serializer.SystemTextJson.Tests
             inputs:
