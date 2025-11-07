@@ -357,17 +357,14 @@ public class SocketIOTests
 
     private async Task ConnectAsync(SocketIOClient.V2.SocketIO io)
     {
-        await ConnectAsync(io, 0);
+        await ConnectAsync(io, 10);
     }
 
     private async Task ConnectAsync(SocketIOClient.V2.SocketIO io, int ms)
     {
         _ = Task.Run(async () =>
         {
-            if (ms > 0)
-            {
-                await Task.Delay(ms);
-            }
+            await Task.Delay(ms);
             await OnNextAsync(io, new ConnectedMessage
             {
                 Sid = "123",
