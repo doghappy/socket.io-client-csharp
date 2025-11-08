@@ -883,17 +883,7 @@ public class SocketIOTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void OnAction_InvalidEventName_ThrowArgumentException(string? eventName)
-    {
-        _io.Invoking(x => x.On(eventName, _ => { }))
-            .Should()
-            .Throw<ArgumentException>();
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void OnFunc_InvalidEventName_ThrowArgumentException(string? eventName)
+    public void On_InvalidEventName_ThrowArgumentException(string? eventName)
     {
         _io.Invoking(x => x.On(eventName, _ => Task.CompletedTask))
             .Should()
@@ -901,15 +891,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public void OnAction_HandlerIsNull_ThrowArgumentNullException()
-    {
-        _io.Invoking(x => x.On("abc", (Action<IEventContext>)null!))
-            .Should()
-            .Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void OnFunc_HandlerIsNull_ThrowArgumentNullException()
+    public void On_HandlerIsNull_ThrowArgumentNullException()
     {
         Func<IEventContext, Task> handler = null!;
         _io.Invoking(x => x.On("abc", handler))
@@ -918,23 +900,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnAction_WhenCalledAndEventReceived_HandlerShouldBeCalled()
-    {
-        var times = 0;
-        _io.On("event", _ => times++);
-
-        var eventMessage = new SystemJsonEventMessage
-        {
-            Event = "event",
-            DataItems = [],
-        };
-        await OnNextAsync(_io, eventMessage);
-
-        times.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task OnFunc_WhenCalledAndEventReceived_HandlerShouldBeCalled()
+    public async Task On_WhenCalledAndEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
         _io.On("event", _ =>
@@ -954,23 +920,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnAction_AnotherEventReceived_HandlerShouldNotBeCalled()
-    {
-        var times = 0;
-        _io.On("another", _ => times++);
-
-        var eventMessage = new SystemJsonEventMessage
-        {
-            Event = "event",
-            DataItems = [],
-        };
-        await OnNextAsync(_io, eventMessage);
-
-        times.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task OnFunc_AnotherEventReceived_HandlerShouldNotBeCalled()
+    public async Task On_AnotherEventReceived_HandlerShouldNotBeCalled()
     {
         var times = 0;
         _io.On("another", _ =>
@@ -990,26 +940,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnAction_DuplicatedEventHandlerAdded_ExecuteTheFirstHandler()
-    {
-        var handler1Called = false;
-        var handler2Called = false;
-        _io.On("event", _ => handler1Called = true);
-        _io.On("event", _ => handler2Called = true);
-
-        var eventMessage = new SystemJsonEventMessage
-        {
-            Event = "event",
-            DataItems = [],
-        };
-        await OnNextAsync(_io, eventMessage);
-
-        handler1Called.Should().BeTrue();
-        handler2Called.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task OnFunc_DuplicatedEventHandlerAdded_ExecuteTheFirstHandler()
+    public async Task On_DuplicatedEventHandlerAdded_ExecuteNewerHandler()
     {
         var handler1Called = false;
         var handler2Called = false;
@@ -1031,33 +962,19 @@ public class SocketIOTests
         };
         await OnNextAsync(_io, eventMessage);
 
-        handler1Called.Should().BeTrue();
-        handler2Called.Should().BeFalse();
-    }
-
-    [Fact]
-    public void On_FirstAddFuncHandlerThenAddActionByUsingSameEventName_ThrowArgumentException()
-    {
-        _io.On("event", _ => Task.CompletedTask);
-        _io.Invoking(x => x.On("event", _ => { }))
-            .Should()
-            .Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void On_FirstAddActionHandlerThenAddFuncByUsingSameEventName_ThrowArgumentException()
-    {
-        _io.On("event", _ => { });
-        _io.Invoking(x => x.On("event", _ => Task.CompletedTask))
-            .Should()
-            .Throw<ArgumentException>();
+        handler1Called.Should().BeFalse();
+        handler2Called.Should().BeTrue();
     }
 
     [Fact]
     public async Task On_BinaryEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
-        _io.On("event", _ => times++);
+        _io.On("event", _ =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
 
         var eventMessage = new SystemJsonBinaryEventMessage
         {
