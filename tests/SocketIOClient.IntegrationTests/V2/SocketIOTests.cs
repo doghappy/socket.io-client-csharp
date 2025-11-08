@@ -65,7 +65,11 @@ public class SocketIOTests
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
         IEventContext message = null!;
-        _io.On("1:emit", msg => message = msg);
+        _io.On("1:emit", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [null]);
 
@@ -87,7 +91,11 @@ public class SocketIOTests
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
         IEventContext message = null!;
-        _io.On("1:emit", msg => message = msg);
+        _io.On("1:emit", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [data]);
 
@@ -104,7 +112,11 @@ public class SocketIOTests
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
         IEventContext message = null!;
-        _io.On("1:emit", msg => message = msg);
+        _io.On("1:emit", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("1:emit", [TestFile.NiuB]);
 
@@ -124,7 +136,11 @@ public class SocketIOTests
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
         IEventContext message = null!;
-        _io.On("2:emit", msg => message = msg);
+        _io.On("2:emit", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("2:emit", [item0, item1]);
 
@@ -216,7 +232,11 @@ public class SocketIOTests
         {
             await data.SendAckDataAsync([1, 2]);
         });
-        _io.On("end-ack-on-client", msg => message = msg);
+        _io.On("end-ack-on-client", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("begin-ack-on-client");
 
@@ -235,7 +255,11 @@ public class SocketIOTests
         {
             await data.SendAckDataAsync([TestFile.IndexHtml, "hello"], CancellationToken.None);
         });
-        _io.On("end-ack-on-client", msg => message = msg);
+        _io.On("end-ack-on-client", msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
         await _io.ConnectAsync();
         await _io.EmitAsync("begin-ack-on-client");
 
@@ -365,5 +389,50 @@ public class SocketIOTests
         await Task.Delay(100);
 
         actual.Should().Be(value);
+    }
+
+    [Fact]
+    public async Task OnAny_ReceivedEventMessage_HandlerIsCalled()
+    {
+        string? eventName = null;
+        IEventContext context = null!;
+        _io.OnAny((e, ctx) =>
+        {
+            eventName = e;
+            context = ctx;
+            return Task.CompletedTask;
+        });
+
+        await _io.ConnectAsync();
+        await _io.EmitAsync("1:emit", ["OnAny"]);
+        await Task.Delay(100);
+
+        eventName.Should().Be("1:emit");
+        context.GetDataValue<string>(0).Should().Be("OnAny");
+    }
+
+    [Fact]
+    public async Task OnAny_OnHandlerAndOnAnyHandler_2HandlersAreCalled()
+    {
+        var onHandlerCalled = false;
+        var onAnyHandlerCalled = false;
+
+        _io.OnAny((_, _) =>
+        {
+            onAnyHandlerCalled = true;
+            return Task.CompletedTask;
+        });
+        _io.On("1:emit", _ =>
+        {
+            onHandlerCalled = true;
+            return Task.CompletedTask;
+        });
+
+        await _io.ConnectAsync();
+        await _io.EmitAsync("1:emit", ["OnAny"]);
+        await Task.Delay(100);
+
+        onHandlerCalled.Should().BeTrue();
+        onAnyHandlerCalled.Should().BeTrue();
     }
 }
