@@ -513,7 +513,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         if (handler is null)
         {
-            return;
+            throw new ArgumentNullException(nameof(handler));
         }
         _onAnyHandlers.Add(handler);
     }
@@ -522,6 +522,19 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public void OffAny(Func<string, IEventContext, Task> handler)
     {
+        if (handler is null)
+        {
+            throw new ArgumentNullException(nameof(handler));
+        }
         _onAnyHandlers.Remove(handler);
+    }
+
+    public void PrependAny(Func<string, IEventContext, Task> handler)
+    {
+        if (handler is null)
+        {
+            throw new ArgumentNullException(nameof(handler));
+        }
+        _onAnyHandlers.Insert(0, handler);
     }
 }

@@ -1137,8 +1137,9 @@ public class SocketIOTests
     [Fact]
     public void OffAny_GivenNull_DoNothing()
     {
-        _io.OffAny(null);
-        _io.ListenersAny.Should().BeEmpty();
+        _io.Invoking(x => x.OffAny(null))
+            .Should()
+            .Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -1156,6 +1157,35 @@ public class SocketIOTests
         _io.OffAny(handler);
 
         _io.ListenersAny.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region PrependAny
+
+    [Fact]
+    public void PrependAny_GivenNull_DoNothing()
+    {
+        _io.Invoking(x => x.PrependAny(null))
+            .Should()
+            .Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void PrependAny_NoHandlersThenRegisterAHandler_CountIs1()
+    {
+        _io.PrependAny((_, _) => Task.CompletedTask);
+        _io.ListenersAny.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void PrependAny_Given2DuplicatedHandlers_CountIs2()
+    {
+        var handler = (string eventName, IEventContext ctx) => Task.CompletedTask;
+        _io.PrependAny(handler);
+        _io.PrependAny(handler);
+
+        _io.ListenersAny.Should().HaveCount(2);
     }
 
     #endregion
