@@ -84,6 +84,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
     private readonly Dictionary<string, Func<IEventContext, Task>> _eventHandlers = new();
+    private readonly HashSet<string> _onceEvents = [];
     private readonly List<Func<string, IEventContext, Task>> _onAnyHandlers = [];
 
     // private TaskCompletionSource<bool> _openedCompletionSource = new();
@@ -399,6 +400,32 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         var eventMessage = (IEventMessage)message;
         var ctx = ToEventContext(eventMessage);
 
+        await InvokeOnAnyHandlersAsync(eventMessage, ctx).ConfigureAwait(false);
+        await InvokeEventHandlersAsync(eventMessage, ctx).ConfigureAwait(false);
+    }
+
+    private async Task InvokeEventHandlersAsync(IEventMessage eventMessage, IEventContext ctx)
+    {
+        if (_eventHandlers.TryGetValue(eventMessage.Event, out var eventHandler))
+        {
+            var isOnce = _onceEvents.Contains(eventMessage.Event);
+            if (isOnce)
+            {
+                _eventHandlers.Remove(eventMessage.Event);
+            }
+            try
+            {
+                await eventHandler(ctx).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured in the event handler, event name: '{Event}'", eventMessage.Event);
+            }
+        }
+    }
+
+    private async Task InvokeOnAnyHandlersAsync(IEventMessage eventMessage, IEventContext ctx)
+    {
         foreach (var handler in _onAnyHandlers)
         {
             try
@@ -408,18 +435,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             catch (Exception e)
             {
                 _logger.LogError(e, "An error occured in one of the OnAny handlers");
-            }
-        }
-
-        if (_eventHandlers.TryGetValue(eventMessage.Event, out var eventHandler))
-        {
-            try
-            {
-                await eventHandler(ctx).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "An error occured in the event handler, event name: '{Event}'", eventMessage.Event);
             }
         }
     }
@@ -497,16 +512,22 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public void On(string eventName, Func<IEventContext, Task> handler)
     {
+        ThrowIfInvalidEventNameHandler(eventName, handler);
+        _eventHandlers[eventName] = handler;
+        _onceEvents.Remove(eventName);
+    }
+
+    private static void ThrowIfInvalidEventNameHandler(string eventName, Func<IEventContext, Task> handler)
+    {
         if (string.IsNullOrEmpty(eventName))
         {
             throw new ArgumentException("Invalid event name", nameof(eventName));
         }
+
         if ((object)handler == null)
         {
             throw new ArgumentNullException(nameof(handler));
         }
-
-        _eventHandlers[eventName] = handler;
     }
 
     public void OnAny(Func<string, IEventContext, Task> handler)
@@ -536,5 +557,11 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             throw new ArgumentNullException(nameof(handler));
         }
         _onAnyHandlers.Insert(0, handler);
+    }
+
+    public void Once(string eventName, Func<IEventContext, Task> handler)
+    {
+        On(eventName, handler);
+        _onceEvents.Add(eventName);
     }
 }

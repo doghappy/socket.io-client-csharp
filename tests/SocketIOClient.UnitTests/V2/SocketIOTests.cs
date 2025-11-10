@@ -920,10 +920,10 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task On_AnotherEventReceived_HandlerShouldNotBeCalled()
+    public async Task On_EventReceivedTwice_HandlerShouldBeCalledTwice()
     {
         var times = 0;
-        _io.On("another", _ =>
+        _io.On("event", _ =>
         {
             times++;
             return Task.CompletedTask;
@@ -932,6 +932,27 @@ public class SocketIOTests
         var eventMessage = new SystemJsonEventMessage
         {
             Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task On_AnotherEventReceived_HandlerShouldNotBeCalled()
+    {
+        var times = 0;
+        _io.On("event", _ =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "another",
             DataItems = [],
         };
         await OnNextAsync(_io, eventMessage);
@@ -971,6 +992,192 @@ public class SocketIOTests
     {
         var times = 0;
         _io.On("event", _ =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonBinaryEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(1);
+    }
+
+    #endregion
+
+    #region Once
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Once_InvalidEventName_ThrowArgumentException(string? eventName)
+    {
+        _io.Invoking(x => x.Once(eventName, _ => Task.CompletedTask))
+            .Should()
+            .Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Once_HandlerIsNull_ThrowArgumentNullException()
+    {
+        Func<IEventContext, Task> handler = null!;
+        _io.Invoking(x => x.Once("abc", handler))
+            .Should()
+            .Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task Once_WhenCalledAndEventReceived_HandlerShouldBeCalled()
+    {
+        var times = 0;
+        _io.Once("event", _ =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Once_EventReceivedTwice_HandlerShouldBeCalledOnce()
+    {
+        var times = 0;
+        _io.Once("event", async _ =>
+        {
+            times++;
+            await Task.Delay(50);
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await Task.WhenAll(OnNextAsync(_io, eventMessage), OnNextAsync(_io, eventMessage));
+
+        times.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Once_AnotherEventReceived_HandlerShouldNotBeCalled()
+    {
+        var times = 0;
+        _io.Once("event", _ =>
+        {
+            times++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "another",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        times.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Once_DuplicatedEventHandlerAdded_ExecuteNewerHandler()
+    {
+        var handler1Called = false;
+        var handler2Called = false;
+        _io.Once("event", _ =>
+        {
+            handler1Called = true;
+            return Task.CompletedTask;
+        });
+        _io.Once("event", _ =>
+        {
+            handler2Called = true;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+
+        handler1Called.Should().BeFalse();
+        handler2Called.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Once_RegisterOnceEventLaterThanOn_UseOnceHandlerInstead()
+    {
+        var handler1Called = 0;
+        var handler2Called = 0;
+        _io.On("event", _ =>
+        {
+            handler1Called++;
+            return Task.CompletedTask;
+        });
+        _io.Once("event", _ =>
+        {
+            handler2Called++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+        await OnNextAsync(_io, eventMessage);
+
+        handler1Called.Should().Be(0);
+        handler2Called.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Once_RegisterOnceEventEarlierThanOn_UseOnEventInstead()
+    {
+        var handler1Called = 0;
+        var handler2Called = 0;
+        _io.Once("event", _ =>
+        {
+            handler1Called++;
+            return Task.CompletedTask;
+        });
+        _io.On("event", _ =>
+        {
+            handler2Called++;
+            return Task.CompletedTask;
+        });
+
+        var eventMessage = new SystemJsonEventMessage
+        {
+            Event = "event",
+            DataItems = [],
+        };
+        await OnNextAsync(_io, eventMessage);
+        await OnNextAsync(_io, eventMessage);
+
+        handler1Called.Should().Be(0);
+        handler2Called.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Once_BinaryEventReceived_HandlerShouldBeCalled()
+    {
+        var times = 0;
+        _io.Once("event", _ =>
         {
             times++;
             return Task.CompletedTask;
