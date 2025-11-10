@@ -509,7 +509,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _eventHandlers[eventName] = handler;
     }
 
-    // TODO: integration test
     public void OnAny(Func<string, IEventContext, Task> handler)
     {
         if (handler is null)
@@ -517,5 +516,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             return;
         }
         _onAnyHandlers.Add(handler);
+    }
+
+    public IEnumerable<Func<string, IEventContext, Task>> ListenersAny => _onAnyHandlers;
+
+    public void OffAny(Func<string, IEventContext, Task> handler)
+    {
+        _onAnyHandlers.Remove(handler);
     }
 }

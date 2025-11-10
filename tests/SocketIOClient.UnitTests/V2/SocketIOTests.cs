@@ -1132,6 +1132,34 @@ public class SocketIOTests
 
     #endregion
 
+    #region OnAny Off
+
+    [Fact]
+    public void OffAny_GivenNull_DoNothing()
+    {
+        _io.OffAny(null);
+        _io.ListenersAny.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void OffAny_GivenNotExistingHandler_DoNothing()
+    {
+        _io.OffAny((_, _) => Task.CompletedTask);
+        _io.ListenersAny.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void OffAny_GivenExistingHandler_Remove()
+    {
+        var handler = (string eventName, IEventContext ctx) => Task.CompletedTask;
+        _io.OnAny(handler);
+        _io.OffAny(handler);
+
+        _io.ListenersAny.Should().BeEmpty();
+    }
+
+    #endregion
+
     #region Reconnect
 
     [Theory]
