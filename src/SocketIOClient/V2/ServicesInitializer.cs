@@ -35,9 +35,7 @@ public static class ServicesInitializer
         services.AddKeyedScoped<IEngineIOAdapter, EngineIO3Adapter>(EngineIO.V3);
         services.AddKeyedScoped<IEngineIOAdapter, EngineIO4Adapter>(EngineIO.V4);
 
-        // TODO: Microsoft.Extensions.Http .AddHttpClient()
         services.AddSingleton<HttpClient>();
-        // services.AddScoped<ISessionFactory, HttpSessionFactory>();
         services.AddScoped<ISession, HttpSession>();
 
         configure?.Invoke(services);
@@ -50,7 +48,6 @@ public static class ServicesInitializer
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO3MessageAdapter>(EngineIO.V3);
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO4MessageAdapter>(EngineIO.V4);
         services.AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
-        // TODO: Should be Scoped, need to add test cases to cover it
         services.AddSingleton<ISerializer, SystemJsonSerializer>();
     }
 }
