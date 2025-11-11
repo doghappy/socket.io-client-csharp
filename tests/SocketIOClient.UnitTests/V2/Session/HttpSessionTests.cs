@@ -5,9 +5,9 @@ using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
+using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
@@ -194,7 +194,7 @@ public class HttpSessionTests
             .When(x => x.OnNextAsync(Arg.Any<IMessage>()))
             .Do(call => captured.Add(call.Arg<IMessage>()));
 
-        await httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
+        await httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
 
         captured.Should()
             .BeEquivalentTo(new List<IMessage>

@@ -68,11 +68,11 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         }
     }
 
-    public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
-    {
-        var response = await SendProtocolMessageAsync(message, cancellationToken);
-        await HandleResponseAsync(response);
-    }
+    // public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
+    // {
+    //     var response = await SendProtocolMessageAsync(message, cancellationToken);
+    //     await HandleResponseAsync(response);
+    // }
 
     public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
     {
