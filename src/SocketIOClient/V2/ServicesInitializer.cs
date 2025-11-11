@@ -1,9 +1,9 @@
 using System;
 using System.Net.Http;
 using Microsoft.Extensions.DependencyInjection;
+using SocketIOClient.Core;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
-using SocketIOClient.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
@@ -15,7 +15,6 @@ namespace SocketIOClient.V2;
 
 public static class ServicesInitializer
 {
-    // TODO: test cases
     public static IServiceProvider BuildServiceProvider(IServiceCollection services, Action<IServiceCollection> configure = null)
     {
         services.AddLogging();
