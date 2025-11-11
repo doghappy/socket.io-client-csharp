@@ -201,7 +201,6 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            // TODO: PingInterval is 0?
             await Task.Delay(_openedMessage.PingInterval, token);
             var request = ToHttpRequest("2");
             _logger.LogDebug("Sending Ping request...");
