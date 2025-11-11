@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using FluentAssertions;
-using JetBrains.Annotations;
+﻿using FluentAssertions;
 using Mono.Collections.Generic;
 using SocketIOClient.V2.UriConverter;
-using Xunit;
 
 namespace SocketIOClient.UnitTests
 {
@@ -37,7 +33,7 @@ namespace SocketIOClient.UnitTests
         [InlineData(" /", "http://localhost/ /?EIO=4&transport=polling")]
         [InlineData(" / ", "http://localhost/ / ?EIO=4&transport=polling")]
         [InlineData("/", "http://localhost/?EIO=4&transport=polling")]
-        public void GetServerUri_AppendPathToUri([CanBeNull] string? path, string expected)
+        public void GetServerUri_AppendPathToUri(string? path, string expected)
         {
             var serverUri = new Uri("http://localhost");
             var converter = new DefaultUriConverter();
