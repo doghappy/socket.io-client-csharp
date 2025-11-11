@@ -1,52 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Web;
 
 namespace SocketIOClient.V2.UriConverter
 {
     public class DefaultUriConverter : IUriConverter
     {
-        // TODO: refactor following NpgConnectionBuilder
-        public Uri GetServerUri(bool ws, Uri serverUri, string path, IEnumerable<KeyValuePair<string, string>> queryParams, int eio)
+        private const string DefaultPath = "/socket.io/";
+
+        public Uri GetServerUri(
+            bool ws,
+            Uri serverUri,
+            string path,
+            IEnumerable<KeyValuePair<string, string>> queryParams,
+            int eio)
         {
-            var builder = new StringBuilder();
-            SetSchema(ws, serverUri, builder);
-            builder.Append(serverUri.Host);
-            if (!serverUri.IsDefaultPort)
+            var scheme = GetScheme(ws, serverUri);
+
+            var uriBuilder = new UriBuilder(serverUri)
             {
-                builder.Append(':').Append(serverUri.Port);
-            }
-            builder.Append(string.IsNullOrWhiteSpace(path) ? "/socket.io" : path);
-            builder
-                .Append("/?EIO=")
-                .Append(eio)
-                .Append("&transport=")
-                .Append(ws ? "websocket" : "polling");
+                Scheme = scheme,
+                Port = serverUri.IsDefaultPort ? -1 : serverUri.Port,
+                Path = string.IsNullOrWhiteSpace(path) ? DefaultPath : path
+            };
+
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            query["EIO"] = eio.ToString();
+            query["transport"] = ws ? "websocket" : "polling";
 
             if (queryParams != null)
             {
                 foreach (var item in queryParams)
                 {
-                    builder.Append('&').Append(item.Key).Append('=').Append(item.Value);
+                    query[item.Key] = item.Value;
                 }
             }
 
-            return new Uri(builder.ToString());
+            uriBuilder.Query = query.ToString();
+
+            return uriBuilder.Uri;
         }
 
-        private static void SetSchema(bool ws, Uri serverUri, StringBuilder builder)
+        private static string GetScheme(bool ws, Uri serverUri) => serverUri.Scheme switch
         {
-            switch (serverUri.Scheme)
-            {
-                case "https" or "wss":
-                    builder.Append(ws ? "wss://" : "https://");
-                    break;
-                case "http" or "ws":
-                    builder.Append(ws ? "ws://" : "http://");
-                    break;
-                default:
-                    throw new ArgumentException("Only supports 'http, https, ws, wss' protocol");
-            }
-        }
+            "https" or "wss" => ws ? "wss" : "https",
+            "http" or "ws" => ws ? "ws" : "http",
+            _ => throw new ArgumentException("Only supports 'http, https, ws, wss' protocol")
+        };
     }
 }

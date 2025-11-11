@@ -28,7 +28,15 @@ namespace SocketIOClient.UnitTests
         [InlineData(null, "http://localhost/socket.io/?EIO=4&transport=polling")]
         [InlineData("", "http://localhost/socket.io/?EIO=4&transport=polling")]
         [InlineData(" ", "http://localhost/socket.io/?EIO=4&transport=polling")]
-        [InlineData("/test", "http://localhost/test/?EIO=4&transport=polling")]
+        [InlineData("/test", "http://localhost/test?EIO=4&transport=polling")]
+        [InlineData("/test/", "http://localhost/test/?EIO=4&transport=polling")]
+        [InlineData("test", "http://localhost/test?EIO=4&transport=polling")]
+        [InlineData("test/", "http://localhost/test/?EIO=4&transport=polling")]
+        [InlineData("//test/", "http://localhost//test/?EIO=4&transport=polling")]
+        [InlineData("//test//", "http://localhost//test//?EIO=4&transport=polling")]
+        [InlineData(" /", "http://localhost/ /?EIO=4&transport=polling")]
+        [InlineData(" / ", "http://localhost/ / ?EIO=4&transport=polling")]
+        [InlineData("/", "http://localhost/?EIO=4&transport=polling")]
         public void GetServerUri_AppendPathToUri([CanBeNull] string? path, string expected)
         {
             var serverUri = new Uri("http://localhost");
