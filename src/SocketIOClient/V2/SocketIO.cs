@@ -155,7 +155,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             catch (Exception e)
             {
                 _logger.LogDebug(e, e.Message);
-                session.Dispose();
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
                 OnReconnectError.RunInBackground(this, ex);
                 if (i == attempts - 1)
@@ -204,7 +203,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private ISession NewSession()
     {
-        // TODO: dispose old scope
+        _scope?.Dispose();
         _scope = _serviceProvider.CreateScope();
         _logger.LogDebug("Creating session...");
         var session = _scope.ServiceProvider.GetRequiredService<ISession>();

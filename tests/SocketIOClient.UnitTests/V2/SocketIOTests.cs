@@ -5,10 +5,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using SocketIOClient.Test.Core;
-using SocketIOClient.Core.Messages;
-using SocketIOClient.V2;
 using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Test.Core;
+using SocketIOClient.V2;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
@@ -29,7 +29,7 @@ public class SocketIOTests
                 builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new XUnitLoggerProvider(output));
             });
-            services.Replace(ServiceDescriptor.Singleton(_session));
+            services.Replace(ServiceDescriptor.Scoped(_ => _session));
             services.Replace(ServiceDescriptor.Singleton(_random));
         })
         {
@@ -239,19 +239,6 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_FailedToConnect_SessionIsDisposed()
-    {
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
-
-        await _io
-            .Invoking(async x => await x.ConnectAsync())
-            .Should()
-            .ThrowAsync<ConnectionException>();
-
-        _session.Received().Dispose();
-    }
-
-    [Fact]
     public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>())
@@ -339,6 +326,22 @@ public class SocketIOTests
 
         await _io.EmitAsync("event");
         await _session.Received().SendAsync(Arg.Any<object[]>(), CancellationToken.None);
+    }
+
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(2, 1)]
+    [InlineData(5, 4)]
+    public async Task ConnectAsync_ConnectAsyncCalledMultipleTimes_DisposePrevSessionEachTime(int attempts, int expectedDisposeCount)
+    {
+        _io.Options.Reconnection = true;
+        _io.Options.ReconnectionAttempts = attempts;
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
+
+        var act = async () => await ConnectAsync();
+        await act.Should().ThrowAsync<Exception>();
+
+        _session.Received(expectedDisposeCount).Dispose();
     }
 
     #endregion
