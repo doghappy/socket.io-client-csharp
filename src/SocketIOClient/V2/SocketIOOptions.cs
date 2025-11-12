@@ -6,11 +6,24 @@ namespace SocketIOClient.V2;
 
 public class SocketIOOptions
 {
-    // TODO: what will happen if user set an invalid value?
     public EngineIO EIO { get; set; } = EngineIO.V4;
     public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
     public bool Reconnection { get; set; } = true;
-    public int ReconnectionAttempts { get; set; } = 10;
+
+    private int _reconnectionAttempts = 10;
+    public int ReconnectionAttempts
+    {
+        get => _reconnectionAttempts;
+        set
+        {
+            if (value < 1)
+            {
+                throw new ArgumentException("The minimum allowable number of attempts is 1");
+            }
+            _reconnectionAttempts = value;
+        }
+    }
+
     public int ReconnectionDelayMax { get; set; } = 5000;
     public string Path { get; set; } = "/socket.io";
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }

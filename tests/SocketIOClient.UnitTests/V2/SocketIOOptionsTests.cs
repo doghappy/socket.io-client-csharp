@@ -27,4 +27,14 @@ public class SocketIOOptionsTests
                 Query = null,
             });
     }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(-0)]
+    public void ReconnectionAttempts_SetInvalidValues_ThrowsException(int attempts)
+    {
+        var act = () => _options.ReconnectionAttempts = attempts;
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("The minimum allowable number of attempts is 1");
+    }
 }
