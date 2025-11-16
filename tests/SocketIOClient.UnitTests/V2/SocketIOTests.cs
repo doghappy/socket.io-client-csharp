@@ -328,22 +328,6 @@ public class SocketIOTests
         await _session.Received().SendAsync(Arg.Any<object[]>(), CancellationToken.None);
     }
 
-    [Theory]
-    [InlineData(1, 0)]
-    [InlineData(2, 1)]
-    [InlineData(5, 4)]
-    public async Task ConnectAsync_ConnectAsyncCalledMultipleTimes_DisposePrevSessionEachTime(int attempts, int expectedDisposeCount)
-    {
-        _io.Options.Reconnection = true;
-        _io.Options.ReconnectionAttempts = attempts;
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
-
-        var act = async () => await ConnectAsync();
-        await act.Should().ThrowAsync<Exception>();
-
-        _session.Received(expectedDisposeCount).Dispose();
-    }
-
     #endregion
 
     #region Private Methods
@@ -795,7 +779,6 @@ public class SocketIOTests
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
-        _session.DidNotReceive().Dispose();
     }
 
     [Fact]
@@ -806,7 +789,6 @@ public class SocketIOTests
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
-        _session.Received(1).Dispose();
     }
 
     [Fact]
@@ -875,7 +857,6 @@ public class SocketIOTests
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
-        _session.Received(1).Dispose();
         reason.Should().Be("io server disconnect");
     }
 

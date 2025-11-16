@@ -503,7 +503,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             {
                 Debug.WriteLine(e);
             }
-            _session.Dispose();
         }
         Connected = false;
         Id = null;

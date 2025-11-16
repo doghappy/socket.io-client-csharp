@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
@@ -7,7 +6,7 @@ using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Session;
 
-public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>, IDisposable
+public interface ISession : IMyObserver<ProtocolMessage>, IMyObservable<IMessage>, IMyObserver<IMessage>
 {
     int PendingDeliveryCount { get; }
     SessionOptions Options { get; set; }

@@ -14,7 +14,7 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
-public sealed class HttpSession : ISession
+public class HttpSession : ISession
 {
     public HttpSession(
         ILogger<HttpSession> logger,
@@ -218,13 +218,5 @@ public sealed class HttpSession : ISession
             return;
         }
         _observers.Add(observer);
-    }
-
-    public void Dispose()
-    {
-        if (_engineIOAdapter is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
     }
 }
