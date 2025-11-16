@@ -110,7 +110,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             return;
         }
-        // TODO: dispose session
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         var timeout = (int)(Options.ConnectionTimeout.TotalMilliseconds * 1.02);
@@ -133,6 +132,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _logger.LogDebug("Got socket.io connection result");
         if (ex != null)
         {
+            _logger.LogDebug(ex.ToString());
             throw ex;
         }
     }
@@ -143,7 +143,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         for (int i = 0; i < attempts; i++)
         {
             ReconnectAttempt(i, attempts);
-            // TODO: dispose old session
             var session = NewSessionWithCancellationToken(cancellationToken);
 
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);

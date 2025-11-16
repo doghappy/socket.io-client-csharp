@@ -306,7 +306,7 @@ public class SocketIOTests
             .BeEquivalentTo(new SessionOptions
             {
                 ServerUri = new Uri("http://localhost:3000"),
-                Path = "/chat",
+                Path = "/chat/",
                 Query = [new KeyValuePair<string, string>("id", "abc")],
                 ExtraHeaders = new Dictionary<string, string>
                 {

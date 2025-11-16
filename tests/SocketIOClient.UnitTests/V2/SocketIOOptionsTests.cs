@@ -23,7 +23,6 @@ public class SocketIOOptionsTests
                 Reconnection = true,
                 ReconnectionAttempts = 10,
                 ReconnectionDelayMax = 5000,
-                Path = "/socket.io",
                 Query = null,
             });
     }
@@ -36,5 +35,16 @@ public class SocketIOOptionsTests
         var act = () => _options.ReconnectionAttempts = attempts;
         act.Should().Throw<ArgumentException>()
             .WithMessage("The minimum allowable number of attempts is 1");
+    }
+
+    [Theory]
+    [InlineData("test", "/test/")]
+    [InlineData("test/", "/test/")]
+    [InlineData("/test/", "/test/")]
+    [InlineData("//test//", "/test/")]
+    public void Path_SetNewValue_SurroundWithSlash(string path, string expected)
+    {
+        _options.Path = path;
+        _options.Path.Should().Be(expected);
     }
 }
