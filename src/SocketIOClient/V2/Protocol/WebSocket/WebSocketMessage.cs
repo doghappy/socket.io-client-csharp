@@ -7,7 +7,7 @@ public enum WebSocketMessageType
     Close
 }
 
-public interface IWebSocketMessage
+public class WebSocketMessage
 {
     public int Count { get; set; }
     public bool EndOfMessage { get; set; }
