@@ -6,18 +6,20 @@ using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session;
 
 public class HttpSessionTests
 {
-    public HttpSessionTests()
+    public HttpSessionTests(ITestOutputHelper output)
     {
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
@@ -27,15 +29,17 @@ public class HttpSessionTests
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
-        _logger = Substitute.For<ILogger<HttpSession>>();
+        _logger = output.CreateLogger<HttpSession>();
         _session = new HttpSession(
             _logger,
             _engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
             _engineIOMessageAdapterFactory,
-            new DefaultUriConverter());
-        _session.Options = _sessionOptions;
+            new DefaultUriConverter())
+        {
+            Options = _sessionOptions
+        };
     }
 
     private readonly SessionOptions _sessionOptions = new()

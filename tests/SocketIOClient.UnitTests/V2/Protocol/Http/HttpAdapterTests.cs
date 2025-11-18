@@ -1,35 +1,25 @@
 using System.Diagnostics;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SocketIOClient.Core;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Protocol.Http;
 
 public class HttpAdapterTests
 {
-    public HttpAdapterTests()
+    public HttpAdapterTests(ITestOutputHelper output)
     {
         _httpClient = Substitute.For<IHttpClient>();
-        var logger = Substitute.For<ILogger<HttpAdapter>>();
+        var logger = output.CreateLogger<HttpAdapter>();
         _httpAdapter = new HttpAdapter(_httpClient, logger);
     }
 
     private readonly HttpAdapter _httpAdapter;
     private readonly IHttpClient _httpClient;
-
-    // [Fact]
-    // public async Task SendProtocolMessageAsync_WhenCalled_OnNextShouldBeTriggered()
-    // {
-    //     var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
-    //     _httpAdapter.Subscribe(observer);
-    //
-    //     await _httpAdapter.SendAsync(new ProtocolMessage(), CancellationToken.None);
-    //
-    //     await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
-    // }
 
     [Fact]
     public async Task SendHttpRequestAsync_WhenCalled_OnNextShouldBeTriggered()
