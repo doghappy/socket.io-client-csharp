@@ -11,8 +11,8 @@ namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
 public interface IEngineIOAdapter : IMyObservable<IMessage>
 {
     TimeSpan Timeout { get; set; }
-    IHttpRequest ToHttpRequest(ICollection<byte[]> bytes);
-    IHttpRequest ToHttpRequest(string content);
+    HttpRequest ToHttpRequest(ICollection<byte[]> bytes);
+    HttpRequest ToHttpRequest(string content);
     IEnumerable<ProtocolMessage> ExtractMessagesFromText(string text);
     IEnumerable<ProtocolMessage> ExtractMessagesFromBytes(byte[] bytes);
     Task ProcessMessageAsync(IMessage message);

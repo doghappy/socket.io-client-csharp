@@ -68,13 +68,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         }
     }
 
-    // public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
-    // {
-    //     var response = await SendProtocolMessageAsync(message, cancellationToken);
-    //     await HandleResponseAsync(response);
-    // }
-
-    public async Task SendAsync(IHttpRequest req, CancellationToken cancellationToken)
+    public async Task SendAsync(HttpRequest req, CancellationToken cancellationToken)
     {
         req.Uri ??= NewUri();
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);

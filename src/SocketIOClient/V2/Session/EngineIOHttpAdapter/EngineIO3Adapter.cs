@@ -39,7 +39,7 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     public TimeSpan Timeout { get; set; }
 
-    public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
+    public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
         if (!bytes.Any())
         {
@@ -68,7 +68,7 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         return req;
     }
 
-    public IHttpRequest ToHttpRequest(string content)
+    public HttpRequest ToHttpRequest(string content)
     {
         if (string.IsNullOrEmpty(content))
         {

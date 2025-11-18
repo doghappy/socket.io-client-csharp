@@ -63,7 +63,7 @@ public class HttpSessionTests
     public async Task ConnectAsync_HttpAdapterThrowAnyException_SessionThrowConnectionFailedException()
     {
         _httpAdapter
-            .SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
             .Throws(new HttpRequestException("Server refused connection"));
 
         await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
@@ -77,10 +77,10 @@ public class HttpSessionTests
     [Fact]
     public async Task ConnectAsync_WhenCalled_PassCorrectHttpRequestToAdapter()
     {
-        var requests = new List<IHttpRequest>();
+        var requests = new List<HttpRequest>();
         _httpAdapter
-            .When(async a => await a.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()))
-            .Do(callInfo => { requests.Add(callInfo.Arg<IHttpRequest>()); });
+            .When(async a => await a.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>()))
+            .Do(callInfo => { requests.Add(callInfo.Arg<HttpRequest>()); });
 
         await _session.ConnectAsync(CancellationToken.None);
 
@@ -98,7 +98,7 @@ public class HttpSessionTests
     public async Task ConnectAsync_CancelledToken_ThrowConnectionFailedException()
     {
         _httpAdapter
-            .SendAsync(Arg.Any<IHttpRequest>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
             .Throws(new TaskCanceledException("Task was canceled"));
 
         await _session.Invoking(async x =>
@@ -182,7 +182,7 @@ public class HttpSessionTests
         session.Options = _sessionOptions;
         var response = Substitute.For<IHttpResponse>();
         response.ReadAsStringAsync().Returns("any text");
-        httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
+        httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
         _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
                 new ProtocolMessage
@@ -429,7 +429,7 @@ public class HttpSessionTests
 
         await _session.SendAsync([], CancellationToken.None);
 
-        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -443,7 +443,7 @@ public class HttpSessionTests
 
         await _session.SendAsync([], 12, CancellationToken.None);
 
-        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -457,7 +457,7 @@ public class HttpSessionTests
 
         await _session.SendAsync([], CancellationToken.None);
 
-        await _httpAdapter.Received(2).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -471,7 +471,7 @@ public class HttpSessionTests
 
         await _session.SendAsync([], CancellationToken.None);
 
-        await _httpAdapter.Received(1).SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>());
+        await _httpAdapter.Received(1).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

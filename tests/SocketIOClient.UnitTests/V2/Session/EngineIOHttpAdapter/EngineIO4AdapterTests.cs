@@ -38,7 +38,7 @@ public class EngineIO4AdapterTests
             .WithMessage("The array cannot be empty");
     }
 
-    private static readonly (ICollection<byte[]> bytes, IHttpRequest req) OneItem1Byte = new(new List<byte[]>
+    private static readonly (ICollection<byte[]> bytes, HttpRequest req) OneItem1Byte = new(new List<byte[]>
     {
         new byte[] { 1 },
     }, new HttpRequest
@@ -48,7 +48,7 @@ public class EngineIO4AdapterTests
         BodyType = RequestBodyType.Text,
     });
 
-    private static readonly (ICollection<byte[]> bytes, IHttpRequest req) OneItem10Bytes = new(new List<byte[]>
+    private static readonly (ICollection<byte[]> bytes, HttpRequest req) OneItem10Bytes = new(new List<byte[]>
     {
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
     }, new HttpRequest
@@ -58,7 +58,7 @@ public class EngineIO4AdapterTests
         BodyType = RequestBodyType.Text,
     });
 
-    private static readonly (ICollection<byte[]> bytes, IHttpRequest req) TwoItems1Byte10Bytes = new(new List<byte[]>
+    private static readonly (ICollection<byte[]> bytes, HttpRequest req) TwoItems1Byte10Bytes = new(new List<byte[]>
     {
         new byte[] { 1 },
         Enumerable.Range(0, 10).Select(x => (byte)x).ToArray(),
@@ -69,7 +69,7 @@ public class EngineIO4AdapterTests
         BodyType = RequestBodyType.Text,
     });
 
-    private static IEnumerable<(ICollection<byte[]> bytes, IHttpRequest req)> ToHttpRequestStrongTypeCases
+    private static IEnumerable<(ICollection<byte[]> bytes, HttpRequest req)> ToHttpRequestStrongTypeCases
     {
         get
         {
@@ -84,7 +84,7 @@ public class EngineIO4AdapterTests
 
     [Theory]
     [MemberData(nameof(ToHttpRequestCases))]
-    public void ToHttpRequest_WhenCalled_AlwaysPass(ICollection<byte[]> bytes, IHttpRequest result)
+    public void ToHttpRequest_WhenCalled_AlwaysPass(ICollection<byte[]> bytes, HttpRequest result)
     {
         var req = _adapter.ToHttpRequest(bytes);
         req.Should().BeEquivalentTo(result);

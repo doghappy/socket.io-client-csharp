@@ -5,10 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
-using SocketIOClient.Serializer;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
@@ -33,7 +31,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
 
     public TimeSpan Timeout { get; set; }
 
-    public IHttpRequest ToHttpRequest(ICollection<byte[]> bytes)
+    public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
         if (!bytes.Any())
         {
@@ -50,7 +48,7 @@ public class EngineIO4Adapter : IEngineIOAdapter
         return req;
     }
 
-    public IHttpRequest ToHttpRequest(string content)
+    public HttpRequest ToHttpRequest(string content)
     {
         if (string.IsNullOrEmpty(content))
         {

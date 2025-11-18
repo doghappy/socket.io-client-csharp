@@ -61,7 +61,7 @@ public class HttpAdapterTests
 
         await _httpClient.Received()
             .SendAsync(
-                Arg.Is<IHttpRequest>(r => r.Uri.AbsoluteUri.StartsWith("http://localhost/?transport=polling&t=")),
+                Arg.Is<HttpRequest>(r => r.Uri.AbsoluteUri.StartsWith("http://localhost/?transport=polling&t=")),
                 Arg.Any<CancellationToken>());
     }
 
@@ -76,7 +76,7 @@ public class HttpAdapterTests
         }, CancellationToken.None);
 
         await _httpClient.Received()
-            .SendAsync(Arg.Is<IHttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
+            .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class HttpAdapterTests
         _httpAdapter.Subscribe(observer);
         var httpResponse = Substitute.For<IHttpResponse>();
         httpResponse.ReadAsStringAsync().Returns("Hello World");
-        _httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
+        _httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
             .Returns(httpResponse);
 
         await _httpAdapter.SendAsync(new HttpRequest
@@ -129,7 +129,7 @@ public class HttpAdapterTests
         var httpResponse = Substitute.For<IHttpResponse>();
         httpResponse.MediaType.Returns(contentType);
         httpResponse.ReadAsByteArrayAsync().Returns([1, 2, 255, 4, 3]);
-        _httpClient.SendAsync(Arg.Any<IHttpRequest>(), Arg.Any<CancellationToken>())
+        _httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
             .Returns(httpResponse);
 
         await _httpAdapter.SendAsync(new HttpRequest

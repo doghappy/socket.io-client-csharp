@@ -7,7 +7,7 @@ namespace SocketIOClient.V2.Protocol.Http;
 public interface IHttpAdapter : IProtocolAdapter
 {
     void SetDefaultHeader(string name, string value);
-    Task SendAsync(IHttpRequest req, CancellationToken cancellationToken);
+    Task SendAsync(HttpRequest req, CancellationToken cancellationToken);
     Uri Uri { get; set; }
     bool IsReadyToSend { get; }
 }

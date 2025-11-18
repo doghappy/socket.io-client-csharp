@@ -15,7 +15,7 @@ public class SystemHttpClient(HttpClient http) : IHttpClient
         http.DefaultRequestHeaders.TryAddWithoutValidation(name, value);
     }
 
-    public async Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken)
+    public async Task<IHttpResponse> SendAsync(HttpRequest req, CancellationToken cancellationToken)
     {
         var request = new HttpRequestMessage(new HttpMethod(req.Method.ToString()), req.Uri);
         request.Content = req.BodyType switch
@@ -31,7 +31,7 @@ public class SystemHttpClient(HttpClient http) : IHttpClient
         return new SystemHttpResponse(res);
     }
 
-    private static void SetHeaders(IHttpRequest req, HttpRequestMessage request)
+    private static void SetHeaders(HttpRequest req, HttpRequestMessage request)
     {
         var content = (ByteArrayContent)request.Content;
         foreach (var header in req.Headers)

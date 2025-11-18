@@ -8,5 +8,5 @@ public interface IHttpClient
 {
     TimeSpan Timeout { get; set; }
     void SetDefaultHeader(string name, string value);
-    Task<IHttpResponse> SendAsync(IHttpRequest req, CancellationToken cancellationToken);
+    Task<IHttpResponse> SendAsync(HttpRequest req, CancellationToken cancellationToken);
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
-public class HttpRequest : IHttpRequest
+public class HttpRequest
 {
     public Uri Uri { get; set; }
     public RequestMethod Method { get; set; } = RequestMethod.Get;
@@ -11,4 +11,16 @@ public class HttpRequest : IHttpRequest
     public Dictionary<string, string> Headers { get; set; } = new();
     public byte[] BodyBytes { get; set; }
     public string BodyText { get; set; }
+}
+
+public enum RequestMethod
+{
+    Get,
+    Post,
+}
+
+public enum RequestBodyType
+{
+    Text,
+    Bytes,
 }
