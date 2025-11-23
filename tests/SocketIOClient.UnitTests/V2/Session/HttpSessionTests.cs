@@ -24,6 +24,7 @@ public class HttpSessionTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
+        _engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
         _engineIOAdapterFactory
             .Create(Arg.Any<EngineIO>())
             .Returns(_engineIOAdapter);
