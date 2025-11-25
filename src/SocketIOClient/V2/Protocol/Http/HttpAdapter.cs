@@ -16,27 +16,6 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
 
     public bool IsReadyToSend => Uri is not null && Uri.Query.Contains("sid=");
 
-    private async Task<IHttpResponse> SendProtocolMessageAsync(ProtocolMessage message, CancellationToken cancellationToken)
-    {
-        var req = new HttpRequest
-        {
-            Method = RequestMethod.Post,
-            Uri = Uri,
-        };
-
-        if (message.Type == ProtocolMessageType.Text)
-        {
-            req.BodyText = message.Text;
-            req.BodyType = RequestBodyType.Text;
-        }
-        else
-        {
-            req.BodyBytes = message.Bytes;
-            req.BodyType = RequestBodyType.Bytes;
-        }
-        return await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
-    }
-
     private static async Task<ProtocolMessage> GetMessageAsync(IHttpResponse response)
     {
         var message = new ProtocolMessage();
