@@ -27,7 +27,7 @@ public class SystemHttpClient(HttpClient http) : IHttpClient
 
         SetHeaders(req, request);
 
-        var res = await http.SendAsync(request, cancellationToken);
+        var res = await http.SendAsync(request, cancellationToken).ConfigureAwait(false);
         return new SystemHttpResponse(res);
     }
 

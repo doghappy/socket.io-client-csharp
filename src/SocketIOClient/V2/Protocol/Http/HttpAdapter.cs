@@ -34,7 +34,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
             req.BodyBytes = message.Bytes;
             req.BodyType = RequestBodyType.Bytes;
         }
-        return await httpClient.SendAsync(req, cancellationToken);
+        return await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
     }
 
     private static async Task<ProtocolMessage> GetMessageAsync(IHttpResponse response)

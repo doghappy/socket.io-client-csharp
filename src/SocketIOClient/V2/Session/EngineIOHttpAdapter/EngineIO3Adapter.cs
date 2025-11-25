@@ -255,7 +255,7 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     {
         foreach (var observer in _observers)
         {
-            await observer.OnNextAsync(message);
+            await observer.OnNextAsync(message).ConfigureAwait(false);
         }
     }
 

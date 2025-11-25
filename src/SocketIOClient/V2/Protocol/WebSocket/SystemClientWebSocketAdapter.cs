@@ -24,7 +24,12 @@ public class SystemClientWebSocketAdapter(IWebSocketClient ws) : IWebSocketClien
             }
             var segment = new ArraySegment<byte>(data, offset, length);
             offset += length;
-            await ws.SendAsync(segment, type, endOfMessage, cancellationToken);
+            await ws.SendAsync(segment, type, endOfMessage, cancellationToken).ConfigureAwait(false);
         } while (!endOfMessage);
+    }
+
+    public Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
+    {
+        return ws.ConnectAsync(uri, cancellationToken);
     }
 }

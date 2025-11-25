@@ -114,14 +114,14 @@ public class EngineIO4Adapter : IEngineIOAdapter
         {
             Duration = _stopwatch.Elapsed,
         };
-        await NotifyObserversAsync(pong);
+        await NotifyObserversAsync(pong).ConfigureAwait(false);
     }
 
     private async Task NotifyObserversAsync(IMessage message)
     {
         foreach (var observer in _observers)
         {
-            await observer.OnNextAsync(message);
+            await observer.OnNextAsync(message).ConfigureAwait(false);
         }
     }
 
