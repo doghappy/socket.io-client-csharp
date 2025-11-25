@@ -42,4 +42,23 @@ public class SystemClientWebSocketAdapterTests
             true,
             CancellationToken.None);
     }
+
+    [Fact]
+    public async Task SendAsync_ByteMessage_PartitionData()
+    {
+        var data = new byte[1025];
+        await _adapter.SendAsync(data, WebSocketMessageType.Binary, CancellationToken.None);
+
+        await _ws.Received(1).SendAsync(
+            Arg.Any<ArraySegment<byte>>(),
+            SysWebSocketMessageType.Binary,
+            false,
+            CancellationToken.None);
+
+        await _ws.Received(1).SendAsync(
+            Arg.Any<ArraySegment<byte>>(),
+            SysWebSocketMessageType.Binary,
+            true,
+            CancellationToken.None);
+    }
 }
