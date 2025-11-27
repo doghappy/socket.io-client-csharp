@@ -1,17 +1,13 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
-using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Protocol.Http;
 
-public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : IHttpAdapter
+public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : ProtocolAdapter, IHttpAdapter
 {
-    private readonly List<IMyObserver<ProtocolMessage>> _observers = [];
-
     public Uri Uri { get; set; }
 
     public bool IsReadyToSend => Uri is not null && Uri.Query.Contains("sid=");
@@ -41,10 +37,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
             : $"0️⃣1️⃣0️⃣1️⃣ {incomingMessage.Bytes!.Length}";
         logger.LogDebug("[Http⬇] {Body}", body);
 #endif
-        foreach (var observer in _observers)
-        {
-            await observer.OnNextAsync(incomingMessage).ConfigureAwait(false);
-        }
+        await OnNextAsync(incomingMessage).ConfigureAwait(false);
     }
 
     public async Task SendAsync(HttpRequest req, CancellationToken cancellationToken)
@@ -62,15 +55,6 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     {
         var str = $"{Uri.AbsoluteUri}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
         return new Uri(str);
-    }
-
-    public void Subscribe(IMyObserver<ProtocolMessage> observer)
-    {
-        if (_observers.Contains(observer))
-        {
-            return;
-        }
-        _observers.Add(observer);
     }
 
     public void SetDefaultHeader(string name, string value) => httpClient.SetDefaultHeader(name, value);

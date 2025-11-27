@@ -3,4 +3,4 @@ using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Protocol;
 
-public interface IProtocolAdapter : IMyObservable<ProtocolMessage>;
+public interface IProtocolAdapter : IMyObservable<ProtocolMessage>, IMyObserver<ProtocolMessage>;
