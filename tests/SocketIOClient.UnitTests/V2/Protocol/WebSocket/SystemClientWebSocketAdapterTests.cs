@@ -1,7 +1,10 @@
+using System.Net.WebSockets;
 using System.Text;
+using FluentAssertions;
 using NSubstitute;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SysWebSocketMessageType = System.Net.WebSockets.WebSocketMessageType;
+using WebSocketMessageType = SocketIOClient.V2.Protocol.WebSocket.WebSocketMessageType;
 
 namespace SocketIOClient.UnitTests.V2.Protocol.WebSocket;
 
@@ -13,6 +16,7 @@ public class SystemClientWebSocketAdapterTests
         _adapter = new SystemClientWebSocketAdapter(_ws)
         {
             SendChunkSize = 1024,
+            ReceiveChunkSize = 1024,
         };
     }
 
@@ -60,5 +64,47 @@ public class SystemClientWebSocketAdapterTests
             SysWebSocketMessageType.Binary,
             true,
             CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenCalled_ThoughPassToWebSocketClient()
+    {
+        var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await _adapter.ConnectAsync(new Uri("ws://localhost:12345"), token);
+
+        await _ws.Received().ConnectAsync(new Uri("ws://localhost:12345"), token);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(1023)]
+    [InlineData(1024)]
+    public async Task ReceiveAsync_ActualDataLengthLessOrEqualThanReceiveChunkSize_ReturnActualLength(int length)
+    {
+        _ws.ReceiveAsync(Arg.Any<ArraySegment<byte>>(), Arg.Any<CancellationToken>())
+            .Returns(new WebSocketReceiveResult(length, SysWebSocketMessageType.Text, true));
+
+        var message = await _adapter.ReceiveAsync(CancellationToken.None);
+
+        message.Type.Should().Be(WebSocketMessageType.Text);
+        message.Bytes.Should().HaveCount(length);
+    }
+
+    [Theory]
+    [InlineData(1025)]
+    [InlineData(2048)]
+    public async Task ReceiveAsync_ActualDataLengthGreaterThanReceiveChunkSize_ReturnActualLength(int length)
+    {
+        _ws.ReceiveAsync(Arg.Any<ArraySegment<byte>>(), Arg.Any<CancellationToken>())
+            .Returns(
+                new WebSocketReceiveResult(1024, SysWebSocketMessageType.Binary, false),
+                new WebSocketReceiveResult(length - 1024, SysWebSocketMessageType.Binary, true));
+
+        var message = await _adapter.ReceiveAsync(CancellationToken.None);
+
+        message.Type.Should().Be(WebSocketMessageType.Binary);
+        message.Bytes.Should().HaveCount(length);
     }
 }
