@@ -3,6 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.Test.Core;
+using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.WebSocket;
 using Xunit.Abstractions;
 
@@ -105,5 +106,49 @@ public class WebSocketAdapterTests
             Arg.Is<byte[]>(b => b.Length == 2 && b[0] == 1 && b[1] == 255),
             WebSocketMessageType.Binary,
             token);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_WhenCalled_ThoughPassToClientAdapter()
+    {
+        var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), token);
+
+        await _clientAdapter.Received().ConnectAsync(new Uri("ws://127.0.0.1:1234"), token);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_NotConnectedEvenReceivedMessage_ObserverCannotGetMessage()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Subscribe(observer);
+
+        _clientAdapter.ReceiveAsync(CancellationToken.None)
+            .Returns(new WebSocketMessage());
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<ProtocolMessage>());
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ReceivedTextMessage_NotifyToObserver()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Subscribe(observer);
+        _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
+            .Returns(new WebSocketMessage
+            {
+                Type = WebSocketMessageType.Text,
+                Bytes = "Hello World!"u8.ToArray()
+            });
+
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
+
+        await Task.Delay(10);
+
+        await observer.Received()
+            .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
+                m.Type == ProtocolMessageType.Text
+                && m.Text == "Hello World!"));
     }
 }

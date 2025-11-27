@@ -4,21 +4,48 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
-using SocketIOClient.V2.Observers;
 
 namespace SocketIOClient.V2.Protocol.WebSocket;
 
 public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClientAdapter clientAdapter)
-    : IWebSocketAdapter
+    : ProtocolAdapter, IWebSocketAdapter
 {
-    public void Subscribe(IMyObserver<ProtocolMessage> observer)
+    private CancellationTokenSource _receiveCancellationTokenSource;
+
+    public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await clientAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+        if (_receiveCancellationTokenSource != null)
+        {
+            _receiveCancellationTokenSource.Cancel();
+            _receiveCancellationTokenSource.Dispose();
+        }
+        _receiveCancellationTokenSource = new CancellationTokenSource();
+        var token = _receiveCancellationTokenSource.Token;
+        _ = Task.Run(() => ReceiveAsync(token), token);
     }
 
-    public Task ConnectAsync(CancellationToken cancellationToken)
+    private async Task ReceiveAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var message = await clientAdapter.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+            var protocolMessage = new ProtocolMessage();
+            switch (message.Type)
+            {
+                case WebSocketMessageType.Text:
+                    protocolMessage.Type = ProtocolMessageType.Text;
+                    protocolMessage.Text = Encoding.UTF8.GetString(message.Bytes);
+                    break;
+                case WebSocketMessageType.Binary:
+                    protocolMessage.Type = ProtocolMessageType.Bytes;
+                    protocolMessage.Bytes = message.Bytes;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            await OnNextAsync(protocolMessage).ConfigureAwait(false);
+        }
     }
 
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)

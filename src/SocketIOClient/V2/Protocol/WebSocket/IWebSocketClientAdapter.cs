@@ -8,4 +8,5 @@ public interface IWebSocketClientAdapter
 {
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
     Task SendAsync(byte[] data, WebSocketMessageType messageType, CancellationToken cancellationToken);
+    Task<WebSocketMessage> ReceiveAsync(CancellationToken cancellationToken);
 }
