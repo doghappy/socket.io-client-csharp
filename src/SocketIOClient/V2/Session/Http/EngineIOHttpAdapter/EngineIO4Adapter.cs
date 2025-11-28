@@ -9,7 +9,7 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 
 public class EngineIO4Adapter : IEngineIOAdapter
 {

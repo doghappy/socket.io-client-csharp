@@ -9,10 +9,10 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Session.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 
-namespace SocketIOClient.V2.Session;
+namespace SocketIOClient.V2.Session.Http;
 
 public class HttpSession : ISession
 {

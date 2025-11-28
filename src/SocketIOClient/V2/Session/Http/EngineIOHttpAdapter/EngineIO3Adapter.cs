@@ -10,7 +10,7 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 
 public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 {

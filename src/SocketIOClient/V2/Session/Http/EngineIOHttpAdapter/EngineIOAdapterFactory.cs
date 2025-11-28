@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using SocketIOClient.Core;
 
-namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 
 public class EngineIOAdapterFactory(IServiceProvider serviceProvider) : IEngineIOAdapterFactory
 {

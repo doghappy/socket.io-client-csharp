@@ -9,10 +9,10 @@ using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Session.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.UnitTests.V2.Session.EngineIOHttpAdapter;
+namespace SocketIOClient.UnitTests.V2.Session.Http.EngineIOHttpAdapter;
 
 public class EngineIO3AdapterTests
 {

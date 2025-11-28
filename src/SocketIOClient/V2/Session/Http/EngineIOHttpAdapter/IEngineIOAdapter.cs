@@ -6,7 +6,7 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 
 public interface IEngineIOAdapter : IMyObservable<IMessage>
 {

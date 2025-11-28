@@ -8,7 +8,8 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
-using SocketIOClient.V2.Session.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;

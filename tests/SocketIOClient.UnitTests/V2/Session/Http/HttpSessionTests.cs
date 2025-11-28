@@ -11,11 +11,12 @@ using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
-using SocketIOClient.V2.Session.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.UnitTests.V2.Session;
+namespace SocketIOClient.UnitTests.V2.Session.Http;
 
 public class HttpSessionTests
 {
