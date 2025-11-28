@@ -7,14 +7,13 @@ using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
-using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.Http;
 
-public class HttpSession : ISession
+public class HttpSession : SessionBase
 {
     public HttpSession(
         ILogger<HttpSession> logger,
@@ -22,7 +21,7 @@ public class HttpSession : ISession
         IHttpAdapter httpAdapter,
         ISerializer serializer,
         IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-        IUriConverter uriConverter)
+        IUriConverter uriConverter) : base(logger)
     {
         _logger = logger;
         _engineIOAdapterFactory = engineIOAdapterFactory;
@@ -40,27 +39,17 @@ public class HttpSession : ISession
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly IUriConverter _uriConverter;
-    private readonly List<IMyObserver<IMessage>> _observers = [];
-    private readonly Queue<IBinaryMessage> _messageQueue = [];
 
-    public int PendingDeliveryCount => _messageQueue.Count;
-
-    private SessionOptions _options;
-    public SessionOptions Options
+    protected override void OnOptionsChanged(SessionOptions newValue)
     {
-        get => _options;
-        set
-        {
-            _options = value;
-            _engineIOAdapter = _engineIOAdapterFactory.Create(value.EngineIO);
-            _engineIOAdapter.Timeout = _options.Timeout;
-            _engineIOAdapter.Subscribe(this);
-            var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(value.EngineIO);
-            _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
-        }
+        _engineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
+        _engineIOAdapter.Timeout = newValue.Timeout;
+        _engineIOAdapter.Subscribe(this);
+        var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
+        _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
     }
 
-    public async Task OnNextAsync(ProtocolMessage protocolMessage)
+    public override async Task OnNextAsync(ProtocolMessage protocolMessage)
     {
         if (protocolMessage.Type == ProtocolMessageType.Bytes)
         {
@@ -70,15 +59,6 @@ public class HttpSession : ISession
         }
         var messages = _engineIOAdapter.ExtractMessagesFromText(protocolMessage.Text);
         await HandleMessages(messages).ConfigureAwait(false);
-    }
-
-    public async Task OnNextAsync(IMessage message)
-    {
-        _logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
-        foreach (var observer in _observers)
-        {
-            await observer.OnNextAsync(message).ConfigureAwait(false);
-        }
     }
 
     private async Task HandleMessages(IEnumerable<ProtocolMessage> messages)
@@ -106,7 +86,7 @@ public class HttpSession : ISession
         }
         if (message.Type is MessageType.Binary or MessageType.BinaryAck)
         {
-            _messageQueue.Enqueue((IBinaryMessage)message);
+            MessageQueue.Enqueue((IBinaryMessage)message);
             return;
         }
         await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
@@ -121,22 +101,22 @@ public class HttpSession : ISession
     private async Task OnNextBytesMessage(byte[] bytes)
     {
         Debug.WriteLine($"[Polling⬇] 0️⃣1️⃣0️⃣1️⃣ {bytes.Length}");
-        var message = _messageQueue.Peek();
+        var message = MessageQueue.Peek();
         message.Add(bytes);
         if (message.ReadyDelivery)
         {
-            _messageQueue.Dequeue();
+            MessageQueue.Dequeue();
             await OnNextAsync(message).ConfigureAwait(false);
         }
     }
 
-    public async Task SendAsync(object[] data, CancellationToken cancellationToken)
+    public override async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
         var messages = _serializer.Serialize(data);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    public override async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
     {
         var messages = _serializer.Serialize(data, packetId);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
@@ -168,13 +148,13 @@ public class HttpSession : ISession
         }
     }
 
-    public async Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    public override async Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
     {
         var messages = _serializer.SerializeAckData(data, packetId);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task ConnectAsync(CancellationToken cancellationToken)
+    public override async Task ConnectAsync(CancellationToken cancellationToken)
     {
         var uri = _uriConverter.GetServerUri(
             false,
@@ -189,9 +169,9 @@ public class HttpSession : ISession
         };
         try
         {
-            if (_options.ExtraHeaders is not null)
+            if (Options.ExtraHeaders is not null)
             {
-                foreach (var header in _options.ExtraHeaders)
+                foreach (var header in Options.ExtraHeaders)
                 {
                     _httpAdapter.SetDefaultHeader(header.Key, header.Value);
                 }
@@ -204,19 +184,10 @@ public class HttpSession : ISession
         }
     }
 
-    public async Task DisconnectAsync(CancellationToken cancellationToken)
+    public override async Task DisconnectAsync(CancellationToken cancellationToken)
     {
         var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
         var req = _engineIOAdapter.ToHttpRequest(content);
         await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
-    }
-
-    public void Subscribe(IMyObserver<IMessage> observer)
-    {
-        if (_observers.Contains(observer))
-        {
-            return;
-        }
-        _observers.Add(observer);
     }
 }
