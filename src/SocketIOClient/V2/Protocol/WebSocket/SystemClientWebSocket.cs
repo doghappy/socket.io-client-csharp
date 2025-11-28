@@ -25,5 +25,7 @@ public class SystemClientWebSocket : IWebSocketClient
     public Task CloseAsync(WebSocketCloseStatus closeStatus, string desc, CancellationToken cancellationToken) =>
         _ws.CloseAsync(closeStatus, desc, cancellationToken);
 
+    public void SetDefaultHeader(string name, string value) => _ws.Options.SetRequestHeader(name, value);
+
     public void Dispose() => _ws.Dispose();
 }

@@ -107,4 +107,12 @@ public class SystemClientWebSocketAdapterTests
         message.Type.Should().Be(WebSocketMessageType.Binary);
         message.Bytes.Should().HaveCount(length);
     }
+
+    [Fact]
+    public void SetDefaultHeader_WhenCalled_AlwaysWsClientSetDefaultHeader()
+    {
+        _adapter.SetDefaultHeader("name", "value");
+
+        _ws.Received().SetDefaultHeader("name", "value");
+    }
 }

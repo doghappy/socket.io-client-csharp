@@ -55,4 +55,6 @@ public class SystemClientWebSocketAdapter(IWebSocketClient ws) : IWebSocketClien
             Type = (WebSocketMessageType)result.MessageType,
         };
     }
+
+    public void SetDefaultHeader(string name, string value) => ws.SetDefaultHeader(name, value);
 }

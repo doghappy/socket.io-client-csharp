@@ -151,4 +151,12 @@ public class WebSocketAdapterTests
                 m.Type == ProtocolMessageType.Text
                 && m.Text == "Hello World!"));
     }
+
+    [Fact]
+    public void SetDefaultHeader_WhenCalled_AlwaysCallClientAdapterSetDefaultHeader()
+    {
+        _wsAdapter.SetDefaultHeader("name", "value");
+
+        _clientAdapter.Received().SetDefaultHeader("name", "value");
+    }
 }

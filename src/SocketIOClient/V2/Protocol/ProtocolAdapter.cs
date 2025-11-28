@@ -25,4 +25,6 @@ public abstract class ProtocolAdapter : IProtocolAdapter
             await observer.OnNextAsync(message).ConfigureAwait(false);
         }
     }
+
+    public abstract void SetDefaultHeader(string name, string value);
 }

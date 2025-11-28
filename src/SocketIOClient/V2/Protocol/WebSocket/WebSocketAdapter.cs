@@ -68,4 +68,6 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
             .SendAsync(message.Bytes, WebSocketMessageType.Binary, cancellationToken)
             .ConfigureAwait(false);
     }
+
+    public override void SetDefaultHeader(string name, string value) => clientAdapter.SetDefaultHeader(name, value);
 }

@@ -57,5 +57,5 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         return new Uri(str);
     }
 
-    public void SetDefaultHeader(string name, string value) => httpClient.SetDefaultHeader(name, value);
+    public override void SetDefaultHeader(string name, string value) => httpClient.SetDefaultHeader(name, value);
 }

@@ -13,4 +13,5 @@ public interface IWebSocketClient : IDisposable
         CancellationToken cancellationToken);
     Task<WebSocketReceiveResult> ReceiveAsync(ArraySegment<byte> buffer, CancellationToken cancellationToken);
     Task CloseAsync(WebSocketCloseStatus closeStatus, string desc, CancellationToken cancellationToken);
+    void SetDefaultHeader(string name, string value);
 }
