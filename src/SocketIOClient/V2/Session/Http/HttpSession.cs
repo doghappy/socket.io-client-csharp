@@ -21,14 +21,13 @@ public class HttpSession : SessionBase
         IHttpAdapter httpAdapter,
         ISerializer serializer,
         IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-        IUriConverter uriConverter) : base(logger)
+        IUriConverter uriConverter) : base(logger, uriConverter, httpAdapter)
     {
         _logger = logger;
         _engineIOAdapterFactory = engineIOAdapterFactory;
         _httpAdapter = httpAdapter;
         _serializer = serializer;
         _engineIOMessageAdapterFactory = engineIOMessageAdapterFactory;
-        _uriConverter = uriConverter;
         _httpAdapter.Subscribe(this);
     }
 
@@ -38,7 +37,8 @@ public class HttpSession : SessionBase
     private readonly IHttpAdapter _httpAdapter;
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
-    private readonly IUriConverter _uriConverter;
+
+    protected override Core.Protocol Protocol => Core.Protocol.Polling;
 
     protected override void OnOptionsChanged(SessionOptions newValue)
     {
@@ -57,6 +57,7 @@ public class HttpSession : SessionBase
             await HandleMessages(bytesMessages).ConfigureAwait(false);
             return;
         }
+
         var messages = _engineIOAdapter.ExtractMessagesFromText(protocolMessage.Text);
         await HandleMessages(messages).ConfigureAwait(false);
     }
@@ -84,17 +85,20 @@ public class HttpSession : SessionBase
         {
             return;
         }
+
         if (message.Type is MessageType.Binary or MessageType.BinaryAck)
         {
             MessageQueue.Enqueue((IBinaryMessage)message);
             return;
         }
+
         await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
         if (message.Type is MessageType.Opened)
         {
             var openedMessage = (OpenedMessage)message;
             _httpAdapter.Uri = new Uri($"{_httpAdapter.Uri.AbsoluteUri}&sid={openedMessage.Sid}");
         }
+
         await OnNextAsync(message).ConfigureAwait(false);
     }
 
@@ -141,6 +145,7 @@ public class HttpSession : SessionBase
 #endif
             bytes.Add(message.Bytes);
         }
+
         if (bytes.Count > 0)
         {
             var request = _engineIOAdapter.ToHttpRequest(bytes);
@@ -154,34 +159,14 @@ public class HttpSession : SessionBase
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    public override async Task ConnectAsync(CancellationToken cancellationToken)
+    protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
     {
-        var uri = _uriConverter.GetServerUri(
-            false,
-            Options.ServerUri,
-            Options.Path,
-            Options.Query,
-            (int)Options.EngineIO);
         _httpAdapter.Uri = uri;
         var req = new HttpRequest
         {
             Uri = uri,
         };
-        try
-        {
-            if (Options.ExtraHeaders is not null)
-            {
-                foreach (var header in Options.ExtraHeaders)
-                {
-                    _httpAdapter.SetDefaultHeader(header.Key, header.Value);
-                }
-            }
-            await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            throw new ConnectionFailedException(e);
-        }
+        await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)
