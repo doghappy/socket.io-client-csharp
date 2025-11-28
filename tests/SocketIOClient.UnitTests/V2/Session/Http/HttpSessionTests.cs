@@ -32,13 +32,17 @@ public class HttpSessionTests
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
         _logger = output.CreateLogger<HttpSession>();
+        _uriConverter = Substitute.For<IUriConverter>();
+        _uriConverter.GetServerUri(false, Arg.Any<Uri>(), Arg.Any<string>(),
+                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
+            .Returns(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
         _session = new HttpSession(
             _logger,
             _engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
             _engineIOMessageAdapterFactory,
-            new DefaultUriConverter())
+            _uriConverter)
         {
             Options = _sessionOptions
         };
@@ -58,6 +62,7 @@ public class HttpSessionTests
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly ILogger<HttpSession> _logger;
+    private readonly IUriConverter _uriConverter;
 
     #region ConnectAsync
 
@@ -94,6 +99,19 @@ public class HttpSessionTests
                     Method = RequestMethod.Get,
                 },
             ]);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_UriConverterThrow_PassThroughException()
+    {
+        _uriConverter.GetServerUri(Arg.Any<bool>(), Arg.Any<Uri>(), Arg.Any<string>(),
+                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
+            .Throws(new Exception("UriConverter Error"));
+
+        await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("UriConverter Error");
     }
 
     [Fact]
