@@ -72,15 +72,15 @@ public abstract class SessionBase(
             Options.Path,
             Options.Query,
             (int)Options.EngineIO);
+        if (Options.ExtraHeaders is not null)
+        {
+            foreach (var header in Options.ExtraHeaders)
+            {
+                protocolAdapter.SetDefaultHeader(header.Key, header.Value);
+            }
+        }
         try
         {
-            if (Options.ExtraHeaders is not null)
-            {
-                foreach (var header in Options.ExtraHeaders)
-                {
-                    protocolAdapter.SetDefaultHeader(header.Key, header.Value);
-                }
-            }
             await ConnectCoreAsync(uri, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)

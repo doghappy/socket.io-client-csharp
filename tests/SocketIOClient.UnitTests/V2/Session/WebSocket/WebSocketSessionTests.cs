@@ -117,5 +117,22 @@ public class WebSocketSessionTests
         _wsAdapter.Received(1).SetDefaultHeader("key2", "value2");
     }
 
+    [Fact]
+    public async Task ConnectAsync_SetDefaultHeaderThrow_PassThroughException()
+    {
+        _wsAdapter
+            .When(a => a.SetDefaultHeader(Arg.Any<string>(), Arg.Any<string>()))
+            .Throws(new Exception("Unable to set header"));
+        _sessionOptions.ExtraHeaders = new Dictionary<string, string>
+        {
+            { "key1", "value1" },
+        };
+
+        await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("Unable to set header");
+    }
+
     #endregion
 }
