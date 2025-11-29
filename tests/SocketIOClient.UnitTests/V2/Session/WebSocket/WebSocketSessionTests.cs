@@ -135,4 +135,28 @@ public class WebSocketSessionTests
     }
 
     #endregion
+
+    [Fact]
+    public async Task DisconnectAsync_NoNamespace_SendDisconnectToServer()
+    {
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await _session.DisconnectAsync(token);
+
+        await _wsAdapter.Received(1)
+            .SendAsync(Arg.Is<ProtocolMessage>(m =>
+                m.Type == ProtocolMessageType.Text && m.Text == "41"), token);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_HasNamespace_SendDisconnectToServer()
+    {
+        _sessionOptions.Namespace = "/test";
+        await _session.DisconnectAsync(CancellationToken.None);
+
+        await _wsAdapter.Received(1)
+            .SendAsync(Arg.Is<ProtocolMessage>(m =>
+                m.Type == ProtocolMessageType.Text && m.Text == "41/test,"), CancellationToken.None);
+    }
+
 }

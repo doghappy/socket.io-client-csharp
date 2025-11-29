@@ -44,8 +44,10 @@ public class WebSocketSession(
         await wsAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
     }
 
-    public override Task DisconnectAsync(CancellationToken cancellationToken)
+    public override async Task DisconnectAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
+        var message = new ProtocolMessage { Text = content };
+        await wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
     }
 }
