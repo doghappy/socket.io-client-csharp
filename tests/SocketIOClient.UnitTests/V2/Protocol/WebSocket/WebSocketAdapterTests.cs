@@ -159,4 +159,24 @@ public class WebSocketAdapterTests
 
         _clientAdapter.Received().SetDefaultHeader("name", "value");
     }
+
+    [Fact]
+    public async Task Dispose_WhenCalled_NoMessageToObserver()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Subscribe(observer);
+        _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
+            .Returns(new WebSocketMessage
+            {
+                Type = WebSocketMessageType.Text,
+                Bytes = "Hello World!"u8.ToArray()
+            });
+
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
+        _wsAdapter.Dispose();
+
+        await Task.Delay(50);
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<ProtocolMessage>());
+    }
 }

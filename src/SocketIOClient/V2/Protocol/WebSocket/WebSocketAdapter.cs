@@ -8,19 +8,13 @@ using SocketIOClient.Core;
 namespace SocketIOClient.V2.Protocol.WebSocket;
 
 public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClientAdapter clientAdapter)
-    : ProtocolAdapter, IWebSocketAdapter
+    : ProtocolAdapter, IWebSocketAdapter, IDisposable
 {
-    private CancellationTokenSource _receiveCancellationTokenSource;
+    private readonly CancellationTokenSource _receiveCancellationTokenSource = new();
 
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
     {
         await clientAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-        if (_receiveCancellationTokenSource != null)
-        {
-            _receiveCancellationTokenSource.Cancel();
-            _receiveCancellationTokenSource.Dispose();
-        }
-        _receiveCancellationTokenSource = new CancellationTokenSource();
         var token = _receiveCancellationTokenSource.Token;
         _ = Task.Run(() => ReceiveAsync(token), token);
     }
@@ -70,4 +64,10 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
     }
 
     public override void SetDefaultHeader(string name, string value) => clientAdapter.SetDefaultHeader(name, value);
+
+    public void Dispose()
+    {
+        _receiveCancellationTokenSource.Cancel();
+        _receiveCancellationTokenSource.Dispose();
+    }
 }
