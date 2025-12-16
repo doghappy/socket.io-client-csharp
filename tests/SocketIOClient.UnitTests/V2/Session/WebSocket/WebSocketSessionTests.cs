@@ -3,9 +3,15 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
+using SocketIOClient.V2.Observers;
+using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Protocol.WebSocket;
+using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
@@ -17,6 +23,14 @@ public class WebSocketSessionTests
     public WebSocketSessionTests(ITestOutputHelper output)
     {
         _wsAdapter = Substitute.For<IWebSocketAdapter>();
+        var engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
+        var engineIOAdapter = Substitute.For<IEngineIOAdapter>();
+        engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
+        engineIOAdapterFactory
+            .Create(Arg.Any<EngineIO>())
+            .Returns(engineIOAdapter);
+        _serializer = Substitute.For<ISerializer>();
+        var engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
         _uriConverter = Substitute.For<IUriConverter>();
         _uriConverter.GetServerUri(true, Arg.Any<Uri>(), Arg.Any<string>(),
                 Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
@@ -24,7 +38,10 @@ public class WebSocketSessionTests
         var logger = output.CreateLogger<WebSocketSession>();
         _session = new WebSocketSession(
             logger,
+            engineIOAdapterFactory,
             _wsAdapter,
+            _serializer,
+            engineIOMessageAdapterFactory,
             _uriConverter)
         {
             Options = _sessionOptions,
@@ -40,6 +57,7 @@ public class WebSocketSessionTests
 
     private readonly WebSocketSession _session;
     private readonly IWebSocketAdapter _wsAdapter;
+    private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
 
     #region ConnectAsync
@@ -162,5 +180,27 @@ public class WebSocketSessionTests
     public void Constructor_WhenCalled_WsSessionIsSubscriberOfWsAdapter()
     {
         _wsAdapter.Received(1).Subscribe(_session);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_BinaryMessageIsNotReady_NoMessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryEventMessage
+            {
+                BytesCount = 1,
+            });
+        var protocolMessage = new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        };
+
+        await _session.OnNextAsync(protocolMessage);
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
+        _session.PendingDeliveryCount.Should().Be(1);
     }
 }

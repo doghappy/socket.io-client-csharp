@@ -224,7 +224,7 @@ public class HttpSessionTests
 
         await _session.OnNextAsync(protocolMessage);
 
-        await observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
     }
 

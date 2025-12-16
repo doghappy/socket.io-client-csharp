@@ -3,25 +3,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.WebSocket;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.WebSocket;
 
 public class WebSocketSession(
     ILogger<WebSocketSession> logger,
+    IEngineIOAdapterFactory engineIOAdapterFactory,
     IWebSocketAdapter wsAdapter,
-    IUriConverter uriConverter) : SessionBase(logger, uriConverter, wsAdapter)
+    ISerializer serializer,
+    IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
+    IUriConverter uriConverter)
+    : SessionBase(logger, engineIOAdapterFactory, wsAdapter, serializer,
+        engineIOMessageAdapterFactory, uriConverter)
 {
     protected override Core.Protocol Protocol => Core.Protocol.WebSocket;
 
-    public override Task OnNextAsync(ProtocolMessage message)
+    public override async Task OnNextAsync(ProtocolMessage message)
     {
-        throw new NotImplementedException();
-    }
-
-    protected override void OnOptionsChanged(SessionOptions newValue)
-    {
+        await HandleMessageAsync(message).ConfigureAwait(false);
     }
 
     public override Task SendAsync(object[] data, CancellationToken cancellationToken)

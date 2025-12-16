@@ -1,32 +1,48 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
+using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
 public abstract class SessionBase : ISession
 {
-    protected SessionBase(ILogger<SessionBase> logger, IUriConverter uriConverter, IProtocolAdapter protocolAdapter)
+    protected SessionBase(
+        ILogger<SessionBase> logger,
+        IEngineIOAdapterFactory engineIOAdapterFactory,
+        IProtocolAdapter protocolAdapter,
+        ISerializer serializer,
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
+        IUriConverter uriConverter)
     {
         _logger = logger;
+        _engineIOAdapterFactory = engineIOAdapterFactory;
         _uriConverter = uriConverter;
         _protocolAdapter = protocolAdapter;
+        _serializer = serializer;
+        _engineIOMessageAdapterFactory = engineIOMessageAdapterFactory;
         protocolAdapter.Subscribe(this);
     }
 
     private readonly ILogger<SessionBase> _logger;
     private readonly IUriConverter _uriConverter;
     private readonly IProtocolAdapter _protocolAdapter;
+    private readonly ISerializer _serializer;
+    private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
+    private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
+    protected IEngineIOAdapter EngineIOAdapter { get; private set; }
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
-    protected Queue<IBinaryMessage> MessageQueue { get; } = [];
+    private readonly Queue<IBinaryMessage> _messageQueue = [];
 
     public void Subscribe(IMyObserver<IMessage> observer)
     {
@@ -49,7 +65,7 @@ public abstract class SessionBase : ISession
         }
     }
 
-    public int PendingDeliveryCount => MessageQueue.Count;
+    public int PendingDeliveryCount => _messageQueue.Count;
 
     private SessionOptions _options;
 
@@ -65,7 +81,14 @@ public abstract class SessionBase : ISession
 
     protected abstract Core.Protocol Protocol { get; }
 
-    protected abstract void OnOptionsChanged(SessionOptions newValue);
+    private void OnOptionsChanged(SessionOptions newValue)
+    {
+        EngineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
+        EngineIOAdapter.Timeout = newValue.Timeout;
+        EngineIOAdapter.Subscribe(this);
+        var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
+        _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+    }
 
     public abstract Task SendAsync(object[] data, CancellationToken cancellationToken);
 
@@ -102,4 +125,58 @@ public abstract class SessionBase : ISession
     }
 
     public abstract Task DisconnectAsync(CancellationToken cancellationToken);
+
+    protected async Task HandleMessageAsync(ProtocolMessage message)
+    {
+        if (message.Type == ProtocolMessageType.Bytes)
+        {
+            await OnNextBytesMessage(message.Bytes).ConfigureAwait(false);
+        }
+        else
+        {
+            await OnNextTextMessage(message.Text).ConfigureAwait(false);
+        }
+    }
+
+    private async Task OnNextBytesMessage(byte[] bytes)
+    {
+        _logger.LogDebug("[Polling⬇] 0️⃣1️⃣0️⃣1️⃣ {length}", bytes.Length);
+        var message = _messageQueue.Peek();
+        message.Add(bytes);
+        if (message.ReadyDelivery)
+        {
+            _messageQueue.Dequeue();
+            await OnNextAsync(message).ConfigureAwait(false);
+        }
+    }
+
+    private async Task OnNextTextMessage(string text)
+    {
+        _logger.LogDebug("[Polling⬇] {text}", text);
+        var message = _serializer.Deserialize(text);
+        if (message is null)
+        {
+            return;
+        }
+
+        if (message.Type is MessageType.Binary or MessageType.BinaryAck)
+        {
+            _messageQueue.Enqueue((IBinaryMessage)message);
+            return;
+        }
+
+        await EngineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        if (message.Type is MessageType.Opened)
+        {
+            var openedMessage = (OpenedMessage)message;
+            OnOpenedMessage(openedMessage);
+        }
+
+        await OnNextAsync(message).ConfigureAwait(false);
+    }
+
+    protected virtual void OnOpenedMessage(OpenedMessage message)
+    {
+        _logger.LogDebug(JsonSerializer.Serialize(message));
+    }
 }
