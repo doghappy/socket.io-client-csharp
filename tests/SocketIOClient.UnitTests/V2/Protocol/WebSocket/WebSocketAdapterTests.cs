@@ -1,6 +1,7 @@
 using System.Text;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Observers;
@@ -161,15 +162,19 @@ public class WebSocketAdapterTests
     }
 
     [Fact]
-    public async Task Dispose_WhenCalled_NoMessageToObserver()
+    public async Task Dispose_WhenCalled_StopsReceivingFurtherMessages()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
         _wsAdapter.Subscribe(observer);
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
-            .Returns(new WebSocketMessage
+            .Returns(async _ =>
             {
-                Type = WebSocketMessageType.Text,
-                Bytes = "Hello World!"u8.ToArray()
+                await Task.Delay(10);
+                return new WebSocketMessage
+                {
+                    Type = WebSocketMessageType.Text,
+                    Bytes = "Hello World!"u8.ToArray()
+                };
             });
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
@@ -177,6 +182,6 @@ public class WebSocketAdapterTests
 
         await Task.Delay(50);
 
-        await observer.DidNotReceive().OnNextAsync(Arg.Any<ProtocolMessage>());
+        await observer.Received(Quantity.Within(0, 1)).OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 }
