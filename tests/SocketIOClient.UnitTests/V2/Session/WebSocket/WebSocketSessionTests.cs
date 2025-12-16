@@ -42,7 +42,6 @@ public class WebSocketSessionTests
     private readonly IWebSocketAdapter _wsAdapter;
     private readonly IUriConverter _uriConverter;
 
-
     #region ConnectAsync
 
     [Fact]
@@ -159,4 +158,9 @@ public class WebSocketSessionTests
                 m.Type == ProtocolMessageType.Text && m.Text == "41/test,"), CancellationToken.None);
     }
 
+    [Fact]
+    public void Constructor_WhenCalled_WsSessionIsSubscriberOfWsAdapter()
+    {
+        _wsAdapter.Received(1).Subscribe(_session);
+    }
 }

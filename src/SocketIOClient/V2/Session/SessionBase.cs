@@ -11,11 +11,20 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
-public abstract class SessionBase(
-    ILogger<SessionBase> logger,
-    IUriConverter uriConverter,
-    IProtocolAdapter protocolAdapter) : ISession
+public abstract class SessionBase : ISession
 {
+    protected SessionBase(ILogger<SessionBase> logger, IUriConverter uriConverter, IProtocolAdapter protocolAdapter)
+    {
+        _logger = logger;
+        _uriConverter = uriConverter;
+        _protocolAdapter = protocolAdapter;
+        protocolAdapter.Subscribe(this);
+    }
+
+    private readonly ILogger<SessionBase> _logger;
+    private readonly IUriConverter _uriConverter;
+    private readonly IProtocolAdapter _protocolAdapter;
+
     private readonly List<IMyObserver<IMessage>> _observers = [];
     protected Queue<IBinaryMessage> MessageQueue { get; } = [];
 
@@ -25,6 +34,7 @@ public abstract class SessionBase(
         {
             return;
         }
+
         _observers.Add(observer);
     }
 
@@ -32,7 +42,7 @@ public abstract class SessionBase(
 
     public async Task OnNextAsync(IMessage message)
     {
-        logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
+        _logger.LogDebug("Deliver message to SocketIO, Type: {Type}", message.Type);
         foreach (var observer in _observers)
         {
             await observer.OnNextAsync(message).ConfigureAwait(false);
@@ -42,6 +52,7 @@ public abstract class SessionBase(
     public int PendingDeliveryCount => MessageQueue.Count;
 
     private SessionOptions _options;
+
     public SessionOptions Options
     {
         get => _options;
@@ -66,7 +77,7 @@ public abstract class SessionBase(
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        var uri = uriConverter.GetServerUri(
+        var uri = _uriConverter.GetServerUri(
             Protocol == Core.Protocol.WebSocket,
             Options.ServerUri,
             Options.Path,
@@ -76,9 +87,10 @@ public abstract class SessionBase(
         {
             foreach (var header in Options.ExtraHeaders)
             {
-                protocolAdapter.SetDefaultHeader(header.Key, header.Value);
+                _protocolAdapter.SetDefaultHeader(header.Key, header.Value);
             }
         }
+
         try
         {
             await ConnectCoreAsync(uri, cancellationToken).ConfigureAwait(false);

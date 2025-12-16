@@ -1,11 +1,9 @@
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
-using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
@@ -23,25 +21,25 @@ public class HttpSessionTests
     public HttpSessionTests(ITestOutputHelper output)
     {
         _httpAdapter = Substitute.For<IHttpAdapter>();
-        _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
+        var engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
         _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         _engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
-        _engineIOAdapterFactory
+        engineIOAdapterFactory
             .Create(Arg.Any<EngineIO>())
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
-        _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
-        _logger = output.CreateLogger<HttpSession>();
+        var engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
+        var logger = output.CreateLogger<HttpSession>();
         _uriConverter = Substitute.For<IUriConverter>();
         _uriConverter.GetServerUri(false, Arg.Any<Uri>(), Arg.Any<string>(),
                 Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
             .Returns(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
         _session = new HttpSession(
-            _logger,
-            _engineIOAdapterFactory,
+            logger,
+            engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
-            _engineIOMessageAdapterFactory,
+            engineIOMessageAdapterFactory,
             _uriConverter)
         {
             Options = _sessionOptions
@@ -57,11 +55,8 @@ public class HttpSessionTests
 
     private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
-    private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly IEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
-    private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
-    private readonly ILogger<HttpSession> _logger;
     private readonly IUriConverter _uriConverter;
 
     #region ConnectAsync
@@ -205,49 +200,9 @@ public class HttpSessionTests
     }
 
     [Fact]
-    public async Task Integration_HttpAdapterPushedMessages_MessagesWillBeForwardedToSubscribersOfHttpSession()
+    public void Constructor_WhenCalled_HttpSessionIsSubscriberOfHttpAdapter()
     {
-        var httpClient = Substitute.For<IHttpClient>();
-        var logger = Substitute.For<ILogger<HttpAdapter>>();
-        var httpAdapter = new HttpAdapter(httpClient, logger)
-        {
-            Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
-        };
-        var serializer = new SystemJsonSerializer(new Decapsulator());
-        var uriConverter = new DefaultUriConverter();
-        var session = new HttpSession(_logger, _engineIOAdapterFactory, httpAdapter, serializer, _engineIOMessageAdapterFactory, uriConverter);
-        session.Options = _sessionOptions;
-        var response = Substitute.For<IHttpResponse>();
-        response.ReadAsStringAsync().Returns("any text");
-        httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>()).Returns(response);
-        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
-            .Returns([
-                new ProtocolMessage
-                {
-                    Type = ProtocolMessageType.Text,
-                    Text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}",
-                },
-            ]);
-        var observer = Substitute.For<IMyObserver<IMessage>>();
-        session.Subscribe(observer);
-        var captured = new List<IMessage>();
-        observer
-            .When(x => x.OnNextAsync(Arg.Any<IMessage>()))
-            .Do(call => captured.Add(call.Arg<IMessage>()));
-
-        await httpAdapter.SendAsync(new HttpRequest(), CancellationToken.None);
-
-        captured.Should()
-            .BeEquivalentTo(new List<IMessage>
-            {
-                new OpenedMessage
-                {
-                    Sid = "123",
-                    Upgrades = ["websocket"],
-                    PingInterval = 10000,
-                    PingTimeout = 5000,
-                },
-            }, options => options.IncludingAllRuntimeProperties());
+        _httpAdapter.Received(1).Subscribe(_session);
     }
 
     [Fact]
