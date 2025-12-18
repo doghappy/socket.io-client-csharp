@@ -12,16 +12,24 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.WebSocket;
 
-public class WebSocketSession(
-    ILogger<WebSocketSession> logger,
-    IEngineIOAdapterFactory engineIOAdapterFactory,
-    IWebSocketAdapter wsAdapter,
-    ISerializer serializer,
-    IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-    IUriConverter uriConverter)
-    : SessionBase(logger, engineIOAdapterFactory, wsAdapter, serializer,
-        engineIOMessageAdapterFactory, uriConverter)
+public class WebSocketSession : SessionBase
 {
+    public WebSocketSession(
+        ILogger<WebSocketSession> logger,
+        IEngineIOAdapterFactory engineIOAdapterFactory,
+        IWebSocketAdapter wsAdapter,
+        ISerializer serializer,
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
+        IUriConverter uriConverter) : base(logger, engineIOAdapterFactory, wsAdapter, serializer,
+        engineIOMessageAdapterFactory, uriConverter)
+    {
+        _serializer = serializer;
+        _wsAdapter = wsAdapter;
+    }
+
+    private readonly ISerializer _serializer;
+    private readonly IWebSocketAdapter _wsAdapter;
+
     protected override Core.Protocol Protocol => Core.Protocol.WebSocket;
 
     protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
@@ -35,7 +43,7 @@ public class WebSocketSession(
 
     public override async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
-        var messages = serializer.Serialize(data);
+        var messages = _serializer.Serialize(data);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
@@ -49,13 +57,13 @@ public class WebSocketSession(
                 : $"[WebSocket⬆] 0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
             Debug.WriteLine(text);
 #endif
-            await wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+            await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }
 
     public override async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
     {
-        var messages = serializer.Serialize(data, packetId);
+        var messages = _serializer.Serialize(data, packetId);
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
@@ -66,13 +74,13 @@ public class WebSocketSession(
 
     protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
     {
-        await wsAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+        await _wsAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)
     {
         var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
         var message = new ProtocolMessage { Text = content };
-        await wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
     }
 }
