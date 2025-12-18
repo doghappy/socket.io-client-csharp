@@ -1,32 +1,29 @@
 using FluentAssertions;
-using JetBrains.Annotations;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-namespace SocketIOClient.UnitTests.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.UnitTests.V2.Session.Http.HttpEngineIOAdapter;
 
-public class EngineIO4AdapterTests
+public class HttpEngineIO4AdapterTests
 {
-    public EngineIO4AdapterTests()
+    public HttpEngineIO4AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
-        _httpAdapter = Substitute.For<IHttpAdapter>();
-        _retryPolicy = Substitute.For<IRetriable>();
-        _adapter = new EngineIO4Adapter(
+        var httpAdapter = Substitute.For<IHttpAdapter>();
+        var retryPolicy = Substitute.For<IRetriable>();
+        _adapter = new HttpEngineIO4Adapter(
             _stopwatch,
-            _httpAdapter,
-            _retryPolicy);
+            httpAdapter,
+            retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
-    private readonly IHttpAdapter _httpAdapter;
-    private readonly EngineIO4Adapter _adapter;
-    private readonly IRetriable _retryPolicy;
+    private readonly HttpEngineIO4Adapter _adapter;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -150,7 +147,7 @@ public class EngineIO4AdapterTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void ToHttpRequest_GivenAnInvalidContent_ThrowException([CanBeNull] string? content)
+    public void ToHttpRequest_GivenAnInvalidContent_ThrowException(string? content)
     {
         _adapter
             .Invoking(x => x.ToHttpRequest(content))

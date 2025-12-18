@@ -8,8 +8,9 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;
@@ -33,8 +34,8 @@ public static class ServicesInitializer
         AddSystemTextJson(services);
 
         services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
-        services.AddKeyedScoped<IEngineIOAdapter, EngineIO3Adapter>(EngineIO.V3);
-        services.AddKeyedScoped<IEngineIOAdapter, EngineIO4Adapter>(EngineIO.V4);
+        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIO.V3);
+        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIO.V4);
 
         services.AddSingleton<HttpClient>();
         services.AddScoped<ISession, HttpSession>();

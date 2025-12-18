@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.WebSocket;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.WebSocket;
@@ -21,6 +21,10 @@ public class WebSocketSession(
         engineIOMessageAdapterFactory, uriConverter)
 {
     protected override Core.Protocol Protocol => Core.Protocol.WebSocket;
+
+    protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
+    {
+    }
 
     public override async Task OnNextAsync(ProtocolMessage message)
     {

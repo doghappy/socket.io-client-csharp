@@ -1,6 +1,6 @@
 using SocketIOClient.Core;
 
-namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public interface IEngineIOAdapterFactory
 {

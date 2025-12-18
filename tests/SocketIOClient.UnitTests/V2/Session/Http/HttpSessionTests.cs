@@ -9,8 +9,9 @@ using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 
@@ -22,7 +23,7 @@ public class HttpSessionTests
     {
         _httpAdapter = Substitute.For<IHttpAdapter>();
         var engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
-        _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
+        _engineIOAdapter = Substitute.For<IHttpEngineIOAdapter>();
         _engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
         engineIOAdapterFactory
             .Create(Arg.Any<EngineIO>())
@@ -55,7 +56,7 @@ public class HttpSessionTests
 
     private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
-    private readonly IEngineIOAdapter _engineIOAdapter;
+    private readonly IHttpEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
 

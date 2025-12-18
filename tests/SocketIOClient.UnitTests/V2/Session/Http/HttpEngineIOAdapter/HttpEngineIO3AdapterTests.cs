@@ -9,14 +9,14 @@ using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.UnitTests.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.UnitTests.V2.Session.Http.HttpEngineIOAdapter;
 
-public class EngineIO3AdapterTests
+public class HttpEngineIO3AdapterTests
 {
-    public EngineIO3AdapterTests(ITestOutputHelper output)
+    public HttpEngineIO3AdapterTests(ITestOutputHelper output)
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
@@ -26,7 +26,7 @@ public class EngineIO3AdapterTests
         {
             await Task.Delay(50);
         });
-        _logger = output.CreateLogger<EngineIO3Adapter>();
+        _logger = output.CreateLogger<HttpEngineIO3Adapter>();
         _adapter = new(
             _stopwatch,
             _httpAdapter,
@@ -36,9 +36,9 @@ public class EngineIO3AdapterTests
 
     private readonly IStopwatch _stopwatch;
     private readonly IHttpAdapter _httpAdapter;
-    private readonly EngineIO3Adapter _adapter;
+    private readonly HttpEngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
-    private readonly ILogger<EngineIO3Adapter> _logger;
+    private readonly ILogger<HttpEngineIO3Adapter> _logger;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -263,7 +263,7 @@ public class EngineIO3AdapterTests
     public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
     {
         var httpAdapter = Substitute.For<IHttpAdapter>();
-        var adapter = new EngineIO3Adapter(
+        var adapter = new HttpEngineIO3Adapter(
             _stopwatch,
             httpAdapter,
             _retryPolicy,

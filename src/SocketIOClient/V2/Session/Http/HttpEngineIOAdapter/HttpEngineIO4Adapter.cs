@@ -9,11 +9,11 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-public class EngineIO4Adapter : IEngineIOAdapter
+public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
 {
-    public EngineIO4Adapter(
+    public HttpEngineIO4Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy)

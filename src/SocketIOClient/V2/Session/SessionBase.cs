@@ -9,7 +9,7 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
@@ -39,7 +39,7 @@ public abstract class SessionBase : ISession
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
-    protected IEngineIOAdapter EngineIOAdapter { get; private set; }
+    private IEngineIOAdapter _engineIOAdapter;
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly Queue<IBinaryMessage> _messageQueue = [];
@@ -83,12 +83,16 @@ public abstract class SessionBase : ISession
 
     private void OnOptionsChanged(SessionOptions newValue)
     {
-        EngineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
-        EngineIOAdapter.Timeout = newValue.Timeout;
-        EngineIOAdapter.Subscribe(this);
+        _engineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
+        _engineIOAdapter.Timeout = newValue.Timeout;
+        _engineIOAdapter.Subscribe(this);
         var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
         _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+
+        OnEngineIOAdapterInitialized(_engineIOAdapter);
     }
+
+    protected abstract void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter);
 
     public abstract Task SendAsync(object[] data, CancellationToken cancellationToken);
 
@@ -165,7 +169,7 @@ public abstract class SessionBase : ISession
             return;
         }
 
-        await EngineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
         if (message.Type is MessageType.Opened)
         {
             var openedMessage = (OpenedMessage)message;

@@ -7,11 +7,10 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Observers;
-using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
-using SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
@@ -24,11 +23,10 @@ public class WebSocketSessionTests
     {
         _wsAdapter = Substitute.For<IWebSocketAdapter>();
         var engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
-        var engineIOAdapter = Substitute.For<IEngineIOAdapter>();
-        engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
+        _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
         engineIOAdapterFactory
             .Create(Arg.Any<EngineIO>())
-            .Returns(engineIOAdapter);
+            .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
         var engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
         _uriConverter = Substitute.For<IUriConverter>();
@@ -59,6 +57,7 @@ public class WebSocketSessionTests
     private readonly IWebSocketAdapter _wsAdapter;
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
+    private readonly IEngineIOAdapter _engineIOAdapter;
 
     #region ConnectAsync
 
@@ -202,5 +201,94 @@ public class WebSocketSessionTests
 
         await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
         _session.PendingDeliveryCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_BinaryMessageReady_MessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryEventMessage
+            {
+                BytesCount = 1,
+            });
+
+        await _session.OnNextAsync(new ProtocolMessage());
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Bytes,
+            Bytes = [],
+        });
+
+        await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
+        _session.PendingDeliveryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
+        _session.PendingDeliveryCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_BinaryAckMessageReady_MessageWillBePushed()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Bytes,
+            Bytes = [],
+        });
+
+        await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
+        _session.PendingDeliveryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_TextMessages_ProcessMessageAsyncOfEngineIOAdapterIsCalled()
+    {
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new ConnectedMessage());
+
+        await _session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+
+        await _engineIOAdapter.Received(1).ProcessMessageAsync(Arg.Any<IMessage>());
     }
 }

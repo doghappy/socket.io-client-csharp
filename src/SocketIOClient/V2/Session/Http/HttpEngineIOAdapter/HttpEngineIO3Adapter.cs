@@ -10,15 +10,15 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
+public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
 {
-    public EngineIO3Adapter(
+    public HttpEngineIO3Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
-        ILogger<EngineIO3Adapter> logger)
+        ILogger<HttpEngineIO3Adapter> logger)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
@@ -35,7 +35,7 @@ public sealed class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly IRetriable _retryPolicy;
-    private readonly ILogger<EngineIO3Adapter> _logger;
+    private readonly ILogger<HttpEngineIO3Adapter> _logger;
 
     public TimeSpan Timeout { get; set; }
 

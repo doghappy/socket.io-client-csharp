@@ -1,19 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
-using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 
-namespace SocketIOClient.V2.Session.Http.EngineIOHttpAdapter;
+namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-public interface IEngineIOAdapter : IMyObservable<IMessage>
+public interface IHttpEngineIOAdapter : IEngineIOAdapter
 {
-    TimeSpan Timeout { get; set; }
     HttpRequest ToHttpRequest(ICollection<byte[]> bytes);
     HttpRequest ToHttpRequest(string content);
     IEnumerable<ProtocolMessage> ExtractMessagesFromText(string text);
     IEnumerable<ProtocolMessage> ExtractMessagesFromBytes(byte[] bytes);
-    Task ProcessMessageAsync(IMessage message);
 }
