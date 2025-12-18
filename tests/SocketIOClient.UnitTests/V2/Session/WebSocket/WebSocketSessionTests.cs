@@ -291,4 +291,68 @@ public class WebSocketSessionTests
 
         await _engineIOAdapter.Received(1).ProcessMessageAsync(Arg.Any<IMessage>());
     }
+
+    [Fact]
+    public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage(),
+                new ProtocolMessage(),
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task SendAsyncDataAndId_SerializerReturn2Messages_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>(), 12)
+            .Returns([
+                new ProtocolMessage(),
+                new ProtocolMessage(),
+            ]);
+
+        await _session.SendAsync([], 12, CancellationToken.None);
+
+        await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task SendAsync_1TextMessage1ByteMessage_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage { Type = ProtocolMessageType.Text },
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task SendAsync_2ByteMessages_CallAdapter2Times()
+    {
+        _serializer.Serialize(Arg.Any<object[]>())
+            .Returns([
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+                new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
+            ]);
+
+        await _session.SendAsync([], CancellationToken.None);
+
+        await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+    }
+
+    [Fact]
+    public void Options_SetAnyValue_InitializationMethodsWereCalled()
+    {
+        _serializer.Received(1).SetEngineIOMessageAdapter(Arg.Any<IEngineIOMessageAdapter>());
+        _engineIOAdapter.Received(1).Subscribe(Arg.Any<WebSocketSession>());
+        _engineIOAdapter.Timeout.Should().Be(_sessionOptions.Timeout);
+    }
 }

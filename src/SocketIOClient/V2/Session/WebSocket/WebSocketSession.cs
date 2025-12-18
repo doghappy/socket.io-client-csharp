@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -31,14 +33,30 @@ public class WebSocketSession(
         await HandleMessageAsync(message).ConfigureAwait(false);
     }
 
-    public override Task SendAsync(object[] data, CancellationToken cancellationToken)
+    public override async Task SendAsync(object[] data, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var messages = serializer.Serialize(data);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    public override Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    private async Task SendProtocolMessagesAsync(IEnumerable<ProtocolMessage> messages, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        foreach (var message in messages)
+        {
+#if DEBUG
+            var text = message.Type == ProtocolMessageType.Text
+                ? $"[WebSocket⬆] {message.Text}"
+                : $"[WebSocket⬆] 0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
+            Debug.WriteLine(text);
+#endif
+            await wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public override async Task SendAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    {
+        var messages = serializer.Serialize(data, packetId);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
     public override Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
