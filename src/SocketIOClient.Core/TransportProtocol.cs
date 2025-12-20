@@ -1,6 +1,6 @@
 namespace SocketIOClient.Core;
 
-public enum Protocol
+public enum TransportProtocol
 {
     Polling,
     WebSocket,

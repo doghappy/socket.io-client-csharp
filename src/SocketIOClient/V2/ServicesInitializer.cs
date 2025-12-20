@@ -38,7 +38,7 @@ public static class ServicesInitializer
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIO.V4);
 
         services.AddSingleton<HttpClient>();
-        services.AddScoped<ISession, HttpSession>();
+        services.AddKeyedScoped<ISession, HttpSession>(TransportProtocol.Polling);
 
         configure?.Invoke(services);
 

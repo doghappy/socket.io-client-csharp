@@ -10,6 +10,8 @@ public class SocketIOOptions
     public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
     public bool Reconnection { get; set; } = true;
 
+    public TransportProtocol Transport { get; set; }
+
     private int _reconnectionAttempts = 10;
     public int ReconnectionAttempts
     {
@@ -27,12 +29,12 @@ public class SocketIOOptions
     public int ReconnectionDelayMax { get; set; } = 5000;
 
     private string _path;
-
     public string Path
     {
         get => _path;
         set => _path = $"/{value.Trim('/')}/";
     }
+
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
 }

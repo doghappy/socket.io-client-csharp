@@ -24,6 +24,7 @@ public class SocketIOOptionsTests
                 ReconnectionAttempts = 10,
                 ReconnectionDelayMax = 5000,
                 Query = null,
+                Transport = TransportProtocol.Polling,
             });
     }
 

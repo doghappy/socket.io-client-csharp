@@ -205,7 +205,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _scope?.Dispose();
         _scope = _serviceProvider.CreateScope();
         _logger.LogDebug("Creating session...");
-        var session = _scope.ServiceProvider.GetRequiredService<ISession>();
+        var session = _scope.ServiceProvider.GetRequiredKeyedService<ISession>(Options.Transport);
         session.Options = new SessionOptions
         {
             ServerUri = ServerUri,

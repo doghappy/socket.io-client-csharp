@@ -35,7 +35,7 @@ public class HttpSession : SessionBase
     private readonly ISerializer _serializer;
     private IHttpEngineIOAdapter _httpEngineIOAdapter;
 
-    protected override Core.Protocol Protocol => Core.Protocol.Polling;
+    protected override TransportProtocol Protocol => TransportProtocol.Polling;
 
     protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
     {

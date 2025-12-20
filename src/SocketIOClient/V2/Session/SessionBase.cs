@@ -79,7 +79,7 @@ public abstract class SessionBase : ISession
         }
     }
 
-    protected abstract Core.Protocol Protocol { get; }
+    protected abstract TransportProtocol Protocol { get; }
 
     private void OnOptionsChanged(SessionOptions newValue)
     {
@@ -105,7 +105,7 @@ public abstract class SessionBase : ISession
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
         var uri = _uriConverter.GetServerUri(
-            Protocol == Core.Protocol.WebSocket,
+            Protocol == TransportProtocol.WebSocket,
             Options.ServerUri,
             Options.Path,
             Options.Query,

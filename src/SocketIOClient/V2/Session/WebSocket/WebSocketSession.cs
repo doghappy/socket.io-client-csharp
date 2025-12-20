@@ -30,7 +30,7 @@ public class WebSocketSession : SessionBase
     private readonly ISerializer _serializer;
     private readonly IWebSocketAdapter _wsAdapter;
 
-    protected override Core.Protocol Protocol => Core.Protocol.WebSocket;
+    protected override TransportProtocol Protocol => TransportProtocol.WebSocket;
 
     protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
     {
