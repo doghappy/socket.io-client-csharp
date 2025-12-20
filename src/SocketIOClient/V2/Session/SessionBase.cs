@@ -163,18 +163,19 @@ public abstract class SessionBase : ISession
             return;
         }
 
-        if (message.Type is MessageType.Binary or MessageType.BinaryAck)
+        switch (message.Type)
         {
-            _messageQueue.Enqueue((IBinaryMessage)message);
-            return;
+            case MessageType.Binary:
+            case MessageType.BinaryAck:
+                _messageQueue.Enqueue((IBinaryMessage)message);
+                return;
+            case MessageType.Opened:
+                var openedMessage = (OpenedMessage)message;
+                OnOpenedMessage(openedMessage);
+                break;
         }
 
         await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
-        if (message.Type is MessageType.Opened)
-        {
-            var openedMessage = (OpenedMessage)message;
-            OnOpenedMessage(openedMessage);
-        }
 
         await OnNextAsync(message).ConfigureAwait(false);
     }

@@ -412,6 +412,35 @@ public class HttpSessionTests
     }
 
     [Fact]
+    public async Task OnNextAsync_OpenedMessageAndProcessMessageAsyncThrows_AdapterUriIsUpdated()
+    {
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new OpenedMessage { Sid = "abc" });
+
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
+                },
+            ]);
+        _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
+        _engineIOAdapter.ProcessMessageAsync(Arg.Any<IMessage>()).ThrowsAsync(new Exception("Test"));
+
+        await _session.Invoking(s => s.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        }))
+        .Should()
+        .ThrowAsync<Exception>()
+        .WithMessage("Test");
+
+        _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling&sid=abc"));
+    }
+
+    [Fact]
     public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())

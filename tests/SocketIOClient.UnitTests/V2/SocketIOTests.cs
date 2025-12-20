@@ -29,7 +29,7 @@ public class SocketIOTests
                 builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new XUnitLoggerProvider(output));
             });
-            services.Replace(ServiceDescriptor.Scoped(_ => _session));
+            services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.Polling, (_, _) => _session));
             services.Replace(ServiceDescriptor.Singleton(_random));
         })
         {
@@ -266,7 +266,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_AlreadyConnected_FastRetrun()
+    public async Task ConnectAsync_AlreadyConnected_FastReturn()
     {
         await ConnectAsync();
 
