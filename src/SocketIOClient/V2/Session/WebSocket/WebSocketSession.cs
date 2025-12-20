@@ -67,9 +67,10 @@ public class WebSocketSession : SessionBase
         await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
-    public override Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
+    public override async Task SendAckDataAsync(object[] data, int packetId, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var messages = _serializer.SerializeAckData(data, packetId);
+        await SendProtocolMessagesAsync(messages, cancellationToken).ConfigureAwait(false);
     }
 
     protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)

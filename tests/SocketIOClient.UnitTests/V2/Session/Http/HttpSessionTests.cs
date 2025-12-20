@@ -440,6 +440,20 @@ public class HttpSessionTests
     }
 
     [Fact]
+    public async Task SendAckDataAsync_SerializerReturn2Messages_CallAdapter2Times()
+    {
+        _serializer.SerializeAckData(Arg.Any<object[]>(), 12)
+            .Returns([
+                new ProtocolMessage(),
+                new ProtocolMessage(),
+            ]);
+
+        await _session.SendAckDataAsync([], 12, CancellationToken.None);
+
+        await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task SendAsync_1TextMessage1ByteMessage_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
