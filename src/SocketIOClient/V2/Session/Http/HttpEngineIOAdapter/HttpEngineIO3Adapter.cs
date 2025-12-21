@@ -38,6 +38,7 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
 
     public TimeSpan Timeout { get; set; }
+    public string Namespace { get; set; }
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -157,7 +158,7 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
         }
     }
 
-    public async Task ProcessMessageAsync(IMessage message)
+    public Task ProcessMessageAsync(IMessage message)
     {
         switch (message.Type)
         {
@@ -171,6 +172,8 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
                 HandlePongMessage(message);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
     private void HandlePongMessage(IMessage message)

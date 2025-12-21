@@ -368,5 +368,6 @@ public class WebSocketSessionTests
         _serializer.Received(1).SetEngineIOMessageAdapter(Arg.Any<IEngineIOMessageAdapter>());
         _engineIOAdapter.Received(1).Subscribe(Arg.Any<WebSocketSession>());
         _engineIOAdapter.Timeout.Should().Be(_sessionOptions.Timeout);
+        _engineIOAdapter.Namespace.Should().Be(_sessionOptions.Namespace);
     }
 }

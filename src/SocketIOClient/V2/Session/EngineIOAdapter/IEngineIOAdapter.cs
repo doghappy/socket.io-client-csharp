@@ -8,5 +8,6 @@ namespace SocketIOClient.V2.Session.EngineIOAdapter;
 public interface IEngineIOAdapter : IMyObservable<IMessage>
 {
     TimeSpan Timeout { get; set; }
+    string Namespace { get; set; }
     Task ProcessMessageAsync(IMessage message);
 }

@@ -30,6 +30,7 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
     private readonly IRetriable _retryPolicy;
 
     public TimeSpan Timeout { get; set; }
+    public string Namespace { get; set; }
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -37,6 +38,7 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
         {
             throw new ArgumentException("The array cannot be empty");
         }
+
         var req = new HttpRequest
         {
             Method = RequestMethod.Post,
@@ -54,6 +56,7 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
         {
             throw new ArgumentException("The content cannot be null or empty");
         }
+
         return new HttpRequest
         {
             Method = RequestMethod.Post,
@@ -94,9 +97,19 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
 
     public async Task ProcessMessageAsync(IMessage message)
     {
-        if (message.Type == MessageType.Ping)
+        switch (message.Type)
         {
-            await HandlePingMessageAsync();
+            case MessageType.Ping:
+                await HandlePingMessageAsync().ConfigureAwait(false);
+                break;
+            case MessageType.Opened:
+                {
+                    var content = string.IsNullOrEmpty(Namespace) ? "40" : $"40{Namespace},";
+                    var req = ToHttpRequest(content);
+                    using var cts = new CancellationTokenSource(Timeout);
+                    await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
+                    break;
+                }
         }
     }
 
@@ -131,6 +144,7 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
         {
             return;
         }
+
         _observers.Add(observer);
     }
 }

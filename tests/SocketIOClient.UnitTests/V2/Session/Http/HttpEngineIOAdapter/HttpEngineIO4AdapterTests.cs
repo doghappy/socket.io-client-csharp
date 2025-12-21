@@ -14,16 +14,17 @@ public class HttpEngineIO4AdapterTests
     public HttpEngineIO4AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
-        var httpAdapter = Substitute.For<IHttpAdapter>();
+        _httpAdapter = Substitute.For<IHttpAdapter>();
         var retryPolicy = Substitute.For<IRetriable>();
         _adapter = new HttpEngineIO4Adapter(
             _stopwatch,
-            httpAdapter,
+            _httpAdapter,
             retryPolicy);
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly HttpEngineIO4Adapter _adapter;
+    private readonly IHttpAdapter _httpAdapter;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -177,6 +178,19 @@ public class HttpEngineIO4AdapterTests
         await observer
             .Received(1)
             .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
+    }
+
+    [Theory]
+    [InlineData(null, "40")]
+    [InlineData("", "40")]
+    [InlineData("/nsp", "40/nsp,")]
+    public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage(string nsp, string expected)
+    {
+        _adapter.Namespace = nsp;
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Is<HttpRequest>(r => r.BodyText == expected), Arg.Any<CancellationToken>());
     }
 
     [Fact]
