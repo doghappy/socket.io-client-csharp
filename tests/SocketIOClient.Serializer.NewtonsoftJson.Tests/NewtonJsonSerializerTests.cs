@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Newtonsoft.Json;
 using NSubstitute;
-using SocketIOClient.Test.Core;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.Test.Core;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson.Tests;
 
@@ -202,7 +202,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, "42[\"event\"]")]
     [InlineData("", "42[\"event\"]")]
-    [InlineData("test", "42test,[\"event\"]")]
+    [InlineData("/test", "42/test,[\"event\"]")]
     public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
         _serializer.Namespace = ns;
@@ -213,7 +213,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", "451-/test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
         _serializer.Namespace = ns;
@@ -513,7 +513,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, 1, "421[\"event\"]")]
     [InlineData("", 2, "422[\"event\"]")]
-    [InlineData("test", 3, "42test,3[\"event\"]")]
+    [InlineData("/test", 3, "42/test,3[\"event\"]")]
     public void Serialize_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
@@ -524,7 +524,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, 4, "451-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "451-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", 6, "451-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
@@ -535,7 +535,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, 1, "431[1,\"2\"]")]
     [InlineData("", 2, "432[1,\"2\"]")]
-    [InlineData("test", 3, "43test,3[1,\"2\"]")]
+    [InlineData("/test", 3, "43/test,3[1,\"2\"]")]
     public void SerializeAckData_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;
@@ -546,7 +546,7 @@ public class NewtonJsonSerializerTests
     [Theory]
     [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", 6, "461-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void SerializeAckData_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
         _serializer.Namespace = ns;

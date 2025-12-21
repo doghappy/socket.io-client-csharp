@@ -1,17 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using FluentAssertions;
-using JetBrains.Annotations;
 using NSubstitute;
-using SocketIOClient.Test.Core;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Serializer.SystemTextJson;
-using Xunit;
 
 namespace SocketIOClient.UnitTests.V2.Serializer.SystemTextJson;
 
@@ -225,7 +221,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, "42[\"event\"]")]
     [InlineData("", "42[\"event\"]")]
-    [InlineData("test", "42test,[\"event\"]")]
+    [InlineData("/test", "42/test,[\"event\"]")]
     public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -237,7 +233,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", "451-[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", "451-test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", "451-/test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -463,7 +459,7 @@ public class SystemJsonSerializerTests
         var item1 = message!.GetDataValue(expected1.GetType(), 0);
         item1.Should().BeEquivalentTo(expected1);
 
-        var item2 = message!.GetDataValue(expected2.GetType(), 1);
+        var item2 = message.GetDataValue(expected2.GetType(), 1);
         item2.Should().BeEquivalentTo(expected2);
     }
 
@@ -515,7 +511,7 @@ public class SystemJsonSerializerTests
         var message = (IBinaryAckMessage)serializer.Deserialize(text);
 
         message.Add(bytes);
-        var item1 = message!.GetDataValue<TestFile>(0);
+        var item1 = message.GetDataValue<TestFile>(0);
         item1.Should().BeEquivalentTo(expected);
     }
 
@@ -540,7 +536,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, 1, "421[\"event\"]")]
     [InlineData("", 2, "422[\"event\"]")]
-    [InlineData("test", 3, "42test,3[\"event\"]")]
+    [InlineData("/test", 3, "42/test,3[\"event\"]")]
     public void Serialize_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -552,7 +548,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, 4, "451-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "451-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", 6, "451-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", 6, "451-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -564,7 +560,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, 1, "431[1,\"2\"]")]
     [InlineData("", 2, "432[1,\"2\"]")]
-    [InlineData("test", 3, "43test,3[1,\"2\"]")]
+    [InlineData("/test", 3, "43/test,3[1,\"2\"]")]
     public void SerializeAckData_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
@@ -576,7 +572,7 @@ public class SystemJsonSerializerTests
     [Theory]
     [InlineData(null, 4, "461-4[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     [InlineData("", 5, "461-5[\"event\",{\"_placeholder\":true,\"num\":0}]")]
-    [InlineData("test", 6, "461-test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
+    [InlineData("/test", 6, "461-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void SerializeAckData_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
