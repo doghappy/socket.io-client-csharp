@@ -22,12 +22,18 @@ public class SocketIOTests
     {
         _session = Substitute.For<ISession>();
         _random = Substitute.For<IRandom>();
-        _io = new SocketIOClient.V2.SocketIO("http://localhost:3000", services =>
+        _output = output;
+        _io = NewSocketIO("http://localhost:3000");
+    }
+
+    private SocketIOClient.V2.SocketIO NewSocketIO(string url)
+    {
+        return new SocketIOClient.V2.SocketIO(url, services =>
         {
             services.AddLogging(builder =>
             {
                 builder.SetMinimumLevel(LogLevel.Trace);
-                builder.AddProvider(new XUnitLoggerProvider(output));
+                builder.AddProvider(new XUnitLoggerProvider(_output));
             });
             services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.Polling, (_, _) => _session));
             services.Replace(ServiceDescriptor.Singleton(_random));
@@ -44,6 +50,7 @@ public class SocketIOTests
     private readonly SocketIOClient.V2.SocketIO _io;
     private readonly ISession _session;
     private readonly IRandom _random;
+    private readonly ITestOutputHelper _output;
 
     [Fact]
     public void NothingCalled_DefaultValues()
@@ -290,7 +297,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionFactory()
+    public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionOptions()
     {
         _io.Options.Path = "/chat";
         _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(3);
@@ -315,6 +322,20 @@ public class SocketIOTests
                 Timeout = TimeSpan.FromSeconds(3),
                 EngineIO = EngineIO.V4,
             });
+    }
+
+    [Theory]
+    [InlineData("http://localhost:3000", "")]
+    [InlineData("http://localhost:3000/", "")]
+    [InlineData("http://localhost:3000/test", "/test")]
+    [InlineData("http://localhost:3000/test/", "/test")]
+    public async Task ConnectAsync_DifferentUrls_SetCorrectNamespaceForSessionOptions(string url, string expectedNsp)
+    {
+        var io = NewSocketIO(url);
+
+        await ConnectAsync(io);
+
+        _session.Options.Namespace.Should().Be(expectedNsp);
     }
 
     [Fact]

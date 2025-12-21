@@ -19,7 +19,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 {
     public SocketIO(Uri uri, SocketIOOptions options, Action<IServiceCollection> configure = null)
     {
-        _serverUri = uri;
+        ServerUri = uri;
         Options = options;
         _serviceProvider = ServicesInitializer.BuildServiceProvider(_services, configure);
         _logger = _serviceProvider.GetRequiredService<ILogger<SocketIO>>();
@@ -60,7 +60,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     public bool Connected { get; private set; }
     public string Id { get; private set; }
 
-    private string Namespace { get; set; }
+    private string _namespace;
 
     private Uri _serverUri;
 
@@ -69,13 +69,15 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         get => _serverUri;
         set
         {
-            if (_serverUri != value)
+            if (_serverUri == value) return;
+            _serverUri = value;
+            if (value != null && value.AbsolutePath != "/")
             {
-                _serverUri = value;
-                if (value != null && value.AbsolutePath != "/")
-                {
-                    Namespace = value.AbsolutePath;
-                }
+                _namespace = value.AbsolutePath.TrimEnd('/');
+            }
+            else
+            {
+                _namespace = string.Empty;
             }
         }
     }
@@ -214,6 +216,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             Timeout = Options.ConnectionTimeout,
             EngineIO = Options.EIO,
             ExtraHeaders = Options.ExtraHeaders,
+            Namespace = _namespace,
         };
         _logger.LogDebug("Session created: {Type}", session.GetType().Name);
         return session;
