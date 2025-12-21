@@ -75,10 +75,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             {
                 _namespace = value.AbsolutePath.TrimEnd('/');
             }
-            else
-            {
-                _namespace = string.Empty;
-            }
         }
     }
 
