@@ -1,51 +1,34 @@
 using System;
-using System.Threading;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SocketIOClient.Test.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2;
-using SocketIOClient.Core;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.IntegrationTests.V2;
 
-// TODO: to xUnit
-// [TestClass]
-public class SocketIOTests
+public abstract class SocketIOTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper _output;
+    protected abstract Uri Url { get; }
+    protected abstract Uri TokenUrl { get; }
+    protected abstract SocketIOClient.V2.SocketIOOptions Options { get; }
 
-    public SocketIOTests(ITestOutputHelper output)
-    {
-        _output = output;
-        // localhost.charlesproxy.com
-        _io = NewSocketIO("http://localhost:11210");
-    }
-
-    private readonly SocketIOClient.V2.SocketIOOptions _options = new()
-    {
-        EIO = EngineIO.V3,
-        Reconnection = false,
-        ConnectionTimeout = TimeSpan.FromSeconds(5),
-    };
-
-    private readonly SocketIOClient.V2.SocketIO _io;
     private const int DefaultDelay = 200;
-    private const string TokenUrl = "http://localhost:11211";
 
-    private SocketIOClient.V2.SocketIO NewSocketIO(string url)
+    private SocketIOClient.V2.SocketIO NewSocketIO(Uri url)
     {
-        return new SocketIOClient.V2.SocketIO(url, _options, services =>
+        return new SocketIOClient.V2.SocketIO(url, Options, services =>
         {
             services.AddLogging(builder =>
             {
                 builder.SetMinimumLevel(LogLevel.Trace);
-                builder.AddProvider(new XUnitLoggerProvider(_output));
+                builder.AddProvider(new XUnitLoggerProvider(output));
             });
         });
     }
@@ -53,10 +36,11 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsync_ConnectedToServer_ConnectedIsTureIdIsNotNullOrEmpty()
     {
-        await _io.ConnectAsync();
+        var io = NewSocketIO(Url);
+        await io.ConnectAsync();
 
-        _io.Connected.Should().BeTrue();
-        _io.Id.Should().NotBeNullOrEmpty();
+        io.Connected.Should().BeTrue();
+        io.Id.Should().NotBeNullOrEmpty();
     }
 
     #region Emit
@@ -64,14 +48,15 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("1:emit", msg =>
+        io.On("1:emit", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:emit", [null]);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:emit", [null]);
 
         await Task.Delay(DefaultDelay);
 
@@ -90,14 +75,15 @@ public class SocketIOTests
     [InlineData("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("1:emit", msg =>
+        io.On("1:emit", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:emit", [data]);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:emit", [data]);
 
         await Task.Delay(DefaultDelay);
 
@@ -111,14 +97,15 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("1:emit", msg =>
+        io.On("1:emit", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:emit", [TestFile.NiuB]);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:emit", [TestFile.NiuB]);
 
         await Task.Delay(DefaultDelay);
 
@@ -135,14 +122,15 @@ public class SocketIOTests
     [InlineData("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("2:emit", msg =>
+        io.On("2:emit", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("2:emit", [item0, item1]);
+        await io.ConnectAsync();
+        await io.EmitAsync("2:emit", [item0, item1]);
 
         await Task.Delay(DefaultDelay);
 
@@ -158,9 +146,10 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_ActionAckWith1Parameter_ReceiveSameParameter()
     {
+        var io = NewSocketIO(Url);
         IDataMessage message = null!;
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:ack", ["action"], msg => message = msg);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:ack", ["action"], msg => message = msg);
 
         await Task.Delay(DefaultDelay);
 
@@ -173,9 +162,10 @@ public class SocketIOTests
     [Fact]
     public async Task EmitAsync_FuncAckWith1Parameter_ReceiveSameParameter()
     {
+        var io = NewSocketIO(Url);
         IDataMessage message = null!;
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:ack", [TestFile.NiuB], msg =>
+        await io.ConnectAsync();
+        await io.EmitAsync("1:ack", [TestFile.NiuB], msg =>
         {
             message = msg;
             return Task.CompletedTask;
@@ -197,12 +187,13 @@ public class SocketIOTests
     [InlineData(14000, 2, 2)]
     public async Task OnPingAndOnPong_HandlerAreRegistered_WorkAsExpected(int ms, int expectedPingTimes, int expectedPongTimes)
     {
+        var io = NewSocketIO(Url);
         var pingTimes = 0;
         var pongTimes = 0;
-        _io.OnPing += (_, _) => pingTimes++;
-        _io.OnPong += (_, _) => pongTimes++;
+        io.OnPing += (_, _) => pingTimes++;
+        io.OnPong += (_, _) => pongTimes++;
 
-        await _io.ConnectAsync();
+        await io.ConnectAsync();
 
         await Task.Delay(ms);
         pingTimes.Should().Be(expectedPingTimes);
@@ -212,12 +203,13 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsync_ConnectAfterDisconnect_OnConnectedTimeIs2()
     {
+        var io = NewSocketIO(Url);
         var times = 0;
-        _io.OnConnected += (_, _) => times++;
+        io.OnConnected += (_, _) => times++;
 
-        await _io.ConnectAsync();
-        await _io.DisconnectAsync();
-        await _io.ConnectAsync();
+        await io.ConnectAsync();
+        await io.DisconnectAsync();
+        await io.ConnectAsync();
 
         await Task.Delay(100);
 
@@ -227,18 +219,19 @@ public class SocketIOTests
     [Fact]
     public async Task SendAckDataAsync_ClientSend2Args_ServerExecuteCallback()
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("ack-on-client", async data =>
+        io.On("ack-on-client", async data =>
         {
             await data.SendAckDataAsync([1, 2]);
         });
-        _io.On("end-ack-on-client", msg =>
+        io.On("end-ack-on-client", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("begin-ack-on-client");
+        await io.ConnectAsync();
+        await io.EmitAsync("begin-ack-on-client");
 
         await Task.Delay(DefaultDelay);
 
@@ -250,18 +243,19 @@ public class SocketIOTests
     [Fact]
     public async Task SendAckDataAsync_ClientSendBytes_ServerExecuteCallback()
     {
+        var io = NewSocketIO(Url);
         IEventContext message = null!;
-        _io.On("ack-on-client", async data =>
+        io.On("ack-on-client", async data =>
         {
             await data.SendAckDataAsync([TestFile.IndexHtml, "hello"], CancellationToken.None);
         });
-        _io.On("end-ack-on-client", msg =>
+        io.On("end-ack-on-client", msg =>
         {
             message = msg;
             return Task.CompletedTask;
         });
-        await _io.ConnectAsync();
-        await _io.EmitAsync("begin-ack-on-client");
+        await io.ConnectAsync();
+        await io.EmitAsync("begin-ack-on-client");
 
         await Task.Delay(DefaultDelay * 4);
 
@@ -310,42 +304,44 @@ public class SocketIOTests
     [Fact]
     public async Task DisconnectAsync_CalledByClient_OnDisconnectIsInvoked()
     {
+        var io = NewSocketIO(Url);
         var times = 0;
         string? reason = null;
-        _io.OnDisconnected += (_, e) =>
+        io.OnDisconnected += (_, e) =>
         {
             times++;
             reason = e;
         };
 
-        await _io.ConnectAsync();
-        await _io.DisconnectAsync();
+        await io.ConnectAsync();
+        await io.DisconnectAsync();
 
         times.Should().Be(1);
         reason.Should().Be(DisconnectReason.IOClientDisconnect);
-        _io.Id.Should().BeNull();
-        _io.Connected.Should().BeFalse();
+        io.Id.Should().BeNull();
+        io.Connected.Should().BeFalse();
     }
 
     [Fact]
     public async Task DisconnectAsync_CalledByServer_OnDisconnectIsInvoked()
     {
+        var io = NewSocketIO(Url);
         var times = 0;
         string? reason = null;
-        _io.OnDisconnected += (_, e) =>
+        io.OnDisconnected += (_, e) =>
         {
             times++;
             reason = e;
         };
 
-        await _io.ConnectAsync();
-        await _io.EmitAsync("disconnect", [false]);
+        await io.ConnectAsync();
+        await io.EmitAsync("disconnect", [false]);
         await Task.Delay(100);
 
         times.Should().Be(1);
         reason.Should().Be(DisconnectReason.IOServerDisconnect);
-        _io.Id.Should().BeNull();
-        _io.Connected.Should().BeFalse();
+        io.Id.Should().BeNull();
+        io.Connected.Should().BeFalse();
     }
 
     [Theory]
@@ -353,15 +349,16 @@ public class SocketIOTests
     [InlineData(7)]
     public async Task Reconnect_Manually_OnConnectedAndOnDisconnectedTriggeredManyTimes(int times)
     {
+        var io = NewSocketIO(Url);
         var connectTimes = 0;
         var disconnectTimes = 0;
-        _io.OnConnected += (_, _) => connectTimes++;
-        _io.OnDisconnected += (_, _) => disconnectTimes++;
+        io.OnConnected += (_, _) => connectTimes++;
+        io.OnDisconnected += (_, _) => disconnectTimes++;
 
         for (var i = 0; i < times; i++)
         {
-            await _io.ConnectAsync();
-            await _io.DisconnectAsync();
+            await io.ConnectAsync();
+            await io.DisconnectAsync();
         }
 
         connectTimes.Should().Be(times);
@@ -374,15 +371,16 @@ public class SocketIOTests
     [InlineData("user-agent", "dotnet-socketio[client]/socket")]
     public async Task ExtraHeaders_UserGivenHeaders_PassThroughToServer(string key, string value)
     {
+        var io = NewSocketIO(Url);
         string? actual = null;
-        _io.Options.ExtraHeaders = new Dictionary<string, string>
+        io.Options.ExtraHeaders = new Dictionary<string, string>
         {
             { key, value },
         };
 
-        await _io.ConnectAsync();
+        await io.ConnectAsync();
         var lowerCaseKey = key.ToLowerInvariant(); // limited by server
-        await _io.EmitAsync("get_header", [lowerCaseKey], res =>
+        await io.EmitAsync("get_header", [lowerCaseKey], res =>
         {
             actual = res.GetDataValue<string>(0);
         });
@@ -394,17 +392,18 @@ public class SocketIOTests
     [Fact]
     public async Task OnAny_ReceivedEventMessage_HandlerIsCalled()
     {
+        var io = NewSocketIO(Url);
         string? eventName = null;
         IEventContext context = null!;
-        _io.OnAny((e, ctx) =>
+        io.OnAny((e, ctx) =>
         {
             eventName = e;
             context = ctx;
             return Task.CompletedTask;
         });
 
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:emit", ["OnAny"]);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:emit", ["OnAny"]);
         await Task.Delay(100);
 
         eventName.Should().Be("1:emit");
@@ -414,22 +413,23 @@ public class SocketIOTests
     [Fact]
     public async Task OnAny_OnHandlerAndOnAnyHandler_2HandlersAreCalled()
     {
+        var io = NewSocketIO(Url);
         var onHandlerCalled = false;
         var onAnyHandlerCalled = false;
 
-        _io.OnAny((_, _) =>
+        io.OnAny((_, _) =>
         {
             onAnyHandlerCalled = true;
             return Task.CompletedTask;
         });
-        _io.On("1:emit", _ =>
+        io.On("1:emit", _ =>
         {
             onHandlerCalled = true;
             return Task.CompletedTask;
         });
 
-        await _io.ConnectAsync();
-        await _io.EmitAsync("1:emit", ["OnAny"]);
+        await io.ConnectAsync();
+        await io.EmitAsync("1:emit", ["OnAny"]);
         await Task.Delay(100);
 
         onHandlerCalled.Should().BeTrue();
