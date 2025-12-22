@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -145,7 +144,7 @@ public abstract class SessionBase : ISession
 
     private async Task OnNextBytesMessage(byte[] bytes)
     {
-        _logger.LogDebug("[Polling⬇] 0️⃣1️⃣0️⃣1️⃣ {length}", bytes.Length);
+        _logger.LogDebug("[{protocol}⬇] 0️⃣1️⃣0️⃣1️⃣ {length}", Protocol, bytes.Length);
         var message = _messageQueue.Peek();
         message.Add(bytes);
         if (message.ReadyDelivery)
@@ -157,7 +156,7 @@ public abstract class SessionBase : ISession
 
     private async Task OnNextTextMessage(string text)
     {
-        _logger.LogDebug("[Polling⬇] {text}", text);
+        _logger.LogDebug("[{protocol}⬇] {text}", Protocol, text);
         var message = _serializer.Deserialize(text);
         if (message is null)
         {
@@ -183,6 +182,5 @@ public abstract class SessionBase : ISession
 
     protected virtual void OnOpenedMessage(OpenedMessage message)
     {
-        _logger.LogDebug(JsonSerializer.Serialize(message));
     }
 }

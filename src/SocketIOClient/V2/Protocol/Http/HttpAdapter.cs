@@ -31,12 +31,6 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     private async Task HandleResponseAsync(IHttpResponse response)
     {
         var incomingMessage = await GetMessageAsync(response).ConfigureAwait(false);
-#if DEBUG
-        var body = incomingMessage.Type == ProtocolMessageType.Text
-            ? incomingMessage.Text
-            : $"0️⃣1️⃣0️⃣1️⃣ {incomingMessage.Bytes!.Length}";
-        logger.LogDebug("[Http⬇] {Body}", body);
-#endif
         await OnNextAsync(incomingMessage).ConfigureAwait(false);
     }
 
@@ -46,7 +40,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
 #if DEBUG
         var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
-        logger.LogDebug("[Http⬆] {Body}", body);
+        logger.LogDebug("[Polling⬆] {Body}", body);
 #endif
         _ = HandleResponseAsync(response).ConfigureAwait(false);
     }
