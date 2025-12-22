@@ -1,30 +1,41 @@
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.Http.HttpEngineIOAdapter;
 
 public class HttpEngineIO4AdapterTests
 {
-    public HttpEngineIO4AdapterTests()
+    public HttpEngineIO4AdapterTests(ITestOutputHelper output)
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
-        var retryPolicy = Substitute.For<IRetriable>();
+        _httpAdapter.IsReadyToSend.Returns(true);
+        _retryPolicy = Substitute.For<IRetriable>();
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ =>
+        {
+            await Task.Delay(50);
+        });
+        var logger = output.CreateLogger<HttpEngineIO4Adapter>();
         _adapter = new HttpEngineIO4Adapter(
             _stopwatch,
             _httpAdapter,
-            retryPolicy);
+            _retryPolicy,
+            logger);
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly HttpEngineIO4Adapter _adapter;
     private readonly IHttpAdapter _httpAdapter;
+    private readonly IRetriable _retryPolicy;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -199,5 +210,65 @@ public class HttpEngineIO4AdapterTests
         _adapter.ExtractMessagesFromBytes([1, 2, 255, 4, 1])
             .Should()
             .BeEmpty();
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_OpenedMessage_PollingInBackground()
+    {
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
+            .Returns(async _ => await Task.Delay(10));
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
+
+        await Task.Delay(100);
+
+        var range = Quantity.Within(5, 15);
+        await _retryPolicy.Received(range).RetryAsync(2, Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task PollingAsync_HttpRequestExceptionOccurred_DoNotContinue()
+    {
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
+            .Returns(_ => Task.FromException(new HttpRequestException()));
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage
+        {
+            PingInterval = 10,
+        });
+
+        await Task.Delay(100);
+
+        await _retryPolicy
+            .Received(1)
+            .RetryAsync(2, Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_IsReadyAfter30ms_PollingIsWorking()
+    {
+        _httpAdapter.IsReadyToSend.Returns(false);
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(30);
+            _httpAdapter.IsReadyToSend.Returns(true);
+        });
+
+        await Task.Delay(200);
+
+        await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task PollingAsync_DisposeIsCalled_NeverPolling()
+    {
+        _adapter.Dispose();
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+
+        await Task.Delay(200);
+        await _retryPolicy.DidNotReceive().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 }

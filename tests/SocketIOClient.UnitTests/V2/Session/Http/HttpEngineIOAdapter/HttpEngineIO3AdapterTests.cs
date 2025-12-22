@@ -330,7 +330,7 @@ public class HttpEngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task PollingAsync_HttpRequestExceptionOccurred_ThrowHttpRequestException()
+    public async Task PollingAsync_HttpRequestExceptionOccurred_DoNotContinue()
     {
         _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
             .Returns(_ => Task.FromException(new HttpRequestException()));

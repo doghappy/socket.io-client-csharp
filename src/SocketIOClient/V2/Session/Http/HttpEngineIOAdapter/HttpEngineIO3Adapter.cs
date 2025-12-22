@@ -12,13 +12,13 @@ using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
+public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
 {
     public HttpEngineIO3Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
-        ILogger<HttpEngineIO3Adapter> logger)
+        ILogger<HttpEngineIO3Adapter> logger) : base(httpAdapter, retryPolicy, logger)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
@@ -30,8 +30,6 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
 
     private readonly IHttpAdapter _httpAdapter;
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
-    private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
-    private OpenedMessage _openedMessage;
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly IRetriable _retryPolicy;
@@ -158,12 +156,12 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
         }
     }
 
-    public Task ProcessMessageAsync(IMessage message)
+    public async Task ProcessMessageAsync(IMessage message)
     {
         switch (message.Type)
         {
             case MessageType.Opened:
-                HandleOpenedMessage(message);
+                await HandleOpenedMessageAsync(message).ConfigureAwait(false);
                 break;
             case MessageType.Connected:
                 HandleConnectedMessageAsync(message);
@@ -172,8 +170,6 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
                 HandlePongMessage(message);
                 break;
         }
-
-        return Task.CompletedTask;
     }
 
     private void HandlePongMessage(IMessage message)
@@ -183,16 +179,10 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
         pongMessage.Duration = _stopwatch.Elapsed;
     }
 
-    private void HandleOpenedMessage(IMessage message)
-    {
-        _openedMessage = (OpenedMessage)message;
-        _ = Task.Run(PollingAsync);
-    }
-
     private void HandleConnectedMessageAsync(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
-        connectedMessage.Sid = _openedMessage.Sid;
+        connectedMessage.Sid = OpenedMessage.Sid;
         _ = Task.Run(StartPingAsync);
     }
 
@@ -204,7 +194,7 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(_openedMessage.PingInterval, token);
+            await Task.Delay(OpenedMessage.PingInterval, token);
             var request = ToHttpRequest("2");
             _logger.LogDebug("Sending Ping request...");
             await _retryPolicy.RetryAsync(3, async () =>
@@ -216,42 +206,6 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
             _stopwatch.Restart();
             _ = NotifyObserversAsync(new PingMessage());
         }
-    }
-
-    private async Task PollingAsync()
-    {
-        _logger.LogDebug("[PollingAsync] Waiting for HttpAdapter ready...");
-        await WaitHttpAdapterReady().ConfigureAwait(false);
-        _logger.LogDebug("[PollingAsync] HttpAdapter is ready");
-        var token = _pollingCancellationTokenSource.Token;
-        while (!token.IsCancellationRequested)
-        {
-            var request = new HttpRequest();
-            _logger.LogDebug("Send Polling request...");
-            await _retryPolicy.RetryAsync(2, async () =>
-            {
-                await _httpAdapter.SendAsync(request, token).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-            _logger.LogDebug("Sent Polling request");
-        }
-    }
-
-    private async Task WaitHttpAdapterReady()
-    {
-        var ms = 0;
-        const int delay = 20;
-        while (ms < _openedMessage.PingInterval)
-        {
-            if (_httpAdapter.IsReadyToSend)
-            {
-                return;
-            }
-            await Task.Delay(delay).ConfigureAwait(false);
-            ms += delay;
-        }
-        var ex = new TimeoutException();
-        _logger.LogError(ex, "Wait HttpAdapter ready timeout");
-        throw ex;
     }
 
     private async Task NotifyObserversAsync(IMessage message)
@@ -271,11 +225,10 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter, IDisposable
         _observers.Add(observer);
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
+        base.Dispose();
         _pingCancellationTokenSource.Cancel();
         _pingCancellationTokenSource.Dispose();
-        _pollingCancellationTokenSource.Cancel();
-        _pollingCancellationTokenSource.Dispose();
     }
 }

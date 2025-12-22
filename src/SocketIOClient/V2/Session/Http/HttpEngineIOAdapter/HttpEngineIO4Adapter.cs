@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
@@ -11,12 +12,13 @@ using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
-public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
+public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
 {
     public HttpEngineIO4Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
-        IRetriable retryPolicy)
+        IRetriable retryPolicy,
+        ILogger<HttpEngineIO4Adapter> logger) : base(httpAdapter, retryPolicy, logger)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
@@ -103,13 +105,8 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
                 await HandlePingMessageAsync().ConfigureAwait(false);
                 break;
             case MessageType.Opened:
-                {
-                    var content = string.IsNullOrEmpty(Namespace) ? "40" : $"40{Namespace},";
-                    var req = ToHttpRequest(content);
-                    using var cts = new CancellationTokenSource(Timeout);
-                    await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
-                    break;
-                }
+                await HandleOpenedMessageAsync(message).ConfigureAwait(false);
+                break;
         }
     }
 
@@ -128,6 +125,16 @@ public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
             Duration = _stopwatch.Elapsed,
         };
         await NotifyObserversAsync(pong).ConfigureAwait(false);
+    }
+
+    protected override async Task HandleOpenedMessageAsync(IMessage message)
+    {
+        await base.HandleOpenedMessageAsync(message).ConfigureAwait(false);
+
+        var content = string.IsNullOrEmpty(Namespace) ? "40" : $"40{Namespace},";
+        var req = ToHttpRequest(content);
+        using var cts = new CancellationTokenSource(Timeout);
+        await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
     }
 
     private async Task NotifyObserversAsync(IMessage message)
