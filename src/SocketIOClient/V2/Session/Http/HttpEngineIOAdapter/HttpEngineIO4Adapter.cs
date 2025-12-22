@@ -118,7 +118,7 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
             using var cts = new CancellationTokenSource(Timeout);
             var pong = ToHttpRequest("3");
             await _httpAdapter.SendAsync(pong, cts.Token);
-        });
+        }).ConfigureAwait(false);
         _stopwatch.Stop();
         var pong = new PongMessage
         {

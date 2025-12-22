@@ -63,11 +63,6 @@ function registerIOEvents(io) {
                 socket.emit("end-ack-on-client", arg1, arg2);
             });
         });
-        socket.on('client will be sending data to server', () => {
-            socket.emit('client sending data to server', (arg) => {
-                socket.emit("server received data", arg);
-            });
-        });
     });
 }
 
@@ -92,9 +87,9 @@ function registerNspEvents(io) {
         socket.on('disconnect', close => {
             socket.disconnect(close);
         });
-        socket.on('client will be sending data to server', () => {
-            socket.emit('client sending data to server', (arg) => {
-                socket.emit("server received data", arg);
+        socket.on('begin-ack-on-client', () => {
+            socket.emit('ack-on-client', (arg1, arg2) => {
+                socket.emit("end-ack-on-client", arg1, arg2);
             });
         });
     });

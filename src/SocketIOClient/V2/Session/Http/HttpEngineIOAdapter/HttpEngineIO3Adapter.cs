@@ -201,7 +201,7 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
             {
                 using var cts = new CancellationTokenSource(Timeout);
                 await _httpAdapter.SendAsync(request, cts.Token);
-            });
+            }).ConfigureAwait(false);
             _logger.LogDebug("Sent Ping request");
             _stopwatch.Restart();
             _ = NotifyObserversAsync(new PingMessage());
