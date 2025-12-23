@@ -176,8 +176,11 @@ public abstract class SessionBase : ISession
                 break;
         }
 
-        await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
-
+        var shouldSwallow = await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        if (shouldSwallow)
+        {
+            return;
+        }
         await OnNextAsync(message).ConfigureAwait(false);
     }
 

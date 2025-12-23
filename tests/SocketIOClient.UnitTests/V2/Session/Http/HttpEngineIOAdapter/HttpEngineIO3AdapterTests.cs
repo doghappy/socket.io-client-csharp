@@ -458,4 +458,60 @@ public class HttpEngineIO3AdapterTests
             .SendAsync(Arg.Is<HttpRequest>(r => r.BodyText == "7:40/nsp,"),
                 Arg.Any<CancellationToken>());
     }
+
+    [Theory]
+    [InlineData("/nsp", null, true)]
+    [InlineData("/nsp", "", true)]
+    [InlineData("/nsp", "/", true)]
+    [InlineData("/nsp", "/abc", true)]
+    [InlineData("/nsp", "/nsp", false)]
+    [InlineData("/nsp", "/NSP", false)]
+    [InlineData(null, null, false)]
+    [InlineData("", null, false)]
+    [InlineData(null, "", false)]
+    [InlineData("", "/", false)]
+    [InlineData("/", "", false)]
+    [InlineData("/", null, false)]
+    public async Task ProcessMessageAsync_NamespaceAndWhetherSwallow_AlwaysPass(string adapterNsp, string connNsp, bool shouldSwallow)
+    {
+        _adapter.Namespace = adapterNsp;
+        var message = new ConnectedMessage
+        {
+            Namespace = connNsp,
+        };
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+        var result = await _adapter.ProcessMessageAsync(message);
+
+        result.Should().Be(shouldSwallow);
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_OnlyReceivedSwallowedConnectedMessage_NeverStartPing()
+    {
+        _adapter.Namespace = "/nsp";
+        var message = new ConnectedMessage();
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await _adapter.ProcessMessageAsync(message);
+        await Task.Delay(100);
+
+        await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ReceivedConnectedMessageWithNamespace_StartPing()
+    {
+        _adapter.Namespace = "/nsp";
+        var message = new ConnectedMessage
+        {
+            Namespace = "/nsp",
+        };
+
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await _adapter.ProcessMessageAsync(message);
+        await Task.Delay(100);
+
+        await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
+    }
 }

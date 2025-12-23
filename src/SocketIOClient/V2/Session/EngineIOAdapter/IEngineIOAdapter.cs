@@ -9,5 +9,5 @@ public interface IEngineIOAdapter : IMyObservable<IMessage>
 {
     TimeSpan Timeout { get; set; }
     string Namespace { get; set; }
-    Task ProcessMessageAsync(IMessage message);
+    Task<bool> ProcessMessageAsync(IMessage message);
 }

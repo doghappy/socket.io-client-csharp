@@ -38,6 +38,13 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
     public TimeSpan Timeout { get; set; }
     public string Namespace { get; set; }
 
+    private static readonly HashSet<string> DefaultNamespaces =
+    [
+        null,
+        string.Empty,
+        "/"
+    ];
+
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
         if (!bytes.Any())
@@ -156,20 +163,23 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
         }
     }
 
-    public async Task ProcessMessageAsync(IMessage message)
+    public async Task<bool> ProcessMessageAsync(IMessage message)
     {
+        bool shouldSwallow = false;
         switch (message.Type)
         {
             case MessageType.Opened:
                 await HandleOpenedMessageAsync(message).ConfigureAwait(false);
                 break;
             case MessageType.Connected:
-                HandleConnectedMessageAsync(message);
+                shouldSwallow = HandleConnectedMessageAsync(message);
                 break;
             case MessageType.Pong:
                 HandlePongMessage(message);
                 break;
         }
+
+        return shouldSwallow;
     }
 
     private async Task HandleOpenedMessageAsync(IMessage message)
@@ -191,11 +201,18 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
         pongMessage.Duration = _stopwatch.Elapsed;
     }
 
-    private void HandleConnectedMessageAsync(IMessage message)
+    private bool HandleConnectedMessageAsync(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
-        connectedMessage.Sid = OpenedMessage.Sid;
-        _ = Task.Run(StartPingAsync);
+        var shouldSwallow = !DefaultNamespaces.Contains(Namespace)
+                            && !Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
+        if (!shouldSwallow)
+        {
+            connectedMessage.Sid = OpenedMessage.Sid;
+            _ = Task.Run(StartPingAsync);
+        }
+
+        return shouldSwallow;
     }
 
     private async Task StartPingAsync()

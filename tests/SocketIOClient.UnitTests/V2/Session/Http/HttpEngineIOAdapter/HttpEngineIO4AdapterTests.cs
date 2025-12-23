@@ -7,6 +7,7 @@ using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using Xunit.Abstractions;
 
@@ -259,6 +260,31 @@ public class HttpEngineIO4AdapterTests
         await Task.Delay(200);
 
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
+    }
+
+    private static IEnumerable<IMessage> ProcessMessageAsyncMessageTypeTupleCases()
+    {
+        yield return new OpenedMessage();
+        yield return new PingMessage();
+        yield return new PongMessage();
+        yield return new ConnectedMessage();
+        yield return new DisconnectedMessage();
+        yield return new SystemJsonEventMessage();
+        yield return new SystemJsonAckMessage();
+        yield return new ErrorMessage();
+        yield return new SystemJsonBinaryEventMessage();
+        yield return new SystemJsonBinaryAckMessage();
+    }
+
+    public static IEnumerable<object[]> ProcessMessageAsyncMessageTypeCases =>
+        ProcessMessageAsyncMessageTypeTupleCases().Select(t => new object[] { t });
+
+    [Theory]
+    [MemberData(nameof(ProcessMessageAsyncMessageTypeCases))]
+    public async Task ProcessMessageAsync_RegardlessOfMessageType_AlwaysReturnFalse(IMessage message)
+    {
+        var result = await _adapter.ProcessMessageAsync(message);
+        result.Should().BeFalse();
     }
 
     [Fact]

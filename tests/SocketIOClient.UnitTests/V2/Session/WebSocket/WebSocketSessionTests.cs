@@ -293,6 +293,21 @@ public class WebSocketSessionTests
     }
 
     [Fact]
+    public async Task OnNextAsync_MessageIsProcessed_NotSendToObserver()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+        _engineIOAdapter.ProcessMessageAsync(Arg.Any<IMessage>()).Returns(true);
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new OpenedMessage { Sid = "abc" });
+
+        await _session.OnNextAsync(new ProtocolMessage());
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
     public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())

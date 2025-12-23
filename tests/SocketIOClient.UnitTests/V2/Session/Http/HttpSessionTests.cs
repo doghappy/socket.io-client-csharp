@@ -441,6 +441,30 @@ public class HttpSessionTests
     }
 
     [Fact]
+    public async Task OnNextAsync_MessageIsProcessed_NotSendToObserver()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _session.Subscribe(observer);
+        _engineIOAdapter.ProcessMessageAsync(Arg.Any<IMessage>()).Returns(true);
+        _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
+            .Returns([
+                new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = "EngineIOAdapter Messages",
+                },
+            ]);
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new OpenedMessage { Sid = "abc" });
+        _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
+
+        await _session.OnNextAsync(new ProtocolMessage());
+
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
     public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())

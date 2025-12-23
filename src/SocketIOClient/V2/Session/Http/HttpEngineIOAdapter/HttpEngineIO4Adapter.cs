@@ -97,7 +97,7 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
         return new List<ProtocolMessage>();
     }
 
-    public async Task ProcessMessageAsync(IMessage message)
+    public async Task<bool> ProcessMessageAsync(IMessage message)
     {
         switch (message.Type)
         {
@@ -108,6 +108,8 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
                 await HandleOpenedMessageAsync(message).ConfigureAwait(false);
                 break;
         }
+
+        return false;
     }
 
     private async Task HandlePingMessageAsync()
