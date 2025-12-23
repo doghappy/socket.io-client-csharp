@@ -172,6 +172,18 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
         }
     }
 
+    private async Task HandleOpenedMessageAsync(IMessage message)
+    {
+        SetOpenedMessage((OpenedMessage)message);
+        if (string.IsNullOrEmpty(Namespace))
+        {
+            return;
+        }
+        var req = ToHttpRequest($"40{Namespace},");
+        using var cts = new CancellationTokenSource(Timeout);
+        await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
+    }
+
     private void HandlePongMessage(IMessage message)
     {
         _stopwatch.Stop();

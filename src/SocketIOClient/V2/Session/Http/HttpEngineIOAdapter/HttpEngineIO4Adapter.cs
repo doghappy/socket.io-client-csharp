@@ -127,10 +127,9 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
         await NotifyObserversAsync(pong).ConfigureAwait(false);
     }
 
-    protected override async Task HandleOpenedMessageAsync(IMessage message)
+    private async Task HandleOpenedMessageAsync(IMessage message)
     {
-        await base.HandleOpenedMessageAsync(message).ConfigureAwait(false);
-
+        SetOpenedMessage((OpenedMessage)message);
         var content = string.IsNullOrEmpty(Namespace) ? "40" : $"40{Namespace},";
         var req = ToHttpRequest(content);
         using var cts = new CancellationTokenSource(Timeout);

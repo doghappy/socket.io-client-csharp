@@ -435,4 +435,27 @@ public class HttpEngineIO3AdapterTests
             .Should()
             .BeEquivalentTo(messages);
     }
+
+    [Theory]
+    [InlineData(null, "40")]
+    [InlineData("", "40")]
+    public async Task ProcessMessageAsync_ReceivedOpenedMessage_NotSendConnectedMessage(string nsp, string expected)
+    {
+        _adapter.Namespace = nsp;
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.DidNotReceive()
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
+    {
+        _adapter.Namespace = "/nsp";
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Is<HttpRequest>(r => r.BodyText == "7:40/nsp,"),
+                Arg.Any<CancellationToken>());
+    }
 }

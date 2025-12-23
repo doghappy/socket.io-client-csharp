@@ -16,11 +16,10 @@ public abstract class HttpEngineIOAdapter(
     protected OpenedMessage OpenedMessage { get; private set; }
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
 
-    protected virtual Task HandleOpenedMessageAsync(IMessage message)
+    protected void SetOpenedMessage(OpenedMessage message)
     {
-        OpenedMessage = (OpenedMessage)message;
+        OpenedMessage = message;
         _ = Task.Run(PollingAsync);
-        return Task.CompletedTask;
     }
 
     private async Task PollingAsync()
