@@ -327,6 +327,8 @@ public class SocketIOTests
     [Theory]
     [InlineData("http://localhost:3000", null)]
     [InlineData("http://localhost:3000/", null)]
+    [InlineData("http://localhost:3000//", "")]
+    [InlineData("http://localhost:3000///", "")]
     [InlineData("http://localhost:3000/test", "/test")]
     [InlineData("http://localhost:3000/test/", "/test")]
     public async Task ConnectAsync_DifferentUrls_SetCorrectNamespaceForSessionOptions(string url, string expectedNsp)
