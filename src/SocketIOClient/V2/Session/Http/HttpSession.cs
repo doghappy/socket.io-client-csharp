@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -90,13 +89,13 @@ public class HttpSession : SessionBase
             {
                 var request = _httpEngineIOAdapter.ToHttpRequest(message.Text);
 #if DEBUG
-                Debug.WriteLine($"[Polling⬆] {request.BodyText}");
+                _logger.LogDebug("[Polling⬆] {text}", request.BodyText);
 #endif
                 await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 continue;
             }
 #if DEBUG
-            Debug.WriteLine($"[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}");
+            _logger.LogDebug("[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes.Length);
 #endif
             bytes.Add(message.Bytes);
         }

@@ -109,6 +109,7 @@ public abstract class BaseJsonSerializer : ISerializer
 
     public IMessage Deserialize(string text)
     {
+        // TODO: {"code":1,"message":"Session ID unknown"}
         // TODO: {"code":2,"message":"Bad handshake method"}
         var result = Decapsulator.DecapsulateRawText(text);
         if (!result.Success)

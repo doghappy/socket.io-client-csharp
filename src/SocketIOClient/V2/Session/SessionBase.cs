@@ -88,6 +88,7 @@ public abstract class SessionBase : ISession
         _engineIOAdapter.Subscribe(this);
         var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
         _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+        _serializer.Namespace = newValue.Namespace;
 
         OnEngineIOAdapterInitialized(_engineIOAdapter);
     }

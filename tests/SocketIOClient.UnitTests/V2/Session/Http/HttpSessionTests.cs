@@ -517,5 +517,6 @@ public class HttpSessionTests
         _engineIOAdapter.Received(1).Subscribe(Arg.Any<HttpSession>());
         _engineIOAdapter.Timeout.Should().Be(_sessionOptions.Timeout);
         _engineIOAdapter.Namespace.Should().Be(_sessionOptions.Namespace);
+        _serializer.Received().Namespace = Arg.Any<string>();
     }
 }
