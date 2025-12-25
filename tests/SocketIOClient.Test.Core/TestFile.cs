@@ -3,8 +3,8 @@
 public class TestFile
 {
     public int Size { get; set; }
-    public string Name { get; set; } = null!;
-    public byte[] Bytes { get; set; } = null!;
+    public required string Name { get; set; }
+    public required byte[] Bytes { get; init; }
 
     public static readonly TestFile IndexHtml = new()
     {

@@ -2,10 +2,10 @@ namespace SocketIO.Serializer.Tests.Models;
 
 public class User
 {
-    public string Name { get; set; } = null!;
-    public Address Address { get; set; } = null!;
+    public required string Name { get; init; }
+    public required Address Address { get; init; }
 
-    public static User SpaceJockey = new()
+    public static readonly User SpaceJockey = new()
     {
         Name = "Space Jockey",
         Address = new Address

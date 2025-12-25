@@ -30,6 +30,11 @@ public class NewtonJsonSerializer : BaseJsonSerializer
         };
     }
 
+    public override string Serialize(object data)
+    {
+        return JsonConvert.SerializeObject(data, _options);
+    }
+
     private JsonSerializerSettings NewSettings(JsonConverter converter)
     {
         var newOptions = new JsonSerializerSettings(_options);

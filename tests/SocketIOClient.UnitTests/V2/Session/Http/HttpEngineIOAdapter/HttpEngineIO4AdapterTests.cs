@@ -3,11 +3,13 @@ using NSubstitute;
 using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
+using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using Xunit.Abstractions;
 
@@ -26,17 +28,18 @@ public class HttpEngineIO4AdapterTests
             await Task.Delay(50);
         });
         var logger = output.CreateLogger<HttpEngineIO4Adapter>();
-        _adapter = new HttpEngineIO4Adapter(
-            _stopwatch,
-            _httpAdapter,
-            _retryPolicy,
-            logger);
+        _serializer = Substitute.For<ISerializer>();
+        _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, _retryPolicy, logger, _serializer)
+        {
+            Options = new EngineIOAdapterOptions()
+        };
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly HttpEngineIO4Adapter _adapter;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IRetriable _retryPolicy;
+    private readonly ISerializer _serializer;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -198,7 +201,21 @@ public class HttpEngineIO4AdapterTests
     [InlineData("/nsp", "40/nsp,")]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage(string nsp, string expected)
     {
-        _adapter.Namespace = nsp;
+        _adapter.Options.Namespace = nsp;
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Is<HttpRequest>(r => r.BodyText == expected), Arg.Any<CancellationToken>());
+    }
+
+    [Theory]
+    [InlineData(null, "40{auth}")]
+    [InlineData("/nsp", "40/nsp,{auth}")]
+    public async Task ProcessMessageAsync_AuthIsProvided_ConnectedMessageContainsAuth(string nsp, string expected)
+    {
+        _adapter.Options.Namespace = nsp;
+        _adapter.Options.Auth = new { user = "admin", password = "123456" };
+        _serializer.Serialize(Arg.Any<object>()).Returns("{auth}");
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()

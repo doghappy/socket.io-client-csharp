@@ -557,6 +557,22 @@ public class SystemJsonSerializerTests
         list[0].Text.Should().Be(expected);
     }
 
+    [Fact]
+    public void Serialize_CamelCase_ReturnCorrectJson()
+    {
+        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.JsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        var json = serializer.Serialize(new
+        {
+            User = "admin",
+            Password = "123456",
+        });
+        json.Should().Be("{\"user\":\"admin\",\"password\":\"123456\"}");
+    }
+
     [Theory]
     [InlineData(null, 1, "431[1,\"2\"]")]
     [InlineData("", 2, "432[1,\"2\"]")]

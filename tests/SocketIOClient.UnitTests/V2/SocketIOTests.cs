@@ -306,6 +306,7 @@ public class SocketIOTests
         {
             ["User-Agent"] = "Hello World!",
         };
+        _io.Options.Auth = new { user = "admin", password = "123456" };
 
         await ConnectAsync();
 
@@ -321,6 +322,7 @@ public class SocketIOTests
                 },
                 Timeout = TimeSpan.FromSeconds(3),
                 EngineIO = EngineIO.V4,
+                Auth = new { user = "admin", password = "123456" }
             });
     }
 

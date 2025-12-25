@@ -13,4 +13,5 @@ public class SessionOptions
     public TimeSpan Timeout { get; set; }
     public EngineIO EngineIO { get; set; }
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
+    public object Auth { get; set; }
 }

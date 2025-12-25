@@ -213,6 +213,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             EngineIO = Options.EIO,
             ExtraHeaders = Options.ExtraHeaders,
             Namespace = _namespace,
+            Auth = Options.Auth,
         };
         _logger.LogDebug("Session created: {Type}", session.GetType().Name);
         return session;

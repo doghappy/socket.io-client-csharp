@@ -9,6 +9,7 @@ using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 using Xunit.Abstractions;
 
@@ -31,7 +32,10 @@ public class HttpEngineIO3AdapterTests
             _stopwatch,
             _httpAdapter,
             _retryPolicy,
-            _logger);
+            _logger)
+        {
+            Options = new EngineIOAdapterOptions()
+        };
     }
 
     private readonly IStopwatch _stopwatch;
@@ -267,7 +271,10 @@ public class HttpEngineIO3AdapterTests
             _stopwatch,
             httpAdapter,
             _retryPolicy,
-            _logger);
+            _logger)
+        {
+            Options = new EngineIOAdapterOptions()
+        };
 
         await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await adapter.ProcessMessageAsync(new ConnectedMessage());
@@ -441,7 +448,7 @@ public class HttpEngineIO3AdapterTests
     [InlineData("", "40")]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_NotSendConnectedMessage(string nsp, string expected)
     {
-        _adapter.Namespace = nsp;
+        _adapter.Options.Namespace = nsp;
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.DidNotReceive()
@@ -451,7 +458,7 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
     {
-        _adapter.Namespace = "/nsp";
+        _adapter.Options.Namespace = "/nsp";
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
@@ -474,7 +481,7 @@ public class HttpEngineIO3AdapterTests
     [InlineData("/", null, false)]
     public async Task ProcessMessageAsync_NamespaceAndWhetherSwallow_AlwaysPass(string adapterNsp, string connNsp, bool shouldSwallow)
     {
-        _adapter.Namespace = adapterNsp;
+        _adapter.Options.Namespace = adapterNsp;
         var message = new ConnectedMessage
         {
             Namespace = connNsp,
@@ -489,7 +496,7 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_OnlyReceivedSwallowedConnectedMessage_NeverStartPing()
     {
-        _adapter.Namespace = "/nsp";
+        _adapter.Options.Namespace = "/nsp";
         var message = new ConnectedMessage();
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
@@ -502,7 +509,7 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_ReceivedConnectedMessageWithNamespace_StartPing()
     {
-        _adapter.Namespace = "/nsp";
+        _adapter.Options.Namespace = "/nsp";
         var message = new ConnectedMessage
         {
             Namespace = "/nsp",

@@ -37,6 +37,11 @@ public class SystemJsonSerializer : BaseJsonSerializer
         };
     }
 
+    public override string Serialize(object data)
+    {
+        return JsonSerializer.Serialize(data, JsonSerializerOptions);
+    }
+
     protected override IMessage NewMessage(MessageType type, string text)
     {
         return type switch

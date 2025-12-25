@@ -83,8 +83,12 @@ public abstract class SessionBase : ISession
     private void OnOptionsChanged(SessionOptions newValue)
     {
         _engineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
-        _engineIOAdapter.Timeout = newValue.Timeout;
-        _engineIOAdapter.Namespace = newValue.Namespace;
+        _engineIOAdapter.Options = new EngineIOAdapterOptions
+        {
+            Timeout = newValue.Timeout,
+            Namespace = newValue.Namespace,
+            Auth = newValue.Auth,
+        };
         _engineIOAdapter.Subscribe(this);
         var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
         _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);

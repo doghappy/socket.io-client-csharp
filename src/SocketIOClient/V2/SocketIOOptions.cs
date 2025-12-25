@@ -37,4 +37,6 @@ public class SocketIOOptions
 
     public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
+
+    public object Auth { get; set; }
 }

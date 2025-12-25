@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace SocketIOClient.IntegrationTests.V2;
 
-public class HttpEngineIO4NspTests(ITestOutputHelper output) : SocketIOTests(output)
+public class HttpEngineIO4NspTests(ITestOutputHelper output) : SocketIOEngineIO4Tests(output)
 {
     protected override Uri Url => new("http://localhost:11410/nsp");
     protected override Uri TokenUrl => new("http://localhost:11411/nsp");

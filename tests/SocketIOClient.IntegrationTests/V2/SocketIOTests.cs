@@ -19,9 +19,9 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     protected abstract Uri TokenUrl { get; }
     protected abstract SocketIOClient.V2.SocketIOOptions Options { get; }
 
-    private const int DefaultDelay = 200;
+    protected const int DefaultDelay = 200;
 
-    private SocketIOClient.V2.SocketIO NewSocketIO(Uri url)
+    protected SocketIOClient.V2.SocketIO NewSocketIO(Uri url)
     {
         return new SocketIOClient.V2.SocketIO(url, Options, services =>
         {

@@ -9,6 +9,7 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
 
@@ -35,8 +36,7 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
 
-    public TimeSpan Timeout { get; set; }
-    public string Namespace { get; set; }
+    public EngineIOAdapterOptions Options { get; set; }
 
     private static readonly HashSet<string> DefaultNamespaces =
     [
@@ -185,12 +185,12 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         SetOpenedMessage((OpenedMessage)message);
-        if (string.IsNullOrEmpty(Namespace))
+        if (string.IsNullOrEmpty(Options.Namespace))
         {
             return;
         }
-        var req = ToHttpRequest($"40{Namespace},");
-        using var cts = new CancellationTokenSource(Timeout);
+        var req = ToHttpRequest($"40{Options.Namespace},");
+        using var cts = new CancellationTokenSource(Options.Timeout);
         await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
     }
 
@@ -204,8 +204,8 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
     private bool HandleConnectedMessageAsync(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
-        var shouldSwallow = !DefaultNamespaces.Contains(Namespace)
-                            && !Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
+        var shouldSwallow = !DefaultNamespaces.Contains(Options.Namespace)
+            && !Options.Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
         if (!shouldSwallow)
         {
             connectedMessage.Sid = OpenedMessage.Sid;
@@ -228,7 +228,7 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
             _logger.LogDebug("Sending Ping request...");
             await _retryPolicy.RetryAsync(3, async () =>
             {
-                using var cts = new CancellationTokenSource(Timeout);
+                using var cts = new CancellationTokenSource(Options.Timeout);
                 await _httpAdapter.SendAsync(request, cts.Token);
             }).ConfigureAwait(false);
             _logger.LogDebug("Sent Ping request");

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
@@ -530,6 +531,22 @@ public class NewtonJsonSerializerTests
         _serializer.Namespace = ns;
         var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
+    }
+
+    [Fact]
+    public void Serialize_CamelCase_ReturnCorrectJson()
+    {
+        var settings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        };
+        var serializer = new NewtonJsonSerializer(_realDecapsulator, settings);
+        var json = serializer.Serialize(new
+        {
+            User = "admin",
+            Password = "123456",
+        });
+        json.Should().Be("{\"user\":\"admin\",\"password\":\"123456\"}");
     }
 
     [Theory]

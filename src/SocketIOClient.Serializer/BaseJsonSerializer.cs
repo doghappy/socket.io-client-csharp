@@ -19,6 +19,7 @@ public abstract class BaseJsonSerializer : ISerializer
     protected IEngineIOMessageAdapter EngineIOMessageAdapter { get; private set; }
     public string Namespace { get; set; }
     protected abstract SerializationResult SerializeCore(object[] data);
+    public abstract string Serialize(object data);
 
     public void SetEngineIOMessageAdapter(IEngineIOMessageAdapter adapter)
     {
