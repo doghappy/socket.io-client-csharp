@@ -6,7 +6,7 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 
-namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
 public abstract class HttpEngineIOAdapter(
     IHttpAdapter httpAdapter,

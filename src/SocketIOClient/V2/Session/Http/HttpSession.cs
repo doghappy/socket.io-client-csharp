@@ -8,7 +8,7 @@ using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
-using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.Http;

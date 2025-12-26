@@ -6,14 +6,13 @@ using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
-using SocketIOClient.V2;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
-using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 

@@ -10,10 +10,10 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
-using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.UnitTests.V2.Session.Http.HttpEngineIOAdapter;
+namespace SocketIOClient.UnitTests.V2.Session.Http.EngineIOAdapter;
 
 public class HttpEngineIO3AdapterTests
 {

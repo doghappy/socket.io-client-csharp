@@ -3,7 +3,7 @@ using SocketIOClient.Core;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 
-namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
 public interface IHttpEngineIOAdapter : IEngineIOAdapter
 {

@@ -13,7 +13,7 @@ using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 
-namespace SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
 public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
 {

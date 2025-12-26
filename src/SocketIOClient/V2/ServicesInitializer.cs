@@ -12,7 +12,7 @@ using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
-using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.UriConverter;
 
