@@ -34,19 +34,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
     }
 
-    public SocketIO(string uri) : this(new Uri(uri), new SocketIOOptions())
-    {
-    }
-
-    public SocketIO(string uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
-    {
-    }
-
-    public SocketIO(string uri, SocketIOOptions options, Action<IServiceCollection> configure = null) : this(new Uri(uri), options, configure)
-    {
-    }
-
-    private readonly ServiceCollection _services = new();
+    private readonly ServiceCollection _services = [];
 
     public IHttpClient HttpClient { get; set; }
 

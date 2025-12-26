@@ -17,14 +17,25 @@ public class SystemJsonSerializerTests
 
     private SystemJsonSerializer NewSystemJsonSerializer(IEngineIOMessageAdapter engineIOMessageAdapter)
     {
-        return NewSystemJsonSerializer(_realDecapsulator, engineIOMessageAdapter);
+        return NewSystemJsonSerializer(engineIOMessageAdapter, new JsonSerializerOptions());
+    }
+
+    private SystemJsonSerializer NewSystemJsonSerializer(IEngineIOMessageAdapter engineIOMessageAdapter, JsonSerializerOptions options)
+    {
+        return NewSystemJsonSerializer(_realDecapsulator, engineIOMessageAdapter, options);
+    }
+
+    private SystemJsonSerializer NewSystemJsonSerializer(JsonSerializerOptions options)
+    {
+        return NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>(), options);
     }
 
     private static SystemJsonSerializer NewSystemJsonSerializer(
         IDecapsulable decapsulator,
-        IEngineIOMessageAdapter engineIOMessageAdapter)
+        IEngineIOMessageAdapter engineIOMessageAdapter,
+        JsonSerializerOptions options)
     {
-        var serializer = new SystemJsonSerializer(decapsulator);
+        var serializer = new SystemJsonSerializer(decapsulator, options);
         serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
         return serializer;
     }
@@ -208,13 +219,11 @@ public class SystemJsonSerializerTests
     [MemberData(nameof(SerializeDataOnlyCases))]
     public void Serialize_DataOnly_AlwaysPass(object[] data, IEnumerable<ProtocolMessage> expected)
     {
-        var serializer = new SystemJsonSerializer(_realDecapsulator)
+        var options = new JsonSerializerOptions
         {
-            JsonSerializerOptions = new JsonSerializerOptions
-            {
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            },
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
+        var serializer = NewSystemJsonSerializer(options);
         serializer.Serialize(data).Should().BeEquivalentTo(expected);
     }
 
@@ -472,7 +481,8 @@ public class SystemJsonSerializerTests
             {
                 Success = false,
             });
-        var serializer = NewSystemJsonSerializer(decapsulator, new SystemJsonEngineIO4MessageAdapter());
+        var adapter = new SystemJsonEngineIO4MessageAdapter();
+        var serializer = NewSystemJsonSerializer(decapsulator, adapter, new JsonSerializerOptions());
         const string text = "0{\"sid\":\"123\",\"upgrades\":[\"websocket\"],\"pingInterval\":10000,\"pingTimeout\":5000}";
 
         serializer.Deserialize(text).Should().BeNull();
@@ -560,11 +570,11 @@ public class SystemJsonSerializerTests
     [Fact]
     public void Serialize_CamelCase_ReturnCorrectJson()
     {
-        var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
-        serializer.JsonSerializerOptions = new JsonSerializerOptions
+        var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+        var serializer = NewSystemJsonSerializer(options);
         var json = serializer.Serialize(new
         {
             User = "admin",

@@ -23,10 +23,10 @@ public class SocketIOTests
         _session = Substitute.For<ISession>();
         _random = Substitute.For<IRandom>();
         _output = output;
-        _io = NewSocketIO("http://localhost:3000");
+        _io = NewSocketIO(new Uri("http://localhost:3000"));
     }
 
-    private SocketIOClient.V2.SocketIO NewSocketIO(string url)
+    private SocketIOClient.V2.SocketIO NewSocketIO(Uri url)
     {
         return new SocketIOClient.V2.SocketIO(url, services =>
         {
@@ -55,7 +55,7 @@ public class SocketIOTests
     [Fact]
     public void NothingCalled_DefaultValues()
     {
-        var io = new SocketIOClient.V2.SocketIO("http://localhost:3000");
+        var io = new SocketIOClient.V2.SocketIO(new Uri("http://localhost:3000"));
         io.PacketId.Should().Be(0);
         io.Connected.Should().BeFalse();
         io.Id.Should().BeNull();
@@ -335,7 +335,7 @@ public class SocketIOTests
     [InlineData("http://localhost:3000/test/", "/test")]
     public async Task ConnectAsync_DifferentUrls_SetCorrectNamespaceForSessionOptions(string url, string expectedNsp)
     {
-        var io = NewSocketIO(url);
+        var io = NewSocketIO(new Uri(url));
 
         await ConnectAsync(io);
 

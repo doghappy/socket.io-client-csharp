@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using SocketIOClient.Core;
 using SocketIOClient.Serializer;
@@ -31,7 +32,7 @@ public static class ServicesInitializer
         // SystemTextJson or NewtonsoftJson
         // v3 or V4
         // Polling or WebSocket
-        AddSystemTextJson(services);
+        services.AddSystemTextJson(new JsonSerializerOptions());
 
         services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIO.V3);
@@ -45,12 +46,13 @@ public static class ServicesInitializer
         return services.BuildServiceProvider();
     }
 
-    private static void AddSystemTextJson(IServiceCollection services)
+    public static void AddSystemTextJson(this IServiceCollection services, JsonSerializerOptions options)
     {
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO3MessageAdapter>(EngineIO.V3);
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO4MessageAdapter>(EngineIO.V4);
         services.AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
         services.AddSingleton<ISerializer, SystemJsonSerializer>();
+        services.AddSingleton(options);
     }
 }
 
