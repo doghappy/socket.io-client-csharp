@@ -7,6 +7,6 @@ public interface IDataMessage : IMessage
     string Namespace { get; set; }
     public int Id { get; set; }
 
-    T GetDataValue<T>(int index);
-    object GetDataValue(Type type, int index);
+    T GetValue<T>(int index);
+    object GetValue(Type type, int index);
 }

@@ -440,7 +440,7 @@ public class SystemJsonSerializerTests
     {
         var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
         var message = serializer.Deserialize(text) as IDataMessage;
-        var item1 = message!.GetDataValue(expected.GetType(), 0);
+        var item1 = message!.GetValue(expected.GetType(), 0);
         item1.Should().BeEquivalentTo(expected);
     }
 
@@ -465,10 +465,10 @@ public class SystemJsonSerializerTests
     {
         var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
         var message = serializer.Deserialize(text) as IEventMessage;
-        var item1 = message!.GetDataValue(expected1.GetType(), 0);
+        var item1 = message!.GetValue(expected1.GetType(), 0);
         item1.Should().BeEquivalentTo(expected1);
 
-        var item2 = message.GetDataValue(expected2.GetType(), 1);
+        var item2 = message.GetValue(expected2.GetType(), 1);
         item2.Should().BeEquivalentTo(expected2);
     }
 
@@ -521,7 +521,7 @@ public class SystemJsonSerializerTests
         var message = (IBinaryAckMessage)serializer.Deserialize(text);
 
         message.Add(bytes);
-        var item1 = message.GetDataValue<TestFile>(0);
+        var item1 = message.GetValue<TestFile>(0);
         item1.Should().BeEquivalentTo(expected);
     }
 

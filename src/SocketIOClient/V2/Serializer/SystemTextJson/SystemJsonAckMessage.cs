@@ -19,13 +19,13 @@ public class SystemJsonAckMessage : ISystemJsonAckMessage
         return JsonSerializerOptions;
     }
 
-    public virtual T GetDataValue<T>(int index)
+    public virtual T GetValue<T>(int index)
     {
         var options = GetOptions();
         return DataItems[index]!.Deserialize<T>(options);
     }
 
-    public virtual object GetDataValue(Type type, int index)
+    public virtual object GetValue(Type type, int index)
     {
         var options = GetOptions();
         return DataItems[index]!.Deserialize(type, options);

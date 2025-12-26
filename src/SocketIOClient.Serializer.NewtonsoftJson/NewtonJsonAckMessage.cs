@@ -19,14 +19,14 @@ public class NewtonJsonAckMessage : INewtonJsonAckMessage
         return JsonSerializerSettings;
     }
 
-    public virtual T? GetDataValue<T>(int index)
+    public virtual T? GetValue<T>(int index)
     {
         var settings = GetSettings();
         var serializer = JsonSerializer.Create(settings);
         return DataItems[index].ToObject<T>(serializer);
     }
 
-    public virtual object? GetDataValue(Type type, int index)
+    public virtual object? GetValue(Type type, int index)
     {
         var settings = GetSettings();
         var serializer = JsonSerializer.Create(settings);

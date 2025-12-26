@@ -23,7 +23,7 @@ public abstract class SocketIOEngineIO4Tests(ITestOutputHelper output) : SocketI
         await io.ConnectAsync(CancellationToken.None);
 
         UserPasswordDto? dto = null;
-        await io.EmitAsync("get_auth", msg => dto = msg.GetDataValue<UserPasswordDto>(0));
+        await io.EmitAsync("get_auth", msg => dto = msg.GetValue<UserPasswordDto>(0));
         await Task.Delay(DefaultDelay);
 
         dto.Should().BeEquivalentTo(new UserPasswordDto

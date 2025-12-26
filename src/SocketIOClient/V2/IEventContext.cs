@@ -28,11 +28,11 @@ public class EventContext(IDataMessage message, IInternalSocketIO io) : IEventCo
 
     public T GetDataValue<T>(int index)
     {
-        return message.GetDataValue<T>(index);
+        return message.GetValue<T>(index);
     }
 
     public object GetDataValue(Type type, int index)
     {
-        return message.GetDataValue(type, index);
+        return message.GetValue(type, index);
     }
 }

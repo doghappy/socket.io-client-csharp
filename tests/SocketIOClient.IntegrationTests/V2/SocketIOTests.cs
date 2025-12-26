@@ -154,7 +154,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        message.GetDataValue<string>(0)
+        message.GetValue<string>(0)
             .Should()
             .BeEquivalentTo("action");
     }
@@ -174,7 +174,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        message.GetDataValue<TestFile>(0)
+        message.GetValue<TestFile>(0)
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
     }
@@ -382,7 +382,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         var lowerCaseKey = key.ToLowerInvariant(); // limited by server
         await io.EmitAsync("get_header", [lowerCaseKey], res =>
         {
-            actual = res.GetDataValue<string>(0);
+            actual = res.GetValue<string>(0);
         });
         await Task.Delay(100);
 
