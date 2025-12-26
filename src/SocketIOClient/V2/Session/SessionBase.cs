@@ -82,7 +82,8 @@ public abstract class SessionBase : ISession
 
     private void OnOptionsChanged(SessionOptions newValue)
     {
-        _engineIOAdapter = _engineIOAdapterFactory.Create(newValue.EngineIO);
+        var compatibility = GetEngineIOCompatibility(newValue);
+        _engineIOAdapter = _engineIOAdapterFactory.Create(compatibility);
         _engineIOAdapter.Options = new EngineIOAdapterOptions
         {
             Timeout = newValue.Timeout,
@@ -95,6 +96,20 @@ public abstract class SessionBase : ISession
         _serializer.Namespace = newValue.Namespace;
 
         OnEngineIOAdapterInitialized(_engineIOAdapter);
+    }
+
+    private EngineIOCompatibility GetEngineIOCompatibility(SessionOptions options)
+    {
+        if (Protocol == TransportProtocol.Polling)
+        {
+            return options.EngineIO == EngineIO.V3
+                ? EngineIOCompatibility.HttpEngineIO3
+                : EngineIOCompatibility.HttpEngineIO4;
+        }
+
+        return options.EngineIO == EngineIO.V3
+            ? EngineIOCompatibility.WebSocketEngineIO3
+            : EngineIOCompatibility.WebSocketEngineIO4;
     }
 
     protected abstract void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter);

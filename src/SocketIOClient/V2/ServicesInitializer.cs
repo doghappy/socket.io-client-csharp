@@ -7,11 +7,13 @@ using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
 using SocketIOClient.V2.Session.Http.HttpEngineIOAdapter;
+using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;
@@ -21,49 +23,57 @@ public static class ServicesInitializer
     public static IServiceProvider BuildServiceProvider(IServiceCollection services, Action<IServiceCollection> configure = null)
     {
         services.AddLogging();
-        services.AddSingleton<IStopwatch, SystemStopwatch>();
-        services.AddSingleton<IRandom, SystemRandom>();
-        services.AddSingleton<IDecapsulable, Decapsulator>();
-        services.AddSingleton<IHttpClient, SystemHttpClient>();
-        services.AddSingleton<IRetriable, RandomDelayRetryPolicy>();
-        services.AddScoped<IHttpAdapter, HttpAdapter>();
-        services.AddSingleton<IUriConverter>(new DefaultUriConverter());
+        services
+            .AddSingleton<IStopwatch, SystemStopwatch>()
+            .AddSingleton<IRandom, SystemRandom>()
+            .AddSingleton<IDecapsulable, Decapsulator>()
+            .AddSingleton<IRetriable, RandomDelayRetryPolicy>()
+            .AddSingleton<IUriConverter, DefaultUriConverter>();
 
-        // SystemTextJson or NewtonsoftJson
-        // v3 or V4
-        // Polling or WebSocket
-        services.AddSystemTextJson(new JsonSerializerOptions());
-
-        services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
-        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIO.V3);
-        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIO.V4);
-
-        services.AddSingleton<HttpClient>();
-        services.AddKeyedScoped<ISession, HttpSession>(TransportProtocol.Polling);
+        services
+            .AddEngineIOCompatibility()
+            .AddHttpSession()
+            .AddWebSocketSession()
+            .AddSystemTextJson(new JsonSerializerOptions());
 
         configure?.Invoke(services);
 
         return services.BuildServiceProvider();
     }
 
-    public static void AddSystemTextJson(this IServiceCollection services, JsonSerializerOptions options)
+    private static IServiceCollection AddEngineIOCompatibility(this IServiceCollection services)
+    {
+        services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
+        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
+        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);
+        return services;
+    }
+
+    private static IServiceCollection AddWebSocketSession(this IServiceCollection services)
+    {
+        services.AddScoped<IWebSocketClient, SystemClientWebSocket>();
+        services.AddScoped<IWebSocketAdapter, WebSocketAdapter>();
+        services.AddScoped<IWebSocketClientAdapter, SystemClientWebSocketAdapter>();
+        services.AddKeyedScoped<ISession, WebSocketSession>(TransportProtocol.WebSocket);
+        return services;
+    }
+
+    private static IServiceCollection AddHttpSession(this IServiceCollection services)
+    {
+        services.AddSingleton<IHttpClient, SystemHttpClient>();
+        services.AddScoped<IHttpAdapter, HttpAdapter>();
+        services.AddSingleton<HttpClient>();
+        services.AddKeyedScoped<ISession, HttpSession>(TransportProtocol.Polling);
+        return services;
+    }
+
+    public static IServiceCollection AddSystemTextJson(this IServiceCollection services, JsonSerializerOptions options)
     {
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO3MessageAdapter>(EngineIO.V3);
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO4MessageAdapter>(EngineIO.V4);
         services.AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
         services.AddSingleton<ISerializer, SystemJsonSerializer>();
         services.AddSingleton(options);
+        return services;
     }
 }
-
-// public record ProtocolOptions
-// {
-//     public ProtocolOptions(TransportProtocol protocol, EngineIO engineIO)
-//     {
-//         Protocol = protocol;
-//         EngineIO = engineIO;
-//     }
-//
-//     public TransportProtocol Protocol { get; }
-//     public EngineIO EngineIO { get; }
-// }

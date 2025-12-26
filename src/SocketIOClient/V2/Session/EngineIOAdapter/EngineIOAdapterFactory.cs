@@ -6,8 +6,8 @@ namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public class EngineIOAdapterFactory(IServiceProvider serviceProvider) : IEngineIOAdapterFactory
 {
-    public IEngineIOAdapter Create(EngineIO engineIO)
+    public IEngineIOAdapter Create(EngineIOCompatibility compatibility)
     {
-        return serviceProvider.GetRequiredKeyedService<IEngineIOAdapter>(engineIO);
+        return serviceProvider.GetRequiredKeyedService<IEngineIOAdapter>(compatibility);
     }
 }

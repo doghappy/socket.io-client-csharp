@@ -1,10 +1,12 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
+using SocketIOClient.V2;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
@@ -22,25 +24,29 @@ public class HttpSessionTests
     public HttpSessionTests(ITestOutputHelper output)
     {
         _httpAdapter = Substitute.For<IHttpAdapter>();
-        var engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
+        _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
         _engineIOAdapter = Substitute.For<IHttpEngineIOAdapter>();
         _engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
-        engineIOAdapterFactory
-            .Create(Arg.Any<EngineIO>())
+        _engineIOAdapterFactory
+            .Create(Arg.Any<EngineIOCompatibility>())
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
-        var engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
-        var logger = output.CreateLogger<HttpSession>();
+        _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
+        _logger = output.CreateLogger<HttpSession>();
         _uriConverter = Substitute.For<IUriConverter>();
         _uriConverter.GetServerUri(false, Arg.Any<Uri>(), Arg.Any<string>(),
                 Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
             .Returns(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
-        _session = new HttpSession(
-            logger,
-            engineIOAdapterFactory,
+    }
+
+    private HttpSession NewSession()
+    {
+        return new HttpSession(
+            _logger,
+            _engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
-            engineIOMessageAdapterFactory,
+            _engineIOMessageAdapterFactory,
             _uriConverter)
         {
             Options = _sessionOptions
@@ -54,22 +60,25 @@ public class HttpSessionTests
         EngineIO = EngineIO.V4,
     };
 
-    private readonly HttpSession _session;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IHttpEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
+    private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
+    private readonly ILogger<HttpSession> _logger;
+    private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
 
     #region ConnectAsync
 
     [Fact]
-    public async Task ConnectAsync_HttpAdapterThrowAnyException_SessionThrowConnectionFailedException()
+    public async Task ConnectAsync_HttpAdapterThrowAnyExceptionsessionThrowConnectionFailedException()
     {
         _httpAdapter
             .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
             .Throws(new HttpRequestException("Server refused connection"));
 
-        await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+        var session = NewSession();
+        await session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
             .Should()
             .ThrowExactlyAsync<ConnectionFailedException>()
             .WithMessage("Failed to connect to the server")
@@ -85,7 +94,8 @@ public class HttpSessionTests
             .When(async a => await a.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>()))
             .Do(callInfo => { requests.Add(callInfo.Arg<HttpRequest>()); });
 
-        await _session.ConnectAsync(CancellationToken.None);
+        var session = NewSession();
+        await session.ConnectAsync(CancellationToken.None);
 
         requests.Should()
             .BeEquivalentTo([
@@ -104,7 +114,8 @@ public class HttpSessionTests
                 Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
             .Throws(new Exception("UriConverter Error"));
 
-        await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+        var session = NewSession();
+        await session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
             .Should()
             .ThrowExactlyAsync<Exception>()
             .WithMessage("UriConverter Error");
@@ -117,7 +128,8 @@ public class HttpSessionTests
             .SendAsync(Arg.Any<HttpRequest>(), Arg.Is<CancellationToken>(t => t.IsCancellationRequested))
             .Throws(new TaskCanceledException("Task was canceled"));
 
-        await _session.Invoking(async x =>
+        var session = NewSession();
+        await session.Invoking(async x =>
             {
                 using var cts = new CancellationTokenSource();
                 await cts.CancelAsync();
@@ -133,7 +145,8 @@ public class HttpSessionTests
     [Fact]
     public async Task ConnectAsync_WhenCalled_SetAdapterUri()
     {
-        await _session.ConnectAsync(CancellationToken.None);
+        var session = NewSession();
+        await session.ConnectAsync(CancellationToken.None);
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
     }
 
@@ -146,7 +159,8 @@ public class HttpSessionTests
             { "key2", "value2" },
         };
 
-        await _session.ConnectAsync(CancellationToken.None);
+        var session = NewSession();
+        await session.ConnectAsync(CancellationToken.None);
 
         _httpAdapter.Received(1).SetDefaultHeader("key1", "value1");
         _httpAdapter.Received(1).SetDefaultHeader("key2", "value2");
@@ -163,7 +177,8 @@ public class HttpSessionTests
             { "key1", "value1" },
         };
 
-        await _session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
+        var session = NewSession();
+        await session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
             .Should()
             .ThrowExactlyAsync<Exception>()
             .WithMessage("Unable to set header");
@@ -180,7 +195,8 @@ public class HttpSessionTests
         };
         _engineIOAdapter.ToHttpRequest("41").Returns(request);
 
-        await _session.DisconnectAsync(CancellationToken.None);
+        var session = NewSession();
+        await session.DisconnectAsync(CancellationToken.None);
 
         await _httpAdapter.Received(1).SendAsync(request, Arg.Any<CancellationToken>());
     }
@@ -195,7 +211,8 @@ public class HttpSessionTests
         };
         _engineIOAdapter.ToHttpRequest("41/test,").Returns(request);
 
-        await _session.DisconnectAsync(CancellationToken.None);
+        var session = NewSession();
+        await session.DisconnectAsync(CancellationToken.None);
 
         await _httpAdapter.Received(1).SendAsync(request, Arg.Any<CancellationToken>());
     }
@@ -203,14 +220,16 @@ public class HttpSessionTests
     [Fact]
     public void Constructor_WhenCalled_HttpSessionIsSubscriberOfHttpAdapter()
     {
-        _httpAdapter.Received(1).Subscribe(_session);
+        var session = NewSession();
+        _httpAdapter.Received(1).Subscribe(session);
     }
 
     [Fact]
     public async Task OnNextAsync_BinaryMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
-        _session.Subscribe(observer);
+        var session = NewSession();
+        session.Subscribe(observer);
 
         _serializer.Deserialize(Arg.Any<string>())
             .Returns(new SystemJsonBinaryEventMessage
@@ -223,17 +242,18 @@ public class HttpSessionTests
         };
         _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>()).Returns([protocolMessage]);
 
-        await _session.OnNextAsync(protocolMessage);
+        await session.OnNextAsync(protocolMessage);
 
         await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
-        _session.PendingDeliveryCount.Should().Be(1);
+        session.PendingDeliveryCount.Should().Be(1);
     }
 
     [Fact]
     public async Task OnNextAsync_BinaryMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
-        _session.Subscribe(observer);
+        var session = NewSession();
+        session.Subscribe(observer);
 
         _serializer
             .Deserialize(Arg.Any<string>())
@@ -254,20 +274,21 @@ public class HttpSessionTests
                     Bytes = [],
                 },
             ]);
-        await _session.OnNextAsync(new ProtocolMessage
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
 
         await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
-        _session.PendingDeliveryCount.Should().Be(0);
+        session.PendingDeliveryCount.Should().Be(0);
     }
 
     [Fact]
     public async Task OnNextAsync_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
-        _session.Subscribe(observer);
+        var session = NewSession();
+        session.Subscribe(observer);
 
         _serializer.Deserialize(Arg.Any<string>())
             .Returns(new SystemJsonBinaryAckMessage
@@ -283,20 +304,21 @@ public class HttpSessionTests
                     Type = ProtocolMessageType.Text,
                 },
             ]);
-        await _session.OnNextAsync(new ProtocolMessage
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
 
         await observer.Received(0).OnNextAsync(Arg.Any<IMessage>());
-        _session.PendingDeliveryCount.Should().Be(1);
+        session.PendingDeliveryCount.Should().Be(1);
     }
 
     [Fact]
     public async Task OnNextAsync_BinaryAckMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
-        _session.Subscribe(observer);
+        var session = NewSession();
+        session.Subscribe(observer);
 
         _serializer
             .Deserialize(Arg.Any<string>())
@@ -322,18 +344,18 @@ public class HttpSessionTests
                     Bytes = [],
                 },
             ]);
-        await _session.OnNextAsync(new ProtocolMessage
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
-        await _session.OnNextAsync(new ProtocolMessage
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Bytes,
             Bytes = [],
         });
 
         await observer.Received(1).OnNextAsync(Arg.Any<IBinaryMessage>());
-        _session.PendingDeliveryCount.Should().Be(0);
+        session.PendingDeliveryCount.Should().Be(0);
     }
 
     [Fact]
@@ -351,7 +373,8 @@ public class HttpSessionTests
                     Text = "EngineIOAdapter Messages",
                 },
             ]);
-        await _session.OnNextAsync(new ProtocolMessage
+        var session = NewSession();
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
@@ -378,7 +401,8 @@ public class HttpSessionTests
                     Text = "EngineIOAdapter Messages",
                 },
             ]);
-        await _session.OnNextAsync(new ProtocolMessage
+        var session = NewSession();
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
@@ -403,7 +427,8 @@ public class HttpSessionTests
             ]);
         _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
 
-        await _session.OnNextAsync(new ProtocolMessage
+        var session = NewSession();
+        await session.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         });
@@ -429,7 +454,8 @@ public class HttpSessionTests
         _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
         _engineIOAdapter.ProcessMessageAsync(Arg.Any<IMessage>()).ThrowsAsync(new Exception("Test"));
 
-        await _session.Invoking(s => s.OnNextAsync(new ProtocolMessage
+        var session = NewSession();
+        await session.Invoking(s => s.OnNextAsync(new ProtocolMessage
         {
             Type = ProtocolMessageType.Text,
         }))
@@ -444,7 +470,8 @@ public class HttpSessionTests
     public async Task OnNextAsync_MessageIsProcessed_NotSendToObserver()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
-        _session.Subscribe(observer);
+        var session = NewSession();
+        session.Subscribe(observer);
         _engineIOAdapter.ProcessMessageAsync(Arg.Any<IMessage>()).Returns(true);
         _engineIOAdapter.ExtractMessagesFromText(Arg.Any<string>())
             .Returns([
@@ -459,7 +486,7 @@ public class HttpSessionTests
             .Returns(new OpenedMessage { Sid = "abc" });
         _httpAdapter.Uri = new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling");
 
-        await _session.OnNextAsync(new ProtocolMessage());
+        await session.OnNextAsync(new ProtocolMessage());
 
         await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
     }
@@ -473,7 +500,8 @@ public class HttpSessionTests
                 new ProtocolMessage(),
             ]);
 
-        await _session.SendAsync([], CancellationToken.None);
+        var session = NewSession();
+        await session.SendAsync([], CancellationToken.None);
 
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
@@ -487,7 +515,8 @@ public class HttpSessionTests
                 new ProtocolMessage(),
             ]);
 
-        await _session.SendAsync([], 12, CancellationToken.None);
+        var session = NewSession();
+        await session.SendAsync([], 12, CancellationToken.None);
 
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
@@ -501,7 +530,8 @@ public class HttpSessionTests
                 new ProtocolMessage(),
             ]);
 
-        await _session.SendAckDataAsync([], 12, CancellationToken.None);
+        var session = NewSession();
+        await session.SendAckDataAsync([], 12, CancellationToken.None);
 
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
@@ -515,7 +545,8 @@ public class HttpSessionTests
                 new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
             ]);
 
-        await _session.SendAsync([], CancellationToken.None);
+        var session = NewSession();
+        await session.SendAsync([], CancellationToken.None);
 
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
@@ -529,7 +560,8 @@ public class HttpSessionTests
                 new ProtocolMessage { Type = ProtocolMessageType.Bytes, Bytes = [] },
             ]);
 
-        await _session.SendAsync([], CancellationToken.None);
+        var session = NewSession();
+        await session.SendAsync([], CancellationToken.None);
 
         await _httpAdapter.Received(1).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
@@ -537,10 +569,22 @@ public class HttpSessionTests
     [Fact]
     public void Options_SetAnyValue_InitializationMethodsWereCalled()
     {
+        NewSession();
         _serializer.Received(1).SetEngineIOMessageAdapter(Arg.Any<IEngineIOMessageAdapter>());
         _engineIOAdapter.Received(1).Subscribe(Arg.Any<HttpSession>());
         _engineIOAdapter.Options.Timeout.Should().Be(_sessionOptions.Timeout);
         _engineIOAdapter.Options.Namespace.Should().Be(_sessionOptions.Namespace);
         _serializer.Received().Namespace = Arg.Any<string>();
+    }
+
+    [Theory]
+    [InlineData(EngineIO.V3, EngineIOCompatibility.HttpEngineIO3)]
+    [InlineData(EngineIO.V4, EngineIOCompatibility.HttpEngineIO4)]
+    public void Options_DifferentEngineIOVersion_SelectRelatedCompatibility(
+        EngineIO engineIO, EngineIOCompatibility expectedCompatibility)
+    {
+        _sessionOptions.EngineIO = engineIO;
+        NewSession();
+        _engineIOAdapterFactory.Received(1).Create(expectedCompatibility);
     }
 }
