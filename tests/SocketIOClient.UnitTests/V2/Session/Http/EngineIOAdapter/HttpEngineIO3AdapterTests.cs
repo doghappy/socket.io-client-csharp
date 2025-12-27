@@ -28,11 +28,13 @@ public class HttpEngineIO3AdapterTests
             await Task.Delay(50);
         });
         _logger = output.CreateLogger<HttpEngineIO3Adapter>();
+        _pollingHandler = Substitute.For<IPollingHandler>();
         _adapter = new(
             _stopwatch,
             _httpAdapter,
             _retryPolicy,
-            _logger)
+            _logger,
+            _pollingHandler)
         {
             Options = new EngineIOAdapterOptions()
         };
@@ -43,6 +45,7 @@ public class HttpEngineIO3AdapterTests
     private readonly HttpEngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
+    private readonly IPollingHandler _pollingHandler;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -193,17 +196,10 @@ public class HttpEngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task ProcessMessageAsync_OpenedMessage_PollingInBackground()
+    public async Task ProcessMessageAsync_OpenedMessage_PollingHandlerIsCalled()
     {
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
-            .Returns(async _ => await Task.Delay(10));
-
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-
-        await Task.Delay(100);
-
-        var range = Quantity.Within(5, 15);
-        await _retryPolicy.Received(range).RetryAsync(2, Arg.Any<Func<Task>>());
+        _pollingHandler.Received().OnOpenedMessageReceived(Arg.Any<OpenedMessage>());
     }
 
     [Fact]
@@ -266,18 +262,10 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
     {
-        var httpAdapter = Substitute.For<IHttpAdapter>();
-        var adapter = new HttpEngineIO3Adapter(
-            _stopwatch,
-            httpAdapter,
-            _retryPolicy,
-            _logger)
-        {
-            Options = new EngineIOAdapterOptions()
-        };
+        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(200));
 
-        await adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-        await adapter.ProcessMessageAsync(new ConnectedMessage());
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
+        await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
         await Task.Delay(100);
 
@@ -334,41 +322,6 @@ public class HttpEngineIO3AdapterTests
         var connectedMessage = new ConnectedMessage();
         await _adapter.ProcessMessageAsync(connectedMessage);
         connectedMessage.Sid.Should().Be("123");
-    }
-
-    [Fact]
-    public async Task PollingAsync_HttpRequestExceptionOccurred_DoNotContinue()
-    {
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
-            .Returns(_ => Task.FromException(new HttpRequestException()));
-
-        await _adapter.ProcessMessageAsync(new OpenedMessage
-        {
-            PingInterval = 10,
-        });
-
-        await Task.Delay(100);
-
-        await _retryPolicy
-            .Received(1)
-            .RetryAsync(2, Arg.Any<Func<Task>>());
-    }
-
-    [Fact]
-    public async Task ProcessMessageAsync_IsReadyAfter30ms_PollingIsWorking()
-    {
-        _httpAdapter.IsReadyToSend.Returns(false);
-
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(30);
-            _httpAdapter.IsReadyToSend.Returns(true);
-        });
-
-        await Task.Delay(200);
-
-        await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
     [Fact]
@@ -515,7 +468,7 @@ public class HttpEngineIO3AdapterTests
             Namespace = "/nsp",
         };
 
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 80 });
         await _adapter.ProcessMessageAsync(message);
         await Task.Delay(100);
 

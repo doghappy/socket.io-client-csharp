@@ -8,17 +8,15 @@ using SocketIOClient.V2.Protocol.Http;
 
 namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
-public abstract class HttpEngineIOAdapter(
-    IHttpAdapter httpAdapter,
-    IRetriable retryPolicy,
-    ILogger<HttpEngineIOAdapter> logger) : IDisposable
+public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, ILogger<PollingHandler> logger)
+    : IPollingHandler, IDisposable
 {
-    protected OpenedMessage OpenedMessage { get; private set; }
+    private OpenedMessage _openedMessage;
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
 
-    protected void SetOpenedMessage(OpenedMessage message)
+    public void OnOpenedMessageReceived(OpenedMessage message)
     {
-        OpenedMessage = message;
+        _openedMessage = message;
         _ = Task.Run(PollingAsync);
     }
 
@@ -40,11 +38,11 @@ public abstract class HttpEngineIOAdapter(
         }
     }
 
-    protected async Task WaitHttpAdapterReady()
+    public async Task WaitHttpAdapterReady()
     {
         var ms = 0;
         const int delay = 20;
-        while (ms < OpenedMessage.PingInterval)
+        while (ms < _openedMessage.PingInterval)
         {
             if (httpAdapter.IsReadyToSend)
             {
@@ -58,7 +56,7 @@ public abstract class HttpEngineIOAdapter(
         throw ex;
     }
 
-    public virtual void Dispose()
+    public void Dispose()
     {
         _pollingCancellationTokenSource.Cancel();
         _pollingCancellationTokenSource.Dispose();

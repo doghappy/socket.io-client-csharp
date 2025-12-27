@@ -43,6 +43,7 @@ public static class ServicesInitializer
 
     private static IServiceCollection AddEngineIOCompatibility(this IServiceCollection services)
     {
+        services.AddScoped<IPollingHandler, PollingHandler>();
         services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);

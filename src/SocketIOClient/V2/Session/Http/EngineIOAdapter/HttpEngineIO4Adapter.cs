@@ -15,19 +15,21 @@ using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
-public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
+public class HttpEngineIO4Adapter : IHttpEngineIOAdapter
 {
     public HttpEngineIO4Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
         ILogger<HttpEngineIO4Adapter> logger,
-        ISerializer serializer) : base(httpAdapter, retryPolicy, logger)
+        ISerializer serializer,
+        IPollingHandler pollingHandler)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
         _retryPolicy = retryPolicy;
         _serializer = serializer;
+        _pollingHandler = pollingHandler;
     }
 
     private const string Delimiter = "\u001E";
@@ -36,8 +38,11 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly IRetriable _retryPolicy;
     private readonly ISerializer _serializer;
+    private readonly IPollingHandler _pollingHandler;
 
     public EngineIOAdapterOptions Options { get; set; }
+
+    private OpenedMessage _openedMessage;
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -136,7 +141,8 @@ public class HttpEngineIO4Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
 
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
-        SetOpenedMessage((OpenedMessage)message);
+        _openedMessage = (OpenedMessage)message;
+        _pollingHandler.OnOpenedMessageReceived(_openedMessage);
         var builder = new StringBuilder("40");
         if (!string.IsNullOrEmpty(Options.Namespace))
         {

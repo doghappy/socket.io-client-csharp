@@ -13,30 +13,33 @@ using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
-public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAdapter
+public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter
 {
     public HttpEngineIO3Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
-        ILogger<HttpEngineIO3Adapter> logger) : base(httpAdapter, retryPolicy, logger)
+        ILogger<HttpEngineIO3Adapter> logger,
+        IPollingHandler pollingHandler)
     {
         _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
         _retryPolicy = retryPolicy;
         _logger = logger;
+        _pollingHandler = pollingHandler;
     }
 
     private readonly IStopwatch _stopwatch;
-
     private readonly IHttpAdapter _httpAdapter;
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
-
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
+    private readonly IPollingHandler _pollingHandler;
 
     public EngineIOAdapterOptions Options { get; set; }
+
+    private OpenedMessage _openedMessage;
 
     private static readonly HashSet<string> DefaultNamespaces =
     [
@@ -184,7 +187,8 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
 
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
-        SetOpenedMessage((OpenedMessage)message);
+        _openedMessage = (OpenedMessage)message;
+        _pollingHandler.OnOpenedMessageReceived(_openedMessage);
         if (string.IsNullOrEmpty(Options.Namespace))
         {
             return;
@@ -208,7 +212,7 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
             && !Options.Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
         if (!shouldSwallow)
         {
-            connectedMessage.Sid = OpenedMessage.Sid;
+            connectedMessage.Sid = _openedMessage.Sid;
             _ = Task.Run(StartPingAsync);
         }
 
@@ -218,12 +222,12 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
     private async Task StartPingAsync()
     {
         _logger.LogDebug("[StartPingAsync] Waiting for HttpAdapter ready...");
-        await WaitHttpAdapterReady().ConfigureAwait(false);
+        await _pollingHandler.WaitHttpAdapterReady().ConfigureAwait(false);
         _logger.LogDebug("[StartPingAsync] HttpAdapter is ready");
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(OpenedMessage.PingInterval, token);
+            await Task.Delay(_openedMessage.PingInterval, token);
             var request = ToHttpRequest("2");
             _logger.LogDebug("Sending Ping request...");
             await _retryPolicy.RetryAsync(3, async () =>
@@ -254,9 +258,8 @@ public sealed class HttpEngineIO3Adapter : HttpEngineIOAdapter, IHttpEngineIOAda
         _observers.Add(observer);
     }
 
-    public override void Dispose()
+    public void Dispose()
     {
-        base.Dispose();
         _pingCancellationTokenSource.Cancel();
         _pingCancellationTokenSource.Dispose();
     }

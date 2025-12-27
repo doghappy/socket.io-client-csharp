@@ -1,6 +1,5 @@
 using FluentAssertions;
 using NSubstitute;
-using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
@@ -29,7 +28,8 @@ public class HttpEngineIO4AdapterTests
         });
         var logger = output.CreateLogger<HttpEngineIO4Adapter>();
         _serializer = Substitute.For<ISerializer>();
-        _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, _retryPolicy, logger, _serializer)
+        _pollingHandler = Substitute.For<IPollingHandler>();
+        _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, _retryPolicy, logger, _serializer, _pollingHandler)
         {
             Options = new EngineIOAdapterOptions()
         };
@@ -40,6 +40,7 @@ public class HttpEngineIO4AdapterTests
     private readonly IHttpAdapter _httpAdapter;
     private readonly IRetriable _retryPolicy;
     private readonly ISerializer _serializer;
+    private readonly IPollingHandler _pollingHandler;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -231,52 +232,10 @@ public class HttpEngineIO4AdapterTests
     }
 
     [Fact]
-    public async Task ProcessMessageAsync_OpenedMessage_PollingInBackground()
+    public async Task ProcessMessageAsync_OpenedMessage_PollingHandlerIsCalled()
     {
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
-            .Returns(async _ => await Task.Delay(10));
-
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-
-        await Task.Delay(100);
-
-        var range = Quantity.Within(5, 15);
-        await _retryPolicy.Received(range).RetryAsync(2, Arg.Any<Func<Task>>());
-    }
-
-    [Fact]
-    public async Task PollingAsync_HttpRequestExceptionOccurred_DoNotContinue()
-    {
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
-            .Returns(_ => Task.FromException(new HttpRequestException()));
-
-        await _adapter.ProcessMessageAsync(new OpenedMessage
-        {
-            PingInterval = 10,
-        });
-
-        await Task.Delay(100);
-
-        await _retryPolicy
-            .Received(1)
-            .RetryAsync(2, Arg.Any<Func<Task>>());
-    }
-
-    [Fact]
-    public async Task ProcessMessageAsync_IsReadyAfter30ms_PollingIsWorking()
-    {
-        _httpAdapter.IsReadyToSend.Returns(false);
-
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(30);
-            _httpAdapter.IsReadyToSend.Returns(true);
-        });
-
-        await Task.Delay(200);
-
-        await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
+        _pollingHandler.Received().OnOpenedMessageReceived(Arg.Any<OpenedMessage>());
     }
 
     private static IEnumerable<IMessage> ProcessMessageAsyncMessageTypeTupleCases()
@@ -302,16 +261,5 @@ public class HttpEngineIO4AdapterTests
     {
         var result = await _adapter.ProcessMessageAsync(message);
         result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task PollingAsync_DisposeIsCalled_NeverPolling()
-    {
-        _adapter.Dispose();
-
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
-
-        await Task.Delay(200);
-        await _retryPolicy.DidNotReceive().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 }
