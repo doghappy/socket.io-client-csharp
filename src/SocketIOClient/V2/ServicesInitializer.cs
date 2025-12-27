@@ -14,6 +14,7 @@ using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
 using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
+using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;
@@ -48,6 +49,7 @@ public static class ServicesInitializer
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);
         services.AddKeyedScoped<IEngineIOAdapter, WebSocketEngineIO3Adapter>(EngineIOCompatibility.WebSocketEngineIO3);
+        services.AddKeyedScoped<IEngineIOAdapter, WebSocketEngineIO4Adapter>(EngineIOCompatibility.WebSocketEngineIO4);
         return services;
     }
 

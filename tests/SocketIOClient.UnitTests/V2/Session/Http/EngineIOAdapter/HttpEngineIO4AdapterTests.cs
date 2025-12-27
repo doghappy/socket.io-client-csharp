@@ -3,33 +3,30 @@ using NSubstitute;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
-using SocketIOClient.Test.Core;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http.EngineIOAdapter;
-using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.Http.EngineIOAdapter;
 
 public class HttpEngineIO4AdapterTests
 {
-    public HttpEngineIO4AdapterTests(ITestOutputHelper output)
+    public HttpEngineIO4AdapterTests()
     {
         _stopwatch = Substitute.For<IStopwatch>();
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
-        _retryPolicy = Substitute.For<IRetriable>();
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ =>
+        var retryPolicy = Substitute.For<IRetriable>();
+        retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ =>
         {
             await Task.Delay(50);
         });
-        var logger = output.CreateLogger<HttpEngineIO4Adapter>();
         _serializer = Substitute.For<ISerializer>();
         _pollingHandler = Substitute.For<IPollingHandler>();
-        _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, _retryPolicy, logger, _serializer, _pollingHandler)
+        _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, retryPolicy, _serializer, _pollingHandler)
         {
             Options = new EngineIOAdapterOptions()
         };
@@ -38,7 +35,6 @@ public class HttpEngineIO4AdapterTests
     private readonly IStopwatch _stopwatch;
     private readonly HttpEngineIO4Adapter _adapter;
     private readonly IHttpAdapter _httpAdapter;
-    private readonly IRetriable _retryPolicy;
     private readonly ISerializer _serializer;
     private readonly IPollingHandler _pollingHandler;
 
