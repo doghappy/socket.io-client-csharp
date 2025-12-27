@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
@@ -18,16 +19,18 @@ public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
         ILogger<HttpEngineIO3Adapter> logger,
-        IPollingHandler pollingHandler) : base(stopwatch, logger, pollingHandler)
+        IPollingHandler pollingHandler) : base(stopwatch, logger)
     {
         _httpAdapter = httpAdapter;
         _retryPolicy = retryPolicy;
         _logger = logger;
+        _pollingHandler = pollingHandler;
     }
 
     private readonly IHttpAdapter _httpAdapter;
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
+    private readonly IPollingHandler _pollingHandler;
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -167,7 +170,12 @@ public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
     protected override async Task OnPingTaskStarted()
     {
         _logger.LogDebug("[StartPingAsync] Waiting for HttpAdapter ready...");
-        await PollingHandler.WaitHttpAdapterReady().ConfigureAwait(false);
+        await _pollingHandler.WaitHttpAdapterReady().ConfigureAwait(false);
         _logger.LogDebug("[StartPingAsync] HttpAdapter is ready");
+    }
+
+    protected override void BeforeOpenedMessageHanding(OpenedMessage message)
+    {
+        _pollingHandler.OnOpenedMessageReceived(message);
     }
 }

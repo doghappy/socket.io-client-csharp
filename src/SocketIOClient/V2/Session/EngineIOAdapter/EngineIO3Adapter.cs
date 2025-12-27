@@ -11,16 +11,14 @@ namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 {
-    protected EngineIO3Adapter(IStopwatch stopwatch, ILogger<EngineIO3Adapter> logger, IPollingHandler pollingHandler)
+    protected EngineIO3Adapter(IStopwatch stopwatch, ILogger<EngineIO3Adapter> logger)
     {
         _stopwatch = stopwatch;
         _logger = logger;
-        PollingHandler = pollingHandler;
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly ILogger<EngineIO3Adapter> _logger;
-    protected readonly IPollingHandler PollingHandler;
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
     private readonly List<IMyObserver<IMessage>> _observers = [];
 
@@ -36,6 +34,15 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 
     protected abstract Task SendConnectAsync();
     protected abstract Task SendPingAsync();
+
+    protected virtual Task OnPingTaskStarted()
+    {
+        return Task.CompletedTask;
+    }
+
+    protected virtual void BeforeOpenedMessageHanding(OpenedMessage message)
+    {
+    }
 
     public async Task<bool> ProcessMessageAsync(IMessage message)
     {
@@ -59,7 +66,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         OpenedMessage = (OpenedMessage)message;
-        PollingHandler.OnOpenedMessageReceived(OpenedMessage);
+        BeforeOpenedMessageHanding(OpenedMessage);
         if (string.IsNullOrEmpty(Options.Namespace))
         {
             return;
@@ -94,11 +101,6 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
             _stopwatch.Restart();
             _ = NotifyObserversAsync(new PingMessage());
         }
-    }
-
-    protected virtual Task OnPingTaskStarted()
-    {
-        return Task.CompletedTask;
     }
 
     private void HandlePongMessage(IMessage message)

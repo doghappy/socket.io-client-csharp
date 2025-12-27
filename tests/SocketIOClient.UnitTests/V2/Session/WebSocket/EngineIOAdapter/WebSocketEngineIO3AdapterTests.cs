@@ -9,7 +9,7 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Session.EngineIOAdapter;
-using SocketIOClient.V2.Session.WebSocket;
+using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.WebSocket.EngineIOAdapter;
@@ -21,8 +21,7 @@ public class WebSocketEngineIO3AdapterTests
         _stopwatch = Substitute.For<IStopwatch>();
         _webSocketAdapter = Substitute.For<IWebSocketAdapter>();
         var logger = output.CreateLogger<WebSocketEngineIO3Adapter>();
-        var pollingHandler = Substitute.For<IPollingHandler>();
-        _adapter = new(_stopwatch, logger, pollingHandler, _webSocketAdapter)
+        _adapter = new(_stopwatch, logger, _webSocketAdapter)
         {
             Options = new EngineIOAdapterOptions()
         };

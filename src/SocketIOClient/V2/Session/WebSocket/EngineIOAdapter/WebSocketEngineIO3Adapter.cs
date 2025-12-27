@@ -6,15 +6,14 @@ using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 
-namespace SocketIOClient.V2.Session.WebSocket;
+namespace SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 
 public class WebSocketEngineIO3Adapter : EngineIO3Adapter
 {
     public WebSocketEngineIO3Adapter(
         IStopwatch stopwatch,
         ILogger<WebSocketEngineIO3Adapter> logger,
-        IPollingHandler pollingHandler,
-        IWebSocketAdapter webSocketAdapter) : base(stopwatch, logger, pollingHandler)
+        IWebSocketAdapter webSocketAdapter) : base(stopwatch, logger)
     {
         _webSocketAdapter = webSocketAdapter;
     }
