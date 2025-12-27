@@ -47,6 +47,7 @@ public static class ServicesInitializer
         services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
         services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);
+        services.AddKeyedScoped<IEngineIOAdapter, WebSocketEngineIO3Adapter>(EngineIOCompatibility.WebSocketEngineIO3);
         return services;
     }
 
