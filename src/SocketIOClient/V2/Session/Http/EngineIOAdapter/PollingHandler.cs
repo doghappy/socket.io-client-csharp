@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Protocol.Http;
+using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 

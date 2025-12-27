@@ -5,48 +5,29 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
 using SocketIOClient.V2.Infrastructure;
-using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
 
-public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter
+public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
 {
     public HttpEngineIO3Adapter(
         IStopwatch stopwatch,
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
         ILogger<HttpEngineIO3Adapter> logger,
-        IPollingHandler pollingHandler)
+        IPollingHandler pollingHandler) : base(stopwatch, logger, pollingHandler)
     {
-        _stopwatch = stopwatch;
         _httpAdapter = httpAdapter;
         _retryPolicy = retryPolicy;
         _logger = logger;
-        _pollingHandler = pollingHandler;
     }
 
-    private readonly IStopwatch _stopwatch;
     private readonly IHttpAdapter _httpAdapter;
-    private readonly CancellationTokenSource _pingCancellationTokenSource = new();
-    private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly IRetriable _retryPolicy;
     private readonly ILogger<HttpEngineIO3Adapter> _logger;
-    private readonly IPollingHandler _pollingHandler;
-
-    public EngineIOAdapterOptions Options { get; set; }
-
-    private OpenedMessage _openedMessage;
-
-    private static readonly HashSet<string> DefaultNamespaces =
-    [
-        null,
-        string.Empty,
-        "/"
-    ];
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)
     {
@@ -166,101 +147,27 @@ public sealed class HttpEngineIO3Adapter : IHttpEngineIOAdapter
         }
     }
 
-    public async Task<bool> ProcessMessageAsync(IMessage message)
+    protected override async Task SendConnectAsync()
     {
-        bool shouldSwallow = false;
-        switch (message.Type)
-        {
-            case MessageType.Opened:
-                await HandleOpenedMessageAsync(message).ConfigureAwait(false);
-                break;
-            case MessageType.Connected:
-                shouldSwallow = HandleConnectedMessageAsync(message);
-                break;
-            case MessageType.Pong:
-                HandlePongMessage(message);
-                break;
-        }
-
-        return shouldSwallow;
-    }
-
-    private async Task HandleOpenedMessageAsync(IMessage message)
-    {
-        _openedMessage = (OpenedMessage)message;
-        _pollingHandler.OnOpenedMessageReceived(_openedMessage);
-        if (string.IsNullOrEmpty(Options.Namespace))
-        {
-            return;
-        }
         var req = ToHttpRequest($"40{Options.Namespace},");
         using var cts = new CancellationTokenSource(Options.Timeout);
         await _httpAdapter.SendAsync(req, cts.Token).ConfigureAwait(false);
     }
 
-    private void HandlePongMessage(IMessage message)
+    protected override async Task SendPingAsync()
     {
-        _stopwatch.Stop();
-        var pongMessage = (PongMessage)message;
-        pongMessage.Duration = _stopwatch.Elapsed;
-    }
-
-    private bool HandleConnectedMessageAsync(IMessage message)
-    {
-        var connectedMessage = (ConnectedMessage)message;
-        var shouldSwallow = !DefaultNamespaces.Contains(Options.Namespace)
-            && !Options.Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
-        if (!shouldSwallow)
+        var request = ToHttpRequest("2");
+        await _retryPolicy.RetryAsync(3, async () =>
         {
-            connectedMessage.Sid = _openedMessage.Sid;
-            _ = Task.Run(StartPingAsync);
-        }
-
-        return shouldSwallow;
+            using var cts = new CancellationTokenSource(Options.Timeout);
+            await _httpAdapter.SendAsync(request, cts.Token);
+        }).ConfigureAwait(false);
     }
 
-    private async Task StartPingAsync()
+    protected override async Task OnPingTaskStarted()
     {
         _logger.LogDebug("[StartPingAsync] Waiting for HttpAdapter ready...");
-        await _pollingHandler.WaitHttpAdapterReady().ConfigureAwait(false);
+        await PollingHandler.WaitHttpAdapterReady().ConfigureAwait(false);
         _logger.LogDebug("[StartPingAsync] HttpAdapter is ready");
-        var token = _pingCancellationTokenSource.Token;
-        while (!token.IsCancellationRequested)
-        {
-            await Task.Delay(_openedMessage.PingInterval, token);
-            var request = ToHttpRequest("2");
-            _logger.LogDebug("Sending Ping request...");
-            await _retryPolicy.RetryAsync(3, async () =>
-            {
-                using var cts = new CancellationTokenSource(Options.Timeout);
-                await _httpAdapter.SendAsync(request, cts.Token);
-            }).ConfigureAwait(false);
-            _logger.LogDebug("Sent Ping request");
-            _stopwatch.Restart();
-            _ = NotifyObserversAsync(new PingMessage());
-        }
-    }
-
-    private async Task NotifyObserversAsync(IMessage message)
-    {
-        foreach (var observer in _observers)
-        {
-            await observer.OnNextAsync(message).ConfigureAwait(false);
-        }
-    }
-
-    public void Subscribe(IMyObserver<IMessage> observer)
-    {
-        if (_observers.Contains(observer))
-        {
-            return;
-        }
-        _observers.Add(observer);
-    }
-
-    public void Dispose()
-    {
-        _pingCancellationTokenSource.Cancel();
-        _pingCancellationTokenSource.Dispose();
     }
 }

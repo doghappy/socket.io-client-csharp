@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using SocketIOClient.Core.Messages;
 
-namespace SocketIOClient.V2.Session.Http.EngineIOAdapter;
+namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public interface IPollingHandler
 {
