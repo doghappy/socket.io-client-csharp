@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -8,11 +7,12 @@ using SocketIOClient.Core;
 using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Session.EngineIOAdapter;
+using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.WebSocket;
 
-public class WebSocketSession : SessionBase
+public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
 {
     public WebSocketSession(
         ILogger<WebSocketSession> logger,
@@ -23,18 +23,16 @@ public class WebSocketSession : SessionBase
         IUriConverter uriConverter) : base(logger, engineIOAdapterFactory, wsAdapter, serializer,
         engineIOMessageAdapterFactory, uriConverter)
     {
+        _logger = logger;
         _serializer = serializer;
         _wsAdapter = wsAdapter;
     }
 
     private readonly ISerializer _serializer;
     private readonly IWebSocketAdapter _wsAdapter;
+    private readonly ILogger<WebSocketSession> _logger;
 
     protected override TransportProtocol Protocol => TransportProtocol.WebSocket;
-
-    protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
-    {
-    }
 
     public override async Task OnNextAsync(ProtocolMessage message)
     {
@@ -51,12 +49,16 @@ public class WebSocketSession : SessionBase
     {
         foreach (var message in messages)
         {
-#if DEBUG
-            var text = message.Type == ProtocolMessageType.Text
-                ? $"[WebSocket⬆] {message.Text}"
-                : $"[WebSocket⬆] 0️⃣1️⃣0️⃣1️⃣ {message.Bytes.Length}";
-            Debug.WriteLine(text);
-#endif
+            if (message.Type == ProtocolMessageType.Text)
+            {
+                _logger.LogDebug("[WebSocket⬆] {message}", message.Text);
+            }
+            else
+            {
+                EngineIOAdapter.FormatBytesMessage(message);
+                _logger.LogDebug("[WebSocket⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes.Length);
+            }
+
             await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
         }
     }

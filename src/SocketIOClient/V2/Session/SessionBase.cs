@@ -13,10 +13,10 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
-public abstract class SessionBase : ISession
+public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapter
 {
     protected SessionBase(
-        ILogger<SessionBase> logger,
+        ILogger<SessionBase<T>> logger,
         IEngineIOAdapterFactory engineIOAdapterFactory,
         IProtocolAdapter protocolAdapter,
         ISerializer serializer,
@@ -32,13 +32,13 @@ public abstract class SessionBase : ISession
         protocolAdapter.Subscribe(this);
     }
 
-    private readonly ILogger<SessionBase> _logger;
+    private readonly ILogger<SessionBase<T>> _logger;
     private readonly IUriConverter _uriConverter;
     private readonly IProtocolAdapter _protocolAdapter;
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
-    private IEngineIOAdapter _engineIOAdapter;
+    protected T EngineIOAdapter { get; private set; }
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly Queue<IBinaryMessage> _messageQueue = [];
@@ -83,19 +83,17 @@ public abstract class SessionBase : ISession
     private void OnOptionsChanged(SessionOptions newValue)
     {
         var compatibility = GetEngineIOCompatibility(newValue);
-        _engineIOAdapter = _engineIOAdapterFactory.Create(compatibility);
-        _engineIOAdapter.Options = new EngineIOAdapterOptions
+        EngineIOAdapter = _engineIOAdapterFactory.Create<T>(compatibility);
+        EngineIOAdapter.Options = new EngineIOAdapterOptions
         {
             Timeout = newValue.Timeout,
             Namespace = newValue.Namespace,
             Auth = newValue.Auth,
         };
-        _engineIOAdapter.Subscribe(this);
+        EngineIOAdapter.Subscribe(this);
         var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);
         _serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
         _serializer.Namespace = newValue.Namespace;
-
-        OnEngineIOAdapterInitialized(_engineIOAdapter);
     }
 
     private EngineIOCompatibility GetEngineIOCompatibility(SessionOptions options)
@@ -111,8 +109,6 @@ public abstract class SessionBase : ISession
             ? EngineIOCompatibility.WebSocketEngineIO3
             : EngineIOCompatibility.WebSocketEngineIO4;
     }
-
-    protected abstract void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter);
 
     public abstract Task SendAsync(object[] data, CancellationToken cancellationToken);
 
@@ -195,7 +191,7 @@ public abstract class SessionBase : ISession
                 break;
         }
 
-        var shouldSwallow = await _engineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        var shouldSwallow = await EngineIOAdapter.ProcessMessageAsync(message).ConfigureAwait(false);
         if (shouldSwallow)
         {
             return;

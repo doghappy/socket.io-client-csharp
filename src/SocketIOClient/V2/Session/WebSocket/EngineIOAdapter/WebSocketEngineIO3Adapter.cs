@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 
-public class WebSocketEngineIO3Adapter : EngineIO3Adapter
+public class WebSocketEngineIO3Adapter : EngineIO3Adapter, IWebSocketEngineIOAdapter
 {
     public WebSocketEngineIO3Adapter(
         IStopwatch stopwatch,
@@ -36,5 +37,13 @@ public class WebSocketEngineIO3Adapter : EngineIO3Adapter
         {
             Text = "2"
         }, cts.Token).ConfigureAwait(false);
+    }
+
+    public void FormatBytesMessage(ProtocolMessage message)
+    {
+        byte[] buffer = new byte[message.Bytes.Length + 1];
+        buffer[0] = 4;
+        Buffer.BlockCopy(message.Bytes, 0, buffer, 1, message.Bytes.Length);
+        message.Bytes = buffer;
     }
 }

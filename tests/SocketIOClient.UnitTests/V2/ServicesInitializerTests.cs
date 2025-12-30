@@ -6,7 +6,8 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
-using SocketIOClient.V2.Session.EngineIOAdapter;
+using SocketIOClient.V2.Session.Http.EngineIOAdapter;
+using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 
 namespace SocketIOClient.UnitTests.V2;
 
@@ -74,9 +75,7 @@ public class ServicesInitializerTests
     [Theory]
     [InlineData(EngineIOCompatibility.HttpEngineIO3)]
     [InlineData(EngineIOCompatibility.HttpEngineIO4)]
-    [InlineData(EngineIOCompatibility.WebSocketEngineIO3)]
-    [InlineData(EngineIOCompatibility.WebSocketEngineIO4)]
-    public void BuildServiceProvider_WhenCalled_AllImplsAreRegistered(EngineIOCompatibility compatibility)
+    public void BuildServiceProvider_ResolveIHttpEngineIOAdapter_AlwaysPass(EngineIOCompatibility compatibility)
     {
         var services = new ServiceCollection();
 
@@ -84,7 +83,23 @@ public class ServicesInitializerTests
 
         using var scope = sp.CreateScope();
         var adapter = scope.ServiceProvider
-            .GetRequiredKeyedService<IEngineIOAdapter>(compatibility);
+            .GetRequiredKeyedService<IHttpEngineIOAdapter>(compatibility);
+
+        adapter.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData(EngineIOCompatibility.WebSocketEngineIO3)]
+    [InlineData(EngineIOCompatibility.WebSocketEngineIO4)]
+    public void BuildServiceProvider_ResolveIWebSocketEngineIOAdapter_AlwaysPass(EngineIOCompatibility compatibility)
+    {
+        var services = new ServiceCollection();
+
+        var sp = ServicesInitializer.BuildServiceProvider(services);
+
+        using var scope = sp.CreateScope();
+        var adapter = scope.ServiceProvider
+            .GetRequiredKeyedService<IWebSocketEngineIOAdapter>(compatibility);
 
         adapter.Should().NotBeNull();
     }

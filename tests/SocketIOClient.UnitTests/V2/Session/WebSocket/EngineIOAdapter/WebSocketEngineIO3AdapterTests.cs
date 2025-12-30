@@ -229,4 +229,42 @@ public class WebSocketEngineIO3AdapterTests
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"),
                 Arg.Any<CancellationToken>());
     }
+
+    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength1 = ([1], [4, 1]);
+    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength9 = (
+        [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        [4, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength10 = (
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+    private static IEnumerable<(byte[] bytes, byte[] expected)> FormatBytesMessageStrongTypeCases
+    {
+        get
+        {
+            yield return FormatBytesMessageLength1;
+            yield return FormatBytesMessageLength9;
+            yield return FormatBytesMessageLength10;
+        }
+    }
+
+    public static IEnumerable<object[]> FormatBytesMessageCases =>
+        FormatBytesMessageStrongTypeCases.Select(x => new object[] { x.bytes, x.expected });
+
+    [Theory]
+    [MemberData(nameof(FormatBytesMessageCases))]
+    public void FormatMessage_WhenCalled_AlwaysFormateBytes(byte[] bytes, byte[] expected)
+    {
+        var message = new ProtocolMessage
+        {
+            Bytes = bytes
+        };
+
+        _adapter.FormatBytesMessage(message);
+
+        message.Should().BeEquivalentTo(new ProtocolMessage
+        {
+            Bytes = expected
+        });
+    }
 }

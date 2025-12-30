@@ -4,5 +4,5 @@ namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public interface IEngineIOAdapterFactory
 {
-    IEngineIOAdapter Create(EngineIOCompatibility compatibility);
+    T Create<T>(EngineIOCompatibility compatibility) where T : IEngineIOAdapter;
 }

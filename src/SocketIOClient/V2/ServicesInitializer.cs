@@ -46,10 +46,10 @@ public static class ServicesInitializer
     {
         services.AddScoped<IPollingHandler, PollingHandler>();
         services.AddScoped<IEngineIOAdapterFactory, EngineIOAdapterFactory>();
-        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
-        services.AddKeyedScoped<IEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);
-        services.AddKeyedScoped<IEngineIOAdapter, WebSocketEngineIO3Adapter>(EngineIOCompatibility.WebSocketEngineIO3);
-        services.AddKeyedScoped<IEngineIOAdapter, WebSocketEngineIO4Adapter>(EngineIOCompatibility.WebSocketEngineIO4);
+        services.AddKeyedScoped<IHttpEngineIOAdapter, HttpEngineIO3Adapter>(EngineIOCompatibility.HttpEngineIO3);
+        services.AddKeyedScoped<IHttpEngineIOAdapter, HttpEngineIO4Adapter>(EngineIOCompatibility.HttpEngineIO4);
+        services.AddKeyedScoped<IWebSocketEngineIOAdapter, WebSocketEngineIO3Adapter>(EngineIOCompatibility.WebSocketEngineIO3);
+        services.AddKeyedScoped<IWebSocketEngineIOAdapter, WebSocketEngineIO4Adapter>(EngineIOCompatibility.WebSocketEngineIO4);
         return services;
     }
 

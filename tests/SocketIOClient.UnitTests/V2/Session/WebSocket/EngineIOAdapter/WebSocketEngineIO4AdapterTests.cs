@@ -95,4 +95,38 @@ public class WebSocketEngineIO4AdapterTests
         var result = await _adapter.ProcessMessageAsync(message);
         result.Should().BeFalse();
     }
+
+    private static readonly byte[] FormatBytesMessageLength1 = [1];
+    private static readonly byte[] FormatBytesMessageLength9 = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    private static readonly byte[] FormatBytesMessageLength10 = [10, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    private static IEnumerable<byte[]> FormatBytesMessageStrongTypeCases
+    {
+        get
+        {
+            yield return FormatBytesMessageLength1;
+            yield return FormatBytesMessageLength9;
+            yield return FormatBytesMessageLength10;
+        }
+    }
+
+    public static IEnumerable<object[]> FormatBytesMessageCases =>
+        FormatBytesMessageStrongTypeCases.Select(x => new object[] { x });
+
+    [Theory]
+    [MemberData(nameof(FormatBytesMessageCases))]
+    public void FormatMessage_WhenCalled_DoNothing(byte[] bytes)
+    {
+        var message = new ProtocolMessage
+        {
+            Bytes = bytes
+        };
+
+        _adapter.FormatBytesMessage(message);
+
+        message.Should().BeEquivalentTo(new ProtocolMessage
+        {
+            Bytes = bytes
+        });
+    }
 }

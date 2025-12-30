@@ -8,7 +8,7 @@ using SocketIOClient.V2.Session.EngineIOAdapter;
 
 namespace SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 
-public class WebSocketEngineIO4Adapter : EngineIO4Adapter
+public class WebSocketEngineIO4Adapter : EngineIO4Adapter, IWebSocketEngineIOAdapter
 {
     public WebSocketEngineIO4Adapter(
         IStopwatch stopwatch,
@@ -36,5 +36,9 @@ public class WebSocketEngineIO4Adapter : EngineIO4Adapter
         {
             Text = "3"
         }, cts.Token).ConfigureAwait(false);
+    }
+
+    public void FormatBytesMessage(ProtocolMessage message)
+    {
     }
 }

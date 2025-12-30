@@ -13,7 +13,7 @@ using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.Http;
 
-public class HttpSession : SessionBase
+public class HttpSession : SessionBase<IHttpEngineIOAdapter>
 {
     public HttpSession(
         ILogger<HttpSession> logger,
@@ -32,25 +32,19 @@ public class HttpSession : SessionBase
     private readonly ILogger<HttpSession> _logger;
     private readonly IHttpAdapter _httpAdapter;
     private readonly ISerializer _serializer;
-    private IHttpEngineIOAdapter _httpEngineIOAdapter;
 
     protected override TransportProtocol Protocol => TransportProtocol.Polling;
-
-    protected override void OnEngineIOAdapterInitialized(IEngineIOAdapter engineIOAdapter)
-    {
-        _httpEngineIOAdapter = (IHttpEngineIOAdapter)engineIOAdapter;
-    }
 
     public override async Task OnNextAsync(ProtocolMessage message)
     {
         if (message.Type == ProtocolMessageType.Bytes)
         {
-            var bytesMessages = _httpEngineIOAdapter.ExtractMessagesFromBytes(message.Bytes);
+            var bytesMessages = EngineIOAdapter.ExtractMessagesFromBytes(message.Bytes);
             await HandleMessagesAsync(bytesMessages).ConfigureAwait(false);
             return;
         }
 
-        var messages = _httpEngineIOAdapter.ExtractMessagesFromText(message.Text);
+        var messages = EngineIOAdapter.ExtractMessagesFromText(message.Text);
         await HandleMessagesAsync(messages).ConfigureAwait(false);
     }
 
@@ -87,7 +81,7 @@ public class HttpSession : SessionBase
         {
             if (message.Type == ProtocolMessageType.Text)
             {
-                var request = _httpEngineIOAdapter.ToHttpRequest(message.Text);
+                var request = EngineIOAdapter.ToHttpRequest(message.Text);
 #if DEBUG
                 _logger.LogDebug("[Polling⬆] {text}", request.BodyText);
 #endif
@@ -102,7 +96,7 @@ public class HttpSession : SessionBase
 
         if (bytes.Count > 0)
         {
-            var request = _httpEngineIOAdapter.ToHttpRequest(bytes);
+            var request = EngineIOAdapter.ToHttpRequest(bytes);
             await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -126,7 +120,7 @@ public class HttpSession : SessionBase
     public override async Task DisconnectAsync(CancellationToken cancellationToken)
     {
         var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
-        var req = _httpEngineIOAdapter.ToHttpRequest(content);
+        var req = EngineIOAdapter.ToHttpRequest(content);
         await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
     }
 }

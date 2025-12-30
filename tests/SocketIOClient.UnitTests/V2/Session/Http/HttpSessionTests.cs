@@ -27,7 +27,7 @@ public class HttpSessionTests
         _engineIOAdapter = Substitute.For<IHttpEngineIOAdapter>();
         _engineIOAdapter.ToHttpRequest(Arg.Any<string>()).Returns(new HttpRequest());
         _engineIOAdapterFactory
-            .Create(Arg.Any<EngineIOCompatibility>())
+            .Create<IHttpEngineIOAdapter>(Arg.Any<EngineIOCompatibility>())
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
@@ -584,6 +584,6 @@ public class HttpSessionTests
     {
         _sessionOptions.EngineIO = engineIO;
         NewSession();
-        _engineIOAdapterFactory.Received(1).Create(expectedCompatibility);
+        _engineIOAdapterFactory.Received(1).Create<IHttpEngineIOAdapter>(expectedCompatibility);
     }
 }

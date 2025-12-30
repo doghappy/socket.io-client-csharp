@@ -7,13 +7,13 @@ using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Serializer;
 using SocketIOClient.Test.Core;
-using SocketIOClient.V2;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
+using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
 using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 
@@ -25,9 +25,9 @@ public class WebSocketSessionTests
     {
         _wsAdapter = Substitute.For<IWebSocketAdapter>();
         _engineIOAdapterFactory = Substitute.For<IEngineIOAdapterFactory>();
-        _engineIOAdapter = Substitute.For<IEngineIOAdapter>();
+        _engineIOAdapter = Substitute.For<IWebSocketEngineIOAdapter>();
         _engineIOAdapterFactory
-            .Create(Arg.Any<EngineIOCompatibility>())
+            .Create<IWebSocketEngineIOAdapter>(Arg.Any<EngineIOCompatibility>())
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
@@ -62,7 +62,7 @@ public class WebSocketSessionTests
     private readonly IWebSocketAdapter _wsAdapter;
     private readonly ISerializer _serializer;
     private readonly IUriConverter _uriConverter;
-    private readonly IEngineIOAdapter _engineIOAdapter;
+    private readonly IWebSocketEngineIOAdapter _engineIOAdapter;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly ILogger<WebSocketSession> _logger;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
@@ -343,6 +343,7 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+        _engineIOAdapter.DidNotReceive().FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -358,6 +359,7 @@ public class WebSocketSessionTests
         await session.SendAsync([], 12, CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+        _engineIOAdapter.DidNotReceive().FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -388,6 +390,7 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+        _engineIOAdapter.Received(1).FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -403,6 +406,7 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
+        _engineIOAdapter.Received(2).FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -424,6 +428,6 @@ public class WebSocketSessionTests
     {
         _sessionOptions.EngineIO = engineIO;
         NewSession();
-        _engineIOAdapterFactory.Received(1).Create(expectedCompatibility);
+        _engineIOAdapterFactory.Received(1).Create<IWebSocketEngineIOAdapter>(expectedCompatibility);
     }
 }
