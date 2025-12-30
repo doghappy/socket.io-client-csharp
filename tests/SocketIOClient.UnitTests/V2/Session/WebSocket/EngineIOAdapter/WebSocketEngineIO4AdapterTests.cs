@@ -96,37 +96,19 @@ public class WebSocketEngineIO4AdapterTests
         result.Should().BeFalse();
     }
 
-    private static readonly byte[] FormatBytesMessageLength1 = [1];
-    private static readonly byte[] FormatBytesMessageLength9 = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-    private static readonly byte[] FormatBytesMessageLength10 = [10, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-    private static IEnumerable<byte[]> FormatBytesMessageStrongTypeCases
+    [Fact]
+    public void WriteProtocolFrame_WhenCalled_ReturnSameValue()
     {
-        get
-        {
-            yield return FormatBytesMessageLength1;
-            yield return FormatBytesMessageLength9;
-            yield return FormatBytesMessageLength10;
-        }
+        var result = _adapter.WriteProtocolFrame([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        result.Should().Equal(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     }
 
-    public static IEnumerable<object[]> FormatBytesMessageCases =>
-        FormatBytesMessageStrongTypeCases.Select(x => new object[] { x });
-
-    [Theory]
-    [MemberData(nameof(FormatBytesMessageCases))]
-    public void FormatMessage_WhenCalled_DoNothing(byte[] bytes)
+    [Fact]
+    public void ReadProtocolFrame_WhenCalled_ReturnSameValue()
     {
-        var message = new ProtocolMessage
-        {
-            Bytes = bytes
-        };
+        var result = _adapter.ReadProtocolFrame([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-        _adapter.FormatBytesMessage(message);
-
-        message.Should().BeEquivalentTo(new ProtocolMessage
-        {
-            Bytes = bytes
-        });
+        result.Should().Equal(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     }
 }

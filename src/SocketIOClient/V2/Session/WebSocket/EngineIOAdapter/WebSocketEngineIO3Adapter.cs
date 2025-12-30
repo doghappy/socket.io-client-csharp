@@ -39,11 +39,18 @@ public class WebSocketEngineIO3Adapter : EngineIO3Adapter, IWebSocketEngineIOAda
         }, cts.Token).ConfigureAwait(false);
     }
 
-    public void FormatBytesMessage(ProtocolMessage message)
+    public byte[] WriteProtocolFrame(byte[] bytes)
     {
-        byte[] buffer = new byte[message.Bytes.Length + 1];
+        byte[] buffer = new byte[bytes.Length + 1];
         buffer[0] = 4;
-        Buffer.BlockCopy(message.Bytes, 0, buffer, 1, message.Bytes.Length);
-        message.Bytes = buffer;
+        Buffer.BlockCopy(bytes, 0, buffer, 1, bytes.Length);
+        return buffer;
+    }
+
+    public byte[] ReadProtocolFrame(byte[] bytes)
+    {
+        var result = new byte[bytes.Length - 1];
+        Buffer.BlockCopy(bytes, 1, result, 0, result.Length);
+        return result;
     }
 }

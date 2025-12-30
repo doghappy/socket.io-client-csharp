@@ -230,41 +230,63 @@ public class WebSocketEngineIO3AdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength1 = ([1], [4, 1]);
-    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength9 = (
+    private static readonly (byte[] bytes, byte[] expected) WriteProtocolFrameBytesLength1 = ([1], [4, 1]);
+    private static readonly (byte[] bytes, byte[] expected) WriteProtocolFrameBytesLength9 = (
         [0, 1, 2, 3, 4, 5, 6, 7, 8],
         [4, 0, 1, 2, 3, 4, 5, 6, 7, 8]);
-    private static readonly (byte[] bytes, byte[] expected) FormatBytesMessageLength10 = (
+    private static readonly (byte[] bytes, byte[] expected) WriteProtocolFrameBytesLength10 = (
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         [4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
-    private static IEnumerable<(byte[] bytes, byte[] expected)> FormatBytesMessageStrongTypeCases
+    private static IEnumerable<(byte[] bytes, byte[] expected)> WriteProtocolFrameStrongTypeCases
     {
         get
         {
-            yield return FormatBytesMessageLength1;
-            yield return FormatBytesMessageLength9;
-            yield return FormatBytesMessageLength10;
+            yield return WriteProtocolFrameBytesLength1;
+            yield return WriteProtocolFrameBytesLength9;
+            yield return WriteProtocolFrameBytesLength10;
         }
     }
 
-    public static IEnumerable<object[]> FormatBytesMessageCases =>
-        FormatBytesMessageStrongTypeCases.Select(x => new object[] { x.bytes, x.expected });
+    public static IEnumerable<object[]> WriteProtocolFrameCases =>
+        WriteProtocolFrameStrongTypeCases.Select(x => new object[] { x.bytes, x.expected });
 
     [Theory]
-    [MemberData(nameof(FormatBytesMessageCases))]
-    public void FormatMessage_WhenCalled_AlwaysFormateBytes(byte[] bytes, byte[] expected)
+    [MemberData(nameof(WriteProtocolFrameCases))]
+    public void WriteProtocolFrame_WhenCalled_AlwaysFormateBytes(byte[] bytes, byte[] expected)
     {
-        var message = new ProtocolMessage
-        {
-            Bytes = bytes
-        };
+        var result = _adapter.WriteProtocolFrame(bytes);
 
-        _adapter.FormatBytesMessage(message);
+        result.Should().Equal(expected);
+    }
 
-        message.Should().BeEquivalentTo(new ProtocolMessage
+    private static readonly (byte[] bytes, byte[] expected) ReadProtocolFrameBytesLength1 = ([4, 1], [1]);
+    private static readonly (byte[] bytes, byte[] expected) ReadProtocolFrameBytesLength9 = (
+        [4, 0, 1, 2, 3, 4, 5, 6, 7, 8],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    private static readonly (byte[] bytes, byte[] expected) ReadProtocolFrameBytesLength10 = (
+        [4, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+    private static IEnumerable<(byte[] bytes, byte[] expected)> ReadProtocolFrameStrongTypeCases
+    {
+        get
         {
-            Bytes = expected
-        });
+            yield return ReadProtocolFrameBytesLength1;
+            yield return ReadProtocolFrameBytesLength9;
+            yield return ReadProtocolFrameBytesLength10;
+        }
+    }
+
+    public static IEnumerable<object[]> ReadProtocolFrameCases =>
+        ReadProtocolFrameStrongTypeCases.Select(x => new object[] { x.bytes, x.expected });
+
+    [Theory]
+    [MemberData(nameof(ReadProtocolFrameCases))]
+    public void ReadProtocolFrame_WhenCalled_AlwaysFormateBytes(byte[] bytes, byte[] expected)
+    {
+        var result = _adapter.ReadProtocolFrame(bytes);
+
+        result.Should().Equal(expected);
     }
 }

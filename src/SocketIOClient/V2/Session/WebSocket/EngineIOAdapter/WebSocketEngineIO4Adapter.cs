@@ -38,7 +38,13 @@ public class WebSocketEngineIO4Adapter : EngineIO4Adapter, IWebSocketEngineIOAda
         }, cts.Token).ConfigureAwait(false);
     }
 
-    public void FormatBytesMessage(ProtocolMessage message)
+    public byte[] WriteProtocolFrame(byte[] bytes)
     {
+        return bytes;
+    }
+
+    public byte[] ReadProtocolFrame(byte[] bytes)
+    {
+        return bytes;
     }
 }

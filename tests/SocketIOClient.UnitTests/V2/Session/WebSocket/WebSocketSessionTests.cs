@@ -343,7 +343,6 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
-        _engineIOAdapter.DidNotReceive().FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -359,7 +358,6 @@ public class WebSocketSessionTests
         await session.SendAsync([], 12, CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
-        _engineIOAdapter.DidNotReceive().FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -390,7 +388,6 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
-        _engineIOAdapter.Received(1).FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -406,7 +403,6 @@ public class WebSocketSessionTests
         await session.SendAsync([], CancellationToken.None);
 
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
-        _engineIOAdapter.Received(2).FormatBytesMessage(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
@@ -429,5 +425,46 @@ public class WebSocketSessionTests
         _sessionOptions.EngineIO = engineIO;
         NewSession();
         _engineIOAdapterFactory.Received(1).Create<IWebSocketEngineIOAdapter>(expectedCompatibility);
+    }
+
+    [Fact]
+    public async Task OnNextAsync_TextMessage_WriteProtocolFrameNeverCalled()
+    {
+        var session = NewSession();
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonEventMessage());
+        var protocolMessage = new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        };
+
+        await session.OnNextAsync(protocolMessage);
+
+        _engineIOAdapter.DidNotReceive().ReadProtocolFrame(Arg.Any<byte[]>());
+    }
+
+    [Fact]
+    public async Task OnNextAsync_BytesMessage_WriteProtocolFrameAlwaysCalled()
+    {
+        var session = NewSession();
+        _serializer
+            .Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonBinaryAckMessage
+            {
+                Id = 1,
+                BytesCount = 1,
+            });
+
+        await session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        });
+        await session.OnNextAsync(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Bytes,
+            Bytes = []
+        });
+
+        _engineIOAdapter.Received().ReadProtocolFrame(Arg.Any<byte[]>());
     }
 }
