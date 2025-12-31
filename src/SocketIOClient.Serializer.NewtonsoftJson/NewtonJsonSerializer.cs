@@ -16,7 +16,6 @@ public class NewtonJsonSerializer : BaseJsonSerializer
     }
 
     private readonly JsonSerializerSettings _options;
-    public IEngineIOMessageAdapter EngineIOMessageAdapter { get; set; }
 
     protected override SerializationResult SerializeCore(object[] data)
     {

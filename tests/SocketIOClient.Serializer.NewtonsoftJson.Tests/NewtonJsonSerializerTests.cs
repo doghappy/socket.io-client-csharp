@@ -11,18 +11,35 @@ namespace SocketIOClient.Serializer.NewtonsoftJson.Tests;
 
 public class NewtonJsonSerializerTests
 {
-    public NewtonJsonSerializerTests()
+    private readonly Decapsulator _realDecapsulator = new();
+
+    private NewtonJsonSerializer NewSerializer(IEngineIOMessageAdapter engineIOMessageAdapter)
     {
-        _serializer = new NewtonJsonSerializer(_realDecapsulator, new JsonSerializerSettings());
+        return NewSerializer(engineIOMessageAdapter, new JsonSerializerSettings());
     }
 
-    private readonly NewtonJsonSerializer _serializer;
-    private readonly Decapsulator _realDecapsulator = new();
+    private NewtonJsonSerializer NewSerializer(
+        IEngineIOMessageAdapter engineIOMessageAdapter,
+        JsonSerializerSettings settings)
+    {
+        return NewSerializer(_realDecapsulator, engineIOMessageAdapter, settings);
+    }
+
+    private static NewtonJsonSerializer NewSerializer(
+        IDecapsulable decapsulator,
+        IEngineIOMessageAdapter engineIOMessageAdapter,
+        JsonSerializerSettings settings)
+    {
+        var serializer = new NewtonJsonSerializer(decapsulator, settings);
+        serializer.SetEngineIOMessageAdapter(engineIOMessageAdapter);
+        return serializer;
+    }
 
     [Fact]
     public void Serialize_DataOnlyAndDataIsNull_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize(null))
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize(null))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -30,7 +47,8 @@ public class NewtonJsonSerializerTests
     [Fact]
     public void Serialize_DataOnlyAndDataIsEmpty_ThrowArgumentException()
     {
-        _serializer.Invoking(x => x.Serialize([]))
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize([]))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -206,8 +224,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", "42/test,[\"event\"]")]
     public void Serialize_NamespaceNoBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event"]);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event"]);
         list[0].Text.Should().Be(expected);
     }
 
@@ -217,8 +236,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", "451-/test,[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_NamespaceWithBytes_ContainsNamespaceIfExists(string? ns, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes]);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event", TestFile.NiuB.Bytes]);
         list[0].Text.Should().Be(expected);
     }
 
@@ -325,8 +345,8 @@ public class NewtonJsonSerializerTests
     [MemberData(nameof(DeserializeEio3Cases))]
     public void Deserialize_EngineIO3MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        _serializer.EngineIOMessageAdapter = new NewtonJsonEngineIO3MessageAdapter();
-        var message = _serializer.Deserialize(text);
+        var serializer = NewSerializer(new NewtonJsonEngineIO3MessageAdapter());
+        var message = serializer.Deserialize(text);
         message.Should()
             .BeEquivalentTo(expected,
                 options => options
@@ -357,8 +377,8 @@ public class NewtonJsonSerializerTests
     [MemberData(nameof(DeserializeEio4Cases))]
     public void Deserialize_EngineIO4MessageAdapter_ReturnMessage(string text, IMessage expected)
     {
-        _serializer.EngineIOMessageAdapter = new NewtonJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text);
+        var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text);
         message.Should()
             .BeEquivalentTo(expected,
                 options => options
@@ -409,8 +429,8 @@ public class NewtonJsonSerializerTests
     [MemberData(nameof(DeserializeEventMessage1ItemCases))]
     public void Deserialize_EventMessage_Return1Data(string text, object expected)
     {
-        _serializer.EngineIOMessageAdapter = new NewtonJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IDataMessage;
+        var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text) as IDataMessage;
         var item1 = message!.GetValue(expected.GetType(), 0);
         item1.Should().BeEquivalentTo(expected);
     }
@@ -434,8 +454,8 @@ public class NewtonJsonSerializerTests
     [MemberData(nameof(DeserializeEventMessage2ItemsCases))]
     public void Deserialize_EventMessage_Return2Data(string text, object expected1, object expected2)
     {
-        _serializer.EngineIOMessageAdapter = new NewtonJsonEngineIO4MessageAdapter();
-        var message = _serializer.Deserialize(text) as IEventMessage;
+        var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
+        var message = serializer.Deserialize(text) as IEventMessage;
         var item1 = message!.GetValue(expected1.GetType(), 0);
         item1.Should().BeEquivalentTo(expected1);
 
@@ -487,8 +507,8 @@ public class NewtonJsonSerializerTests
     [MemberData(nameof(DeserializeBinaryEventMessage1ItemCases))]
     public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
-        _serializer.EngineIOMessageAdapter = new NewtonJsonEngineIO4MessageAdapter();
-        var message = (IBinaryAckMessage)_serializer.Deserialize(text);
+        var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
+        var message = (IBinaryAckMessage)serializer.Deserialize(text);
 
         message.Add(bytes);
         var item1 = message.GetValue<TestFile>(0);
@@ -498,7 +518,8 @@ public class NewtonJsonSerializerTests
     [Fact]
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize(null, 1))
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize(null, 1))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -506,7 +527,8 @@ public class NewtonJsonSerializerTests
     [Fact]
     public void SerializeDataAndId_DataIsEmpty_ThrowArgumentNullException()
     {
-        _serializer.Invoking(x => x.Serialize([], 1))
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Invoking(x => x.Serialize([], 1))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -517,8 +539,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", 3, "42/test,3[\"event\"]")]
     public void Serialize_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event"], id);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event"], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -528,8 +551,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", 6, "451-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void Serialize_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.Serialize(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -555,8 +579,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", 3, "43/test,3[1,\"2\"]")]
     public void SerializeAckData_WhenCalled_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.SerializeAckData([1, "2"], id);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.SerializeAckData([1, "2"], id);
         list[0].Text.Should().Be(expected);
     }
 
@@ -566,8 +591,9 @@ public class NewtonJsonSerializerTests
     [InlineData("/test", 6, "461-/test,6[\"event\",{\"_placeholder\":true,\"num\":0}]")]
     public void SerializeAckData_WithBytes_ReturnCorrectText(string? ns, int id, string expected)
     {
-        _serializer.Namespace = ns;
-        var list = _serializer.SerializeAckData(["event", TestFile.NiuB.Bytes], id);
+        var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
+        serializer.Namespace = ns;
+        var list = serializer.SerializeAckData(["event", TestFile.NiuB.Bytes], id);
         list[0].Text.Should().Be(expected);
     }
 }

@@ -29,7 +29,8 @@ public static class ServicesInitializer
             .AddSingleton<IRandom, SystemRandom>()
             .AddSingleton<IDecapsulable, Decapsulator>()
             .AddSingleton<IRetriable, RandomDelayRetryPolicy>()
-            .AddSingleton<IUriConverter, DefaultUriConverter>();
+            .AddSingleton<IUriConverter, DefaultUriConverter>()
+            .AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
 
         services
             .AddEngineIOCompatibility()
@@ -75,7 +76,6 @@ public static class ServicesInitializer
     {
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO3MessageAdapter>(EngineIO.V3);
         services.AddKeyedSingleton<IEngineIOMessageAdapter, SystemJsonEngineIO4MessageAdapter>(EngineIO.V4);
-        services.AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
         services.AddSingleton<ISerializer, SystemJsonSerializer>();
         services.AddSingleton(options);
         return services;

@@ -1,8 +1,11 @@
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SocketIOClient.Core;
 using SocketIOClient.Serializer;
+using SocketIOClient.Serializer.NewtonsoftJson;
 using SocketIOClient.V2;
 using SocketIOClient.V2.Serializer.SystemTextJson;
 using SocketIOClient.V2.Session;
@@ -70,6 +73,26 @@ public class ServicesInitializerTests
         serializer.Should().BeOfType<SystemJsonSerializer>();
         var options = scope.ServiceProvider.GetRequiredService<JsonSerializerOptions>();
         options.PropertyNamingPolicy.Should().Be(JsonNamingPolicy.CamelCase);
+    }
+
+    [Fact]
+    public void AddNewtonsoftJson_CustomOptions_OverrideDefaults()
+    {
+        var services = new ServiceCollection();
+
+        var sp = ServicesInitializer.BuildServiceProvider(services, s =>
+        {
+            s.AddNewtonsoftJson(new JsonSerializerSettings
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            });
+        });
+
+        using var scope = sp.CreateScope();
+        var serializer = scope.ServiceProvider.GetRequiredService<ISerializer>();
+        serializer.Should().BeOfType<NewtonJsonSerializer>();
+        var options = scope.ServiceProvider.GetRequiredService<JsonSerializerSettings>();
+        options.ContractResolver.Should().BeOfType<CamelCasePropertyNamesContractResolver>();
     }
 
     [Theory]
