@@ -2,12 +2,12 @@ using System;
 using SocketIOClient.Core;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.IntegrationTests.V2;
+namespace SocketIOClient.IntegrationTests.V2.SystemJson;
 
-public class WebSocketEngineIO3Tests(ITestOutputHelper output) : SocketIOTests(output)
+public class WebSocketEngineIO3NspTests(ITestOutputHelper output) : SocketIOTests(output)
 {
-    protected override Uri Url => new("http://localhost:11200");
-    protected override Uri TokenUrl => new("http://localhost:11201");
+    protected override Uri Url => new("http://localhost:11200/nsp");
+    protected override Uri TokenUrl => new("http://localhost:11201/nsp");
 
     protected override SocketIOClient.V2.SocketIOOptions Options => new()
     {

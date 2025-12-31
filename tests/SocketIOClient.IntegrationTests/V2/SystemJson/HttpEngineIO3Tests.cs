@@ -2,7 +2,7 @@ using System;
 using SocketIOClient.Core;
 using Xunit.Abstractions;
 
-namespace SocketIOClient.IntegrationTests.V2;
+namespace SocketIOClient.IntegrationTests.V2.SystemJson;
 
 public class HttpEngineIO3Tests(ITestOutputHelper output) : SocketIOTests(output)
 {
