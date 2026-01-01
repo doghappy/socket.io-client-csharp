@@ -15,10 +15,15 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
     private OpenedMessage _openedMessage;
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
 
-    public void StartPolling(OpenedMessage message)
+    public bool StartPolling(OpenedMessage message, bool autoUpgrade)
     {
+        if (autoUpgrade && message.Upgrades.Contains("websocket"))
+        {
+            return false;
+        }
         _openedMessage = message;
         _ = Task.Run(PollingAsync);
+        return true;
     }
 
     private async Task PollingAsync()

@@ -48,9 +48,10 @@ public class HttpEngineIO4Adapter : EngineIO4Adapter, IHttpEngineIOAdapter
         }).ConfigureAwait(false);
     }
 
-    protected override void OnOpenedMessageReceived(OpenedMessage message)
+    protected override bool OnOpenedMessageReceived(OpenedMessage message)
     {
-        _pollingHandler.StartPolling(message);
+        var isStarted = _pollingHandler.StartPolling(message, Options.AutoUpgrade);
+        return !isStarted;
     }
 
     public HttpRequest ToHttpRequest(ICollection<byte[]> bytes)

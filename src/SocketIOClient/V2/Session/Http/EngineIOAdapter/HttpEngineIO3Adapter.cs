@@ -174,8 +174,9 @@ public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
         _logger.LogDebug("[StartPingAsync] HttpAdapter is ready");
     }
 
-    protected override void OnOpenedMessageReceived(OpenedMessage message)
+    protected override bool OnOpenedMessageReceived(OpenedMessage message)
     {
-        _pollingHandler.StartPolling(message);
+        var isStarted = _pollingHandler.StartPolling(message, Options.AutoUpgrade);
+        return !isStarted;
     }
 }

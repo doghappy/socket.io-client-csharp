@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
@@ -27,13 +26,13 @@ public class HttpEngineIO3AdapterTests
         {
             await Task.Delay(50);
         });
-        _logger = output.CreateLogger<HttpEngineIO3Adapter>();
+        var logger = output.CreateLogger<HttpEngineIO3Adapter>();
         _pollingHandler = Substitute.For<IPollingHandler>();
         _adapter = new(
             _stopwatch,
             _httpAdapter,
             _retryPolicy,
-            _logger,
+            logger,
             _pollingHandler)
         {
             Options = new EngineIOAdapterOptions()
@@ -44,7 +43,6 @@ public class HttpEngineIO3AdapterTests
     private readonly IHttpAdapter _httpAdapter;
     private readonly HttpEngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
-    private readonly ILogger<HttpEngineIO3Adapter> _logger;
     private readonly IPollingHandler _pollingHandler;
 
     [Fact]
@@ -196,10 +194,29 @@ public class HttpEngineIO3AdapterTests
     }
 
     [Fact]
-    public async Task ProcessMessageAsync_OpenedMessage_PollingHandlerIsCalled()
+    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingStarted_SendConnectedMessage()
     {
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-        _pollingHandler.Received().StartPolling(Arg.Any<OpenedMessage>());
+        _adapter.Options.Namespace = "/nsp";
+        _pollingHandler
+            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(true);
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingNotStarted_NotSendConnectedMessage()
+    {
+        _adapter.Options.Namespace = "/nsp";
+        _pollingHandler
+            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(false);
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.DidNotReceive()
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -412,6 +429,8 @@ public class HttpEngineIO3AdapterTests
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
     {
         _adapter.Options.Namespace = "/nsp";
+        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()

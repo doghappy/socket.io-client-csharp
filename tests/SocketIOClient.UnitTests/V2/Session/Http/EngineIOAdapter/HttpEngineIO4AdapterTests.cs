@@ -199,6 +199,8 @@ public class HttpEngineIO4AdapterTests
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage(string nsp, string expected)
     {
         _adapter.Options.Namespace = nsp;
+        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
@@ -213,6 +215,8 @@ public class HttpEngineIO4AdapterTests
         _adapter.Options.Namespace = nsp;
         _adapter.Options.Auth = new { user = "admin", password = "123456" };
         _serializer.Serialize(Arg.Any<object>()).Returns("{auth}");
+        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
@@ -228,10 +232,29 @@ public class HttpEngineIO4AdapterTests
     }
 
     [Fact]
-    public async Task ProcessMessageAsync_OpenedMessage_PollingHandlerIsCalled()
+    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingStarted_SendConnectedMessage()
     {
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-        _pollingHandler.Received().StartPolling(Arg.Any<OpenedMessage>());
+        _adapter.Options.Namespace = "/nsp";
+        _pollingHandler
+            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(true);
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingNotStarted_NotSendConnectedMessage()
+    {
+        _adapter.Options.Namespace = "/nsp";
+        _pollingHandler
+            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
+            .Returns(false);
+        await _adapter.ProcessMessageAsync(new OpenedMessage());
+
+        await _httpAdapter.DidNotReceive()
+            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
     private static IEnumerable<IMessage> ProcessMessageAsyncMessageTypeTupleCases()

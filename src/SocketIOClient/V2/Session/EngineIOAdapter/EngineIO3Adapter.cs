@@ -40,8 +40,9 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         return Task.CompletedTask;
     }
 
-    protected virtual void OnOpenedMessageReceived(OpenedMessage message)
+    protected virtual bool OnOpenedMessageReceived(OpenedMessage message)
     {
+        return false;
     }
 
     public async Task<bool> ProcessMessageAsync(IMessage message)
@@ -66,7 +67,11 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         OpenedMessage = (OpenedMessage)message;
-        OnOpenedMessageReceived(OpenedMessage);
+        var shouldSwallow = OnOpenedMessageReceived(OpenedMessage);
+        if (shouldSwallow)
+        {
+            return;
+        }
         if (string.IsNullOrEmpty(Options.Namespace))
         {
             return;

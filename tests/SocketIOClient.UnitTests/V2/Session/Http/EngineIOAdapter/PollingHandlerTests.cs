@@ -1,3 +1,4 @@
+using FluentAssertions;
 using NSubstitute;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Test.Core;
@@ -40,7 +41,7 @@ public class PollingHandlerTests
         _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 50
-        });
+        }, false);
         await Task.Delay(100);
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
@@ -53,7 +54,7 @@ public class PollingHandlerTests
         _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 50
-        });
+        }, false);
 
         await Task.Delay(100);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
@@ -68,7 +69,7 @@ public class PollingHandlerTests
         _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 10,
-        });
+        }, false);
 
         await Task.Delay(100);
 
@@ -82,7 +83,7 @@ public class PollingHandlerTests
     {
         _httpAdapter.IsReadyToSend.Returns(false);
 
-        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 100 });
+        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 100 }, false);
         _ = Task.Run(async () =>
         {
             await Task.Delay(30);
@@ -92,5 +93,50 @@ public class PollingHandlerTests
         await Task.Delay(100);
 
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task StartPolling_ServerNotSupportsWebSocket_StartPollingReturnTrue(bool autoUpgrade)
+    {
+        var isPollingStarted = _pollingHandler.StartPolling(new OpenedMessage
+        {
+            PingInterval = 100,
+            Upgrades = []
+        }, autoUpgrade);
+
+        isPollingStarted.Should().BeTrue();
+
+        await Task.Delay(100);
+        await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task StartPolling_ServerSupportsWebSocketButClientNot_StartPollingReturnTrue()
+    {
+        var isPollingStarted = _pollingHandler.StartPolling(new OpenedMessage
+        {
+            PingInterval = 100,
+            Upgrades = ["websocket"]
+        }, false);
+
+        isPollingStarted.Should().BeTrue();
+        await Task.Delay(100);
+        await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
+    }
+
+    [Fact]
+    public async Task StartPolling_BothServerAndClientSupportWebSocket_NeverStartPollingReturnFalse()
+    {
+        var isPollingStarted = _pollingHandler.StartPolling(new OpenedMessage
+        {
+            PingInterval = 100,
+            Upgrades = ["websocket"]
+        }, true);
+
+        isPollingStarted.Should().BeFalse();
+        await Task.Delay(100);
+        await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 }

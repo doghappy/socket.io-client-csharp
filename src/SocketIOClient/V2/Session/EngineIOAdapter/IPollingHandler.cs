@@ -5,6 +5,6 @@ namespace SocketIOClient.V2.Session.EngineIOAdapter;
 
 public interface IPollingHandler
 {
-    void StartPolling(OpenedMessage message);
+    bool StartPolling(OpenedMessage message, bool autoUpgrade);
     Task WaitHttpAdapterReady();
 }
