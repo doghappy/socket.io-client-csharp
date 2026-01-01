@@ -29,7 +29,7 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
     protected abstract Task SendConnectAsync(string message);
     protected abstract Task SendPongAsync();
 
-    protected virtual void BeforeOpenedMessageHanding(OpenedMessage message)
+    protected virtual void OnOpenedMessageReceived(OpenedMessage message)
     {
     }
 
@@ -51,7 +51,7 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         OpenedMessage = (OpenedMessage)message;
-        BeforeOpenedMessageHanding(OpenedMessage);
+        OnOpenedMessageReceived(OpenedMessage);
 
         var builder = new StringBuilder("40");
         if (!string.IsNullOrEmpty(Options.Namespace))

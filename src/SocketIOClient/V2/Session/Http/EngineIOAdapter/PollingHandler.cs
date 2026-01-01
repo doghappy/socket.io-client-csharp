@@ -15,7 +15,7 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
     private OpenedMessage _openedMessage;
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
 
-    public void OnOpenedMessageReceived(OpenedMessage message)
+    public void StartPolling(OpenedMessage message)
     {
         _openedMessage = message;
         _ = Task.Run(PollingAsync);

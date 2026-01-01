@@ -199,7 +199,7 @@ public class HttpEngineIO3AdapterTests
     public async Task ProcessMessageAsync_OpenedMessage_PollingHandlerIsCalled()
     {
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
-        _pollingHandler.Received().OnOpenedMessageReceived(Arg.Any<OpenedMessage>());
+        _pollingHandler.Received().StartPolling(Arg.Any<OpenedMessage>());
     }
 
     [Fact]

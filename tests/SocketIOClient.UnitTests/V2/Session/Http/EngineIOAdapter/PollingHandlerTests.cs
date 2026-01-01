@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using NSubstitute;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Test.Core;
@@ -20,26 +19,25 @@ public class PollingHandlerTests
         {
             await Task.Delay(20);
         });
-        _logger = output.CreateLogger<PollingHandler>();
-        _pollingHandler = new PollingHandler(_httpAdapter, _retryPolicy, _logger);
+        var logger = output.CreateLogger<PollingHandler>();
+        _pollingHandler = new PollingHandler(_httpAdapter, _retryPolicy, logger);
     }
 
     private readonly PollingHandler _pollingHandler;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IRetriable _retryPolicy;
-    private readonly ILogger<PollingHandler> _logger;
 
     [Fact]
-    public async Task OnOpenedMessageReceived_WhenNeverCalled_NotStartPolling()
+    public async Task StartPolling_WhenNeverCalled_DoNotSendHttpRequest()
     {
         await Task.Delay(100);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
     [Fact]
-    public async Task OnOpenedMessageReceived_WhenCalled_StartPolling()
+    public async Task StartPolling_WhenCalled_SendHttpRequest()
     {
-        _pollingHandler.OnOpenedMessageReceived(new OpenedMessage
+        _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 50
         });
@@ -48,11 +46,11 @@ public class PollingHandlerTests
     }
 
     [Fact]
-    public async Task PollingAsync_FirstDisposeThenOnOpenedMessageReceived_NeverStartPolling()
+    public async Task PollingAsync_FirstDisposeThenStartPolling_NeverStartPolling()
     {
         _pollingHandler.Dispose();
 
-        _pollingHandler.OnOpenedMessageReceived(new OpenedMessage
+        _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 50
         });
@@ -67,7 +65,7 @@ public class PollingHandlerTests
         _retryPolicy.RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>())
             .Returns(_ => Task.FromException(new HttpRequestException()));
 
-        _pollingHandler.OnOpenedMessageReceived(new OpenedMessage
+        _pollingHandler.StartPolling(new OpenedMessage
         {
             PingInterval = 10,
         });
@@ -84,7 +82,7 @@ public class PollingHandlerTests
     {
         _httpAdapter.IsReadyToSend.Returns(false);
 
-        _pollingHandler.OnOpenedMessageReceived(new OpenedMessage { PingInterval = 100 });
+        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 100 });
         _ = Task.Run(async () =>
         {
             await Task.Delay(30);

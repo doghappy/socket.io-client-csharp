@@ -40,7 +40,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         return Task.CompletedTask;
     }
 
-    protected virtual void BeforeOpenedMessageHanding(OpenedMessage message)
+    protected virtual void OnOpenedMessageReceived(OpenedMessage message)
     {
     }
 
@@ -66,7 +66,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         OpenedMessage = (OpenedMessage)message;
-        BeforeOpenedMessageHanding(OpenedMessage);
+        OnOpenedMessageReceived(OpenedMessage);
         if (string.IsNullOrEmpty(Options.Namespace))
         {
             return;
