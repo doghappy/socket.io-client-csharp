@@ -14,4 +14,9 @@ public static class ServiceCollectionExtension
         services.AddSingleton(settings);
         return services;
     }
+
+    public static IServiceCollection AddNewtonsoftJson(this IServiceCollection services)
+    {
+        return services.AddNewtonsoftJson(new JsonSerializerSettings());
+    }
 }

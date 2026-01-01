@@ -21,6 +21,10 @@ public abstract class SocketIOTests(ITestOutputHelper output)
 
     protected const int DefaultDelay = 200;
 
+    protected virtual void ConfigureServices(IServiceCollection services)
+    {
+    }
+
     protected SocketIOClient.V2.SocketIO NewSocketIO(Uri url)
     {
         return new SocketIOClient.V2.SocketIO(url, Options, services =>
@@ -30,6 +34,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
                 builder.SetMinimumLevel(LogLevel.Trace);
                 builder.AddProvider(new XUnitLoggerProvider(output));
             });
+            ConfigureServices(services);
         });
     }
 

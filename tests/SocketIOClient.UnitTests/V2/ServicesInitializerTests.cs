@@ -95,6 +95,21 @@ public class ServicesInitializerTests
         options.ContractResolver.Should().BeOfType<CamelCasePropertyNamesContractResolver>();
     }
 
+    [Fact]
+    public void AddNewtonsoftJson_DefaultOptions_ResolvedIsNewtonJsonSerializer()
+    {
+        var services = new ServiceCollection();
+
+        var sp = ServicesInitializer.BuildServiceProvider(services, s =>
+        {
+            s.AddNewtonsoftJson();
+        });
+
+        using var scope = sp.CreateScope();
+        var serializer = scope.ServiceProvider.GetRequiredService<ISerializer>();
+        serializer.Should().BeOfType<NewtonJsonSerializer>();
+    }
+
     [Theory]
     [InlineData(EngineIOCompatibility.HttpEngineIO3)]
     [InlineData(EngineIOCompatibility.HttpEngineIO4)]
