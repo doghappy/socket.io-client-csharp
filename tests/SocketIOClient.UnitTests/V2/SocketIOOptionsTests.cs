@@ -25,7 +25,11 @@ public class SocketIOOptionsTests
                 ReconnectionDelayMax = 5000,
                 Query = null,
                 Transport = TransportProtocol.Polling,
+                ExtraHeaders = null,
+                Auth = null,
+                AutoUpgrade = true
             });
+        _options.Path.Should().BeNull();
     }
 
     [Theory]

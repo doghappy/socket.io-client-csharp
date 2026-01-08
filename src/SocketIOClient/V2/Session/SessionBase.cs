@@ -89,6 +89,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
             Timeout = newValue.Timeout,
             Namespace = newValue.Namespace,
             Auth = newValue.Auth,
+            AutoUpgrade = newValue.AutoUpgrade,
         };
         EngineIOAdapter.Subscribe(this);
         var engineIOMessageAdapter = _engineIOMessageAdapterFactory.Create(newValue.EngineIO);

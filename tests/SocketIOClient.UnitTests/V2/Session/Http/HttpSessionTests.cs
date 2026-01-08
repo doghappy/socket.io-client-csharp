@@ -568,11 +568,19 @@ public class HttpSessionTests
     [Fact]
     public void Options_SetAnyValue_InitializationMethodsWereCalled()
     {
+        _sessionOptions.Timeout = TimeSpan.FromSeconds(1);
+        _sessionOptions.Namespace = "/test";
+        _sessionOptions.Auth = new { user = "admin", password = "123456" };
+        _sessionOptions.AutoUpgrade = true;
+
         NewSession();
+
         _serializer.Received(1).SetEngineIOMessageAdapter(Arg.Any<IEngineIOMessageAdapter>());
         _engineIOAdapter.Received(1).Subscribe(Arg.Any<HttpSession>());
-        _engineIOAdapter.Options.Timeout.Should().Be(_sessionOptions.Timeout);
-        _engineIOAdapter.Options.Namespace.Should().Be(_sessionOptions.Namespace);
+        _engineIOAdapter.Options.Timeout.Should().Be(TimeSpan.FromSeconds(1));
+        _engineIOAdapter.Options.Namespace.Should().Be("/test");
+        _engineIOAdapter.Options.Auth.Should().BeEquivalentTo(new { user = "admin", password = "123456" });
+        _engineIOAdapter.Options.AutoUpgrade.Should().BeTrue();
         _serializer.Received().Namespace = Arg.Any<string>();
     }
 

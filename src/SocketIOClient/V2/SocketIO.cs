@@ -96,6 +96,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             return;
         }
+
         _connCompletionSource = new TaskCompletionSource<Exception>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         var timeout = (int)(Options.ConnectionTimeout.TotalMilliseconds * 1.02);
@@ -103,6 +104,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             timeout *= Options.ReconnectionAttempts;
         }
+
         using var timeoutCts = new CancellationTokenSource(timeout);
         timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
 
@@ -147,6 +149,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                     _connCompletionSource.SetResult(ex);
                     throw ex;
                 }
+
                 var delay = _random.Next(Options.ReconnectionDelayMax);
                 await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
             }
@@ -183,6 +186,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             _connCompletionSource.SetResult(ex);
             throw;
         }
+
         return session;
     }
 
@@ -202,6 +206,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             ExtraHeaders = Options.ExtraHeaders,
             Namespace = _namespace,
             Auth = Options.Auth,
+            AutoUpgrade = Options.AutoUpgrade,
         };
         _logger.LogDebug("Session created: {Type}", session.GetType().Name);
         return session;
@@ -213,6 +218,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             return;
         }
+
         throw new InvalidOperationException("SocketIO is not connected.");
     }
 
@@ -399,6 +405,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             {
                 _eventHandlers.Remove(eventMessage.Event);
             }
+
             try
             {
                 await eventHandler(ctx).ConfigureAwait(false);
@@ -491,6 +498,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 Debug.WriteLine(e);
             }
         }
+
         Connected = false;
         Id = null;
     }
@@ -521,6 +529,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             throw new ArgumentNullException(nameof(handler));
         }
+
         _onAnyHandlers.Add(handler);
     }
 
@@ -532,6 +541,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             throw new ArgumentNullException(nameof(handler));
         }
+
         _onAnyHandlers.Remove(handler);
     }
 
@@ -541,6 +551,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             throw new ArgumentNullException(nameof(handler));
         }
+
         _onAnyHandlers.Insert(0, handler);
     }
 

@@ -14,4 +14,5 @@ public class SessionOptions
     public EngineIO EngineIO { get; set; }
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
     public object Auth { get; set; }
+    public bool AutoUpgrade { get; set; }
 }

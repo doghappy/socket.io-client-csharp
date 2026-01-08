@@ -39,4 +39,5 @@ public class SocketIOOptions
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
 
     public object Auth { get; set; }
+    public bool AutoUpgrade { get; set; } = true;
 }
