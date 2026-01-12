@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
 using SocketIOClient.Extensions;
 using SocketIOClient.V2.Infrastructure;
@@ -134,9 +135,10 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             var session = NewSessionWithCancellationToken(cancellationToken);
 
             using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+            var timeoutCancellationToken = cts.Token;
             try
             {
-                await TryConnectAsync(session, cts).ConfigureAwait(false);
+                await TryConnectAsync(session, timeoutCancellationToken).ConfigureAwait(false);
                 break;
             }
             catch (Exception e)
@@ -163,11 +165,11 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         OnReconnectAttempt.RunInBackground(this, times);
     }
 
-    private async Task TryConnectAsync(ISession session, CancellationTokenSource cts)
+    private async Task TryConnectAsync(ISession session, CancellationToken cancellationToken)
     {
         session.Subscribe(this);
         _logger.LogDebug("Session connecting...");
-        await session.ConnectAsync(cts.Token).ConfigureAwait(false);
+        await session.ConnectAsync(cancellationToken).ConfigureAwait(false);
         _session = session;
         _sessionCompletionSource.SetResult(true);
         _logger.LogDebug("Session connected");
@@ -356,6 +358,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         switch (message.Type)
         {
+            case MessageType.Opened:
+                await HandleOpenedMessage(message).ConfigureAwait(false);
+                break;
             case MessageType.Ping:
                 OnPing?.Invoke(this, EventArgs.Empty);
                 break;
@@ -382,15 +387,40 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
     }
 
-    private IEventContext ToEventContext(IDataMessage message)
+    private async Task HandleOpenedMessage(IMessage message)
     {
-        return new EventContext(message, this);
+        if (!Options.AutoUpgrade)
+        {
+            return;
+        }
+
+        var openedMessage = (OpenedMessage)message;
+        if (!openedMessage.Upgrades.Contains("websocket"))
+        {
+            return;
+        }
+
+        Options.Transport = TransportProtocol.WebSocket;
+        await UpgradeTransportAsync(openedMessage).ConfigureAwait(false);
+    }
+
+    private async Task UpgradeTransportAsync(OpenedMessage message)
+    {
+        _logger.LogDebug("Transport upgrading...");
+        using var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
+        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
+        var cancellationToken = timeoutCts.Token;
+        var session = NewSessionWithCancellationToken(cancellationToken);
+        session.Options.Sid = message.Sid;
+        _sessionCompletionSource = new TaskCompletionSource<bool>();
+        await TryConnectAsync(session, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Transport upgraded");
     }
 
     private async Task HandleEventMessage(IMessage message)
     {
         var eventMessage = (IEventMessage)message;
-        var ctx = ToEventContext(eventMessage);
+        var ctx = new EventContext(eventMessage, this);
 
         await InvokeOnAnyHandlersAsync(eventMessage, ctx).ConfigureAwait(false);
         await InvokeEventHandlersAsync(eventMessage, ctx).ConfigureAwait(false);

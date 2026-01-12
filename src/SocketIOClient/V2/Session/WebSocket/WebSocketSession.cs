@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,6 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.WebSocket;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.WebSocket;
 
@@ -19,9 +19,13 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
         IEngineIOAdapterFactory engineIOAdapterFactory,
         IWebSocketAdapter wsAdapter,
         ISerializer serializer,
-        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-        IUriConverter uriConverter) : base(logger, engineIOAdapterFactory, wsAdapter, serializer,
-        engineIOMessageAdapterFactory, uriConverter)
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory)
+        : base(
+            logger,
+            engineIOAdapterFactory,
+            wsAdapter,
+            serializer,
+            engineIOMessageAdapterFactory)
     {
         _logger = logger;
         _serializer = serializer;
@@ -82,6 +86,26 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
     protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
     {
         await _wsAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+    }
+
+    protected override string GetServerUriSchema()
+    {
+        var schema = Options.ServerUri.Scheme.ToLowerInvariant();
+        return schema switch
+        {
+            "http" or "ws" => "ws",
+            "https" or "wss" => "wss",
+            _ => throw new ArgumentException("Only supports 'http, https, ws, wss' protocol")
+        };
+    }
+
+    protected override void SetProtocolQueries(NameValueCollection query)
+    {
+        query["transport"] = "websocket";
+        if (!string.IsNullOrEmpty(Options.Sid))
+        {
+            query["sid"] = Options.Sid;
+        }
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)

@@ -14,7 +14,6 @@ using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.WebSocket;
@@ -31,10 +30,6 @@ public class WebSocketSessionTests
             .Returns(_engineIOAdapter);
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
-        _uriConverter = Substitute.For<IUriConverter>();
-        _uriConverter.GetServerUri(true, Arg.Any<Uri>(), Arg.Any<string>(),
-                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
-            .Returns(new Uri("ws://localhost:3000/socket.io"));
         _logger = output.CreateLogger<WebSocketSession>();
     }
 
@@ -45,8 +40,7 @@ public class WebSocketSessionTests
             _engineIOAdapterFactory,
             _wsAdapter,
             _serializer,
-            _engineIOMessageAdapterFactory,
-            _uriConverter)
+            _engineIOMessageAdapterFactory)
         {
             Options = _sessionOptions,
         };
@@ -61,7 +55,6 @@ public class WebSocketSessionTests
 
     private readonly IWebSocketAdapter _wsAdapter;
     private readonly ISerializer _serializer;
-    private readonly IUriConverter _uriConverter;
     private readonly IWebSocketEngineIOAdapter _engineIOAdapter;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly ILogger<WebSocketSession> _logger;
@@ -70,7 +63,7 @@ public class WebSocketSessionTests
     #region ConnectAsync
 
     [Fact]
-    public async Task ConnectAsync_AdapterThrowAnyExceptionsessionThrowConnectionFailedException()
+    public async Task ConnectAsync_AdapterThrowAnyException_ThrowConnectionFailedException()
     {
         _wsAdapter
             .ConnectAsync(Arg.Any<Uri>(), Arg.Any<CancellationToken>())
@@ -85,28 +78,33 @@ public class WebSocketSessionTests
             .WithMessage("Server refused connection");
     }
 
-    [Fact]
-    public async Task ConnectAsync_WhenCalled_PassCorrectArgsToAdapter()
+    [Theory]
+    [InlineData("http://localhost:3000", null, EngineIO.V3, "ws://localhost:3000/socket.io/?EIO=3&transport=websocket")]
+    [InlineData("https://localhost:3000", null, EngineIO.V4, "wss://localhost:3000/socket.io/?EIO=4&transport=websocket")]
+    [InlineData("http://localhost:3000", "", EngineIO.V3, "ws://localhost:3000/socket.io/?EIO=3&transport=websocket")]
+    [InlineData("http://localhost:3000", "/app/", EngineIO.V4, "ws://localhost:3000/app/?EIO=4&transport=websocket")]
+    public async Task ConnectAsync_WhenCalled_PassCorrectArgsToAdapter(string serverUri, string path, EngineIO eio, string expectedUri)
     {
         var session = NewSession();
+        session.Options.ServerUri = new Uri(serverUri);
+        session.Options.Path = path;
+        session.Options.EngineIO = eio;
+
         await session.ConnectAsync(CancellationToken.None);
 
-        var expectedUri = new Uri("ws://localhost:3000/socket.io");
-        await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
+        await _wsAdapter.Received().ConnectAsync(new Uri(expectedUri), CancellationToken.None);
     }
 
     [Fact]
-    public async Task ConnectAsync_UriConverterThrow_PassThroughException()
+    public async Task ConnectAsync_SidIsNotNull_UriContainsSid()
     {
-        _uriConverter.GetServerUri(Arg.Any<bool>(), Arg.Any<Uri>(), Arg.Any<string>(),
-                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
-            .Throws(new Exception("UriConverter Error"));
-
         var session = NewSession();
-        await session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("UriConverter Error");
+        session.Options.Sid = "123456";
+
+        await session.ConnectAsync(CancellationToken.None);
+
+        var expectedUri = new Uri("ws://localhost:3000/socket.io/?EIO=4&transport=websocket&sid=123456");
+        await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
     }
 
     [Fact]

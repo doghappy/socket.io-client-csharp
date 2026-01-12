@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
@@ -9,7 +11,6 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Protocol;
 using SocketIOClient.V2.Session.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session;
 
@@ -20,20 +21,19 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         IEngineIOAdapterFactory engineIOAdapterFactory,
         IProtocolAdapter protocolAdapter,
         ISerializer serializer,
-        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-        IUriConverter uriConverter)
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory)
     {
         _logger = logger;
         _engineIOAdapterFactory = engineIOAdapterFactory;
-        _uriConverter = uriConverter;
         _protocolAdapter = protocolAdapter;
         _serializer = serializer;
         _engineIOMessageAdapterFactory = engineIOMessageAdapterFactory;
         protocolAdapter.Subscribe(this);
     }
 
+    private const string DefaultPath = "/socket.io/";
+
     private readonly ILogger<SessionBase<T>> _logger;
-    private readonly IUriConverter _uriConverter;
     private readonly IProtocolAdapter _protocolAdapter;
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
@@ -121,12 +121,6 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
 
     public async Task ConnectAsync(CancellationToken cancellationToken)
     {
-        var uri = _uriConverter.GetServerUri(
-            Protocol == TransportProtocol.WebSocket,
-            Options.ServerUri,
-            Options.Path,
-            Options.Query,
-            (int)Options.EngineIO);
         if (Options.ExtraHeaders is not null)
         {
             foreach (var header in Options.ExtraHeaders)
@@ -137,6 +131,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
 
         try
         {
+            var uri = GetServerUri();
             await ConnectCoreAsync(uri, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -144,6 +139,44 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
             throw new ConnectionFailedException(e);
         }
     }
+
+    private Uri GetServerUri()
+    {
+        var uriBuilder = GetUriBuilder();
+        var query = GetQueryParameters();
+        uriBuilder.Query = query.ToString();
+        return uriBuilder.Uri;
+    }
+
+    private UriBuilder GetUriBuilder()
+    {
+        return new UriBuilder
+        {
+            Scheme = GetServerUriSchema(),
+            Port = Options.ServerUri.IsDefaultPort ? -1 : Options.ServerUri.Port,
+            Path = string.IsNullOrWhiteSpace(Options.Path) ? DefaultPath : Options.Path
+        };
+    }
+
+    private NameValueCollection GetQueryParameters()
+    {
+        var query = HttpUtility.ParseQueryString(string.Empty);
+        query["EIO"] = ((int)Options.EngineIO).ToString();
+        SetProtocolQueries(query);
+
+        if (Options.Query != null)
+        {
+            foreach (var item in Options.Query)
+            {
+                query[item.Key] = item.Value;
+            }
+        }
+
+        return query;
+    }
+
+    protected abstract string GetServerUriSchema();
+    protected abstract void SetProtocolQueries(NameValueCollection query);
 
     public abstract Task DisconnectAsync(CancellationToken cancellationToken);
 
@@ -197,6 +230,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         {
             return;
         }
+
         await OnNextAsync(message).ConfigureAwait(false);
     }
 

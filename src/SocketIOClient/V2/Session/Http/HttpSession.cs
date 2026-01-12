@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,6 @@ using SocketIOClient.Serializer;
 using SocketIOClient.V2.Protocol.Http;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2.Session.Http;
 
@@ -20,9 +20,13 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
         IEngineIOAdapterFactory engineIOAdapterFactory,
         IHttpAdapter httpAdapter,
         ISerializer serializer,
-        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory,
-        IUriConverter uriConverter) : base(logger, engineIOAdapterFactory, httpAdapter, serializer,
-        engineIOMessageAdapterFactory, uriConverter)
+        IEngineIOMessageAdapterFactory engineIOMessageAdapterFactory)
+        : base(
+            logger,
+            engineIOAdapterFactory,
+            httpAdapter,
+            serializer,
+            engineIOMessageAdapterFactory)
     {
         _logger = logger;
         _httpAdapter = httpAdapter;
@@ -115,6 +119,22 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
             Uri = uri,
         };
         await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
+    }
+
+    protected override string GetServerUriSchema()
+    {
+        var schema = Options.ServerUri.Scheme.ToLowerInvariant();
+        return schema switch
+        {
+            "http" or "ws" => "http",
+            "https" or "wss" => "https",
+            _ => throw new ArgumentException("Only supports 'http, https, ws, wss' protocol")
+        };
+    }
+
+    protected override void SetProtocolQueries(NameValueCollection query)
+    {
+        query["transport"] = "polling";
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)

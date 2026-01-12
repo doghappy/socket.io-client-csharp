@@ -15,4 +15,5 @@ public class SessionOptions
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
     public object Auth { get; set; }
     public bool AutoUpgrade { get; set; }
+    public string Sid { get; set; }
 }

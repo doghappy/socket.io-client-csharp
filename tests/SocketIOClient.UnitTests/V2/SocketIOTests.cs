@@ -21,6 +21,7 @@ public class SocketIOTests
     public SocketIOTests(ITestOutputHelper output)
     {
         _session = Substitute.For<ISession>();
+        _wsSession = Substitute.For<ISession>();
         _random = Substitute.For<IRandom>();
         _output = output;
         _io = NewSocketIO(new Uri("http://localhost:3000"));
@@ -36,6 +37,7 @@ public class SocketIOTests
                 builder.AddProvider(new XUnitLoggerProvider(_output));
             });
             services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.Polling, (_, _) => _session));
+            services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.WebSocket, (_, _) => _wsSession));
             services.Replace(ServiceDescriptor.Singleton(_random));
         })
         {
@@ -49,6 +51,7 @@ public class SocketIOTests
 
     private readonly SocketIOClient.V2.SocketIO _io;
     private readonly ISession _session;
+    private readonly ISession _wsSession;
     private readonly IRandom _random;
     private readonly ITestOutputHelper _output;
 
@@ -793,6 +796,39 @@ public class SocketIOTests
 
         _io.Connected.Should().BeTrue();
         times.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task OnOpenedMessage_WebSocketIsNotAvailable_NotUpgrade()
+    {
+        await ConnectAsync();
+
+        await OnNextAsync(_io, new OpenedMessage
+        {
+            Upgrades = []
+        });
+
+        _io.Options.Transport.Should().Be(TransportProtocol.Polling);
+        await _session.Received().ConnectAsync(Arg.Any<CancellationToken>());
+        await _wsSession.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task OnOpenedMessage_WebSocketIsAvailable_Upgrade()
+    {
+        _ = _io.ConnectAsync();
+        await Task.Delay(20);
+
+        await OnNextAsync(_io, new OpenedMessage
+        {
+            Sid = "123456",
+            Upgrades = ["websocket"]
+        });
+
+        _io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
+        await _session.Received().ConnectAsync(Arg.Any<CancellationToken>());
+        _wsSession.Options.Sid.Should().Be("123456");
+        await _wsSession.Received().ConnectAsync(Arg.Any<CancellationToken>());
     }
 
     #endregion

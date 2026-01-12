@@ -15,7 +15,6 @@ using SocketIOClient.V2.Session.Http;
 using SocketIOClient.V2.Session.Http.EngineIOAdapter;
 using SocketIOClient.V2.Session.WebSocket;
 using SocketIOClient.V2.Session.WebSocket.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 
 namespace SocketIOClient.V2;
 
@@ -29,7 +28,6 @@ public static class ServicesInitializer
             .AddSingleton<IRandom, SystemRandom>()
             .AddSingleton<IDecapsulable, Decapsulator>()
             .AddSingleton<IRetriable, RandomDelayRetryPolicy>()
-            .AddSingleton<IUriConverter, DefaultUriConverter>()
             .AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
 
         services

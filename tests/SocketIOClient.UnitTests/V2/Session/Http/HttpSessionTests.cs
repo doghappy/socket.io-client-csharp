@@ -13,7 +13,6 @@ using SocketIOClient.V2.Session;
 using SocketIOClient.V2.Session.EngineIOAdapter;
 using SocketIOClient.V2.Session.Http;
 using SocketIOClient.V2.Session.Http.EngineIOAdapter;
-using SocketIOClient.V2.UriConverter;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.V2.Session.Http;
@@ -32,10 +31,6 @@ public class HttpSessionTests
         _serializer = Substitute.For<ISerializer>();
         _engineIOMessageAdapterFactory = Substitute.For<IEngineIOMessageAdapterFactory>();
         _logger = output.CreateLogger<HttpSession>();
-        _uriConverter = Substitute.For<IUriConverter>();
-        _uriConverter.GetServerUri(false, Arg.Any<Uri>(), Arg.Any<string>(),
-                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
-            .Returns(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
     }
 
     private HttpSession NewSession()
@@ -45,8 +40,7 @@ public class HttpSessionTests
             _engineIOAdapterFactory,
             _httpAdapter,
             _serializer,
-            _engineIOMessageAdapterFactory,
-            _uriConverter)
+            _engineIOMessageAdapterFactory)
         {
             Options = _sessionOptions
         };
@@ -62,7 +56,6 @@ public class HttpSessionTests
     private readonly IHttpAdapter _httpAdapter;
     private readonly IHttpEngineIOAdapter _engineIOAdapter;
     private readonly ISerializer _serializer;
-    private readonly IUriConverter _uriConverter;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
     private readonly ILogger<HttpSession> _logger;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
@@ -70,7 +63,7 @@ public class HttpSessionTests
     #region ConnectAsync
 
     [Fact]
-    public async Task ConnectAsync_HttpAdapterThrowAnyExceptionsessionThrowConnectionFailedException()
+    public async Task ConnectAsync_HttpAdapterThrowAnyException_ThrowConnectionFailedException()
     {
         _httpAdapter
             .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
@@ -85,8 +78,12 @@ public class HttpSessionTests
             .WithMessage("Server refused connection");
     }
 
-    [Fact]
-    public async Task ConnectAsync_WhenCalled_PassCorrectHttpRequestToAdapter()
+    [Theory]
+    [InlineData("http://localhost:3000", null, EngineIO.V3, "http://localhost:3000/socket.io/?EIO=3&transport=polling")]
+    [InlineData("https://localhost:3000", null, EngineIO.V4, "https://localhost:3000/socket.io/?EIO=4&transport=polling")]
+    [InlineData("http://localhost:3000", "", EngineIO.V3, "http://localhost:3000/socket.io/?EIO=3&transport=polling")]
+    [InlineData("http://localhost:3000", "/app/", EngineIO.V4, "http://localhost:3000/app/?EIO=4&transport=polling")]
+    public async Task ConnectAsync_WhenCalled_PassCorrectHttpRequestToAdapter(string serverUri, string path, EngineIO eio, string expectedUri)
     {
         var requests = new List<HttpRequest>();
         _httpAdapter
@@ -94,30 +91,19 @@ public class HttpSessionTests
             .Do(callInfo => { requests.Add(callInfo.Arg<HttpRequest>()); });
 
         var session = NewSession();
+        session.Options.ServerUri = new Uri(serverUri);
+        session.Options.Path = path;
+        session.Options.EngineIO = eio;
         await session.ConnectAsync(CancellationToken.None);
 
         requests.Should()
             .BeEquivalentTo([
                 new HttpRequest
                 {
-                    Uri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"),
+                    Uri = new Uri(expectedUri),
                     Method = RequestMethod.Get,
                 },
             ]);
-    }
-
-    [Fact]
-    public async Task ConnectAsync_UriConverterThrow_PassThroughException()
-    {
-        _uriConverter.GetServerUri(Arg.Any<bool>(), Arg.Any<Uri>(), Arg.Any<string>(),
-                Arg.Any<IEnumerable<KeyValuePair<string, string>>>(), Arg.Any<int>())
-            .Throws(new Exception("UriConverter Error"));
-
-        var session = NewSession();
-        await session.Invoking(async x => await x.ConnectAsync(CancellationToken.None))
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("UriConverter Error");
     }
 
     [Fact]
@@ -147,6 +133,19 @@ public class HttpSessionTests
         var session = NewSession();
         await session.ConnectAsync(CancellationToken.None);
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
+    }
+
+    [Fact]
+    public async Task ConnectAsync_EvenSidIsNotNull_SidIsIgnored()
+    {
+        var session = NewSession();
+        session.Options.Sid = "123456";
+
+        await session.ConnectAsync(CancellationToken.None);
+
+        var expectedUri = new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling");
+        await _httpAdapter.Received()
+            .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == expectedUri), Arg.Any<CancellationToken>());
     }
 
     [Fact]
