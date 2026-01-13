@@ -96,7 +96,7 @@ public class WebSocketSessionTests
     }
 
     [Fact]
-    public async Task ConnectAsync_SidIsNotNull_UriContainsSid()
+    public async Task ConnectAsync_SidIsNotNull_SendUpgradeMessageToServer()
     {
         var session = NewSession();
         session.Options.Sid = "123456";
@@ -105,6 +105,8 @@ public class WebSocketSessionTests
 
         var expectedUri = new Uri("ws://localhost:3000/socket.io/?EIO=4&transport=websocket&sid=123456");
         await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
+        await _wsAdapter.Received()
+            .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "5"), CancellationToken.None);
     }
 
     [Fact]

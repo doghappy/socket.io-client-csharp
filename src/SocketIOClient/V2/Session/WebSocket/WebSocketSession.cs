@@ -86,6 +86,12 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
     protected override async Task ConnectCoreAsync(Uri uri, CancellationToken cancellationToken)
     {
         await _wsAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+        if (!string.IsNullOrEmpty(Options.Sid))
+        {
+            var message = new ProtocolMessage { Text = "5" };
+            _logger.LogDebug("[WebSocket⬆] {message}", message.Text);
+            await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     protected override string GetServerUriSchema()
