@@ -199,8 +199,6 @@ public class HttpEngineIO4AdapterTests
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage(string nsp, string expected)
     {
         _adapter.Options.Namespace = nsp;
-        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
@@ -215,8 +213,6 @@ public class HttpEngineIO4AdapterTests
         _adapter.Options.Namespace = nsp;
         _adapter.Options.Auth = new { user = "admin", password = "123456" };
         _serializer.Serialize(Arg.Any<object>()).Returns("{auth}");
-        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
@@ -231,30 +227,17 @@ public class HttpEngineIO4AdapterTests
             .BeEmpty();
     }
 
-    [Fact]
-    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingStarted_SendConnectedMessage()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("/nsp")]
+    public async Task ProcessMessageAsync_OpenedMessage_StartPolling(string? nsp)
     {
-        _adapter.Options.Namespace = "/nsp";
-        _pollingHandler
-            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(true);
-        await _adapter.ProcessMessageAsync(new OpenedMessage());
+        _adapter.Options.Namespace = nsp;
+        var message = new OpenedMessage();
+        await _adapter.ProcessMessageAsync(message);
 
-        await _httpAdapter.Received()
-            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingNotStarted_NotSendConnectedMessage()
-    {
-        _adapter.Options.Namespace = "/nsp";
-        _pollingHandler
-            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(false);
-        await _adapter.ProcessMessageAsync(new OpenedMessage());
-
-        await _httpAdapter.DidNotReceive()
-            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+        _pollingHandler.Received().StartPolling(message, false);
     }
 
     private static IEnumerable<IMessage> ProcessMessageAsyncMessageTypeTupleCases()

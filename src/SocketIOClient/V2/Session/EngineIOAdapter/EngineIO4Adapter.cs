@@ -29,9 +29,8 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
     protected abstract Task SendConnectAsync(string message);
     protected abstract Task SendPongAsync();
 
-    protected virtual bool OnOpenedMessageReceived(OpenedMessage message)
+    protected virtual void OnOpenedMessageReceived(OpenedMessage message)
     {
-        return false;
     }
 
     public async Task<bool> ProcessMessageAsync(IMessage message)
@@ -52,11 +51,7 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
     private async Task HandleOpenedMessageAsync(IMessage message)
     {
         OpenedMessage = (OpenedMessage)message;
-        var shouldSwallow = OnOpenedMessageReceived(OpenedMessage);
-        if (shouldSwallow)
-        {
-            return;
-        }
+        OnOpenedMessageReceived(OpenedMessage);
 
         var builder = new StringBuilder("40");
         if (!string.IsNullOrEmpty(Options.Namespace))

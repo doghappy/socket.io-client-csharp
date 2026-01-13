@@ -193,30 +193,17 @@ public class HttpEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact]
-    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingStarted_SendConnectedMessage()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("/nsp")]
+    public async Task ProcessMessageAsync_OpenedMessage_StartPolling(string? nsp)
     {
-        _adapter.Options.Namespace = "/nsp";
-        _pollingHandler
-            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(true);
-        await _adapter.ProcessMessageAsync(new OpenedMessage());
+        _adapter.Options.Namespace = nsp;
+        var message = new OpenedMessage();
+        await _adapter.ProcessMessageAsync(message);
 
-        await _httpAdapter.Received()
-            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task ProcessMessageAsync_NspOpenedMessageAndPollingNotStarted_NotSendConnectedMessage()
-    {
-        _adapter.Options.Namespace = "/nsp";
-        _pollingHandler
-            .StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(false);
-        await _adapter.ProcessMessageAsync(new OpenedMessage());
-
-        await _httpAdapter.DidNotReceive()
-            .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
+        _pollingHandler.Received().StartPolling(message, false);
     }
 
     [Fact]
@@ -429,8 +416,6 @@ public class HttpEngineIO3AdapterTests
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
     {
         _adapter.Options.Namespace = "/nsp";
-        _pollingHandler.StartPolling(Arg.Any<OpenedMessage>(), Arg.Any<bool>())
-            .Returns(true);
         await _adapter.ProcessMessageAsync(new OpenedMessage());
 
         await _httpAdapter.Received()
