@@ -86,15 +86,11 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
             if (message.Type == ProtocolMessageType.Text)
             {
                 var request = EngineIOAdapter.ToHttpRequest(message.Text);
-#if DEBUG
                 _logger.LogDebug("[Polling⬆] {text}", request.BodyText);
-#endif
                 await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 continue;
             }
-#if DEBUG
             _logger.LogDebug("[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes.Length);
-#endif
             bytes.Add(message.Bytes);
         }
 

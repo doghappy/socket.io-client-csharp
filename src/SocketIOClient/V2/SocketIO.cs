@@ -12,7 +12,6 @@ using SocketIOClient.Extensions;
 using SocketIOClient.V2.Infrastructure;
 using SocketIOClient.V2.Observers;
 using SocketIOClient.V2.Session;
-using IHttpClient = SocketIOClient.Transport.Http.IHttpClient;
 
 namespace SocketIOClient.V2;
 
@@ -36,8 +35,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     }
 
     private readonly ServiceCollection _services = [];
-
-    public IHttpClient HttpClient { get; set; }
 
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SocketIO> _logger;

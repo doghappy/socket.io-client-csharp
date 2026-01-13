@@ -38,10 +38,8 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     {
         req.Uri ??= NewUri();
         var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
-#if DEBUG
         var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
         logger.LogDebug("[Polling⬆] {Body}", body);
-#endif
         _ = HandleResponseAsync(response).ConfigureAwait(false);
     }
 
