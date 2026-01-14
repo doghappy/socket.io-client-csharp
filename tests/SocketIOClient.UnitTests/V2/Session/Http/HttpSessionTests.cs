@@ -580,7 +580,7 @@ public class HttpSessionTests
         _engineIOAdapter.Options.Namespace.Should().Be("/test");
         _engineIOAdapter.Options.Auth.Should().BeEquivalentTo(new { user = "admin", password = "123456" });
         _engineIOAdapter.Options.AutoUpgrade.Should().BeTrue();
-        _serializer.Received().Namespace = Arg.Any<string>();
+        _serializer.Namespace.Should().Be("/test");
     }
 
     [Theory]
