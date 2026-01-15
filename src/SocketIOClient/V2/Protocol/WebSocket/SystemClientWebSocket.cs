@@ -2,12 +2,23 @@ using System;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace SocketIOClient.V2.Protocol.WebSocket;
 
 public class SystemClientWebSocket : IWebSocketClient
 {
-    private readonly ClientWebSocket _ws = new();
+    public SystemClientWebSocket(ILogger<SystemClientWebSocket> logger, WebSocketOptions options)
+    {
+        _ws = new ClientWebSocket();
+        if (options.Proxy != null)
+        {
+            _ws.Options.Proxy = options.Proxy;
+            logger.LogInformation("WebSocket proxy is enabled");
+        }
+    }
+
+    private readonly ClientWebSocket _ws;
 
     public WebSocketState State => _ws.State;
 

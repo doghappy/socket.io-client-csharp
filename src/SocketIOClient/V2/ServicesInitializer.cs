@@ -58,6 +58,7 @@ public static class ServicesInitializer
         services.AddScoped<IWebSocketAdapter, WebSocketAdapter>();
         services.AddScoped<IWebSocketClientAdapter, SystemClientWebSocketAdapter>();
         services.AddKeyedScoped<ISession, WebSocketSession>(TransportProtocol.WebSocket);
+        services.AddSingleton(new WebSocketOptions());
         return services;
     }
 
