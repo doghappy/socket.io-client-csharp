@@ -15,7 +15,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     private static async Task<ProtocolMessage> GetMessageAsync(IHttpResponse response)
     {
         var message = new ProtocolMessage();
-        if (response.MediaType.Equals(MediaTypeNames.Application.Octet, StringComparison.InvariantCultureIgnoreCase))
+        if (MediaTypeNames.Application.Octet.Equals(response.MediaType, StringComparison.InvariantCultureIgnoreCase))
         {
             message.Type = ProtocolMessageType.Bytes;
             message.Bytes = await response.ReadAsByteArrayAsync().ConfigureAwait(false);

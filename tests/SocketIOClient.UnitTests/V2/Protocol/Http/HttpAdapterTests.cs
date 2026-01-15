@@ -97,12 +97,18 @@ public class HttpAdapterTests
         _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
     }
 
-    [Fact]
-    public async Task SendAsync_ResponseIsText_ObserverCanGetSameText()
+    [Theory]
+    [InlineData("")]
+    [InlineData("test")]
+    [InlineData("text/plain")]
+    [InlineData("text/html")]
+    [InlineData(null)]
+    public async Task SendAsync_ResponseIsText_ObserverCanGetSameText(string mediaType)
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
         _httpAdapter.Subscribe(observer);
         var httpResponse = Substitute.For<IHttpResponse>();
+        httpResponse.MediaType.Returns(mediaType);
         httpResponse.ReadAsStringAsync().Returns("Hello World");
         _httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
             .Returns(httpResponse);
