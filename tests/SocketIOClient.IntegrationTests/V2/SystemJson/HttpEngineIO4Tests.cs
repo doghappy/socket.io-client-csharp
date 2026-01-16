@@ -11,7 +11,7 @@ namespace SocketIOClient.IntegrationTests.V2.SystemJson;
 
 public class HttpEngineIO4Tests(ITestOutputHelper output) : SocketIOEngineIO4Tests(output)
 {
-    protected override Uri Url => new("http://localhost.charlesproxy.com:11410");
+    protected override Uri Url => new("http://localhost:11410");
     protected override Uri TokenUrl => new("http://localhost:11411");
 
     protected override SocketIOClient.V2.SocketIOOptions Options => new()
@@ -25,7 +25,7 @@ public class HttpEngineIO4Tests(ITestOutputHelper output) : SocketIOEngineIO4Tes
     [Fact]
     public async Task ConnectAsync_WebSocketIsAvailable_UpgradeToWebSocket()
     {
-        var uri = new Uri("http://localhost.charlesproxy.com:11400");
+        var uri = new Uri("http://localhost:11400");
         var io = NewSocketIO(uri);
 
         await io.ConnectAsync();

@@ -128,9 +128,12 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
         };
     }
 
-    protected override void SetProtocolQueries(NameValueCollection query)
+    protected override NameValueCollection GetProtocolQueries()
     {
-        query["transport"] = "polling";
+        return new NameValueCollection
+        {
+            ["transport"] = "polling"
+        };
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)

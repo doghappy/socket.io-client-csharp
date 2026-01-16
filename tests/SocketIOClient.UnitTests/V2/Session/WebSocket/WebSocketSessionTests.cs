@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Net.WebSockets;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -49,7 +50,7 @@ public class WebSocketSessionTests
     private readonly SessionOptions _sessionOptions = new()
     {
         ServerUri = new Uri("http://localhost:3000"),
-        Query = new List<KeyValuePair<string, string>>(),
+        Query = new NameValueCollection(),
         EngineIO = EngineIO.V4,
     };
 
@@ -107,6 +108,24 @@ public class WebSocketSessionTests
         await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
         await _wsAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "5"), CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ConnectAsync_OptionQueryHasAnyItems_AppendOptionQueryToUrl()
+    {
+        var session = NewSession();
+        session.Options.Query = new NameValueCollection
+        {
+            { "test", "123" },
+            { "test", "456" },
+            { "🐮", "🍺" },
+            { "你", "好" }
+        };
+
+        await session.ConnectAsync(CancellationToken.None);
+
+        var expectedUri = new Uri("ws://localhost:3000/socket.io/?EIO=4&transport=websocket&test=123%2C456&%F0%9F%90%AE=%F0%9F%8D%BA&%E4%BD%A0=%E5%A5%BD");
+        await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -275,10 +276,10 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         var errors = new List<string>();
         var io = NewSocketIO(TokenUrl);
         io.Options.Reconnection = false;
-        io.Options.Query =
-        [
-            new KeyValuePair<string, string>("token", "invalid_token"),
-        ];
+        io.Options.Query = new NameValueCollection
+        {
+            { "token", "invalid_token" }
+        };
         io.OnError += (_, err) => errors.Add(err);
 
         await io
@@ -296,10 +297,10 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     {
         var io = NewSocketIO(TokenUrl);
         io.Options.Reconnection = false;
-        io.Options.Query =
-        [
-            new KeyValuePair<string, string>("token", "abc"),
-        ];
+        io.Options.Query = new NameValueCollection
+        {
+            { "token", "abc" }
+        };
 
         await io.ConnectAsync(CancellationToken.None);
 

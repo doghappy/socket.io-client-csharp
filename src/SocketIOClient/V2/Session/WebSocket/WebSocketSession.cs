@@ -105,13 +105,17 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
         };
     }
 
-    protected override void SetProtocolQueries(NameValueCollection query)
+    protected override NameValueCollection GetProtocolQueries()
     {
-        query["transport"] = "websocket";
+        var query = new NameValueCollection
+        {
+            ["transport"] = "websocket"
+        };
         if (!string.IsNullOrEmpty(Options.Sid))
         {
             query["sid"] = Options.Sid;
         }
+        return query;
     }
 
     public override async Task DisconnectAsync(CancellationToken cancellationToken)

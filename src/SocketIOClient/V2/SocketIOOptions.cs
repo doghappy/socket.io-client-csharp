@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using SocketIOClient.Core;
 
 namespace SocketIOClient.V2;
@@ -35,7 +36,7 @@ public class SocketIOOptions
         set => _path = $"/{value.Trim('/')}/";
     }
 
-    public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
+    public NameValueCollection Query { get; set; }
     public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
 
     public object Auth { get; set; }

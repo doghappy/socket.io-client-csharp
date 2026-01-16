@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Diagnostics;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -304,7 +305,10 @@ public class SocketIOTests
     {
         _io.Options.Path = "/chat";
         _io.Options.ConnectionTimeout = TimeSpan.FromSeconds(3);
-        _io.Options.Query = [new KeyValuePair<string, string>("id", "abc"),];
+        _io.Options.Query = new NameValueCollection
+        {
+            { "id", "abc" }
+        };
         _io.Options.ExtraHeaders = new Dictionary<string, string>
         {
             ["User-Agent"] = "Hello World!",
@@ -319,7 +323,10 @@ public class SocketIOTests
             {
                 ServerUri = new Uri("http://localhost:3000"),
                 Path = "/chat/",
-                Query = [new KeyValuePair<string, string>("id", "abc")],
+                Query = new NameValueCollection
+                {
+                    { "id", "abc" }
+                },
                 ExtraHeaders = new Dictionary<string, string>
                 {
                     ["User-Agent"] = "Hello World!",

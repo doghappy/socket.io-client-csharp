@@ -22,6 +22,7 @@ public class ProxyTests(ITestOutputHelper output)
         Transport = TransportProtocol.Polling,
         Reconnection = false,
         ConnectionTimeout = TimeSpan.FromSeconds(5),
+        AutoUpgrade = false,
     };
 
     private SocketIOClient.V2.SocketIO NewSocketIO(Uri url, Action<IServiceCollection> configure)
@@ -69,7 +70,6 @@ public class ProxyTests(ITestOutputHelper output)
     public async Task Proxy_WebSocketProxy_AlwaysPass()
     {
         _options.Transport = TransportProtocol.WebSocket;
-        _options.ConnectionTimeout = TimeSpan.FromSeconds(6);
 
         await using var proxy = new ProxyServer(output);
         using var cts = new CancellationTokenSource();

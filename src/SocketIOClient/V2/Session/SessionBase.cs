@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Core;
 using SocketIOClient.Core.Messages;
@@ -143,8 +144,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
     private Uri GetServerUri()
     {
         var uriBuilder = GetUriBuilder();
-        var query = GetQueryParameters();
-        uriBuilder.Query = query.ToString();
+        uriBuilder.Query = GetQueryString();
         return uriBuilder.Uri;
     }
 
@@ -158,25 +158,33 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         };
     }
 
-    private NameValueCollection GetQueryParameters()
+    private string GetQueryString()
     {
-        var query = HttpUtility.ParseQueryString(string.Empty);
-        query["EIO"] = ((int)Options.EngineIO).ToString();
-        SetProtocolQueries(query);
+        var builder = new StringBuilder();
+        builder.Append("EIO=").Append((int)Options.EngineIO);
+
+        var query = GetProtocolQueries();
+        foreach (string key in query)
+        {
+            builder.Append('&').Append(key).Append('=').Append(query[key]);
+        }
 
         if (Options.Query != null)
         {
-            foreach (var item in Options.Query)
+            foreach (string key in Options.Query)
             {
-                query[item.Key] = item.Value;
+                builder.Append('&')
+                    .Append(WebUtility.UrlEncode(key))
+                    .Append('=')
+                    .Append(WebUtility.UrlEncode(Options.Query[key]));
             }
         }
 
-        return query;
+        return builder.ToString();
     }
 
     protected abstract string GetServerUriSchema();
-    protected abstract void SetProtocolQueries(NameValueCollection query);
+    protected abstract NameValueCollection GetProtocolQueries();
 
     public abstract Task DisconnectAsync(CancellationToken cancellationToken);
 
