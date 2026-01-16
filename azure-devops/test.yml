@@ -27,31 +27,25 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
-              # arguments: -- xunit.MaxParallelThreads=1
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.SystemTextJson.Tests
+            displayName: SocketIOClient.Serializer.NewtonsoftJson.Tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.SystemTextJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.NewtonsoftJson.Tests
               command: test
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.NewtonsoftJson.Tests
+            displayName: SocketIOClient.Serializer.Tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.NewtonsoftJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.Tests
               command: test
+      - job:
+        displayName: Integration tests
+        steps:
+          - template: templates/socket.io-tpl.yml
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.MessagePack.Tests
+            displayName: Integration tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.MessagePack.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
-#      - job:
-#        displayName: Integration tests
-#        steps:
-#          - template: templates/socket.io-tpl.yml
-#          - task: DotNetCoreCLI@2
-#            displayName: Integration tests
-#            inputs:
-#              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
-#              command: test
 #  - stage: NET_Framework_Tests
 #    dependsOn: CheckFormat
 #    pool:

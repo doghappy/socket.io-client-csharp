@@ -1,9 +1,0 @@
-using SocketIOClient.Core;
-using SocketIOClient.V2.Observers;
-
-namespace SocketIOClient.V2.Protocol;
-
-public interface IProtocolAdapter : IMyObservable<ProtocolMessage>, IMyObserver<ProtocolMessage>
-{
-    void SetDefaultHeader(string name, string value);
-}

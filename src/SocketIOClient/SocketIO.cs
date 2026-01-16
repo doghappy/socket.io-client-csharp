@@ -1,841 +1,591 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
-using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIO.Core;
-using SocketIO.Serializer.Core;
-using SocketIO.Serializer.SystemTextJson;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SocketIOClient.Core;
+using SocketIOClient.Core.Messages;
+using SocketIOClient.Exceptions;
 using SocketIOClient.Extensions;
-using SocketIOClient.Transport;
-using SocketIOClient.Transport.Http;
-using SocketIOClient.Transport.WebSockets;
+using SocketIOClient.Infrastructure;
+using SocketIOClient.Observers;
+using SocketIOClient.Session;
 
-namespace SocketIOClient
+namespace SocketIOClient;
+
+public class SocketIO : ISocketIO, IInternalSocketIO
 {
-    /// <summary>
-    /// socket.io client class
-    /// </summary>
-    public class SocketIO : IDisposable
+    public SocketIO(Uri uri, SocketIOOptions options, Action<IServiceCollection> configure = null)
     {
-        /// <summary>
-        /// Create SocketIO object with default options
-        /// </summary>
-        /// <param name="uri"></param>
-        public SocketIO(string uri) : this(new Uri(uri))
-        {
-        }
+        ServerUri = uri;
+        Options = options;
+        _serviceProvider = ServicesInitializer.BuildServiceProvider(_services, configure);
+        _logger = _serviceProvider.GetRequiredService<ILogger<SocketIO>>();
+        _random = _serviceProvider.GetRequiredService<IRandom>();
+    }
 
-        /// <summary>
-        /// Create SocketIO object with options
-        /// </summary>
-        /// <param name="uri"></param>
-        public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
-        {
-        }
+    public SocketIO(Uri uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
+    {
+    }
 
-        /// <summary>
-        /// Create SocketIO object with options
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="options"></param>
-        public SocketIO(string uri, SocketIOOptions options) : this(new Uri(uri), options)
-        {
-        }
+    public SocketIO(Uri uri) : this(uri, new SocketIOOptions())
+    {
+    }
 
-        /// <summary>
-        /// Create SocketIO object with options
-        /// </summary>
-        /// <param name="uri"></param>
-        /// <param name="options"></param>
-        public SocketIO(Uri uri, SocketIOOptions options)
-        {
-            ServerUri = uri ?? throw new ArgumentNullException("uri");
-            Options = options ?? throw new ArgumentNullException("options");
-            Initialize();
-        }
+    private readonly ServiceCollection _services = [];
 
-        Uri _serverUri;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<SocketIO> _logger;
+    private readonly IRandom _random;
 
-        private Uri ServerUri
+    private ISession _session;
+    private IServiceScope _scope;
+    public int PacketId { get; private set; }
+    public bool Connected { get; private set; }
+    public string Id { get; private set; }
+
+    private string _namespace;
+
+    private Uri _serverUri;
+
+    private Uri ServerUri
+    {
+        get => _serverUri;
+        set
         {
-            get => _serverUri;
-            set
+            if (_serverUri == value) return;
+            _serverUri = value;
+            if (value != null && value.AbsolutePath != "/")
             {
-                if (_serverUri != value)
-                {
-                    _serverUri = value;
-                    if (value != null && value.AbsolutePath != "/")
-                    {
-                        Namespace = value.AbsolutePath;
-                    }
-                }
+                _namespace = value.AbsolutePath.TrimEnd('/');
             }
         }
-
-        /// <summary>
-        /// An unique identifier for the socket session. Set after the connect event is triggered, and updated after the reconnect event.
-        /// </summary>
-        public string Id { get; private set; }
-
-        public string Namespace { get; private set; }
-
-        /// <summary>
-        /// Whether or not the socket is connected to the server.
-        /// </summary>
-        public bool Connected { get; private set; }
-
-        int _attempts;
-
-        public SocketIOOptions Options { get; }
-
-        public ISerializer Serializer { get; set; }
-        private ITransport Transport { get; set; }
-        public IHttpClient HttpClient { get; set; }
-
-        public Func<IClientWebSocket> ClientWebSocketProvider { get; set; }
-
-        List<Type> _expectedExceptions;
-
-        int _packetId;
-        Exception _backgroundException;
-        Dictionary<int, Action<SocketIOResponse>> _ackActionHandlers;
-        internal Dictionary<int, Action<SocketIOResponse>> AckActionHandlers => _ackActionHandlers;
-        Dictionary<int, Func<SocketIOResponse, Task>> _ackFuncHandlers;
-        internal Dictionary<int, Func<SocketIOResponse, Task>> AckFuncHandlers => _ackFuncHandlers;
-        List<OnAnyHandler> _onAnyHandlers;
-        private Dictionary<string, Action<SocketIOResponse>> _eventActionHandlers;
-        private Dictionary<string, Func<SocketIOResponse, Task>> _eventFuncHandlers;
-        double _reconnectionDelay;
-        readonly SemaphoreSlim _packetIdLock = new(1, 1);
-        private TaskCompletionSource<bool> _openedCompletionSource = new();
-        private TaskCompletionSource<bool> _transportCompletionSource = new();
-        private TaskCompletionSource<Exception> _connBackgroundSource = new();
-
-        public event EventHandler OnConnected;
-
-        //public event EventHandler<string> OnConnectError;
-        //public event EventHandler<string> OnConnectTimeout;
-        public event EventHandler<string> OnError;
-        public event EventHandler<string> OnDisconnected;
-
-        /// <summary>
-        /// Fired upon a successful reconnection.
-        /// </summary>
-        public event EventHandler<int> OnReconnected;
-
-        /// <summary>
-        /// Fired upon an attempt to reconnect.
-        /// </summary>
-        public event EventHandler<int> OnReconnectAttempt;
-
-        /// <summary>
-        /// Fired upon a reconnection attempt error.
-        /// </summary>
-        public event EventHandler<Exception> OnReconnectError;
-
-        /// <summary>
-        /// Fired when couldn’t reconnect within reconnectionAttempts
-        /// </summary>
-        public event EventHandler OnReconnectFailed;
-
-        public event EventHandler OnPing;
-        public event EventHandler<TimeSpan> OnPong;
+    }
 
 
-        private void InitializeStatus()
+    private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
+    private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
+    private readonly Dictionary<string, Func<IEventContext, Task>> _eventHandlers = new();
+    private readonly HashSet<string> _onceEvents = [];
+    private readonly List<Func<string, IEventContext, Task>> _onAnyHandlers = [];
+
+    // private TaskCompletionSource<bool> _openedCompletionSource = new();
+    private TaskCompletionSource<bool> _sessionCompletionSource;
+    private TaskCompletionSource<Exception> _connCompletionSource;
+    public SocketIOOptions Options { get; }
+    public event EventHandler<Exception> OnReconnectError;
+    public event EventHandler OnPing;
+    public event EventHandler<TimeSpan> OnPong;
+    public event EventHandler OnConnected;
+    public event EventHandler<string> OnDisconnected;
+    public event EventHandler<string> OnError;
+    public event EventHandler<int> OnReconnectAttempt;
+
+    public async Task ConnectAsync()
+    {
+        await ConnectAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task ConnectAsync(CancellationToken cancellationToken)
+    {
+        if (Connected)
         {
-            Id = null;
-            Connected = false;
-            _backgroundException = null;
-            _reconnectionDelay = Options.ReconnectionDelay;
-            Transport?.Dispose();
+            return;
         }
 
-        private void Initialize()
+        _connCompletionSource = new TaskCompletionSource<Exception>();
+        _sessionCompletionSource = new TaskCompletionSource<bool>();
+        var timeout = (int)(Options.ConnectionTimeout.TotalMilliseconds * 1.02);
+        if (Options.Reconnection)
         {
-            _packetId = -1;
-            _ackActionHandlers = new Dictionary<int, Action<SocketIOResponse>>();
-            _ackFuncHandlers = new Dictionary<int, Func<SocketIOResponse, Task>>();
-            _eventActionHandlers = new Dictionary<string, Action<SocketIOResponse>>();
-            _eventFuncHandlers = new Dictionary<string, Func<SocketIOResponse, Task>>();
-            _onAnyHandlers = new List<OnAnyHandler>();
-
-            Serializer = new SystemTextJsonSerializer();
-
-            HttpClient = new DefaultHttpClient(Options.RemoteCertificateValidationCallback);
-            ClientWebSocketProvider = () =>
-            {
-                var ws = new DefaultClientWebSocket(Options.RemoteCertificateValidationCallback);
-                return ws;
-            };
-            _expectedExceptions = new List<Type>
-            {
-                typeof(TimeoutException),
-                typeof(WebSocketException),
-                typeof(HttpRequestException),
-                typeof(OperationCanceledException),
-                typeof(TaskCanceledException),
-                typeof(TransportException),
-            };
+            timeout *= Options.ReconnectionAttempts;
         }
 
-        private ITransport NewTransport(TransportProtocol protocol, TransportOptions options)
-        {
-            ITransport transport = protocol switch
-            {
-                TransportProtocol.Polling => NewHttpTransport(options),
-                TransportProtocol.WebSocket => NewWebSocketTransport(options),
-                _ => throw new ArgumentOutOfRangeException()
-            };
+        using var timeoutCts = new CancellationTokenSource(timeout);
+        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
 
-            OnTransportCreated(transport);
-            return transport;
+        cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+        var ctsToken = cts.Token;
+
+        _ = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
+        _logger.LogDebug("Waiting for socket.io connection result...");
+        var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), ctsToken);
+        var ex = await task.ConfigureAwait(false);
+        _logger.LogDebug("Got socket.io connection result");
+        if (ex != null)
+        {
+            _logger.LogDebug(ex.ToString());
+            throw ex;
         }
+    }
 
-        private TransportOptions NewTransportOptions()
+    private async Task ConnectCoreAsync(CancellationToken cancellationToken)
+    {
+        var attempts = Options.Reconnection ? Options.ReconnectionAttempts : 1;
+        for (int i = 0; i < attempts; i++)
         {
-            return new TransportOptions
-            {
-                EIO = Options.EIO,
-                Query = Options.Query ?? new List<KeyValuePair<string, string>>(),
-                Auth = Options.Auth,
-                ServerUri = ServerUri,
-                Path = Options.Path,
-                ConnectionTimeout = Options.ConnectionTimeout,
-                AutoUpgrade = Options.AutoUpgrade,
-                Namespace = Namespace
-            };
-        }
+            ReconnectAttempt(i, attempts);
+            var session = NewSessionWithCancellationToken(cancellationToken);
 
-        private HttpTransport NewHttpTransport(TransportOptions options)
-        {
-            var handler = HttpPollingHandler.CreateHandler(options.EIO, HttpClient);
-            var transport = new HttpTransport(options, handler, Serializer);
-            SetHttpHeaders();
-            return transport;
-        }
-
-        private WebSocketTransport NewWebSocketTransport(TransportOptions options)
-        {
-            var ws = ClientWebSocketProvider();
-            if (ws is null)
-            {
-                throw new ArgumentNullException(nameof(ClientWebSocketProvider),
-                    $"{ClientWebSocketProvider} returns a null");
-            }
-
-            var transport = new WebSocketTransport(options, ws, Serializer);
-            SetWebSocketHeaders(transport);
-            return transport;
-        }
-
-        private void OnTransportCreated(ITransport transport)
-        {
-            if (Options.Proxy != null)
-            {
-                transport.SetProxy(Options.Proxy);
-            }
-
-            transport.OnReceived = OnMessageReceived;
-            transport.OnError = OnErrorReceived;
-        }
-
-        private void SetWebSocketHeaders(ITransport transport)
-        {
-            if (Options.ExtraHeaders is null)
-            {
-                return;
-            }
-
-            foreach (var item in Options.ExtraHeaders)
-            {
-                transport.AddHeader(item.Key, item.Value);
-            }
-        }
-
-        private void SetHttpHeaders()
-        {
-            if (Options.ExtraHeaders is null)
-            {
-                return;
-            }
-
-            foreach (var header in Options.ExtraHeaders)
-            {
-                HttpClient.AddHeader(header.Key, header.Value);
-            }
-        }
-
-        private void ConnectInBackground(CancellationToken cancellationToken)
-        {
-            Task.Factory.StartNew(async () =>
-            {
-                InitializeStatus();
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var options = NewTransportOptions();
-                    var transport = NewTransport(Options.Transport, options);
-                    if (_attempts > 0)
-                        OnReconnectAttempt.TryInvoke(this, _attempts);
-                    try
-                    {
-                        await transport.ConnectAsync(cancellationToken).ConfigureAwait(false);
-                        Transport = transport;
-                        _transportCompletionSource.SetResult(true);
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        transport.Dispose();
-                        OnReconnectError.TryInvoke(this, e);
-                        var failedToAttempt = await AttemptAsync();
-                        if (failedToAttempt)
-                        {
-                            _connBackgroundSource.SetResult(
-                                new ConnectionException($"Cannot connect to server '{ServerUri}'."));
-                            break;
-                        }
-
-                        var canHandle = CanHandleException(e);
-                        if (canHandle) continue;
-                        _connBackgroundSource.SetResult(
-                            new ConnectionException($"Cannot connect to server '{ServerUri}'", e));
-                        throw;
-                    }
-                }
-            }, cancellationToken);
-        }
-
-        private async Task UpgradeToWebSocket(IMessage openedMessage)
-        {
-            var options = NewTransportOptions();
-            options.OpenedMessage = openedMessage;
-            for (var i = 0; i < 3; i++)
-            {
-                var transport = (WebSocketTransport)NewTransport(TransportProtocol.WebSocket, options);
-                using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
-                try
-                {
-                    await transport.ConnectAsync(cts.Token).ConfigureAwait(false);
-                    var message = Serializer.SerializeUpgradeMessage();
-                    await transport
-                        .SendAsync(new List<SerializedItem> { message }, cts.Token)
-                        .ConfigureAwait(false);
-
-                    Transport.Dispose();
-                    Transport = transport;
-                    Options.Transport = TransportProtocol.WebSocket;
-                    transport.OnUpgraded();
-                    break;
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(e);
-                    transport.Dispose();
-                    var ex = new ConnectionException("Upgrade to websocket failed", e);
-                    OnReconnectError.TryInvoke(this, ex);
-                }
-            }
-
-            _openedCompletionSource.SetResult(true);
-        }
-
-        private async Task<bool> AttemptAsync()
-        {
-            _attempts++;
-            if (_attempts <= Options.ReconnectionAttempts)
-            {
-                if (_reconnectionDelay < Options.ReconnectionDelayMax)
-                {
-                    _reconnectionDelay += 2 * Options.RandomizationFactor;
-                }
-
-                if (_reconnectionDelay > Options.ReconnectionDelayMax)
-                {
-                    _reconnectionDelay = Options.ReconnectionDelayMax;
-                }
-
-                await Task.Delay((int)_reconnectionDelay);
-            }
-            else
-            {
-                OnReconnectFailed.TryInvoke(this, EventArgs.Empty);
-                return true;
-            }
-
-            return false;
-        }
-
-        private bool CanHandleException(Exception e)
-        {
-            if (_expectedExceptions.Contains(e.GetType()))
-            {
-                if (Options.Reconnection)
-                {
-                    if (_attempts > Options.ReconnectionAttempts)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    _backgroundException = e;
-                    return false;
-                }
-            }
-            else
-            {
-                _backgroundException = e;
-                return false;
-            }
-
-            return true;
-        }
-
-        private readonly SemaphoreSlim _connectingLock = new(1, 1);
-        private CancellationTokenSource _connCts = new();
-
-        private async Task ConnectCore(CancellationToken cancellationToken)
-        {
-            await _connectingLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
+            var timeoutCancellationToken = cts.Token;
             try
             {
-                if (Connected) return;
-
-                ConnectInBackground(cancellationToken);
-                cancellationToken.Register(_connBackgroundSource.SetCanceled);
-                var task = Task
-                    .Run(async () => await _connBackgroundSource.Task.ConfigureAwait(false), cancellationToken);
-
-                var ex = await task.ConfigureAwait(false);
-                _connBackgroundSource = new TaskCompletionSource<Exception>();
-                if (ex is not null)
-                {
-                    throw ex;
-                }
-            }
-            finally
-            {
-                _connectingLock.Release();
-            }
-        }
-
-        public async Task ConnectAsync()
-        {
-            await ConnectCore(_connCts.Token).ConfigureAwait(false);
-            _connCts.Dispose();
-            _connCts = new CancellationTokenSource();
-        }
-
-        public async Task ConnectAsync(CancellationToken cancellationToken)
-        {
-            await ConnectCore(cancellationToken).ConfigureAwait(false);
-        }
-
-        private void PingHandler()
-        {
-            OnPing.TryInvoke(this, EventArgs.Empty);
-        }
-
-        private void PongHandler(IMessage msg)
-        {
-            OnPong.TryInvoke(this, msg.Duration);
-        }
-
-        private async Task OpenedHandler(IMessage msg)
-        {
-            await _transportCompletionSource.Task;
-            _transportCompletionSource = new TaskCompletionSource<bool>();
-            if (Options.AutoUpgrade
-                && Options.Transport == TransportProtocol.Polling
-                && msg.Upgrades.Contains("websocket"))
-            {
-                _ = UpgradeToWebSocket(msg);
-                return;
-            }
-
-            _openedCompletionSource.SetResult(true);
-        }
-
-
-        private async Task ConnectedHandler(IMessage msg)
-        {
-            await _openedCompletionSource.Task;
-            _openedCompletionSource = new TaskCompletionSource<bool>();
-
-            Id = msg.Sid;
-            Connected = true;
-
-            OnConnected.TryInvoke(this, EventArgs.Empty);
-            if (_attempts > 0)
-            {
-                OnReconnected.TryInvoke(this, _attempts);
-            }
-
-            _attempts = 0;
-            _connBackgroundSource.SetResult(null);
-        }
-
-        private void DisconnectedHandler()
-        {
-            _ = InvokeDisconnect(DisconnectReason.IOServerDisconnect);
-        }
-
-        private void EventMessageHandler(IMessage message)
-        {
-            // TODO: run actions in background. eg: Task.Run
-            var res = new SocketIOResponse(message, this)
-            {
-                PacketId = message.Id
-            };
-            foreach (var item in _onAnyHandlers)
-            {
-                item.TryInvoke(message.Event, res);
-            }
-
-            if (_eventActionHandlers.TryGetValue(message.Event, out var actionHandler))
-            {
-                actionHandler.TryInvoke(res);
-            }
-            else if (_eventFuncHandlers.TryGetValue(message.Event, out var funcHandler))
-            {
-                funcHandler.TryInvoke(res);
-            }
-        }
-
-        private void AckMessageHandler(IMessage message)
-        {
-            var res = new SocketIOResponse(message, this);
-            if (_ackActionHandlers.ContainsKey(message.Id))
-            {
-                _ackActionHandlers[message.Id].TryInvoke(res);
-                _ackActionHandlers.Remove(message.Id);
-            }
-            else if (_ackFuncHandlers.ContainsKey(message.Id))
-            {
-                _ackFuncHandlers[message.Id].TryInvoke(res);
-                _ackFuncHandlers.Remove(message.Id);
-            }
-        }
-
-        private void ErrorMessageHandler(IMessage msg)
-        {
-            OnError.TryInvoke(this, msg.Error);
-        }
-
-        private void BinaryMessageHandler(IMessage message)
-        {
-            var response = new SocketIOResponse(message, this)
-            {
-                PacketId = message.Id,
-            };
-            foreach (var item in _onAnyHandlers)
-            {
-                // TODO: run in background to make sure user logic could not block socket.io's logic
-                item.TryInvoke(message.Event, response);
-            }
-
-            if (_eventActionHandlers.TryGetValue(message.Event, out var handler))
-            {
-                handler.TryInvoke(response);
-            }
-        }
-
-        private void BinaryAckMessageHandler(IMessage msg)
-        {
-            if (_ackActionHandlers.TryGetValue(msg.Id, out var handler))
-            {
-                var response = new SocketIOResponse(msg, this)
-                {
-                    PacketId = msg.Id,
-                };
-                handler.TryInvoke(response);
-            }
-        }
-
-        private void OnErrorReceived(Exception ex)
-        {
-#if DEBUG
-            Debug.WriteLine(ex);
-#endif
-            _ = InvokeDisconnect(DisconnectReason.TransportClose);
-        }
-
-        private void OnMessageReceived(IMessage msg)
-        {
-            try
-            {
-                switch (msg.Type)
-                {
-                    case MessageType.Ping:
-                        PingHandler();
-                        break;
-                    case MessageType.Pong:
-                        PongHandler(msg);
-                        break;
-                    case MessageType.Opened:
-                        _ = OpenedHandler(msg);
-                        break;
-                    case MessageType.Connected:
-                        _ = ConnectedHandler(msg);
-                        break;
-                    case MessageType.Disconnected:
-                        DisconnectedHandler();
-                        break;
-                    case MessageType.Event:
-                        EventMessageHandler(msg);
-                        break;
-                    case MessageType.Ack:
-                        AckMessageHandler(msg);
-                        break;
-                    case MessageType.Error:
-                        ErrorMessageHandler(msg);
-                        break;
-                    case MessageType.Binary:
-                        BinaryMessageHandler(msg);
-                        break;
-                    case MessageType.BinaryAck:
-                        BinaryAckMessageHandler(msg);
-                        break;
-                }
+                await TryConnectAsync(session, timeoutCancellationToken).ConfigureAwait(false);
+                break;
             }
             catch (Exception e)
             {
-#if DEBUG
+                _logger.LogDebug(e, e.Message);
+                var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
+                OnReconnectError.RunInBackground(this, ex);
+                if (i == attempts - 1)
+                {
+                    _connCompletionSource.SetResult(ex);
+                    throw ex;
+                }
+
+                var delay = _random.Next(Options.ReconnectionDelayMax);
+                await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private void ReconnectAttempt(int i, int attempts)
+    {
+        var times = i + 1;
+        _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", times, attempts);
+        OnReconnectAttempt.RunInBackground(this, times);
+    }
+
+    private async Task TryConnectAsync(ISession session, CancellationToken cancellationToken)
+    {
+        session.Subscribe(this);
+        _logger.LogDebug("Session connecting...");
+        await session.ConnectAsync(cancellationToken).ConfigureAwait(false);
+        _session = session;
+        _sessionCompletionSource.SetResult(true);
+        _logger.LogDebug("Session connected");
+    }
+
+    private ISession NewSessionWithCancellationToken(CancellationToken cancellationToken)
+    {
+        ISession session;
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            session = NewSession();
+        }
+        catch (Exception ex)
+        {
+            _connCompletionSource.SetResult(ex);
+            throw;
+        }
+
+        return session;
+    }
+
+    private ISession NewSession()
+    {
+        _scope?.Dispose();
+        _scope = _serviceProvider.CreateScope();
+        _logger.LogDebug("Creating session...");
+        var session = _scope.ServiceProvider.GetRequiredKeyedService<ISession>(Options.Transport);
+        session.Options = new SessionOptions
+        {
+            ServerUri = ServerUri,
+            Path = Options.Path,
+            Query = Options.Query,
+            Timeout = Options.ConnectionTimeout,
+            EngineIO = Options.EIO,
+            ExtraHeaders = Options.ExtraHeaders,
+            Namespace = _namespace,
+            Auth = Options.Auth,
+            AutoUpgrade = Options.AutoUpgrade,
+        };
+        _logger.LogDebug("Session created: {Type}", session.GetType().Name);
+        return session;
+    }
+
+    private void ThrowIfNotConnected()
+    {
+        if (Connected)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("SocketIO is not connected.");
+    }
+
+    private static void ThrowIfDataIsNull(object data)
+    {
+        if (data is null)
+        {
+            throw new ArgumentNullException(nameof(data));
+        }
+    }
+
+    private void CheckStatusAndData(object data)
+    {
+        ThrowIfNotConnected();
+        ThrowIfDataIsNull(data);
+    }
+
+    private static object[] MergeEventData(string eventName, IEnumerable<object> data)
+    {
+        return new[] { eventName }.Concat(data).ToArray();
+    }
+
+    #region Emit event
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        CheckStatusAndData(data);
+        var sessionData = MergeEventData(eventName, data);
+        await _session.SendAsync(sessionData, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data)
+    {
+        await EmitAsync(eventName, data, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName)
+    {
+        await EmitAsync(eventName, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region Emit action ack
+
+    public async Task EmitAsync(string eventName, Action<IDataMessage> ack, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, Action<IDataMessage> ack)
+    {
+        await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(
+        string eventName,
+        IEnumerable<object> data,
+        Action<IDataMessage> ack,
+        CancellationToken cancellationToken)
+    {
+        CheckStatusAndData(data);
+        PacketId++;
+        var sessionData = MergeEventData(eventName, data);
+        _ackHandlers.Add(PacketId, ack);
+        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Action<IDataMessage> ack)
+    {
+        await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    #endregion
+
+    #region Emit func ack
+
+    public async Task EmitAsync(
+        string eventName,
+        IEnumerable<object> data,
+        Func<IDataMessage, Task> ack,
+        CancellationToken cancellationToken)
+    {
+        CheckStatusAndData(data);
+        PacketId++;
+        var sessionData = MergeEventData(eventName, data);
+        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
+        _funcHandlers.Add(PacketId, ack);
+    }
+
+    public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IDataMessage, Task> ack)
+    {
+        await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, Func<IDataMessage, Task> ack, CancellationToken cancellationToken)
+    {
+        await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task EmitAsync(string eventName, Func<IDataMessage, Task> ack)
+    {
+        await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    #endregion
+
+    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data)
+    {
+        await SendAckDataAsync(packetId, data, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        await SendAckDataAsync(packetId, data, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
+    {
+        CheckStatusAndData(data);
+        await _session.SendAckDataAsync(data.ToArray(), packetId, cancellationToken).ConfigureAwait(false);
+    }
+
+    async Task IMyObserver<IMessage>.OnNextAsync(IMessage message)
+    {
+        await OnNextAsync(message).ConfigureAwait(false);
+    }
+
+    private async Task OnNextAsync(IMessage message)
+    {
+        switch (message.Type)
+        {
+            case MessageType.Opened:
+                await HandleOpenedMessage(message).ConfigureAwait(false);
+                break;
+            case MessageType.Ping:
+                OnPing?.Invoke(this, EventArgs.Empty);
+                break;
+            case MessageType.Pong:
+                HandlePongMessage(message);
+                break;
+            case MessageType.Connected:
+                await HandleConnectedMessage(message).ConfigureAwait(false);
+                break;
+            case MessageType.Disconnected:
+                await HandleDisconnectedMessageAsync().ConfigureAwait(false);
+                break;
+            case MessageType.Event:
+            case MessageType.Binary:
+                await HandleEventMessage(message).ConfigureAwait(false);
+                break;
+            case MessageType.Ack:
+            case MessageType.BinaryAck:
+                await HandleAckMessage(message).ConfigureAwait(false);
+                break;
+            case MessageType.Error:
+                HandleErrorMessage(message);
+                break;
+        }
+    }
+
+    private async Task HandleOpenedMessage(IMessage message)
+    {
+        if (!Options.AutoUpgrade)
+        {
+            return;
+        }
+
+        var openedMessage = (OpenedMessage)message;
+        if (!openedMessage.Upgrades.Contains("websocket"))
+        {
+            return;
+        }
+
+        Options.Transport = TransportProtocol.WebSocket;
+        await UpgradeTransportAsync(openedMessage).ConfigureAwait(false);
+    }
+
+    private async Task UpgradeTransportAsync(OpenedMessage message)
+    {
+        _logger.LogDebug("Transport upgrading...");
+        using var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
+        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
+        var cancellationToken = timeoutCts.Token;
+        var session = NewSessionWithCancellationToken(cancellationToken);
+        session.Options.Sid = message.Sid;
+        _sessionCompletionSource = new TaskCompletionSource<bool>();
+        await TryConnectAsync(session, cancellationToken).ConfigureAwait(false);
+        _logger.LogDebug("Transport upgraded");
+    }
+
+    private async Task HandleEventMessage(IMessage message)
+    {
+        var eventMessage = (IEventMessage)message;
+        var ctx = new EventContext(eventMessage, this);
+
+        await InvokeOnAnyHandlersAsync(eventMessage, ctx).ConfigureAwait(false);
+        await InvokeEventHandlersAsync(eventMessage, ctx).ConfigureAwait(false);
+    }
+
+    private async Task InvokeEventHandlersAsync(IEventMessage eventMessage, IEventContext ctx)
+    {
+        if (_eventHandlers.TryGetValue(eventMessage.Event, out var eventHandler))
+        {
+            var isOnce = _onceEvents.Contains(eventMessage.Event);
+            if (isOnce)
+            {
+                _eventHandlers.Remove(eventMessage.Event);
+            }
+
+            try
+            {
+                await eventHandler(ctx).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured in the event handler, event name: '{Event}'", eventMessage.Event);
+            }
+        }
+    }
+
+    private async Task InvokeOnAnyHandlersAsync(IEventMessage eventMessage, IEventContext ctx)
+    {
+        foreach (var handler in _onAnyHandlers)
+        {
+            try
+            {
+                await handler(eventMessage.Event, ctx).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occured in one of the OnAny handlers");
+            }
+        }
+    }
+
+    private async Task HandleAckMessage(IMessage message)
+    {
+        var ackMessage = (IDataMessage)message;
+        if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
+        {
+            ack(ackMessage);
+        }
+        else if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
+        {
+            await func(ackMessage);
+        }
+    }
+
+    private async Task HandleConnectedMessage(IMessage message)
+    {
+        await _sessionCompletionSource.Task.ConfigureAwait(false);
+        var connectedMessage = (ConnectedMessage)message;
+        Id = connectedMessage.Sid;
+        Connected = true;
+        _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
+        _connCompletionSource.SetResult(null);
+    }
+
+    private async Task HandleDisconnectedMessageAsync()
+    {
+        OnDisconnected?.Invoke(this, DisconnectReason.IOServerDisconnect);
+        await DisconnectCoreAsync(CancellationToken.None);
+    }
+
+    private void HandlePongMessage(IMessage message)
+    {
+        var pong = (PongMessage)message;
+        OnPong?.Invoke(this, pong.Duration);
+    }
+
+    private void HandleErrorMessage(IMessage message)
+    {
+        var err = (ErrorMessage)message;
+        _connCompletionSource.SetResult(new ConnectionException(err.Error));
+        OnError?.Invoke(this, err.Error);
+    }
+
+    public async Task DisconnectAsync()
+    {
+        await DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
+    }
+
+    public async Task DisconnectAsync(CancellationToken cancellationToken)
+    {
+        await DisconnectCoreAsync(cancellationToken).ConfigureAwait(false);
+        OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
+    }
+
+    private async Task DisconnectCoreAsync(CancellationToken cancellationToken)
+    {
+        if (_session is not null)
+        {
+            try
+            {
+                await _session.DisconnectAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
                 Debug.WriteLine(e);
-#endif
             }
         }
 
-        public async Task DisconnectAsync()
-        {
-            // try
-            // {
-            //     var message = Serializer.SerializeDisconnectionMessage();
-            //     using var cts = new CancellationTokenSource(Options.ConnectionTimeout);
-            //     await Transport.SendAsync(new List<SerializedItem> { message }, cts.Token).ConfigureAwait(false);
-            // }
-            // catch (Exception e)
-            // {
-            //     Debug.WriteLine(e);
-            // }
+        Connected = false;
+        Id = null;
+    }
 
-            await InvokeDisconnect(DisconnectReason.IOClientDisconnect);
+    public void On(string eventName, Func<IEventContext, Task> handler)
+    {
+        ThrowIfInvalidEventNameHandler(eventName, handler);
+        _eventHandlers[eventName] = handler;
+        _onceEvents.Remove(eventName);
+    }
+
+    private static void ThrowIfInvalidEventNameHandler(string eventName, Func<IEventContext, Task> handler)
+    {
+        if (string.IsNullOrEmpty(eventName))
+        {
+            throw new ArgumentException("Invalid event name", nameof(eventName));
         }
 
-        /// <summary>
-        /// Register a new handler for the given event.
-        /// </summary>
-        /// <param name="eventName"></param>
-        /// <param name="callback"></param>
-        public void On(string eventName, Action<SocketIOResponse> callback)
+        if ((object)handler == null)
         {
-            if (_eventActionHandlers.ContainsKey(eventName))
-            {
-                _eventActionHandlers.Remove(eventName);
-            }
+            throw new ArgumentNullException(nameof(handler));
+        }
+    }
 
-            _eventActionHandlers.Add(eventName, callback);
+    public void OnAny(Func<string, IEventContext, Task> handler)
+    {
+        if (handler is null)
+        {
+            throw new ArgumentNullException(nameof(handler));
         }
 
-        public void On(string eventName, Func<SocketIOResponse, Task> callback)
-        {
-            if (_eventFuncHandlers.ContainsKey(eventName))
-            {
-                _eventFuncHandlers.Remove(eventName);
-            }
+        _onAnyHandlers.Add(handler);
+    }
 
-            _eventFuncHandlers.Add(eventName, callback);
+    public IEnumerable<Func<string, IEventContext, Task>> ListenersAny => _onAnyHandlers;
+
+    public void OffAny(Func<string, IEventContext, Task> handler)
+    {
+        if (handler is null)
+        {
+            throw new ArgumentNullException(nameof(handler));
         }
 
+        _onAnyHandlers.Remove(handler);
+    }
 
-        /// <summary>
-        /// Unregister a new handler for the given event.
-        /// </summary>
-        /// <param name="eventName"></param>
-        public void Off(string eventName)
+    public void PrependAny(Func<string, IEventContext, Task> handler)
+    {
+        if (handler is null)
         {
-            if (_eventActionHandlers.ContainsKey(eventName))
-            {
-                _eventActionHandlers.Remove(eventName);
-            }
-
-            if (_eventFuncHandlers.ContainsKey(eventName))
-            {
-                _eventFuncHandlers.Remove(eventName);
-            }
+            throw new ArgumentNullException(nameof(handler));
         }
 
-        public void OnAny(OnAnyHandler handler)
-        {
-            if (handler != null)
-            {
-                _onAnyHandlers.Add(handler);
-            }
-        }
+        _onAnyHandlers.Insert(0, handler);
+    }
 
-        public void PrependAny(OnAnyHandler handler)
-        {
-            if (handler != null)
-            {
-                _onAnyHandlers.Insert(0, handler);
-            }
-        }
-
-        public void OffAny(OnAnyHandler handler)
-        {
-            if (handler != null)
-            {
-                _onAnyHandlers.Remove(handler);
-            }
-        }
-
-        public OnAnyHandler[] ListenersAny() => _onAnyHandlers.ToArray();
-
-        internal async Task ClientAckAsync(int packetId, CancellationToken cancellationToken, params object[] data)
-        {
-            var serializedItems = Serializer.Serialize(Options.EIO, packetId, Namespace, data);
-            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Emits an event to the socket
-        /// </summary>
-        /// <param name="eventName"></param>
-        /// <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
-        /// <returns></returns>
-        public async Task EmitAsync(string eventName, params object[] data)
-        {
-            await EmitAsync(eventName, CancellationToken.None, data).ConfigureAwait(false);
-        }
-
-        private async Task EmitAsync(string eventName, CancellationToken cancellationToken, params object[] data)
-        {
-            var serializedItems = Serializer.Serialize(Options.EIO, eventName, Namespace, data);
-            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Emits an event to the socket
-        /// </summary>
-        /// <param name="eventName"></param>
-        /// <param name="ack">will be called with the server answer.</param>
-        /// <param name="data">Any other parameters can be included. All serializable datastructures are supported, including byte[]</param>
-        /// <returns></returns>
-        public async Task EmitAsync(string eventName, Action<SocketIOResponse> ack, params object[] data)
-        {
-            await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
-        }
-
-        public async Task EmitAsync(string eventName, Func<SocketIOResponse, Task> ack, params object[] data)
-        {
-            await EmitAsync(eventName, CancellationToken.None, ack, data).ConfigureAwait(false);
-        }
-
-        private async Task EmitForAck(string eventName, int packetId, CancellationToken cancellationToken,
-            params object[] data)
-        {
-            var serializedItems = Serializer.Serialize(Options.EIO, eventName, packetId, Namespace, data);
-            await Transport.SendAsync(serializedItems, cancellationToken).ConfigureAwait(false);
-        }
-
-        private async Task EmitAsync(
-            string eventName,
-            CancellationToken cancellationToken,
-            Action<SocketIOResponse> ack,
-            params object[] data)
-        {
-            try
-            {
-                await _packetIdLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                _ackActionHandlers.Add(++_packetId, ack);
-                await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
-            }
-            finally
-            {
-                _packetIdLock.Release();
-            }
-        }
-
-        private async Task EmitAsync(
-            string eventName,
-            CancellationToken cancellationToken,
-            Func<SocketIOResponse, Task> ack,
-            params object[] data)
-        {
-            try
-            {
-                await _packetIdLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-                _ackFuncHandlers.Add(++_packetId, ack);
-                await EmitForAck(eventName, _packetId, cancellationToken, data).ConfigureAwait(false);
-            }
-            finally
-            {
-                _packetIdLock.Release();
-            }
-        }
-
-
-        private readonly SemaphoreSlim _disconnectingLock = new SemaphoreSlim(1, 1);
-
-        private async Task InvokeDisconnect(string reason)
-        {
-            try
-            {
-                await _disconnectingLock.WaitAsync();
-                if (!Connected)
-                {
-                    return;
-                }
-
-                try
-                {
-                    await Transport.DisconnectAsync(CancellationToken.None).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-#if DEBUG
-                    Debug.WriteLine(e);
-#endif
-                }
-
-                Connected = false;
-                Id = null;
-                OnDisconnected.TryInvoke(this, reason);
-                if (reason != DisconnectReason.IOServerDisconnect && reason != DisconnectReason.IOClientDisconnect)
-                {
-                    //In the this cases (explicit disconnection), the client will not try to reconnect and you need to manually call socket.connect().
-                    if (Options.Reconnection)
-                    {
-                        ConnectInBackground(_connCts.Token);
-                    }
-                }
-            }
-            finally
-            {
-                _disconnectingLock.Release();
-            }
-        }
-
-        public void AddExpectedException(Type type)
-        {
-            if (!_expectedExceptions.Contains(type))
-            {
-                _expectedExceptions.Add(type);
-            }
-        }
-
-        public void Dispose()
-        {
-            _connCts.TryDispose();
-            Transport.TryDispose();
-            _ackActionHandlers.Clear();
-            _onAnyHandlers.Clear();
-            _eventActionHandlers.Clear();
-        }
+    public void Once(string eventName, Func<IEventContext, Task> handler)
+    {
+        On(eventName, handler);
+        _onceEvents.Add(eventName);
     }
 }

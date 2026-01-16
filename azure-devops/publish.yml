@@ -9,13 +9,11 @@ parameters:
     displayName: Package
     type: string
     values:
-      - SocketIO.Core
-      - SocketIO.Serializer.Core
       - SocketIOClient
+      - SocketIOClient.Core
+      - SocketIOClient.Serializer
+      - SocketIOClient.Serializer.NewtonsoftJson
       - SocketIOClient.Windows7
-      - SocketIO.Serializer.MessagePack
-      - SocketIO.Serializer.NewtonsoftJson
-      - SocketIO.Serializer.SystemTextJson
 
 jobs:
   - job:
