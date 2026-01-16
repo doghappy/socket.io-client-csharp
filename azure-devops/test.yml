@@ -1,5 +1,3 @@
-name: Unit Tests and Integration Tests
-
 trigger:
   - master
 
