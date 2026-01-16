@@ -16,6 +16,16 @@ public class SystemClientWebSocket : IWebSocketClient
             _ws.Options.Proxy = options.Proxy;
             logger.LogInformation("WebSocket proxy is enabled");
         }
+
+        if (options.RemoteCertificateValidationCallback != null)
+        {
+#if NET6_0_OR_GREATER
+    _ws.Options.RemoteCertificateValidationCallback = options.RemoteCertificateValidationCallback;
+#elif NET461
+            // AllowHeaders();
+            System.Net.ServicePointManager.ServerCertificateValidationCallback = options.RemoteCertificateValidationCallback;
+#endif
+        }
     }
 
     private readonly ClientWebSocket _ws;

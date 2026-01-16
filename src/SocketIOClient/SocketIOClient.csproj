@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<!--<TargetFrameworks>netstandard2;net462;net6.0</TargetFrameworks>-->
-		<TargetFramework>netstandard2</TargetFramework>
+		<TargetFrameworks>net461;net6.0</TargetFrameworks>
 		<AssemblyName>SocketIOClient</AssemblyName>
 		<RootNamespace>SocketIOClient</RootNamespace>
 		<Authors>doghappy</Authors>

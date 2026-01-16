@@ -14,7 +14,7 @@ using Xunit.Abstractions;
 
 namespace SocketIOClient.IntegrationTests.V2;
 
-public class ProxyTests(ITestOutputHelper output)
+public class ProxyAndSslTests(ITestOutputHelper output)
 {
     private readonly SocketIOClient.V2.SocketIOOptions _options = new()
     {
@@ -88,5 +88,71 @@ public class ProxyTests(ITestOutputHelper output)
         proxy.ResponseTexts.Should().Contain(t => t.StartsWith("0{\"sid\":\""));
         proxy.ResponseTexts.Should().Contain(t => t.StartsWith("40"));
         await cts.CancelAsync();
+    }
+
+    private readonly Uri _httpsUri = new("https://localhost:11414");
+
+    [Fact]
+    public async Task HttpClient_ServerCertHasError_ThrowConnectionException()
+    {
+        var io = NewSocketIO(_httpsUri, _ => { });
+        await io.Invoking(x => x.ConnectAsync()).Should().ThrowAsync<ConnectionException>();
+    }
+
+    [Fact]
+    public async Task HttpClient_IgnoreServerCertError_AlwaysPass()
+    {
+        var callback = false;
+        var io = NewSocketIO(_httpsUri, services =>
+        {
+            services.AddSingleton<HttpClient>(_ =>
+            {
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (_, _, _, _) =>
+                    {
+                        callback = true;
+                        return true;
+                    }
+                };
+
+                return new HttpClient(handler);
+            });
+        });
+        await io.ConnectAsync();
+
+        callback.Should().BeTrue();
+    }
+
+    private readonly Uri _wssUri = new("https://localhost:11404");
+
+    [Fact]
+    public async Task WebSocket_ServerCertHasError_ThrowConnectionException()
+    {
+        _options.Transport = TransportProtocol.WebSocket;
+        var io = NewSocketIO(_wssUri, _ => { });
+
+        await io.Invoking(x => x.ConnectAsync()).Should().ThrowAsync<ConnectionException>();
+    }
+
+    [Fact]
+    public async Task WebSocket_IgnoreServerCertError_AlwaysPass()
+    {
+        var callback = false;
+        _options.Transport = TransportProtocol.WebSocket;
+        var io = NewSocketIO(_wssUri, services =>
+        {
+            services.AddSingleton(new WebSocketOptions
+            {
+                RemoteCertificateValidationCallback = (_, _, _, _) =>
+                {
+                    callback = true;
+                    return true;
+                }
+            });
+        });
+        await io.ConnectAsync();
+
+        callback.Should().BeTrue();
     }
 }
