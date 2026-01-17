@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using SocketIO.Serializer.Tests.Models;
+using SocketIOClient.Test.Core;
 using Xunit;
 using Xunit.Abstractions;
 

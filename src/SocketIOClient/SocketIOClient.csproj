@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net462;net6.0</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
 		<AssemblyName>SocketIOClient</AssemblyName>
 		<RootNamespace>SocketIOClient</RootNamespace>
 		<Authors>doghappy</Authors>
@@ -28,16 +28,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
-	  <ProjectReference Include="..\SocketIO.Serializer.SystemTextJson\SocketIO.Serializer.SystemTextJson.csproj" />
 	  <ProjectReference Include="..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
 	  <ProjectReference Include="..\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
 	  <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
-	  <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.8" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+	  <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+	  <PackageReference Include="System.Text.Json" Version="10.0.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="System.Net.Http" />
 	</ItemGroup>
 
 </Project>

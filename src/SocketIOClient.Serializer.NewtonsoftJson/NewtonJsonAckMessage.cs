@@ -7,12 +7,12 @@ namespace SocketIOClient.Serializer.NewtonsoftJson;
 
 public class NewtonJsonAckMessage : INewtonJsonAckMessage
 {
-    public JArray DataItems { get; set; }
+    public JArray DataItems { get; set; } = null!;
 
     public virtual MessageType Type => MessageType.Ack;
-    public string Namespace { get; set; }
+    public string Namespace { get; set; } = null!;
     public int Id { get; set; }
-    public JsonSerializerSettings JsonSerializerSettings { get; set; }
+    public JsonSerializerSettings JsonSerializerSettings { get; set; } = null!;
 
     protected virtual JsonSerializerSettings GetSettings()
     {

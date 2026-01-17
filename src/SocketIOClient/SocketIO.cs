@@ -588,4 +588,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         On(eventName, handler);
         _onceEvents.Add(eventName);
     }
+
+    public void Dispose()
+    {
+        _scope?.Dispose();
+    }
 }

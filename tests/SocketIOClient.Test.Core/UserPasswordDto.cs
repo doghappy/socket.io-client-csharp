@@ -1,4 +1,4 @@
-namespace SocketIO.Serializer.Tests.Models;
+namespace SocketIOClient.Test.Core;
 
 public class UserPasswordDto
 {

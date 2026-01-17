@@ -7,7 +7,7 @@ namespace SocketIOClient.Serializer.NewtonsoftJson;
 public class NewtonJsonBinaryAckMessage : NewtonJsonAckMessage, IBinaryAckMessage
 {
     public override MessageType Type => MessageType.BinaryAck;
-    public IList<byte[]> Bytes { get; set; }
+    public IList<byte[]> Bytes { get; set; } = null!;
     public int BytesCount { get; set; }
 
     protected override JsonSerializerSettings GetSettings()
