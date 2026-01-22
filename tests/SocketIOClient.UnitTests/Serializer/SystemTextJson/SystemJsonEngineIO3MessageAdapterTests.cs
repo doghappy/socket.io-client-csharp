@@ -33,7 +33,6 @@ public class SystemJsonEngineIO3MessageAdapterTests
         message.Should()
             .BeEquivalentTo(new ErrorMessage
             {
-                // TODO: is namespace supported by eio3?
                 Namespace = null,
                 Error = error,
             });

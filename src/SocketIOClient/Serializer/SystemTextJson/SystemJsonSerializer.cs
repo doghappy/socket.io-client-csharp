@@ -76,6 +76,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
         message.Namespace = result.Namespace;
         message.Id = result.Id;
         message.JsonSerializerOptions = options;
+        message.RawText = result.Data;
 
         var jsonNode = JsonNode.Parse(result.Data)!;
         var jsonArray = jsonNode.AsArray()!;

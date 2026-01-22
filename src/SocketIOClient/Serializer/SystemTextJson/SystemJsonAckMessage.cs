@@ -12,6 +12,7 @@ public class SystemJsonAckMessage : ISystemJsonAckMessage
     public virtual MessageType Type => MessageType.Ack;
     public string Namespace { get; set; }
     public int Id { get; set; }
+    public string RawText { get; set; }
     public JsonSerializerOptions JsonSerializerOptions { get; set; }
 
     protected virtual JsonSerializerOptions GetOptions()

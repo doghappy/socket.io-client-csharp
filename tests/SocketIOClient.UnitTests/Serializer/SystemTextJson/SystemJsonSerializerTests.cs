@@ -361,6 +361,7 @@ public class SystemJsonSerializerTests
                 options => options
                     .IncludingAllRuntimeProperties()
                     .Excluding(p => p.Name == nameof(SystemJsonAckMessage.DataItems))
+                    .Excluding(p => p.Name == nameof(SystemJsonAckMessage.RawText))
                     .Excluding(p => p.Name == nameof(ISystemJsonAckMessage.JsonSerializerOptions)));
     }
 
@@ -393,6 +394,7 @@ public class SystemJsonSerializerTests
                 options => options
                     .IncludingAllRuntimeProperties()
                     .Excluding(p => p.Name == nameof(SystemJsonAckMessage.DataItems))
+                    .Excluding(p => p.Name == nameof(SystemJsonAckMessage.RawText))
                     .Excluding(p => p.Name == nameof(ISystemJsonAckMessage.JsonSerializerOptions)));
     }
 
@@ -523,6 +525,20 @@ public class SystemJsonSerializerTests
         message.Add(bytes);
         var item1 = message.GetValue<TestFile>(0);
         item1.Should().BeEquivalentTo(expected);
+    }
+
+    [Theory]
+    [InlineData("42[\"event\"]", "[\"event\"]")]
+    [InlineData("421[\"event\"]", "[\"event\"]")]
+    [InlineData("42/test,2[\"event\"]", "[\"event\"]")]
+    [InlineData("43/test,1[\"nice\"]", "[\"nice\"]")]
+    [InlineData("461-/test,2[{\"_placeholder\":true,\"num\":0}]", "[{\"_placeholder\":true,\"num\":0}]")]
+    public void Deserialize_DataMessage_RawTextIsAlwaysExpected(string raw, string expected)
+    {
+        var serializer = NewSystemJsonSerializer(new JsonSerializerOptions());
+
+        var message = (IDataMessage)serializer.Deserialize(raw);
+        message.RawText.Should().Be(expected);
     }
 
     [Fact]

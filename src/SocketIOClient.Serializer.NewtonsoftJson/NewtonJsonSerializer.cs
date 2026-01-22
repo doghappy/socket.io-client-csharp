@@ -78,6 +78,7 @@ public class NewtonJsonSerializer : BaseJsonSerializer
         message.Namespace = result.Namespace;
         message.Id = result.Id;
         message.JsonSerializerSettings = settings;
+        message.RawText = result.Data;
         message.DataItems = JArray.Parse(result.Data);
     }
 

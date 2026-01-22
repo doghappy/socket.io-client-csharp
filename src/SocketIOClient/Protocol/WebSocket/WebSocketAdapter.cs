@@ -36,7 +36,7 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
                     protocolMessage.Bytes = message.Bytes;
                     break;
                 default:
-                    throw new NotImplementedException();
+                    throw new ArgumentException();
             }
             await OnNextAsync(protocolMessage).ConfigureAwait(false);
         }

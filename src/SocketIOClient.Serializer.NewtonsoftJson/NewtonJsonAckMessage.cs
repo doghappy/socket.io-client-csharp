@@ -12,6 +12,7 @@ public class NewtonJsonAckMessage : INewtonJsonAckMessage
     public virtual MessageType Type => MessageType.Ack;
     public string Namespace { get; set; } = null!;
     public int Id { get; set; }
+    public string RawText { get; set; } = null!;
     public JsonSerializerSettings JsonSerializerSettings { get; set; } = null!;
 
     protected virtual JsonSerializerSettings GetSettings()
