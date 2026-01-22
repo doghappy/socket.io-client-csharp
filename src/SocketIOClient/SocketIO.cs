@@ -66,7 +66,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     }
 
 
-    private readonly Dictionary<int, Action<IDataMessage>> _ackHandlers = new();
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
     private readonly Dictionary<string, Func<IEventContext, Task>> _eventHandlers = new();
     private readonly HashSet<string> _onceEvents = [];
@@ -267,39 +266,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     #endregion
 
-    #region Emit action ack
-
-    public async Task EmitAsync(string eventName, Action<IDataMessage> ack, CancellationToken cancellationToken)
-    {
-        await EmitAsync(eventName, [], ack, cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task EmitAsync(string eventName, Action<IDataMessage> ack)
-    {
-        await EmitAsync(eventName, ack, CancellationToken.None).ConfigureAwait(false);
-    }
-
-    public async Task EmitAsync(
-        string eventName,
-        IEnumerable<object> data,
-        Action<IDataMessage> ack,
-        CancellationToken cancellationToken)
-    {
-        CheckStatusAndData(data);
-        PacketId++;
-        var sessionData = MergeEventData(eventName, data);
-        _ackHandlers.Add(PacketId, ack);
-        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task EmitAsync(string eventName, IEnumerable<object> data, Action<IDataMessage> ack)
-    {
-        await EmitAsync(eventName, data, ack, CancellationToken.None).ConfigureAwait(false);
-    }
-
-    #endregion
-
-    #region Emit func ack
+    #region Emit ack
 
     public async Task EmitAsync(
         string eventName,
@@ -463,11 +430,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private async Task HandleAckMessage(IMessage message)
     {
         var ackMessage = (IDataMessage)message;
-        if (_ackHandlers.TryGetValue(ackMessage.Id, out var ack))
-        {
-            ack(ackMessage);
-        }
-        else if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
+        if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
         {
             await func(ackMessage);
         }

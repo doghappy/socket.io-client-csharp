@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Threading;
@@ -150,12 +150,16 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task EmitAsync_ActionAckWith1Parameter_ReceiveSameParameter()
+    public async Task EmitAsync_AckWith1StringParameter_ReceiveSameParameter()
     {
         var io = NewSocketIO(Url);
         IDataMessage message = null!;
         await io.ConnectAsync();
-        await io.EmitAsync("1:ack", ["action"], msg => message = msg);
+        await io.EmitAsync("1:ack", ["action"], msg =>
+        {
+            message = msg;
+            return Task.CompletedTask;
+        });
 
         await Task.Delay(DefaultDelay);
 
@@ -166,7 +170,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task EmitAsync_FuncAckWith1Parameter_ReceiveSameParameter()
+    public async Task EmitAsync_AckWith1BinaryParameter_ReceiveSameParameter()
     {
         var io = NewSocketIO(Url);
         IDataMessage message = null!;
@@ -389,6 +393,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.EmitAsync("get_header", [lowerCaseKey], res =>
         {
             actual = res.GetValue<string>(0);
+            return Task.CompletedTask;
         });
         await Task.Delay(100);
 

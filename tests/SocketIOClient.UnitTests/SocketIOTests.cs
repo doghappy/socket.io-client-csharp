@@ -402,16 +402,7 @@ public class SocketIOTests
     #region EmitAsync
 
     [Fact]
-    public async Task EmitAsyncActionAck_NotConnected_ThrowException()
-    {
-        await _io.Invoking(x => x.EmitAsync("event", _ => { }))
-            .Should()
-            .ThrowAsync<InvalidOperationException>()
-            .WithMessage("SocketIO is not connected.");
-    }
-
-    [Fact]
-    public async Task EmitAsyncFuncAck_NotConnected_ThrowException()
+    public async Task EmitAsyncAck_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
             .Should()
@@ -439,37 +430,12 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsyncActionAck_WhenCalled_PacketIdIncrementBy1()
-    {
-        await ConnectAsync();
-        await _io.EmitAsync("event", _ => { });
-
-        _io.PacketId.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task EmitAsync_AckEventActionAndGotResponse_HandlerIsCalled()
-    {
-        var ackCalled = false;
-
-        await ConnectAsync();
-        await _io.EmitAsync("event", _ => ackCalled = true);
-        var ackMessage = new SystemJsonAckMessage
-        {
-            Id = _io.PacketId,
-        };
-        await OnNextAsync(_io, ackMessage);
-
-        ackCalled.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task EmitAsyncActionAck_EventAndCancellationToken_TokenIsNotNone()
+    public async Task EmitAsyncAck_EventAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
 
         using var cts = new CancellationTokenSource();
-        await _io.EmitAsync("event", _ => { }, cts.Token);
+        await _io.EmitAsync("event", _ => Task.CompletedTask, cts.Token);
 
         await _session.Received()
             .SendAsync(
@@ -479,7 +445,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsyncFuncAck_WhenCalled_PacketIdIncrementBy1()
+    public async Task EmitAsyncAck_WhenCalled_PacketIdIncrementBy1()
     {
         await ConnectAsync();
         await _io.EmitAsync("event", _ => Task.CompletedTask);
@@ -488,7 +454,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_AckEventFuncAndGotResponse_HandlerIsCalled()
+    public async Task EmitAsync_AckEventAndGotResponse_HandlerIsCalled()
     {
         var ackCalled = false;
 
@@ -562,18 +528,7 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsyncActionAck_WithNullData_ThrowArgumentNullException()
-    {
-        await ConnectAsync();
-
-        await _io.Invoking(x => x.EmitAsync("event", null, _ => { }, CancellationToken.None))
-            .Should()
-            .ThrowAsync<ArgumentNullException>()
-            .WithMessage("Value cannot be null. (Parameter 'data')");
-    }
-
-    [Fact]
-    public async Task EmitAsyncFuncAck_WithNullData_ThrowArgumentNullException()
+    public async Task EmitAsyncAck_WithNullData_ThrowArgumentNullException()
     {
         await ConnectAsync();
 
@@ -658,11 +613,11 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsyncActionAck_AndEmptyData_AlwaysPass()
+    public async Task EmitAsyncAck_AndEmptyData_AlwaysPass()
     {
         await ConnectAsync();
 
-        await _io.EmitAsync("event", [], _ => { });
+        await _io.EmitAsync("event", [], _ => Task.CompletedTask);
 
         await _session.Received()
             .SendAsync(
@@ -673,11 +628,11 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsyncActionAck_And1Data_AlwaysPass()
+    public async Task EmitAsyncAck_And1Data_AlwaysPass()
     {
         await ConnectAsync();
 
-        await _io.EmitAsync("event", [1], _ => { }, CancellationToken.None);
+        await _io.EmitAsync("event", [1], _ => Task.CompletedTask, CancellationToken.None);
 
         await _session.Received()
             .SendAsync(
@@ -688,12 +643,12 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task EmitAsync_EventAndDataAndActionAckAndCancellationToken_TokenIsNotNone()
+    public async Task EmitAsync_EventAndDataAndAckAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
 
         using var cts = new CancellationTokenSource();
-        await _io.EmitAsync("event", [], _ => { }, cts.Token);
+        await _io.EmitAsync("event", [], _ => Task.CompletedTask, cts.Token);
 
         await _session.Received()
             .SendAsync(
