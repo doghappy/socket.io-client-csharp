@@ -12,7 +12,7 @@ namespace SocketIOClient.Session.Http.EngineIOAdapter;
 public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, ILogger<PollingHandler> logger)
     : IPollingHandler, IDisposable
 {
-    private OpenedMessage _openedMessage;
+    private OpenedMessage? _openedMessage;
     private readonly CancellationTokenSource _pollingCancellationTokenSource = new();
 
     public void StartPolling(OpenedMessage message, bool autoUpgrade)
@@ -47,7 +47,7 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
     {
         var ms = 0;
         const int delay = 20;
-        while (ms < _openedMessage.PingInterval)
+        while (ms < _openedMessage!.PingInterval)
         {
             if (httpAdapter.IsReadyToSend)
             {

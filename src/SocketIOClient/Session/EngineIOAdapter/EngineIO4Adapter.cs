@@ -23,8 +23,8 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
     private readonly List<IMyObserver<IMessage>> _observers = [];
 
-    private OpenedMessage OpenedMessage { get; set; }
-    public EngineIOAdapterOptions Options { get; set; }
+    private OpenedMessage? OpenedMessage { get; set; }
+    public EngineIOAdapterOptions Options { get; set; } = null!;
 
     protected abstract Task SendConnectAsync(string message);
     protected abstract Task SendPongAsync();

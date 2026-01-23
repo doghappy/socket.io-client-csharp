@@ -43,19 +43,19 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
     {
         if (message.Type == ProtocolMessageType.Bytes)
         {
-            var bytesMessages = EngineIOAdapter.ExtractMessagesFromBytes(message.Bytes);
+            var bytesMessages = EngineIOAdapter.ExtractMessagesFromBytes(message.Bytes!);
             await HandleMessagesAsync(bytesMessages).ConfigureAwait(false);
             return;
         }
 
-        var messages = EngineIOAdapter.ExtractMessagesFromText(message.Text);
+        var messages = EngineIOAdapter.ExtractMessagesFromText(message.Text!);
         await HandleMessagesAsync(messages).ConfigureAwait(false);
     }
 
     protected override void OnOpenedMessage(OpenedMessage message)
     {
         base.OnOpenedMessage(message);
-        _httpAdapter.Uri = new Uri($"{_httpAdapter.Uri.AbsoluteUri}&sid={message.Sid}");
+        _httpAdapter.Uri = new Uri($"{_httpAdapter.Uri!.AbsoluteUri}&sid={message.Sid}");
     }
 
     private async Task HandleMessagesAsync(IEnumerable<ProtocolMessage> messages)
@@ -85,12 +85,12 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
         {
             if (message.Type == ProtocolMessageType.Text)
             {
-                var request = EngineIOAdapter.ToHttpRequest(message.Text);
+                var request = EngineIOAdapter.ToHttpRequest(message.Text!);
                 _logger.LogDebug("[Polling⬆] {text}", request.BodyText);
                 await _httpAdapter.SendAsync(request, cancellationToken).ConfigureAwait(false);
                 continue;
             }
-            _logger.LogDebug("[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes.Length);
+            _logger.LogDebug("[Polling⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes!.Length);
             bytes.Add(message.Bytes);
         }
 

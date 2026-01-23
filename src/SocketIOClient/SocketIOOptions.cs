@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using SocketIOClient.Core;
@@ -29,16 +29,16 @@ public class SocketIOOptions
 
     public int ReconnectionDelayMax { get; set; } = 5000;
 
-    private string _path;
-    public string Path
+    private string? _path;
+    public string? Path
     {
         get => _path;
-        set => _path = $"/{value.Trim('/')}/";
+        set => _path = $"/{value!.Trim('/')}/";
     }
 
-    public NameValueCollection Query { get; set; }
-    public IReadOnlyDictionary<string, string> ExtraHeaders { get; set; }
+    public NameValueCollection? Query { get; set; }
+    public IReadOnlyDictionary<string, string>? ExtraHeaders { get; set; }
 
-    public object Auth { get; set; }
+    public object? Auth { get; set; }
     public bool AutoUpgrade { get; set; } = true;
 }

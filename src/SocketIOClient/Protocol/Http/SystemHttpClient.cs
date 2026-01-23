@@ -21,7 +21,7 @@ public class SystemHttpClient(HttpClient http) : IHttpClient
         request.Content = req.BodyType switch
         {
             RequestBodyType.Text => new StringContent(req.BodyText ?? string.Empty),
-            RequestBodyType.Bytes => new ByteArrayContent(req.BodyBytes),
+            RequestBodyType.Bytes => new ByteArrayContent(req.BodyBytes!),
             _ => throw new NotSupportedException(),
         };
 
@@ -33,7 +33,7 @@ public class SystemHttpClient(HttpClient http) : IHttpClient
 
     private static void SetHeaders(HttpRequest req, HttpRequestMessage request)
     {
-        var content = (ByteArrayContent)request.Content;
+        var content = (ByteArrayContent)request.Content!;
         foreach (var header in req.Headers)
         {
             if (HttpHeaders.ContentType.Equals(header.Key))

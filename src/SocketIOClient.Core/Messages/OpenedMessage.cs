@@ -5,8 +5,8 @@ namespace SocketIOClient.Core.Messages;
 public class OpenedMessage : IMessage
 {
     public MessageType Type => MessageType.Opened;
-    public string Sid { get; set; }
+    public string Sid { get; set; } = null!;
     public int PingInterval { get; set; }
     public int PingTimeout { get; set; }
-    public List<string> Upgrades { get; set; }
+    public List<string> Upgrades { get; set; } = [];
 }

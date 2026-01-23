@@ -65,7 +65,7 @@ public class SystemJsonSerializer : BaseJsonSerializer
         {
             NumberHandling = JsonNumberHandling.AllowReadingFromString,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        });
+        })!;
     }
 
     private static void SetAckMessageProperties(

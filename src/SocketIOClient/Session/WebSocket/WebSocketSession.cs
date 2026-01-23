@@ -42,7 +42,7 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
     {
         if (message.Type == ProtocolMessageType.Bytes)
         {
-            message.Bytes = EngineIOAdapter.ReadProtocolFrame(message.Bytes);
+            message.Bytes = EngineIOAdapter.ReadProtocolFrame(message.Bytes!);
         }
         await HandleMessageAsync(message).ConfigureAwait(false);
     }
@@ -63,7 +63,7 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
             }
             else
             {
-                message.Bytes = EngineIOAdapter.WriteProtocolFrame(message.Bytes);
+                message.Bytes = EngineIOAdapter.WriteProtocolFrame(message.Bytes!);
                 _logger.LogDebug("[WebSocket⬆] 0️⃣1️⃣0️⃣1️⃣ {length}", message.Bytes.Length);
             }
 

@@ -8,8 +8,8 @@ namespace SocketIOClient;
 
 public interface IEventContext
 {
-    T GetDataValue<T>(int index);
-    object GetDataValue(Type type, int index);
+    T? GetDataValue<T>(int index);
+    object? GetDataValue(Type type, int index);
     Task SendAckDataAsync(IEnumerable<object> data);
     Task SendAckDataAsync(IEnumerable<object> data, CancellationToken cancellationToken);
 }
@@ -26,12 +26,12 @@ public class EventContext(IDataMessage message, IInternalSocketIO io) : IEventCo
         await SendAckDataAsync(data, CancellationToken.None).ConfigureAwait(false);
     }
 
-    public T GetDataValue<T>(int index)
+    public T? GetDataValue<T>(int index)
     {
         return message.GetValue<T>(index);
     }
 
-    public object GetDataValue(Type type, int index)
+    public object? GetDataValue(Type type, int index)
     {
         return message.GetValue(type, index);
     }

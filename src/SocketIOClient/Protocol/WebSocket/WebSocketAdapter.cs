@@ -54,13 +54,13 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
         logger.LogDebug("Sending {type} message...", message.Type);
         if (message.Type == ProtocolMessageType.Text)
         {
-            var data = Encoding.UTF8.GetBytes(message.Text);
+            var data = Encoding.UTF8.GetBytes(message.Text!);
             await clientAdapter.SendAsync(data, WebSocketMessageType.Text, cancellationToken).ConfigureAwait(false);
         }
         else
         {
             await clientAdapter
-                .SendAsync(message.Bytes, WebSocketMessageType.Binary, cancellationToken)
+                .SendAsync(message.Bytes!, WebSocketMessageType.Binary, cancellationToken)
                 .ConfigureAwait(false);
         }
         logger.LogDebug("Sent {type} message.", message.Type);

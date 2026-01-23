@@ -19,7 +19,7 @@ public class SystemJsonEngineIO3MessageAdapter : IEngineIOMessageAdapter
 
     public ErrorMessage DeserializeErrorMessage(string text)
     {
-        var error = JsonNode.Parse(text).Deserialize<string>();
+        var error = JsonNode.Parse(text).Deserialize<string>()!;
         return new ErrorMessage
         {
             Error = error,

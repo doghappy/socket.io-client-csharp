@@ -7,5 +7,5 @@ public class DecapsulationResult
 {
     public bool Success { get; set; }
     public MessageType? Type { get; set; }
-    public string Data { get; set; }
+    public string Data { get; set; } = null!;
 }

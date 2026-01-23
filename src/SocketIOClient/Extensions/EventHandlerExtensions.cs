@@ -8,10 +8,6 @@ namespace SocketIOClient.Extensions
     {
         public static void RunInBackground<T>(this EventHandler<T> handler, object sender, T args)
         {
-            if (handler is null)
-            {
-                return;
-            }
             _ = Task.Run(() => handler(sender, args), CancellationToken.None).ConfigureAwait(false);
         }
     }

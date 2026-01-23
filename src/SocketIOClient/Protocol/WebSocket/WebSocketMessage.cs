@@ -10,5 +10,5 @@ public enum WebSocketMessageType
 public class WebSocketMessage
 {
     public WebSocketMessageType Type { get; set; }
-    public byte[] Bytes { get; set; }
+    public byte[] Bytes { get; set; } = null!;
 }

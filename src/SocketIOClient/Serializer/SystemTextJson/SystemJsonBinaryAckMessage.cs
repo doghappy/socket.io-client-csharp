@@ -7,7 +7,7 @@ namespace SocketIOClient.Serializer.SystemTextJson;
 public class SystemJsonBinaryAckMessage : SystemJsonAckMessage, IBinaryAckMessage
 {
     public override MessageType Type => MessageType.BinaryAck;
-    public IList<byte[]> Bytes { get; set; }
+    public IList<byte[]> Bytes { get; set; } = [];
     public int BytesCount { get; set; }
 
     protected override JsonSerializerOptions GetOptions()
@@ -21,21 +21,10 @@ public class SystemJsonBinaryAckMessage : SystemJsonAckMessage, IBinaryAckMessag
         return options;
     }
 
-    public bool ReadyDelivery
-    {
-        get
-        {
-            if (Bytes is null)
-            {
-                return false;
-            }
-            return BytesCount == Bytes.Count;
-        }
-    }
+    public bool ReadyDelivery => BytesCount == Bytes.Count;
 
     public void Add(byte[] bytes)
     {
-        Bytes ??= new List<byte[]>(BytesCount);
         Bytes.Add(bytes);
     }
 }

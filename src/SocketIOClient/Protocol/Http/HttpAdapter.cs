@@ -8,7 +8,7 @@ namespace SocketIOClient.Protocol.Http;
 
 public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : ProtocolAdapter, IHttpAdapter
 {
-    public Uri Uri { get; set; }
+    public Uri? Uri { get; set; }
 
     public bool IsReadyToSend => Uri is not null && Uri.Query.Contains("sid=");
 
@@ -45,7 +45,7 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
 
     private Uri NewUri()
     {
-        var str = $"{Uri.AbsoluteUri}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+        var str = $"{Uri!.AbsoluteUri}&t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
         return new Uri(str);
     }
 

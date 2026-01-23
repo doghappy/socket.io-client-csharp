@@ -16,8 +16,8 @@ public abstract class BaseJsonSerializer : ISerializer
     }
 
     protected IDecapsulable Decapsulator { get; }
-    protected IEngineIOMessageAdapter EngineIOMessageAdapter { get; private set; }
-    public string Namespace { get; set; }
+    protected IEngineIOMessageAdapter EngineIOMessageAdapter { get; private set; } = null!;
+    public string? Namespace { get; set; }
     protected abstract SerializationResult SerializeCore(object[] data);
     public abstract string Serialize(object data);
 
@@ -108,7 +108,7 @@ public abstract class BaseJsonSerializer : ISerializer
         return Serialize(data, packetId, AddAckPrefix);
     }
 
-    public IMessage Deserialize(string text)
+    public IMessage? Deserialize(string text)
     {
         // TODO: {"code":1,"message":"Session ID unknown"}
         // TODO: {"code":2,"message":"Bad handshake method"}

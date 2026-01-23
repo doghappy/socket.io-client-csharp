@@ -29,7 +29,7 @@ public class SystemJsonEngineIO4MessageAdapter : IEngineIOMessageAdapter
     {
         var message = new ErrorMessage();
         var rawJson = DecapsulateNamespace(text, message);
-        message.Error = JsonDocument.Parse(rawJson).RootElement.GetProperty("message").GetString();
+        message.Error = JsonDocument.Parse(rawJson).RootElement.GetProperty("message").GetString()!;
         return message;
     }
 }

@@ -22,15 +22,15 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
     private readonly List<IMyObserver<IMessage>> _observers = [];
 
-    private static readonly HashSet<string> DefaultNamespaces =
+    private static readonly HashSet<string?> DefaultNamespaces =
     [
         null,
         string.Empty,
         "/"
     ];
 
-    private OpenedMessage OpenedMessage { get; set; }
-    public EngineIOAdapterOptions Options { get; set; }
+    private OpenedMessage? OpenedMessage { get; set; }
+    public EngineIOAdapterOptions Options { get; set; } = null!;
 
     protected abstract Task SendConnectAsync();
     protected abstract Task SendPingAsync();
@@ -78,10 +78,10 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     {
         var connectedMessage = (ConnectedMessage)message;
         var shouldSwallow = !DefaultNamespaces.Contains(Options.Namespace)
-                            && !Options.Namespace.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
+                            && !Options.Namespace!.Equals(connectedMessage.Namespace, StringComparison.InvariantCultureIgnoreCase);
         if (!shouldSwallow)
         {
-            connectedMessage.Sid = OpenedMessage.Sid;
+            connectedMessage.Sid = OpenedMessage!.Sid;
             _ = Task.Run(StartPingAsync);
         }
 
@@ -94,7 +94,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(OpenedMessage.PingInterval, token);
+            await Task.Delay(OpenedMessage!.PingInterval, token);
             _logger.LogDebug("Sending Ping...");
             await SendPingAsync().ConfigureAwait(false);
             _logger.LogDebug("Sent Ping");

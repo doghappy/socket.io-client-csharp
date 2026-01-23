@@ -7,6 +7,6 @@ namespace SocketIOClient.Protocol.Http;
 public interface IHttpAdapter : IProtocolAdapter
 {
     Task SendAsync(HttpRequest req, CancellationToken cancellationToken);
-    Uri Uri { get; set; }
+    Uri? Uri { get; set; }
     bool IsReadyToSend { get; }
 }

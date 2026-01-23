@@ -39,7 +39,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
     private readonly ISerializer _serializer;
     private readonly IEngineIOMessageAdapterFactory _engineIOMessageAdapterFactory;
     private readonly IEngineIOAdapterFactory _engineIOAdapterFactory;
-    protected T EngineIOAdapter { get; private set; }
+    protected T EngineIOAdapter { get; private set; } = null!;
 
     private readonly List<IMyObserver<IMessage>> _observers = [];
     private readonly Queue<IBinaryMessage> _messageQueue = [];
@@ -67,7 +67,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
 
     public int PendingDeliveryCount => _messageQueue.Count;
 
-    private SessionOptions _options;
+    private SessionOptions _options = null!;
 
     public SessionOptions Options
     {
@@ -192,11 +192,11 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
     {
         if (message.Type == ProtocolMessageType.Bytes)
         {
-            await OnNextBytesMessage(message.Bytes).ConfigureAwait(false);
+            await OnNextBytesMessage(message.Bytes!).ConfigureAwait(false);
         }
         else
         {
-            await OnNextTextMessage(message.Text).ConfigureAwait(false);
+            await OnNextTextMessage(message.Text!).ConfigureAwait(false);
         }
     }
 

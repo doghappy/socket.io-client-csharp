@@ -20,7 +20,7 @@ namespace SocketIOClient;
 
 public static class ServicesInitializer
 {
-    public static IServiceProvider BuildServiceProvider(IServiceCollection services, Action<IServiceCollection> configure = null)
+    public static IServiceProvider BuildServiceProvider(IServiceCollection services, Action<IServiceCollection>? configure = null)
     {
         services.AddLogging();
         services

@@ -13,13 +13,13 @@ public class ByteArrayConverter : JsonConverter<byte[]>
 
     public override byte[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType != JsonTokenType.StartObject) return null;
+        if (reader.TokenType != JsonTokenType.StartObject) return null!;
         reader.Read();
-        if (reader.TokenType != JsonTokenType.PropertyName || reader.GetString() != Placeholder) return null;
+        if (reader.TokenType != JsonTokenType.PropertyName || reader.GetString() != Placeholder) return null!;
         reader.Read();
-        if (reader.TokenType != JsonTokenType.True || !reader.GetBoolean()) return null;
+        if (reader.TokenType != JsonTokenType.True || !reader.GetBoolean()) return null!;
         reader.Read();
-        if (reader.TokenType != JsonTokenType.PropertyName || reader.GetString() != Num) return null;
+        if (reader.TokenType != JsonTokenType.PropertyName || reader.GetString() != Num) return null!;
         reader.Read();
         var num = reader.GetInt32();
         var bytes = Bytes[num];

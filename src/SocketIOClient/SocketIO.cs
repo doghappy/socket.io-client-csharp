@@ -18,7 +18,7 @@ namespace SocketIOClient;
 
 public class SocketIO : ISocketIO, IInternalSocketIO
 {
-    public SocketIO(Uri uri, SocketIOOptions options, Action<IServiceCollection> configure = null)
+    public SocketIO(Uri uri, SocketIOOptions options, Action<IServiceCollection>? configure = null)
     {
         ServerUri = uri;
         Options = options;
@@ -41,15 +41,15 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly ILogger<SocketIO> _logger;
     private readonly IRandom _random;
 
-    private ISession _session;
-    private IServiceScope _scope;
+    private ISession? _session;
+    private IServiceScope? _scope;
     public int PacketId { get; private set; }
     public bool Connected { get; private set; }
-    public string Id { get; private set; }
+    public string? Id { get; private set; }
 
-    private string _namespace;
+    private string? _namespace;
 
-    private Uri _serverUri;
+    private Uri _serverUri = null!;
 
     private Uri ServerUri
     {
@@ -58,7 +58,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         {
             if (_serverUri == value) return;
             _serverUri = value;
-            if (value != null && value.AbsolutePath != "/")
+            if (value.AbsolutePath != "/")
             {
                 _namespace = value.AbsolutePath.TrimEnd('/');
             }
@@ -71,17 +71,16 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly HashSet<string> _onceEvents = [];
     private readonly List<Func<string, IEventContext, Task>> _onAnyHandlers = [];
 
-    // private TaskCompletionSource<bool> _openedCompletionSource = new();
-    private TaskCompletionSource<bool> _sessionCompletionSource;
-    private TaskCompletionSource<Exception> _connCompletionSource;
+    private TaskCompletionSource<bool>? _sessionCompletionSource;
+    private TaskCompletionSource<Exception?>? _connCompletionSource;
     public SocketIOOptions Options { get; }
-    public event EventHandler<Exception> OnReconnectError;
-    public event EventHandler OnPing;
-    public event EventHandler<TimeSpan> OnPong;
-    public event EventHandler OnConnected;
-    public event EventHandler<string> OnDisconnected;
-    public event EventHandler<string> OnError;
-    public event EventHandler<int> OnReconnectAttempt;
+    public event EventHandler<Exception>? OnReconnectError;
+    public event EventHandler? OnPing;
+    public event EventHandler<TimeSpan>? OnPong;
+    public event EventHandler? OnConnected;
+    public event EventHandler<string>? OnDisconnected;
+    public event EventHandler<string>? OnError;
+    public event EventHandler<int>? OnReconnectAttempt;
 
     public async Task ConnectAsync()
     {
@@ -95,7 +94,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             return;
         }
 
-        _connCompletionSource = new TaskCompletionSource<Exception>();
+        _connCompletionSource = new TaskCompletionSource<Exception?>();
         _sessionCompletionSource = new TaskCompletionSource<bool>();
         var timeout = (int)(Options.ConnectionTimeout.TotalMilliseconds * 1.02);
         if (Options.Reconnection)
@@ -142,10 +141,10 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             {
                 _logger.LogDebug(e, e.Message);
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
-                OnReconnectError.RunInBackground(this, ex);
+                OnReconnectError?.RunInBackground(this, ex);
                 if (i == attempts - 1)
                 {
-                    _connCompletionSource.SetResult(ex);
+                    _connCompletionSource!.SetResult(ex);
                     throw ex;
                 }
 
@@ -159,7 +158,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         var times = i + 1;
         _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", times, attempts);
-        OnReconnectAttempt.RunInBackground(this, times);
+        OnReconnectAttempt?.RunInBackground(this, times);
     }
 
     private async Task TryConnectAsync(ISession session, CancellationToken cancellationToken)
@@ -168,7 +167,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _logger.LogDebug("Session connecting...");
         await session.ConnectAsync(cancellationToken).ConfigureAwait(false);
         _session = session;
-        _sessionCompletionSource.SetResult(true);
+        _sessionCompletionSource!.SetResult(true);
         _logger.LogDebug("Session connected");
     }
 
@@ -182,7 +181,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
         catch (Exception ex)
         {
-            _connCompletionSource.SetResult(ex);
+            _connCompletionSource!.SetResult(ex);
             throw;
         }
 
@@ -246,7 +245,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         CheckStatusAndData(data);
         var sessionData = MergeEventData(eventName, data);
-        await _session.SendAsync(sessionData, cancellationToken).ConfigureAwait(false);
+        await _session!.SendAsync(sessionData, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task EmitAsync(string eventName, IEnumerable<object> data)
@@ -277,7 +276,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         CheckStatusAndData(data);
         PacketId++;
         var sessionData = MergeEventData(eventName, data);
-        await _session.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
+        await _session!.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
         _funcHandlers.Add(PacketId, ack);
     }
 
@@ -311,7 +310,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private async Task SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
     {
         CheckStatusAndData(data);
-        await _session.SendAckDataAsync(data.ToArray(), packetId, cancellationToken).ConfigureAwait(false);
+        await _session!.SendAckDataAsync(data.ToArray(), packetId, cancellationToken).ConfigureAwait(false);
     }
 
     async Task IMyObserver<IMessage>.OnNextAsync(IMessage message)
@@ -373,7 +372,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         _logger.LogDebug("Transport upgrading...");
         using var timeoutCts = new CancellationTokenSource(Options.ConnectionTimeout);
-        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
+        timeoutCts.Token.Register(() => _connCompletionSource!.SetResult(new TimeoutException()));
         var cancellationToken = timeoutCts.Token;
         var session = NewSessionWithCancellationToken(cancellationToken);
         session.Options.Sid = message.Sid;
@@ -438,12 +437,12 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private async Task HandleConnectedMessage(IMessage message)
     {
-        await _sessionCompletionSource.Task.ConfigureAwait(false);
+        await _sessionCompletionSource!.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
         _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
-        _connCompletionSource.SetResult(null);
+        _connCompletionSource!.SetResult(null);
     }
 
     private async Task HandleDisconnectedMessageAsync()
@@ -461,7 +460,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private void HandleErrorMessage(IMessage message)
     {
         var err = (ErrorMessage)message;
-        _connCompletionSource.SetResult(new ConnectionException(err.Error));
+        _connCompletionSource!.SetResult(new ConnectionException(err.Error));
         OnError?.Invoke(this, err.Error);
     }
 
