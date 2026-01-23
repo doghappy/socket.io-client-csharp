@@ -28,23 +28,45 @@ stages:
               publishTestResults: true
               arguments: >
                 --configuration Release
-                --collect:"XPlat Code Coverage"
-          - task: PublishCodeCoverageResults@2
-            displayName: Publish code coverage
-            inputs:
-              codeCoverageTool: Cobertura
-              summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
-              reportDirectory: '$(Agent.TempDirectory)'
-          - task: DotNetCoreCLI@2
-            displayName: SocketIOClient.Serializer.NewtonsoftJson.Tests
-            inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.NewtonsoftJson.Tests
-              command: test
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.UnitTests/
           - task: DotNetCoreCLI@2
             displayName: SocketIOClient.Serializer.Tests
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.Tests
               command: test
+              publishTestResults: true
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.Serializer.Tests/
+          - task: DotNetCoreCLI@2
+            displayName: SocketIOClient.Serializer.NewtonsoftJson.Tests
+            inputs:
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.NewtonsoftJson.Tests
+              command: test
+              publishTestResults: true
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.Serializer.NewtonsoftJson.Tests/
+          - script: dotnet tool install -g dotnet-reportgenerator-globaltool
+            displayName: Install reportgenerator
+          - script: |
+              reportgenerator \
+                -reports:"$(Build.SourcesDirectory)/TestResults/**/coverage.cobertura.xml" \
+                -targetdir:"$(Build.SourcesDirectory)/TestResults/MergedCoverage" \
+                -reporttypes:Cobertura
+            displayName: Merge coverage reports
+          - task: PublishCodeCoverageResults@2
+            displayName: Publish code coverage
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(Build.SourcesDirectory)/TestResults/MergedCoverage/Cobertura.xml'
+              reportDirectory: '$(Build.SourcesDirectory)/TestResults/MergedCoverage'
       - job:
         displayName: Integration tests
         steps:
