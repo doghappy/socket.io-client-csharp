@@ -25,6 +25,17 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/
+          - task: PublishCodeCoverageResults@2
+            displayName: Publish code coverage
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(Build.SourcesDirectory)/TestResults/Coverage/coverage.cobertura.xml'
+              reportDirectory: '$(Build.SourcesDirectory)/TestResults/Coverage'
           - task: DotNetCoreCLI@2
             displayName: SocketIOClient.Serializer.NewtonsoftJson.Tests
             inputs:
