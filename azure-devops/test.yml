@@ -25,11 +25,13 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
+              publishTestResults: true
               arguments: >
                 --configuration Release
-                /p:CollectCoverage=true
-                /p:CoverletOutputFormat=cobertura
-                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/
+                --collect:"XPlat Code Coverage"
+#                /p:CollectCoverage=true
+#                /p:CoverletOutputFormat=cobertura
+#                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/Coverage/
           - task: PublishCodeCoverageResults@2
             displayName: Publish code coverage
             inputs:
