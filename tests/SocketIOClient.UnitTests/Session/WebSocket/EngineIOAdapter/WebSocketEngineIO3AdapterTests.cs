@@ -77,11 +77,11 @@ public class WebSocketEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
-            PingInterval = 10,
+            PingInterval = 50,
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(100);
+        await Task.Delay(500);
 
         var range = Quantity.Within(5, 12);
         await _webSocketAdapter.Received(range)
