@@ -67,7 +67,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        var receivedData = message.GetDataValue<object>(0);
+        var receivedData = message.GetValue<object>(0);
         receivedData.Should().BeNull();
     }
 
@@ -95,7 +95,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
 
         // TODO: json?
         message.Should().NotBeNull();
-        message.GetDataValue(data.GetType(), 0)
+        message.GetValue(data.GetType(), 0)
             .Should()
             .BeEquivalentTo(data);
     }
@@ -116,7 +116,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        message.GetDataValue<TestFile>(0)
+        message.GetValue<TestFile>(0)
             .Should()
             .BeEquivalentTo(TestFile.NiuB);
     }
@@ -141,10 +141,10 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        message.GetDataValue(item0.GetType(), 0)
+        message.GetValue(item0.GetType(), 0)
             .Should()
             .BeEquivalentTo(item0);
-        message.GetDataValue(item1.GetType(), 1)
+        message.GetValue(item1.GetType(), 1)
             .Should()
             .BeEquivalentTo(item1);
     }
@@ -246,8 +246,8 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
-        message.GetDataValue<int>(0).Should().Be(1);
-        message.GetDataValue<int>(1).Should().Be(2);
+        message.GetValue<int>(0).Should().Be(1);
+        message.GetValue<int>(1).Should().Be(2);
     }
 
     [Fact]
@@ -270,8 +270,8 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(DefaultDelay * 4);
 
         message.Should().NotBeNull();
-        message.GetDataValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
-        message.GetDataValue<string>(1).Should().Be("hello");
+        message.GetValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
+        message.GetValue<string>(1).Should().Be("hello");
     }
 
     [Fact]
@@ -418,7 +418,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await Task.Delay(100);
 
         eventName.Should().Be("1:emit");
-        context.GetDataValue<string>(0).Should().Be("OnAny");
+        context.GetValue<string>(0).Should().Be("OnAny");
     }
 
     [Fact]

@@ -8,10 +8,11 @@ namespace SocketIOClient;
 
 public interface IEventContext
 {
-    T? GetDataValue<T>(int index);
-    object? GetDataValue(Type type, int index);
+    T? GetValue<T>(int index);
+    object? GetValue(Type type, int index);
     Task SendAckDataAsync(IEnumerable<object> data);
     Task SendAckDataAsync(IEnumerable<object> data, CancellationToken cancellationToken);
+    string RawText { get; }
 }
 
 public class EventContext(IDataMessage message, IInternalSocketIO io) : IEventContext
@@ -21,17 +22,19 @@ public class EventContext(IDataMessage message, IInternalSocketIO io) : IEventCo
         await io.SendAckDataAsync(message.Id, data, cancellationToken).ConfigureAwait(false);
     }
 
+    public string RawText => message.RawText;
+
     public async Task SendAckDataAsync(IEnumerable<object> data)
     {
         await SendAckDataAsync(data, CancellationToken.None).ConfigureAwait(false);
     }
 
-    public T? GetDataValue<T>(int index)
+    public T? GetValue<T>(int index)
     {
         return message.GetValue<T>(index);
     }
 
-    public object? GetDataValue(Type type, int index)
+    public object? GetValue(Type type, int index)
     {
         return message.GetValue(type, index);
     }

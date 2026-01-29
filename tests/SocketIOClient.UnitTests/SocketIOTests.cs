@@ -1230,7 +1230,7 @@ public class SocketIOTests
         times.Should().Be(1);
         eventName.Should().Be("event");
         context.Should().NotBeNull();
-        context.GetDataValue<int>(0).Should().Be(1);
+        context.GetValue<int>(0).Should().Be(1);
     }
 
     [Fact]
