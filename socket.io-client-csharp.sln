@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Test.Core", "tests\SocketIOClient.Test.Core\SocketIOClient.Test.Core.csproj", "{C2754666-1367-47B2-A234-8E8F42C9BE07}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.SoakTests", "tests\SocketIOClient.SoakTests\SocketIOClient.SoakTests.csproj", "{B7AB6389-579E-410D-BF0E-9F02AF42F09B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,10 @@ Global
 		{C2754666-1367-47B2-A234-8E8F42C9BE07}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2754666-1367-47B2-A234-8E8F42C9BE07}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2754666-1367-47B2-A234-8E8F42C9BE07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7AB6389-579E-410D-BF0E-9F02AF42F09B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7AB6389-579E-410D-BF0E-9F02AF42F09B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7AB6389-579E-410D-BF0E-9F02AF42F09B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7AB6389-579E-410D-BF0E-9F02AF42F09B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,5 +97,6 @@ Global
 		{BE2F3BED-EDF1-4B25-AE84-AAE5F4C15BE2} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{0A3E6691-40FD-4010-A764-2B0C538F9B73} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 		{C2754666-1367-47B2-A234-8E8F42C9BE07} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
+		{B7AB6389-579E-410D-BF0E-9F02AF42F09B} = {335237B5-C6F5-4D4D-BD0C-006558A6F1B6}
 	EndGlobalSection
 EndGlobal

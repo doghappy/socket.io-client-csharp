@@ -15,11 +15,11 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
     - [Ack](#ack)
     - [Binary messages](#binary-messages)
     - [Serializer](#serializer)
-    - [Self-signed certificate](#自签名证书)
+    - [Self-signed certificate](#self-signed-certificate)
     - [Proxy](#Proxy)
-- [Development](#开发)
+- [Development](#development)
 - [Change log](#change-log)
-- [Sponsors](#Sponsors)
+- [Thanks](#thanks)
 
 # Quick start
 
@@ -275,6 +275,20 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 
 > Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this case, you may need to configure a proxy for both transports.
 
+# Development
+
+This library currently follows the software testing pyramid model, with 95% unit test coverage. You can view the coverage details in the Code Coverage section of the Azure DevOps interface.
+
+If you need to run the integration tests locally:
+
+```
+cd socket.io-client-csharp/tests/socket.io
+
+npm run install-all # Install the dependencies. This only needs to be done once.
+
+npm run start # Start socket.io server for integration testing
+```
+
 # Change log
 
 ## [4.0.0] - 2026-01-28
@@ -290,20 +304,6 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 - Optimized data access and internal workflows for better runtime performance
 
 [See more](./CHANGELOG.md)
-
-# Development
-
-This library currently follows the software testing pyramid model, with 95% unit test coverage. You can view the coverage details in the Code Coverage section of the Azure DevOps interface.
-
-If you need to run the integration tests locally:
-
-```
-cd socket.io-client-csharp/tests/socket.io
-
-npm run install-all # Install the dependencies. This only needs to be done once.
-
-npm run start # Start socket.io server for integration testing
-```
 
 After that, you can run the integration tests.
 

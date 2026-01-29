@@ -8,7 +8,7 @@ socket.io client 的 .NET 实现, 它支持 socket.io server v2/v3/v4, 并且支
 [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
 [![NuGet](https://img.shields.io/nuget/dt/SocketIOClient)](https://www.nuget.org/packages/SocketIOClient)
 
-# Table of Contents
+# 目录
 
 - [Quick start](#quick-start)
   - [Options](#options)
@@ -19,7 +19,7 @@ socket.io client 的 .NET 实现, 它支持 socket.io server v2/v3/v4, 并且支
   - [代理](#代理)
 - [开发](#开发)
 - [Change log](#change-log)
-- [Sponsors](#Sponsors)
+- [Thanks](#thanks)
 
 # Quick start
 
@@ -273,6 +273,20 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 
 > 注意：默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置代理
 
+# 开发
+
+此 Lib 目前是符合软件测试金字塔模型的，单元测试覆盖率 95%，可以在 Azure DevOps 界面的 Code Coverage 中看到。
+
+如果需要在本地运行集成测试：
+
+```
+cd socket.io-client-csharp/tests/socket.io
+
+npm run install-all # 安装依赖，只需要运行一次即可
+
+npm run start # 启动 socket.io server 测试服务
+```
+
 # Change log
 
 ## [4.0.0] - 2026-01-28
@@ -288,20 +302,6 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 - Optimized data access and internal workflows for better runtime performance
 
 [See more](./CHANGELOG.md)
-
-# 开发
-
-此 Lib 目前是符合软件测试金字塔模型的，单元测试覆盖率 95%，可以在 Azure DevOps 界面的 Code Coverage 中看到。
-
-如果需要在本地运行集成测试：
-
-```
-cd socket.io-client-csharp/tests/socket.io
-
-npm run install-all # 安装依赖，只需要运行一次即可
-
-npm run start # 启动 socket.io server 测试服务
-```
 
 然后就可以运行集成测试了
 
