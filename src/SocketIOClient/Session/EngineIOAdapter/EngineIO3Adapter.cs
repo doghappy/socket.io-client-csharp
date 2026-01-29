@@ -82,7 +82,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         if (!shouldSwallow)
         {
             connectedMessage.Sid = OpenedMessage!.Sid;
-            _ = Task.Run(StartPingAsync);
+            Task.Run(StartPingAsync);
         }
 
         return shouldSwallow;
