@@ -230,14 +230,14 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
-            PingInterval = 10,
+            PingInterval = 20,
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
         await Task.Delay(100);
 
-        var range = Quantity.Within(5, 12);
-        await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
+        var range = Quantity.Within(2, 8);
+        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));

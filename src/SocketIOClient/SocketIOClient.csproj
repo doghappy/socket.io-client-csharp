@@ -17,11 +17,6 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <DocumentationFile>bin\Release\SocketIOClient.xml</DocumentationFile>
-        <OutputPath>bin\Release\</OutputPath>
-    </PropertyGroup>
-
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
             <_Parameter1>SocketIOClient.UnitTests</_Parameter1>
