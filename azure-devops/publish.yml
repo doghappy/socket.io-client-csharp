@@ -13,7 +13,6 @@ parameters:
       - SocketIOClient.Core
       - SocketIOClient.Serializer
       - SocketIOClient.Serializer.NewtonsoftJson
-      - SocketIOClient.Windows7
 
 jobs:
   - job:
