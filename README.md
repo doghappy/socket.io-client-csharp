@@ -1,6 +1,6 @@
 # Socket.IO-client for .NET
 
-Languages: [Chinese Simplified](./README.zh.md) ｜ English
+Languages: [中文简体](./README.zh.md) ｜ English
 
 An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and has implemented http polling and websocket.
 
