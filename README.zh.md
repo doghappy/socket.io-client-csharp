@@ -1,8 +1,8 @@
 # Socket.IO-client for .NET
 
-Languages: [Chinese Simplified](./README.zh.md) ｜ English
+语言：中文简体 ｜ [English](./README.md)
 
-An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and has implemented http polling and websocket.
+socket.io client 的 .NET 实现, 它支持 socket.io server v2/v3/v4, 并且支持 Http 轮询和 WebSocket 两种通信模式。
 
 [![Build Status](https://dev.azure.com/doghappy/socket.io-client/_apis/build/status/Unit%20Test%20and%20Integration%20Test?branchName=master)](https://dev.azure.com/doghappy/socket.io-client/_build/latest?definitionId=16&branchName=master)
 [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
@@ -11,19 +11,19 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
 # Table of Contents
 
 - [Quick start](#quick-start)
-    - [Options](#options)
-    - [Ack](#ack)
-    - [Binary messages](#binary-messages)
-    - [Serializer](#serializer)
-    - [Self-signed certificate](#自签名证书)
-    - [Proxy](#Proxy)
-- [Development](#开发)
+  - [Options](#options)
+  - [Ack](#ack)
+  - [Binary messages](#binary-messages)
+  - [Serializer](#serializer)
+  - [自签名证书](#自签名证书)
+  - [代理](#代理)
+- [开发](#开发)
 - [Change log](#change-log)
 - [Sponsors](#Sponsors)
 
 # Quick start
 
-Connect to a Socket.IO server to receive and emit events.
+连接到 socket.io 服务，接收和发送事件
 
 ```cs
 var client = new SocketIO(new Uri("http://localhost:11400"));
@@ -31,19 +31,18 @@ var client = new SocketIO(new Uri("http://localhost:11400"));
 client.On("event", ctx =>
 {
     // RawText: ["event","Hello World!", 1, {\"Name\":\"Alice\",\"Age\":18}]
-    // The first element in the array is the event name,
-    // and the subsequent elements are the data carried with the event.
+    // 数组中的第一个元素是 event name，之后的元素是 event 携带的数据
     Console.WriteLine(ctx.RawText);
 
-    // Use index 0 to access the first item in the data payload, which is of type string.
+    // 使用索引 0 获取数据部分的第1个数据，在这个例子中数据类型是 string
     var message = ctx.GetValue<string>(0)!;
     Console.WriteLine(message); // Hello World!
 
-    // Use index 1 to access the second data item in the payload. The data type is int.
+    // 使用索引 1 获取数据部分的第2个数据，数据类型是 int
     var id = ctx.GetValue<int>(1);
     Console.WriteLine(id); // 1
 
-    // Use index 2 to access the third data item in the payload. The data type is User.
+    // 使用索引 2 获取数据部分的第3个数据，数据类型是 User 类型
     var user = ctx.GetValue<User>(2)!;
     Console.WriteLine($"Name: {user.Name}, Age: {user.Age}"); // Name: Alice, Age: 18
 
@@ -53,7 +52,7 @@ client.On("event", ctx =>
 
 ## Options
 
-An overload is provided here to allow custom configuration of the options.
+这里提供了一个重载，用来自定义 Options
 
 ```cs
 var client = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions
@@ -66,23 +65,23 @@ var client = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions
 });
 ```
 
-| Option               | Default Value | Description                                                                                                                                                                                                      |
+| Option               | 默认值 | 描述|
 |:--|:--|:--|
-| Path                 | /socket.io    | The service endpoint path.|
-| Reconnection         | true          | If the initial connection attempt fails, set this to true to keep retrying until the maximum number of reconnection attempts is reached. Set it to false to fail immediately without any further retry attempts. |
-| ReconnectionAttempts | 10            | When Reconnection is set to true, the client will automatically retry if the connection fails. The number of retry attempts is determined by ReconnectionAttempts.|
-| ReconnectionDelayMax | 5000          | After a reconnection attempt fails, the client will wait for a random delay before trying again. ReconnectionDelayMax defines the upper bound of that random delay.|
-| ConnectionTimeout    | 30s           | The timeout duration for each connection attempt.|
-| Query                | null          | Before the connection is established, the client can use this parameter to send query string values to the server.|
-| EIO                  | V4            | For Socket.IO server v2.x, please set EIO = 3.|
-| ExtraHeaders         | null          | Send the request headers with each request to the server. These values can be used during the handshake phase.|
-| Transport            | Polling       | By default, HTTP polling is used. When AutoUpgrade is set to true, the connection will automatically upgrade to WebSocket when possible. If the server only supports WebSocket, set Transport = TransportProtocol.WebSocket.|
-| AutoUpgrade          | true          | After the handshake, if the server supports WebSocket while the client is currently using polling, the connection will be upgraded to WebSocket.|
-| Auth                 | null          | Configure connection credentials. This feature is not supported when EIO = 3.|
+| Path                 | /socket.io | 服务的路径|
+| Reconnection         | true       | 初次连接时失败时，true 继续尝试连接直到重连次数超过指定值，false 连接失败后立即报错，不会继续尝试|
+| ReconnectionAttempts | 10         | 当 Reconnection 为 true 时，如果连接失败了会自动进行重试，重试次数为 ReconnectionAttempts|
+| ReconnectionDelayMax | 5000       | 当重新连接失败后，会随机休眠一段时间后再次尝试连接，ReconnectionDelayMax 是随机数的上限|
+| ConnectionTimeout    | 30s        | 每次请求建立连接的超时时间|
+| Query                | null       | 在连接建立前，客户端可以通过此参数传递一些 query string 到服务端|
+| EIO                  | V4         | 对于 socket.io server v2.x, 请设置 EIO = V3|
+| ExtraHeaders         | null       | 将请求头随每个请求一起发送到服务端。这些值可以在握手阶段使用|
+| Transport            | Polling    | 默认使用 Http Polling，当 AutoUpgrade 为 true 时，会自动升级到 WebSocket。如果服务端只支持 WebSocket 请设置 `Transport = TransportProtocol.WebSocket` |
+| AutoUpgrade          | true       | 在握手后，如何服务端支持 WebSocket，而客户端使用的是 Polling，则会升级到 WebSocket|
+| Auth                 | null       | 设置连接凭证，当 EIO = V3 时不支持此特性|
 
 ## Ack
 
-Emit an event with a callback function. After the server finishes processing, it will invoke the client’s callback function and pass back the relevant data.
+发送一个带有回调函数的事件，服务端在处理结束后，后调用客户端的回调函数，并传递相关的数据。
 
 **Client**
 
@@ -110,7 +109,7 @@ socket.on('hi', (m1, fn) => {
 });
 ```
 
-Listen for an event that includes a callback function. After the client finishes processing, it will send the relevant data back to the server. Once the server receives the data, it will execute its callback function.
+监听一个带有回调函数的事件，客户端在处理结束后，会向服务端传递相关的数据，当服务端收到数据后会在服务端执行回调函数。
 
 **Client**
 
@@ -135,7 +134,7 @@ socket.emit('add', 1, 2, c => {
 
 ## Binary messages
 
-Send and receive complex data types that include byte[]. By default, System.Text.Json is used for JSON serialization.
+发送和监听带有 byte[] 的复杂类型数据。默认使用 System.Text.Json 作为 json 序列化
 
 ```cs
 class FileDTO
@@ -151,7 +150,7 @@ class FileDTO
 }
 ```
 
-The above example uses [JsonPropertyName] to customize JSON property names. Global configuration via [JsonSerializerOptions](#serializer) is also supported.
+上述例子使用了 [JsonPropertyName] 来自定义 json 属性名，全局配置 [JsonSerializerOptions](#serializer) 也是支持的。
 
 ```cs
 await client.EmitAsync("1:emit", [
@@ -173,7 +172,7 @@ client.On("new files", ctx =>
 
 ## Serializer
 
-By default, System.Text.Json is used for serialization and deserialization. If you want to configure JsonSerializerOptions:
+默认情况下使用 System.Text.Json 进行序列化与反序列化，如果你想配置 JsonSerializerOptions：
 
 ```cs
 var client = new SocketIO(new Uri("http://localhost:11400"), services =>
@@ -185,7 +184,7 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 });
 ```
 
-Of course, if you prefer to use Newtonsoft.Json, you need to install SocketIOClient.Serializer.NewtonsoftJson.
+当然，如果你想使用 Newtonsoft.Json 则需要安装 `SocketIOClient.Serializer.NewtonsoftJson`
 
 ```cs
 var client = new SocketIO(new Uri("http://localhost:11400"), services =>
@@ -194,11 +193,10 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 });
 ```
 
-## Self-signed certificate
+## 自签名证书
 
-If your socket.io server uses a certificate issued by a trusted CA, you should not use these APIs to avoid potential security risks.
-
-However, if your socket.io server uses a self-signed certificate, you may need to customize the certificate validation logic:
+如果你的 socket.io 服务端使用的是受信任的 CA 签发的证书，请不要使用这些 API，避免安全问题。
+但如果 socket.io 服务端使用了自签名证书，你可能需要自定义证书校验逻辑：
 
 ### Http Polling
 
@@ -237,11 +235,11 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 });
 ```
 
-> Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this scenario, you may need to configure CertificateValidationCallback for both transports.
+> 注意：默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置 CertificateValidationCallback
 
-## Proxy
+## 代理
 
-In some network environments, a proxy must be configured in order to communicate with the server. Proxy can also be used for development and debugging purposes to capture and inspect the entire interaction.
+在某些特殊的网络环境中，需要配置代理才能与服务器通信，或者出于开发和调试的目的，使用代理软件记录整个交互过程。
 
 ### Http Polling
 
@@ -273,7 +271,7 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 });
 ```
 
-> Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this case, you may need to configure a proxy for both transports.
+> 注意：默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置代理
 
 # Change log
 
@@ -291,21 +289,21 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 
 [See more](./CHANGELOG.md)
 
-# Development
+# 开发
 
-This library currently follows the software testing pyramid model, with 95% unit test coverage. You can view the coverage details in the Code Coverage section of the Azure DevOps interface.
+此 Lib 目前是符合软件测试金字塔模型的，单元测试覆盖率 95%，可以在 Azure DevOps 界面的 Code Coverage 中看到。
 
-If you need to run the integration tests locally:
+如果需要在本地运行集成测试：
 
 ```
 cd socket.io-client-csharp/tests/socket.io
 
-npm run install-all # Install the dependencies. This only needs to be done once.
+npm run install-all # 安装依赖，只需要运行一次即可
 
-npm run start # Start socket.io server for integration testing
+npm run start # 启动 socket.io server 测试服务
 ```
 
-After that, you can run the integration tests.
+然后就可以运行集成测试了
 
 # Thanks
 
