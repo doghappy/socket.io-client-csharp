@@ -15,7 +15,7 @@ stages:
 #              dotnet format --verify-no-changes
 #            displayName: Check format
   - stage: NET_Tests
-    dependsOn: CheckFormat
+#    dependsOn: CheckFormat
     jobs:
       - job:
         displayName: Unit tests
