@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.EngineIOAdapter;
 

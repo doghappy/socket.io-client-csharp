@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer.SystemTextJson;

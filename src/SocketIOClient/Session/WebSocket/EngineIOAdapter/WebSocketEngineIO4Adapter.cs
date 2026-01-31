@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Protocol.WebSocket;
 using SocketIOClient.Serializer;

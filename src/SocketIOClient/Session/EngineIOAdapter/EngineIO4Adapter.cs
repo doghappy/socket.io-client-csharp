@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Observers;
 using SocketIOClient.Serializer;

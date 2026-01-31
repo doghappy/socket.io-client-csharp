@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;

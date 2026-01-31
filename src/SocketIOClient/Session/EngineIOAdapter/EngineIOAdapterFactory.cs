@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 
 namespace SocketIOClient.Session.EngineIOAdapter;
 

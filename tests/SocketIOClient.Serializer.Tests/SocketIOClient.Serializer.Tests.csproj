@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\SocketIOClient.Core\SocketIOClient.Core.csproj" />
+      <ProjectReference Include="..\..\src\SocketIOClient.Common\SocketIOClient.Common.csproj" />
       <ProjectReference Include="..\..\src\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
     </ItemGroup>
 </Project>

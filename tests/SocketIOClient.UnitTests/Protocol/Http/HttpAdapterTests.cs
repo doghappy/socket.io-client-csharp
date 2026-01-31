@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using FluentAssertions;
 using NSubstitute;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Observers;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Test.Core;

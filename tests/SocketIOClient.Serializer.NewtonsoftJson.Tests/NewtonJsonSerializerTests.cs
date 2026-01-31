@@ -2,8 +2,8 @@ using FluentAssertions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NSubstitute;
-using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 using SocketIOClient.Test.Core;
 

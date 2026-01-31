@@ -1,5 +1,5 @@
 using System;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.IntegrationTests.SystemJson;

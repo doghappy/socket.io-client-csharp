@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson.Tests;
 

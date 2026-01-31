@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SocketIOClient.Core\SocketIOClient.Core.csproj"/>
+        <ProjectReference Include="..\SocketIOClient.Common\SocketIOClient.Common.csproj" />
         <ProjectReference Include="..\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj"/>
         <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj"/>
     </ItemGroup>

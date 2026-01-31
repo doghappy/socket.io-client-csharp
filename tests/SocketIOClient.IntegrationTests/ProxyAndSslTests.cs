@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Exceptions;
 using SocketIOClient.Protocol.WebSocket;
 using SocketIOClient.Test.Core;

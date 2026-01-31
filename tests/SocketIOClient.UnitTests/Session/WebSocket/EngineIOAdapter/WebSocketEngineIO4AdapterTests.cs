@@ -1,7 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
-using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Observers;
 using SocketIOClient.Protocol.WebSocket;

@@ -2,8 +2,6 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
-        <AssemblyName>SocketIOClient.Core</AssemblyName>
-        <RootNamespace>SocketIOClient.Core</RootNamespace>
         <Authors>doghappy</Authors>
         <Description>socket.io-client implemention for .NET</Description>
         <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
@@ -15,6 +13,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
+        <PackageId>SocketIOClient.Common</PackageId>
     </PropertyGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.SystemTextJson;
 

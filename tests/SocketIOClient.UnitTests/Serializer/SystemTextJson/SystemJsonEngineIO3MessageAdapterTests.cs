@@ -1,6 +1,6 @@
 using FluentAssertions;
 using JetBrains.Annotations;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.SystemTextJson;
 
 namespace SocketIOClient.UnitTests.Serializer.SystemTextJson;

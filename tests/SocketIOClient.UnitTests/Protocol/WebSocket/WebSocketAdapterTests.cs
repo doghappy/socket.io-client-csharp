@@ -2,7 +2,7 @@ using System.Text;
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ReceivedExtensions;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Observers;
 using SocketIOClient.Protocol.WebSocket;
 using SocketIOClient.Test.Core;

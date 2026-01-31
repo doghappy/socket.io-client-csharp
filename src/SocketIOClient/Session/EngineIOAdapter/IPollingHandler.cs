@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Session.EngineIOAdapter;
 

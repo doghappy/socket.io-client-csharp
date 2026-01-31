@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.EngineIOAdapter;

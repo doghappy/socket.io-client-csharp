@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 
 namespace SocketIOClient;
 

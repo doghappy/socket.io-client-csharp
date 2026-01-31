@@ -2,7 +2,7 @@ using System;
 using System.Net.Http;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Protocol.WebSocket;

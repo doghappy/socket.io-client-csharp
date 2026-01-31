@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer;

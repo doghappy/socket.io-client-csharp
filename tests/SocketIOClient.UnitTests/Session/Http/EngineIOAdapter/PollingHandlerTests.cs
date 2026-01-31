@@ -1,5 +1,5 @@
 using NSubstitute;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.Http.EngineIOAdapter;

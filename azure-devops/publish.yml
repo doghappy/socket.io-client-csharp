@@ -1,4 +1,4 @@
-name: Publish ${{ parameters.package }}
+name: $(Date:yyyyMMdd)$(Rev:.r)_${{ parameters.package }}
 trigger: none
 
 pool:
@@ -9,10 +9,10 @@ parameters:
     displayName: Package
     type: string
     values:
-      - SocketIOClient
-      - SocketIOClient.Core
+      - SocketIOClient.Common
       - SocketIOClient.Serializer
       - SocketIOClient.Serializer.NewtonsoftJson
+      - SocketIOClient
 
 jobs:
   - job:

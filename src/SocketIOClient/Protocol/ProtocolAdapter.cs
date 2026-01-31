@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Observers;
 
 namespace SocketIOClient.Protocol;

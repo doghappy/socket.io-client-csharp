@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.SystemTextJson;
 

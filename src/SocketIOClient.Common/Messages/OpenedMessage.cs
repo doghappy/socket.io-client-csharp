@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace SocketIOClient.Core.Messages;
+namespace SocketIOClient.Common.Messages;
 
 public class OpenedMessage : IMessage
 {

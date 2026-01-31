@@ -17,7 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{335237B5
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer", "src\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj", "{260AFC53-0BA2-42EC-A7FB-9F768F300A04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Core", "src\SocketIOClient.Core\SocketIOClient.Core.csproj", "{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Common", "src\SocketIOClient.Common\SocketIOClient.Common.csproj", "{182DD1C2-ADC7-494D-AA9B-603EEC2C6729}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketIOClient.Serializer.NewtonsoftJson", "src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj", "{E7F04687-E32F-49D1-8A22-18328EE327F7}"
 EndProject

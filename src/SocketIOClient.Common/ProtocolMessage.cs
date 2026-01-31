@@ -1,4 +1,4 @@
-﻿namespace SocketIOClient.Core
+﻿namespace SocketIOClient.Common
 {
     public class ProtocolMessage
     {

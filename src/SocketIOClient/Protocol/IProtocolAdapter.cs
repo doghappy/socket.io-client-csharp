@@ -1,4 +1,4 @@
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Observers;
 
 namespace SocketIOClient.Protocol;

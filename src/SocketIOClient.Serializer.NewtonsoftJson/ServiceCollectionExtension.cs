@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
 

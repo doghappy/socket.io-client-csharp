@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Protocol.WebSocket;
 using SocketIOClient.Serializer;
 using SocketIOClient.Session.EngineIOAdapter;

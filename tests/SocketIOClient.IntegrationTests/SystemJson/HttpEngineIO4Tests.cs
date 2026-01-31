@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using FluentAssertions;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Session.WebSocket;
 using Xunit;
 using Xunit.Abstractions;

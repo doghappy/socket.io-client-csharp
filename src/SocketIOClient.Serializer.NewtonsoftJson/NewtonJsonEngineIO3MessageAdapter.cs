@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
 

@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer.Tests.Decapsulation;

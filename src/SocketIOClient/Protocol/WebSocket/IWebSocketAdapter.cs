@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 
 namespace SocketIOClient.Protocol.WebSocket;
 

@@ -1,4 +1,4 @@
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 
 namespace SocketIOClient.Session.EngineIOAdapter;
 

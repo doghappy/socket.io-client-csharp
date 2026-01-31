@@ -1,17 +1,17 @@
-using ArchUnitNET.xUnit;
 using ArchUnitNET.Domain;
 using ArchUnitNET.Fluent.Slices;
 using ArchUnitNET.Loader;
-using Xunit;
+using ArchUnitNET.xUnit;
+using Assembly = System.Reflection.Assembly;
 
 namespace SocketIOClient.UnitTests.ArchUnit;
 
 public class ArchitectureTests
 {
     private static readonly Architecture Architecture = new ArchLoader().LoadAssemblies(
-        System.Reflection.Assembly.Load("SocketIOClient"),
-        System.Reflection.Assembly.Load("SocketIOClient.Core"),
-        System.Reflection.Assembly.Load("SocketIOClient.Serializer")
+        Assembly.Load("SocketIOClient"),
+        Assembly.Load("SocketIOClient.Common"),
+        Assembly.Load("SocketIOClient.Serializer")
     ).Build();
 
     [Fact]

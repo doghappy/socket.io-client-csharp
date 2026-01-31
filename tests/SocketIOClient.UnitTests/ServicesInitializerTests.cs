@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using SocketIOClient.Core;
+using SocketIOClient.Common;
 using SocketIOClient.Serializer;
 using SocketIOClient.Serializer.NewtonsoftJson;
 using SocketIOClient.Serializer.SystemTextJson;

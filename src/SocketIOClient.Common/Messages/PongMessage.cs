@@ -1,6 +1,6 @@
 using System;
 
-namespace SocketIOClient.Core.Messages;
+namespace SocketIOClient.Common.Messages;
 
 public class PongMessage : IMessage
 {

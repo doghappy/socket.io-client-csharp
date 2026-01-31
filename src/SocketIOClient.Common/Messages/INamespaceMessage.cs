@@ -1,4 +1,4 @@
-namespace SocketIOClient.Core.Messages;
+namespace SocketIOClient.Common.Messages;
 
 public interface INamespaceMessage : IMessage
 {
