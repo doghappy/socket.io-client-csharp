@@ -29,7 +29,7 @@ public class NewtonJsonEngineIO4MessageAdapter : IEngineIOMessageAdapter
     {
         var message = new ErrorMessage();
         var rawJson = DecapsulateNamespace(text, message);
-        message.Error = JObject.Parse(rawJson).Value<string>("message");
+        message.Error = JObject.Parse(rawJson).Value<string>("message")!;
         return message;
     }
 }

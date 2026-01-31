@@ -88,7 +88,7 @@ public class NewtonJsonSerializer : BaseJsonSerializer
         JsonSerializerSettings settings)
     {
         SetAckMessageProperties(result, message, settings);
-        message.Event = message.DataItems[0].Value<string>();
+        message.Event = message.DataItems[0].Value<string>()!;
         message.DataItems.RemoveAt(0);
     }
 

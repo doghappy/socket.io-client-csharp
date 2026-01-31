@@ -10,7 +10,7 @@ public class NewtonJsonAckMessage : INewtonJsonAckMessage
     public JArray DataItems { get; set; } = null!;
 
     public virtual MessageType Type => MessageType.Ack;
-    public string Namespace { get; set; } = null!;
+    public string? Namespace { get; set; }
     public int Id { get; set; }
     public string RawText { get; set; } = null!;
     public JsonSerializerSettings JsonSerializerSettings { get; set; } = null!;

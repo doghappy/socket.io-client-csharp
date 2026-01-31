@@ -10,6 +10,7 @@
         <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>socket.io-client</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryType>github</RepositoryType>
         <Version>4.0.0</Version>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -27,6 +28,8 @@
         <ProjectReference Include="..\SocketIOClient.Common\SocketIOClient.Common.csproj" />
         <ProjectReference Include="..\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj"/>
         <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj"/>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\README.zh.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
     <ItemGroup>
