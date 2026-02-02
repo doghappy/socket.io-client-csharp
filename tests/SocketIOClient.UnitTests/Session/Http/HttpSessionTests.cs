@@ -84,6 +84,7 @@ public class HttpSessionTests
     [InlineData("https://localhost:3000", null, EngineIO.V4, "https://localhost:3000/socket.io/?EIO=4&transport=polling")]
     [InlineData("http://localhost:3000", "", EngineIO.V3, "http://localhost:3000/socket.io/?EIO=3&transport=polling")]
     [InlineData("http://localhost:3000", "/app/", EngineIO.V4, "http://localhost:3000/app/?EIO=4&transport=polling")]
+    [InlineData("http://example.com:3000", null, EngineIO.V4, "http://example.com:3000/socket.io/?EIO=4&transport=polling")]
     public async Task ConnectAsync_WhenCalled_PassCorrectHttpRequestToAdapter(string serverUri, string path, EngineIO eio, string expectedUri)
     {
         var requests = new List<HttpRequest>();

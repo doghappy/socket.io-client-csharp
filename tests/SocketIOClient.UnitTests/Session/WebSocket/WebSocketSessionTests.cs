@@ -84,6 +84,7 @@ public class WebSocketSessionTests
     [InlineData("https://localhost:3000", null, EngineIO.V4, "wss://localhost:3000/socket.io/?EIO=4&transport=websocket")]
     [InlineData("http://localhost:3000", "", EngineIO.V3, "ws://localhost:3000/socket.io/?EIO=3&transport=websocket")]
     [InlineData("http://localhost:3000", "/app/", EngineIO.V4, "ws://localhost:3000/app/?EIO=4&transport=websocket")]
+    [InlineData("https://example.com:3000", null, EngineIO.V4, "wss://example.com:3000/socket.io/?EIO=4&transport=websocket")]
     public async Task ConnectAsync_WhenCalled_PassCorrectArgsToAdapter(string serverUri, string path, EngineIO eio, string expectedUri)
     {
         var session = NewSession();

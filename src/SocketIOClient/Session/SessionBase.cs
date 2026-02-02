@@ -154,7 +154,8 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         {
             Scheme = GetServerUriSchema(),
             Port = Options.ServerUri.IsDefaultPort ? -1 : Options.ServerUri.Port,
-            Path = string.IsNullOrWhiteSpace(Options.Path) ? DefaultPath : Options.Path!
+            Path = string.IsNullOrWhiteSpace(Options.Path) ? DefaultPath : Options.Path!,
+            Host = Options.ServerUri.Host
         };
     }
 
