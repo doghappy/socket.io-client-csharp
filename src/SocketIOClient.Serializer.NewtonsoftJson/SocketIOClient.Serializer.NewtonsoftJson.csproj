@@ -1,18 +1,30 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+        <AssemblyName>SocketIOClient.Serializer.NewtonsoftJson</AssemblyName>
+        <RootNamespace>SocketIOClient.Serializer.NewtonsoftJson</RootNamespace>
+        <Authors>doghappy</Authors>
+        <Description>socket.io-client implemention for .NET</Description>
+        <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageTags>socket.io-client</PackageTags>
+        <RepositoryType>github</RepositoryType>
+        <Version>4.0.0.1</Version>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\SocketIOClient.Core\SocketIOClient.Core.csproj" />
+      <ProjectReference Include="..\SocketIOClient.Common\SocketIOClient.Common.csproj" />
       <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     </ItemGroup>
 
 </Project>

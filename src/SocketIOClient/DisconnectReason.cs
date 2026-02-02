@@ -2,10 +2,10 @@
 {
     public class DisconnectReason
     {
-        public static string IOServerDisconnect = "io server disconnect";
-        public static string IOClientDisconnect = "io client disconnect";
-        public static string PingTimeout = "ping timeout";
-        public static string TransportClose = "transport close";
-        public static string TransportError = "transport error";
+        public const string IOServerDisconnect = "io server disconnect";
+        public const string IOClientDisconnect = "io client disconnect";
+        public const string PingTimeout = "ping timeout";
+        public const string TransportClose = "transport close";
+        public const string TransportError = "transport error";
     }
 }

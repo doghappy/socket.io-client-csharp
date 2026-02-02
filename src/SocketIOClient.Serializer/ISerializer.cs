@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
-using SocketIOClient.Core;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer
 {
     public interface ISerializer
     {
-        string Namespace { get; set; }
+        string? Namespace { get; set; }
+        string Serialize(object data);
         List<ProtocolMessage> Serialize(object[] data);
-        IMessage Deserialize(string text);
-        ProtocolMessage NewPingMessage();
-        ProtocolMessage NewPongMessage();
+        List<ProtocolMessage> Serialize(object[] data, int packetId);
+        List<ProtocolMessage> SerializeAckData(object[] data, int packetId);
+        IMessage? Deserialize(string text);
+        void SetEngineIOMessageAdapter(IEngineIOMessageAdapter adapter);
     }
 }

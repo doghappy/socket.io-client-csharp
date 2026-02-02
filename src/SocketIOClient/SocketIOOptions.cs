@@ -1,70 +1,44 @@
-﻿using SocketIOClient.Transport;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Security;
-using SocketIO.Core;
+using System.Collections.Specialized;
+using SocketIOClient.Common;
 
-namespace SocketIOClient
+namespace SocketIOClient;
+
+public class SocketIOOptions
 {
-    public sealed class SocketIOOptions
+    public EngineIO EIO { get; set; } = EngineIO.V4;
+    public TimeSpan ConnectionTimeout { get; set; } = TimeSpan.FromSeconds(30);
+    public bool Reconnection { get; set; } = true;
+
+    public TransportProtocol Transport { get; set; }
+
+    private int _reconnectionAttempts = 10;
+    public int ReconnectionAttempts
     {
-        public SocketIOOptions()
+        get => _reconnectionAttempts;
+        set
         {
-            RandomizationFactor = 0.5;
-            ReconnectionDelay = 1000;
-            ReconnectionDelayMax = 5000;
-            ReconnectionAttempts = int.MaxValue;
-            Path = "/socket.io";
-            ConnectionTimeout = TimeSpan.FromSeconds(20);
-            Reconnection = true;
-            Transport = TransportProtocol.Polling;
-            EIO = EngineIO.V4;
-            AutoUpgrade = true;
-        }
-
-        public string Path { get; set; }
-
-        public TimeSpan ConnectionTimeout { get; set; }
-
-        public IEnumerable<KeyValuePair<string, string>> Query { get; set; }
-
-        /// <summary>
-        /// Whether to allow reconnection if accidentally disconnected
-        /// </summary>
-        public bool Reconnection { get; set; }
-
-        public double ReconnectionDelay { get; set; }
-        public int ReconnectionDelayMax { get; set; }
-        public int ReconnectionAttempts { get; set; }
-
-        double _randomizationFactor;
-        public double RandomizationFactor
-        {
-            get => _randomizationFactor;
-            set
+            if (value < 1)
             {
-                if (value >= 0 && value <= 1)
-                {
-                    _randomizationFactor = value;
-                }
-                else
-                {
-                    throw new ArgumentException($"{nameof(RandomizationFactor)} should be greater than or equal to 0.0, and less than 1.0.");
-                }
+                throw new ArgumentException("The minimum allowable number of attempts is 1");
             }
+            _reconnectionAttempts = value;
         }
-
-        public Dictionary<string, string> ExtraHeaders { get; set; }
-
-        public TransportProtocol Transport { get; set; }
-
-        public EngineIO EIO { get; set; }
-
-        public bool AutoUpgrade { get; set; }
-
-        public object Auth { get; set; }
-        public IWebProxy Proxy { get; set; }
-        public RemoteCertificateValidationCallback RemoteCertificateValidationCallback { get; set; }
     }
+
+    public int ReconnectionDelayMax { get; set; } = 5000;
+
+    private string? _path;
+    public string? Path
+    {
+        get => _path;
+        set => _path = $"/{value!.Trim('/')}/";
+    }
+
+    public NameValueCollection? Query { get; set; }
+    public IReadOnlyDictionary<string, string>? ExtraHeaders { get; set; }
+
+    public object? Auth { get; set; }
+    public bool AutoUpgrade { get; set; } = true;
 }

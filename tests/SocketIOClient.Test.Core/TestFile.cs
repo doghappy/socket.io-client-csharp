@@ -1,0 +1,27 @@
+﻿namespace SocketIOClient.Test.Core;
+
+public class TestFile
+{
+    public int Size { get; set; }
+    public required string Name { get; set; }
+    public required byte[] Bytes { get; init; }
+
+    public static readonly TestFile IndexHtml = new()
+    {
+        Name = "index.html",
+        Size = 1024,
+        Bytes = "Hello World!"u8.ToArray(),
+    };
+
+    /// <summary>
+    /// "NiuB" (牛B) is a slang term in Chinese, often used to describe someone or something that's really impressive or awesome.
+    /// It’s like saying "cool," "amazing," or "badass" in English.
+    /// NiuB => 牛B => 🐮🍺
+    /// </summary>
+    public static readonly TestFile NiuB = new()
+    {
+        Name = "NiuB",
+        Size = 666,
+        Bytes = "🐮🍺"u8.ToArray(),
+    };
+}

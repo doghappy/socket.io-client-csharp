@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
@@ -16,7 +16,6 @@ public class NewtonJsonSerializer : BaseJsonSerializer
     }
 
     private readonly JsonSerializerSettings _options;
-    public IEngineIOMessageAdapter EngineIOMessageAdapter { get; set; }
 
     protected override SerializationResult SerializeCore(object[] data)
     {
@@ -28,6 +27,11 @@ public class NewtonJsonSerializer : BaseJsonSerializer
             Json = json,
             Bytes = converter.Bytes,
         };
+    }
+
+    public override string Serialize(object data)
+    {
+        return JsonConvert.SerializeObject(data, _options);
     }
 
     private JsonSerializerSettings NewSettings(JsonConverter converter)
@@ -74,6 +78,7 @@ public class NewtonJsonSerializer : BaseJsonSerializer
         message.Namespace = result.Namespace;
         message.Id = result.Id;
         message.JsonSerializerSettings = settings;
+        message.RawText = result.Data;
         message.DataItems = JArray.Parse(result.Data);
     }
 
@@ -83,7 +88,7 @@ public class NewtonJsonSerializer : BaseJsonSerializer
         JsonSerializerSettings settings)
     {
         SetAckMessageProperties(result, message, settings);
-        message.Event = message.DataItems[0].Value<string>();
+        message.Event = message.DataItems[0].Value<string>()!;
         message.DataItems.RemoveAt(0);
     }
 

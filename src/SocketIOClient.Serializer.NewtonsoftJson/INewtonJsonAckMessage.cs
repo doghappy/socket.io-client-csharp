@@ -1,10 +1,10 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
 
-public interface INewtonJsonAckMessage : IAckMessage
+public interface INewtonJsonAckMessage : IDataMessage
 {
     JArray DataItems { get; set; }
     JsonSerializerSettings JsonSerializerSettings { get; set; }

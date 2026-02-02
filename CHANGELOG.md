@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-01-29
+
+### Architecture Refactor
+- Reworked the internal architecture to improve modularity, maintainability, and long-term extensibility
+- Clearer separation of responsibilities between core components
+- Reduced coupling between modules, making future enhancements safer and easier
+
+### Performance Enhancements
+- Improved execution efficiency in key processing paths
+- Reduced unnecessary allocations and redundant operations
+- Optimized data access and internal workflows for better runtime performance
+
 ## [3.1.2] - 2024-08-18
 
 ### Added
@@ -176,7 +188,7 @@ client.Socket = new ClientWebSocketManaged();
 
 ## [2.2.4] - 2021-6-24
 
-SocketIOClient  
+SocketIOClient
 SocketIOClient.Windows7
 
 ### Changed
@@ -189,7 +201,7 @@ SocketIOClient.Windows7
 
 ## [2.2.3] - 2021-6-15
 
-SocketIOClient  
+SocketIOClient
 SocketIOClient.Windows7
 
 ### Changed
@@ -205,7 +217,7 @@ SocketIOClient.Windows7
 
 ## [2.2.2] - 2021-6-7
 
-SocketIOClient  
+SocketIOClient
 SocketIOClient.Windows7
 
 ### Changed
@@ -214,7 +226,7 @@ SocketIOClient.Windows7
 
 ## [2.2.1] - 2021-6-5
 
-SocketIOClient  
+SocketIOClient
 SocketIOClient.Windows7
 
 ### Changed

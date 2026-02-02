@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 using SocketIOClient.Serializer.Decapsulation;
 
 namespace SocketIOClient.Serializer.Tests.Decapsulation;
@@ -21,7 +21,7 @@ public class DecapsulatorTests
         true,
         MessageType.Opened,
         "{\"sid\":\"123\",\"upgrades\":[],\"pingInterval\":10000,\"pingTimeout\":5000}")]
-    public void DecapsulateRawText_WhenCalled_AlwaysPass(string text, bool success, MessageType? type, string data)
+    public void DecapsulateRawText_WhenCalled_AlwaysPass(string text, bool success, MessageType? type, string? data)
     {
         var decapsulator = new Decapsulator();
         var result = decapsulator.DecapsulateRawText(text);

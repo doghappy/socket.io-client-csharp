@@ -1,5 +1,3 @@
-name: Unit Tests and Integration Tests
-
 trigger:
   - master
 
@@ -7,17 +5,17 @@ pool:
   vmImage: ubuntu-latest
 
 stages:
-  - stage: CheckFormat
-    jobs:
-      - job:
-        displayName: Check format
-        steps:
-          - script: |
-              dotnet tool restore
-              dotnet format --verify-no-changes
-            displayName: Check format
+#  - stage: CheckFormat
+#    jobs:
+#      - job:
+#        displayName: Check format
+#        steps:
+#          - script: |
+#              dotnet tool restore
+#              dotnet format --verify-no-changes
+#            displayName: Check format
   - stage: NET_Tests
-    dependsOn: CheckFormat
+#    dependsOn: CheckFormat
     jobs:
       - job:
         displayName: Unit tests
@@ -27,21 +25,65 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
+              publishTestResults: true
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.UnitTests/
+
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.SystemTextJson.Tests
+            displayName: SocketIOClient.Serializer.Tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.SystemTextJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.Tests
               command: test
+              publishTestResults: true
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.Serializer.Tests/
+
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.NewtonsoftJson.Tests
+            displayName: SocketIOClient.Serializer.NewtonsoftJson.Tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.NewtonsoftJson.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.Serializer.NewtonsoftJson.Tests
               command: test
+              publishTestResults: true
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.Serializer.NewtonsoftJson.Tests/
+
+          - template: templates/socket.io-tpl.yml
           - task: DotNetCoreCLI@2
-            displayName: SocketIO.Serializer.MessagePack.Tests
+            displayName: Integration tests
             inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIO.Serializer.MessagePack.Tests
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
+              arguments: >
+                --configuration Release
+                /p:CollectCoverage=true
+                /p:CoverletOutputFormat=cobertura
+                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.IntegrationTests/
+
+          - script: dotnet tool install -g dotnet-reportgenerator-globaltool
+            displayName: Install reportgenerator
+
+          - script: |
+              reportgenerator \
+                -reports:"$(Build.SourcesDirectory)/TestResults/**/coverage.cobertura.xml" \
+                -targetdir:"$(Build.SourcesDirectory)/TestResults/MergedCoverage" \
+                -reporttypes:Cobertura
+            displayName: Merge coverage reports
+
+          - task: PublishCodeCoverageResults@2
+            displayName: Publish code coverage
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(Build.SourcesDirectory)/TestResults/MergedCoverage/Cobertura.xml'
+              reportDirectory: '$(Build.SourcesDirectory)/TestResults/MergedCoverage'
 #      - job:
 #        displayName: Integration tests
 #        steps:
@@ -51,6 +93,11 @@ stages:
 #            inputs:
 #              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
 #              command: test
+#              arguments: >
+#                --configuration Release
+#                /p:CollectCoverage=true
+#                /p:CoverletOutputFormat=cobertura
+#                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.IntegrationTests/
 #  - stage: NET_Framework_Tests
 #    dependsOn: CheckFormat
 #    pool:

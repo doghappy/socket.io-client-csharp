@@ -10,12 +10,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
-        <PackageReference Include="FluentAssertions" Version="6.12.0" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-        <PackageReference Include="NSubstitute" Version="5.1.0" />
-        <PackageReference Include="xunit" Version="2.5.3"/>
-        <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3"/>
+        <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="FluentAssertions" Version="8.8.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
@@ -23,14 +28,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\SocketIOClient.Core\SocketIOClient.Core.csproj" />
+      <ProjectReference Include="..\..\src\SocketIOClient.Common\SocketIOClient.Common.csproj" />
       <ProjectReference Include="..\..\src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Include="..\SocketIOClient.UnitTests\V2\Serializer\TestFile.cs">
-        <Link>TestFile.cs</Link>
-      </Compile>
+      <ProjectReference Include="..\SocketIOClient.Test.Core\SocketIOClient.Test.Core.csproj" />
     </ItemGroup>
 
 </Project>

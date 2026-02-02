@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson;
 
@@ -18,7 +18,7 @@ public class NewtonJsonEngineIO3MessageAdapter : IEngineIOMessageAdapter
 
     public ErrorMessage DeserializeErrorMessage(string text)
     {
-        var error = JToken.Parse(text).ToObject<string>();
+        var error = JToken.Parse(text).ToObject<string>()!;
         return new ErrorMessage
         {
             Error = error,

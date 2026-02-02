@@ -1,10 +1,12 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FluentAssertions;
-using SocketIO.Core;
-using SocketIOClient.Transport;
+using Microsoft.Extensions.DependencyInjection;
+using SocketIOClient.Core;
+using SocketIOClient.Protocol.WebSocket;
 
 namespace SocketIOClient.IntegrationTests.Net472
 {
@@ -18,7 +20,7 @@ namespace SocketIOClient.IntegrationTests.Net472
         public async Task ExtraHeaders(string key, string value)
         {
             string actual = null;
-            using (var io = new SocketIO("http://localhost:11400", new SocketIOOptions
+            using (var io = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions
             {
                 Reconnection = false,
                 EIO = EngineIO.V4,
@@ -30,31 +32,40 @@ namespace SocketIOClient.IntegrationTests.Net472
             }))
             {
                 await io.ConnectAsync();
-                await io.EmitAsync("get_header",
-                    res => actual = res.GetValue<string>(),
-                    key.ToLower());
+                var data = new object[] { key.ToLower() };
+                await io.EmitAsync("get_header", data, res => actual = res.GetValue<string>(0));
                 await Task.Delay(100);
 
                 actual.Should().Be(value);
-            };
+            }
         }
 
         [TestMethod]
-        public async Task Should_ignore_ws_SSL_error()
+        public async Task WebSocket_IgnoreServerCertError_AlwaysPass()
         {
+            Console.WriteLine(AppDomain.CurrentDomain.BaseDirectory);
             var callback = false;
-            var io = new SocketIO("https://localhost:11404", new SocketIOOptions
+            var io = new SocketIO(new Uri("https://localhost:11404"), new SocketIOOptions
             {
                 EIO = EngineIO.V4,
                 AutoUpgrade = false,
                 Reconnection = false,
                 Transport = TransportProtocol.WebSocket,
-                ConnectionTimeout = TimeSpan.FromSeconds(2),
-                RemoteCertificateValidationCallback = (sender, cert, chain, errs) =>
+                ConnectionTimeout = TimeSpan.FromSeconds(2)
+            }, services =>
+            {
+                services.AddSingleton<HttpClient>(_ =>
                 {
-                    callback = true;
-                    return true;
-                }
+                    var handler = new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (sender, cert, chain, errs) =>
+                        {
+                            callback = true;
+                            return true;
+                        }
+                    };
+                    return new HttpClient(handler);
+                });
             });
             var connected = false;
             io.OnConnected += (s, e) => connected = true;
@@ -65,21 +76,26 @@ namespace SocketIOClient.IntegrationTests.Net472
         }
 
         [TestMethod]
-        public async Task Should_ignore_http_SSL_error()
+        public async Task HttpClient_IgnoreServerCertError_AlwaysPass()
         {
             var callback = false;
-            var io = new SocketIO("https://localhost:11414", new SocketIOOptions
+            var io = new SocketIO(new Uri("https://localhost:11414"), new SocketIOOptions
             {
                 EIO = EngineIO.V4,
                 AutoUpgrade = false,
                 Reconnection = false,
                 Transport = TransportProtocol.Polling,
-                ConnectionTimeout = TimeSpan.FromSeconds(2),
-                RemoteCertificateValidationCallback = (sender, cert, chain, errs) =>
+                ConnectionTimeout = TimeSpan.FromSeconds(2)
+            }, services =>
+            {
+                services.AddSingleton(new WebSocketOptions
                 {
-                    callback = true;
-                    return true;
-                }
+                    RemoteCertificateValidationCallback = (sender, cert, chain, errs) =>
+                    {
+                        callback = true;
+                        return true;
+                    }
+                });
             });
             var connected = false;
             io.OnConnected += (s, e) => connected = true;

@@ -4,3 +4,4 @@
 dotnet test --no-restore tests/SocketIOClient.UnitTests
 dotnet test --no-restore tests/SocketIOClient.Serializer.Tests
 dotnet test --no-restore tests/SocketIOClient.Serializer.NewtonsoftJson.Tests
+dotnet test --no-restore tests/SocketIOClient.IntegrationTests

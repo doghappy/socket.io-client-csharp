@@ -1,5 +1,5 @@
 using FluentAssertions;
-using SocketIOClient.Core.Messages;
+using SocketIOClient.Common.Messages;
 
 namespace SocketIOClient.Serializer.NewtonsoftJson.Tests;
 
@@ -31,7 +31,6 @@ public class NewtonJsonEngineIO3MessageAdapterTests
         message.Should()
             .BeEquivalentTo(new ErrorMessage
             {
-                // TODO: is namespace supported by eio3?
                 Namespace = null,
                 Error = error,
             });

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+        <Authors>doghappy</Authors>
+        <Description>socket.io-client implemention for .NET</Description>
+        <PackageProjectUrl>https://github.com/doghappy/socket.io-client-csharp</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/doghappy/socket.io-client-csharp</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PackageTags>socket.io-client</PackageTags>
+        <RepositoryType>github</RepositoryType>
+        <Version>4.0.0</Version>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <LangVersion>default</LangVersion>
+        <Nullable>enable</Nullable>
+        <PackageId>SocketIOClient.Common</PackageId>
+    </PropertyGroup>
+
+</Project>

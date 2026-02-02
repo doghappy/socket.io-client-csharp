@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>SocketIOClient.Test.Core</AssemblyName>
+        <RootNamespace>SocketIOClient.Test.Core</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
+      <PackageReference Include="xunit.core" Version="2.9.3" />
+    </ItemGroup>
+
+</Project>

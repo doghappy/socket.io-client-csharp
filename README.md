@@ -1,166 +1,141 @@
 # Socket.IO-client for .NET
 
+Languages: [中文简体](./README.zh.md) ｜ English
+
 An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and has implemented http polling and websocket.
 
 [![Build Status](https://dev.azure.com/doghappy/socket.io-client/_apis/build/status/Unit%20Test%20and%20Integration%20Test?branchName=master)](https://dev.azure.com/doghappy/socket.io-client/_build/latest?definitionId=16&branchName=master)
 [![NuGet](https://img.shields.io/badge/NuGet-SocketIOClient-%23004880)](https://www.nuget.org/packages/SocketIOClient)
-[![Target Framework](https://img.shields.io/badge/Target%20Framework-.NET%20Standard%202.0-%237014e8)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard#net-implementation-support)
 [![NuGet](https://img.shields.io/nuget/dt/SocketIOClient)](https://www.nuget.org/packages/SocketIOClient)
 
 # Table of Contents
 
 - [Quick start](#quick-start)
-  - [Options](#options)
-  - [Ack](#ack)
-  - [Binary messages](#binary-messages)
-  - [JsonSerializer](#jsonserializer)
-  - [Allowing Untrusted SSL Certificates](#allowing-untrusted-ssl-certificates)
-  - [ClientWebSocket Options](#clientwebsocket-options)
-  - [Windows 7 Support](#windows-7-support)
-  - [Xamarin](#xamarin)
-- [Breaking changes](#breaking-changes)
-  - [Breaking changes in 3.1.0](#breaking-changes-in-310)
+    - [Options](#options)
+    - [Ack](#ack)
+    - [Binary messages](#binary-messages)
+    - [Serializer](#serializer)
+    - [Self-signed certificate](#self-signed-certificate)
+    - [Proxy](#Proxy)
+- [Development](#development)
 - [Change log](#change-log)
-- [Sponsors](#Sponsors)
+- [Thanks](#thanks)
 
 # Quick start
 
-Connect to the socket.io server, listen events and emit some data.
+Connect to a Socket.IO server to receive and emit events.
 
 ```cs
-var client = new SocketIO("http://localhost:11000/");
+var client = new SocketIO(new Uri("http://localhost:11400"));
 
-client.On("hi", response =>
+client.On("event", ctx =>
 {
-    // You can print the returned data first to decide what to do next.
-    // output: ["hi client"]
-    Console.WriteLine(response);
+    // RawText: ["event","Hello World!", 1, {\"Name\":\"Alice\",\"Age\":18}]
+    // The first element in the array is the event name,
+    // and the subsequent elements are the data carried with the event.
+    Console.WriteLine(ctx.RawText);
 
-    string text = response.GetValue<string>();
+    // Use index 0 to access the first item in the data payload, which is of type string.
+    var message = ctx.GetValue<string>(0)!;
+    Console.WriteLine(message); // Hello World!
 
-    // The socket.io server code looks like this:
-    // socket.emit('hi', 'hi client');
+    // Use index 1 to access the second data item in the payload. The data type is int.
+    var id = ctx.GetValue<int>(1);
+    Console.WriteLine(id); // 1
+
+    // Use index 2 to access the third data item in the payload. The data type is User.
+    var user = ctx.GetValue<User>(2)!;
+    Console.WriteLine($"Name: {user.Name}, Age: {user.Age}"); // Name: Alice, Age: 18
+
+    return Task.CompletedTask;
 });
-
-client.On("test", response =>
-{
-    // You can print the returned data first to decide what to do next.
-    // output: ["ok",{"id":1,"name":"tom"}]
-    Console.WriteLine(response);
-    
-    // Get the first data in the response
-    string text = response.GetValue<string>();
-    // Get the second data in the response
-    var dto = response.GetValue<TestDTO>(1);
-
-    // The socket.io server code looks like this:
-    // socket.emit('hi', 'ok', { id: 1, name: 'tom'});
-});
-
-client.OnConnected += async (sender, e) =>
-{
-    // Emit a string
-    await client.EmitAsync("hi", "socket.io");
-
-    // Emit a string and an object
-    var dto = new TestDTO { Id = 123, Name = "bob" };
-    await client.EmitAsync("register", "source", dto);
-};
-await client.ConnectAsync();
 ```
 
 ## Options
 
-The way to override the default options is as follows:
+An overload is provided here to allow custom configuration of the options.
 
 ```cs
-var client = new SocketIO("http://localhost:11000/", new SocketIOOptions
+var client = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions
 {
-    Query = new List<KeyValuePair<string, string>>
+    Query = new NameValueCollection
     {
-        new KeyValuePair<string, string>("token", "abc123"),
-        new KeyValuePair<string, string>("key", "value")
-    }
+        ["user"] = "Alice"
+    },
+    // ...
 });
 ```
 
-| Option | Default value | Description |
-| :- | :- | :- |
-| `Path` | `/socket.io` | name of the path that is captured on the server side |
-| `Reconnection` | `true` | whether to reconnect automatically |
-| `ReconnectionAttempts` | `int.MaxValue` | number of reconnection attempts before giving up |
-| `ReconnectionDelay` | `1000` | how long to initially wait before attempting a new reconnection. Affected by +/- `RandomizationFactor`, for example the default initial delay will be between 500 to 1500ms. |
-| `RandomizationFactor` | `0.5` | 0 <= RandomizationFactor <= 1 |
-| `ConnectionTimeout` | `20000` | connection timeout |
-| `Query` | `IEnumerable<KeyValuePair<string, string>>` | additional query parameters that are sent when connecting a namespace (then found in `socket.handshake.query` object on the server-side) |
-| `EIO` | `V4` | If your server is using socket.io server v2.x, please explicitly set it to V3 |
-| `ExtraHeaders` | `null` | Headers that will be passed for each request to the server (via xhr-polling and via websockets). These values then can be used during handshake or for special proxies. |
-| `Transport` | `Polling` | Websocket is used by default, you can change to http polling. |
-| `AutoUpgrade` | `true` | If websocket is available, it will be automatically upgrade to use websocket |
-| `Auth` | `null` | Credentials that are sent when accessing a namespace |
-| `RemoteCertificateValidationCallback` | `null` | Verifies the remote Secure Sockets Layer (SSL) certificate used for authentication. |
+| Option               | Default Value | Description                                                                                                                                                                                                      |
+|:--|:--|:--|
+| Path                 | /socket.io    | The service endpoint path.|
+| Reconnection         | true          | If the initial connection attempt fails, set this to true to keep retrying until the maximum number of reconnection attempts is reached. Set it to false to fail immediately without any further retry attempts. |
+| ReconnectionAttempts | 10            | When Reconnection is set to true, the client will automatically retry if the connection fails. The number of retry attempts is determined by ReconnectionAttempts.|
+| ReconnectionDelayMax | 5000          | After a reconnection attempt fails, the client will wait for a random delay before trying again. ReconnectionDelayMax defines the upper bound of that random delay.|
+| ConnectionTimeout    | 30s           | The timeout duration for each connection attempt.|
+| Query                | null          | Before the connection is established, the client can use this parameter to send query string values to the server.|
+| EIO                  | V4            | For Socket.IO server v2.x, please set EIO = 3.|
+| ExtraHeaders         | null          | Send the request headers with each request to the server. These values can be used during the handshake phase.|
+| Transport            | Polling       | By default, HTTP polling is used. When AutoUpgrade is set to true, the connection will automatically upgrade to WebSocket when possible. If the server only supports WebSocket, set Transport = TransportProtocol.WebSocket.|
+| AutoUpgrade          | true          | After the handshake, if the server supports WebSocket while the client is currently using polling, the connection will be upgraded to WebSocket.|
+| Auth                 | null          | Configure connection credentials. This feature is not supported when EIO = 3.|
 
 ## Ack
 
-### The server executes the client's ack function
+Emit an event with a callback function. After the server finishes processing, it will invoke the client’s callback function and pass back the relevant data.
 
 **Client**
 
 ```cs
-await client.EmitAsync("ack", response =>
+await client.EmitAsync("hi", ["Hi, I'm Client"], ack =>
 {
-    // You can print the returned data first to decide what to do next.
-    // output: [{"result":true,"message":"Prometheus - server"}]
-    Console.WriteLine(response);
-    var result = response.GetValue<BaseResult>();
-}, "Prometheus");
-```
+    Console.WriteLine(ack.RawText);
+    // RawText: ["Hi, I'm Client","Hi, I'm Server"]
 
-**Server**
+    var message1 = ack.GetValue<string>(0)!;
+    Console.WriteLine(message1); // Hi, I'm Client
 
-```js
-socket.on("ack", (name, fn) => {
-    fn({
-        result: true,
-        message: `${name} - server`
-    });
-});
-```
+    var message2 = ack.GetValue<string>(1)!;
+    Console.WriteLine(message2); // Hi, I'm Server
 
-### The client executes the server's ack function
-
-**Client**
-
-```cs
-client.On("ack2", async response =>
-{
-    // You can print the returned data first to decide what to do next.
-    // output: [1, 2]
-    Console.WriteLine(response);
-    int a = response.GetValue<int>();
-    int b = response.GetValue<int>(1);
-    
-    await response.CallbackAsync(b, a);
+    return Task.CompletedTask;
 });
 ```
 
 **Server**
 
 ```js
-socket.emit("ack2", 1, 2, (arg1, arg2) => {
-    console.log(`arg1: ${arg1}, arg2: ${arg2}`);
+socket.on('hi', (m1, fn) => {
+    fn(m1, 'Hi, I\'m Server');
 });
 ```
 
-The output of the server is:
+Listen for an event that includes a callback function. After the client finishes processing, it will send the relevant data back to the server. Once the server receives the data, it will execute its callback function.
 
+**Client**
+
+```cs
+client.On("add", async ctx =>
+{
+    var a = ctx.GetValue<int>(0);
+    var b = ctx.GetValue<int>(1);
+    var c = a + b;
+
+    await ctx.SendAckDataAsync([c]);
+});
 ```
-arg1: 2, arg2: 1
+
+**Server**
+
+```js
+socket.emit('add', 1, 2, c => {
+    console.log(c); // 3
+});
 ```
 
 ## Binary messages
 
-This example shows how to emit and receive binary messages, The library uses System.Text.Json to serialize and deserialize json by default.
+Send and receive complex data types that include byte[]. By default, System.Text.Json is used for JSON serialization.
 
 ```cs
 class FileDTO
@@ -176,128 +151,165 @@ class FileDTO
 }
 ```
 
-```cs
-client.OnConnected += async (sender, e) =>
-{
-    await client.EmitAsync("upload", new FileDTO
-    {
-        Name = "template.html"
-        MimeType = "text/html",
-        bytes = Encoding.UTF8.GetBytes("<div>test</div>")
-    });
-};
+The above example uses [JsonPropertyName] to customize JSON property names. Global configuration via [JsonSerializerOptions](#serializer) is also supported.
 
-client.On("new files", response =>
+```cs
+await client.EmitAsync("1:emit", [
+    new FileDTO
+    {
+        Name = "template.html",
+        MimeType = "text/html",
+        Bytes = Encoding.UTF8.GetBytes("<div>test</div>")
+    }
+]);
+
+client.On("new files", ctx =>
 {
-    // You can print the returned data first to decide what to do next.
-    // output: [{"name":"template.html","mimeType":"text/html","bytes":{"_placeholder":true,"num":0}}]
-    Console.WriteLine(response);
-    var result = response.GetValue<FileDTO>();
+    // RawText: ["new files", {"name":"template.html","mimeType":"text/html","bytes":{"_placeholder":true,"num":0}}]
+    var result = ctx.GetValue<FileDTO>();
     Console.WriteLine(Encoding.UTF8.GetString(result.Bytes))
 });
 ```
 
 ## Serializer
 
-The library uses System.Text.Json to serialize and deserialize json by default, If you want to change JsonSerializerOptions, you can do this:
+By default, System.Text.Json is used for serialization and deserialization. If you want to configure JsonSerializerOptions:
 
 ```cs
-var client = new SocketIO("http://localhost:11000/");
-client.Serializer = new SystemTextJsonSerializer(new JsonSerializerOptions
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 {
-    PropertyNameCaseInsensitive = true
+    services.AddSystemTextJson(new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    });
 });
 ```
 
-Of course you can also use Newtonsoft.Json library, for this, you need to install `SocketIO.Serializer.NewtonsoftJson` 
-dependency.
+Of course, if you prefer to use Newtonsoft.Json, you need to install SocketIOClient.Serializer.NewtonsoftJson.
 
 ```cs
-client.Serializer = new NewtonsoftJsonSerializer(new JsonSerializerSettings
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 {
-    ContractResolver = new DefaultContractResolver
-    {
-        NamingStrategy = new CamelCaseNamingStrategy()
-    }
+    services.AddNewtonsoftJson(new JsonSerializerSettings());
 });
 ```
 
-## Allowing Untrusted SSL Certificates
+## Self-signed certificate
+
+If your socket.io server uses a certificate issued by a trusted CA, you should not use these APIs to avoid potential security risks.
+
+However, if your socket.io server uses a self-signed certificate, you may need to customize the certificate validation logic:
+
+### Http Polling
 
 ```cs
-var io = new SocketIO("https://localhost:11404", new SocketIOOptions
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 {
-    RemoteCertificateValidationCallback = (_, _, _, _) =>
+    services.AddSingleton<HttpClient>(_ =>
     {
-        return true;
-    }
-});
-```
-
-## Windows 7 Support
-
-The library uses System.Net.WebSockets.ClientWebSocket by default. Unfortunately, it does not support Windows 7 or Windows Server 2008 R2. You will get a PlatformNotSupportedException. To solve this problem, you need to install the `SocketIOClient.Windows7` dependency and then change the implementation of ClientWebSocket.
-
-```cs
-client.ClientWebSocketProvider = () => new ClientWebSocketManaged(...);
-```
-
-## Xamarin
-
-The library will always try to connect to the server, and an exception will be thrown when the connection fails. The library catches some exception types, such as: TimeoutException, WebSocketException, HttpRequestException and OperationCanceledException. If it is one of them, the library will continue to try to connect to the server. If there are other exceptions, the library will stop reconnecting and throw exception to the upper layer. You need extra attention in Xamarin.
-
-For Xamarin.Android you should add the following code:
-
-```cs
-    public partial class MainPage: ContentPage
-    {
-        public MainPage()
+        var handler = new HttpClientHandler
         {
-            InitializeComponent();
-        }
+            ServerCertificateCustomValidationCallback = (s, cert, chain, policyError) =>
+            {
+                var isValid = ...
+                return isValid;
+            }
+        };
 
-        public SocketIOClient Socket {get;}
-    }
-
-    ...
-
-    public class MainActivity: global::Xamarin.Forms.Platform.Android.FormsAppCompatActivity
-    {
-        protected override void OnCreate(Bundle savedInstanceState)
-        {
-            ...
-            var app = new App();
-            var mainPage = app.MainPage as MainPage;
-            mainPage.Socket.AddExpectedException(typeof(Java.Net.SocketException));
-            mainPage.Socket.AddExpectedException(typeof(Java.Net.SocketTimeoutException));
-            LoadApplication(app);
-        }
-
-        ...
-    }
+        return new HttpClient(handler);
+    });
+});
 ```
 
-I don't know the specific exceptions of Xamarin.iOS. Welcome to create a pr and update this document. thanks :)
+### WebSocket
+
+```cs
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
+{
+    services.AddSingleton(new WebSocketOptions
+    {
+        RemoteCertificateValidationCallback = (s, cert, chain, policyError) =>
+        {
+            var isValid = ...
+            return isValid;
+        };
+    });
+});
+```
+
+> Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this scenario, you may need to configure CertificateValidationCallback for both transports.
+
+## Proxy
+
+In some network environments, a proxy must be configured in order to communicate with the server. Proxy can also be used for development and debugging purposes to capture and inspect the entire interaction.
+
+### Http Polling
+
+```cs
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
+{
+    services.AddSingleton<HttpClient>(_ =>
+    {
+        var handler = new HttpClientHandler
+        {
+            Proxy = new WebProxy(proxyUrl),
+            UseProxy = true
+        };
+
+        return new HttpClient(handler);
+    });
+});
+```
+
+### WebSocket
+
+```cs
+var client = new SocketIO(new Uri("http://localhost:11400"), services =>
+{
+    services.AddSingleton(new WebSocketOptions
+    {
+        Proxy = new WebProxy(proxyUrl)
+    });
+});
+```
+
+> Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this case, you may need to configure a proxy for both transports.
+
+# Development
+
+This library currently follows the software testing pyramid model, with 95% unit test coverage. You can view the coverage details in the Code Coverage section of the Azure DevOps interface.
+
+If you need to run the integration tests locally:
+
+```
+cd socket.io-client-csharp/tests/socket.io
+
+npm run install-all # Install the dependencies. This only needs to be done once.
+
+npm run start # Start socket.io server for integration testing
+```
 
 # Change log
 
-## [3.1.0] - 2023-08-25
+## [4.0.0] - 2026-01-28
 
-### Added
+### Architecture Refactor
+- Reworked the internal architecture to improve modularity, maintainability, and long-term extensibility
+- Clearer separation of responsibilities between core components
+- Reduced coupling between modules, making future enhancements safer and easier
 
-- `SocketIO.Serializer.MessagePack` serializer
-- `SocketIO.Serializer.NewtonsoftJson` serializer
-- `SocketIO.Serializer.SystemTextJson` serializer
-
-### Removed
-
-- `SocketIOClient.Newtonsoft.Json` serializer
+### Performance Enhancements
+- Improved execution efficiency in key processing paths
+- Reduced unnecessary allocations and redundant operations
+- Optimized data access and internal workflows for better runtime performance
 
 [See more](./CHANGELOG.md)
 
+After that, you can run the integration tests.
+
 # Thanks
 
-[<img src="https://socket.io/images/logo.svg" width=100px/>](https://github.com/socketio/socket.io) [<img src="https://github.com/darrachequesne.png" width=100px/>](https://github.com/socketio/socket.io) 
+[<img src="https://socket.io/images/logo.svg" width=100px/>](https://github.com/socketio/socket.io) [<img src="https://github.com/darrachequesne.png" width=100px/>](https://github.com/socketio/socket.io)
 
 Thank [socket.io](https://socket.io/) and [darrachequesne](https://github.com/darrachequesne) for sponsoring the project on [Open Collective](https://opencollective.com/socketio/expenses/).
 

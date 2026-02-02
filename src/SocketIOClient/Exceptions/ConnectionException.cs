@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SocketIOClient
+namespace SocketIOClient.Exceptions
 {
     public class ConnectionException : Exception
     {

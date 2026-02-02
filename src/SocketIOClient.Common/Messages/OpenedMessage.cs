@@ -1,0 +1,12 @@
+using System.Collections.Generic;
+
+namespace SocketIOClient.Common.Messages;
+
+public class OpenedMessage : IMessage
+{
+    public MessageType Type => MessageType.Opened;
+    public string Sid { get; set; } = null!;
+    public int PingInterval { get; set; }
+    public int PingTimeout { get; set; }
+    public List<string> Upgrades { get; set; } = [];
+}
