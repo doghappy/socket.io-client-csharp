@@ -368,7 +368,9 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         for (var i = 0; i < times; i++)
         {
             await io.ConnectAsync();
+            await Task.Delay(50);
             await io.DisconnectAsync();
+            await Task.Delay(50);
         }
 
         connectTimes.Should().Be(times);
