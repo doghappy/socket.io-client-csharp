@@ -16,6 +16,9 @@
   <ItemGroup>
     <ProjectReference Include="..\SocketIO.Core\SocketIO.Core.csproj" />
     <ProjectReference Include="..\SocketIO.Serializer.Core\SocketIO.Serializer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="9.0.4" />
   </ItemGroup>
 
