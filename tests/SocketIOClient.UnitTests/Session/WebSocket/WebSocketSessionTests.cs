@@ -184,6 +184,17 @@ public class WebSocketSessionTests
             .WithMessage("Unable to set header");
     }
 
+    [Fact]
+    public void OnDisconnected_AdapterIsInvoked_SessionShouldBeInvoked()
+    {
+        var session = NewSession();
+        session.OnDisconnected = Substitute.For<Action>();
+
+        _wsAdapter.OnDisconnected();
+
+        session.OnDisconnected.Received().Invoke();
+    }
+
     #endregion
 
     [Fact]

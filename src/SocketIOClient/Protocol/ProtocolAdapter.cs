@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using SocketIOClient.Common;
@@ -27,4 +28,6 @@ public abstract class ProtocolAdapter : IProtocolAdapter
     }
 
     public abstract void SetDefaultHeader(string name, string value);
+
+    public Action OnDisconnected { get; set; } = null!;
 }

@@ -113,6 +113,7 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
         var req = new HttpRequest
         {
             Uri = uri,
+            IsConnect = true
         };
         await _httpAdapter.SendAsync(req, cancellationToken).ConfigureAwait(false);
     }

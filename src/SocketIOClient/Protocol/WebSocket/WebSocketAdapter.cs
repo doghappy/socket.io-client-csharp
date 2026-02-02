@@ -23,22 +23,32 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var message = await clientAdapter.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-            var protocolMessage = new ProtocolMessage();
-            switch (message.Type)
+            try
             {
-                case WebSocketMessageType.Text:
-                    protocolMessage.Type = ProtocolMessageType.Text;
-                    protocolMessage.Text = Encoding.UTF8.GetString(message.Bytes);
-                    break;
-                case WebSocketMessageType.Binary:
-                    protocolMessage.Type = ProtocolMessageType.Bytes;
-                    protocolMessage.Bytes = message.Bytes;
-                    break;
-                default:
-                    throw new ArgumentException();
+                var message = await clientAdapter.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                var protocolMessage = new ProtocolMessage();
+                switch (message.Type)
+                {
+                    case WebSocketMessageType.Text:
+                        protocolMessage.Type = ProtocolMessageType.Text;
+                        protocolMessage.Text = Encoding.UTF8.GetString(message.Bytes);
+                        break;
+                    case WebSocketMessageType.Binary:
+                        protocolMessage.Type = ProtocolMessageType.Bytes;
+                        protocolMessage.Bytes = message.Bytes;
+                        break;
+                    default:
+                        throw new ArgumentException();
+                }
+
+                await OnNextAsync(protocolMessage).ConfigureAwait(false);
             }
-            await OnNextAsync(protocolMessage).ConfigureAwait(false);
+            catch (Exception e)
+            {
+                logger.LogError(e, "Failed to receive message");
+                OnDisconnected();
+                throw;
+            }
         }
     }
 

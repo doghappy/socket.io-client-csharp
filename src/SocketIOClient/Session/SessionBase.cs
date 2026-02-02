@@ -79,6 +79,17 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         }
     }
 
+    private Action _onDisconnected;
+    public Action OnDisconnected
+    {
+        get => _onDisconnected;
+        set
+        {
+            _onDisconnected = value;
+            _protocolAdapter.OnDisconnected = value;
+        }
+    }
+
     protected abstract TransportProtocol Protocol { get; }
 
     private void OnOptionsChanged(SessionOptions newValue)

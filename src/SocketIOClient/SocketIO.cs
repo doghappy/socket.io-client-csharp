@@ -47,6 +47,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     public bool Connected { get; private set; }
     public string? Id { get; private set; }
 
+    private bool _disconnectNotified;
     private string? _namespace;
 
     private Uri _serverUri = null!;
@@ -437,16 +438,29 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private async Task HandleConnectedMessage(IMessage message)
     {
+        _disconnectNotified = false;
         await _sessionCompletionSource!.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
         _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
         _connCompletionSource!.SetResult(null);
+        _session!.OnDisconnected = OnSessionDisconnected;
+    }
+
+    private void OnSessionDisconnected()
+    {
+        Connected = false;
+        PacketId = 0;
+        if (!_disconnectNotified)
+        {
+            OnDisconnected?.Invoke(this, DisconnectReason.TransportError);
+        }
     }
 
     private async Task HandleDisconnectedMessageAsync()
     {
+        _disconnectNotified = true;
         OnDisconnected?.Invoke(this, DisconnectReason.IOServerDisconnect);
         await DisconnectCoreAsync(CancellationToken.None);
     }
@@ -471,6 +485,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
+        _disconnectNotified = true;
         await DisconnectCoreAsync(cancellationToken).ConfigureAwait(false);
         OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
     }
@@ -491,6 +506,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
         Connected = false;
         Id = null;
+        PacketId = 0;
     }
 
     public void On(string eventName, Func<IEventContext, Task> handler)

@@ -37,10 +37,23 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
     public async Task SendAsync(HttpRequest req, CancellationToken cancellationToken)
     {
         req.Uri ??= NewUri();
-        var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
-        var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
-        logger.LogDebug("[Polling⬆] {Body}", body);
-        _ = HandleResponseAsync(response).ConfigureAwait(false);
+        try
+        {
+            var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
+            var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
+            logger.LogDebug("[Polling⬆] {Body}", body);
+            _ = HandleResponseAsync(response).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            logger.LogError("Failed to send http request");
+            logger.LogError(e.ToString());
+            if (!req.IsConnect)
+            {
+                OnDisconnected();
+            }
+            throw;
+        }
     }
 
     private Uri NewUri()

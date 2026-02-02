@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using FluentAssertions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using SocketIOClient.Common;
 using SocketIOClient.Observers;
 using SocketIOClient.Protocol.Http;
@@ -15,11 +16,16 @@ public class HttpAdapterTests
     {
         _httpClient = Substitute.For<IHttpClient>();
         var logger = output.CreateLogger<HttpAdapter>();
-        _httpAdapter = new HttpAdapter(_httpClient, logger);
+        _onDisconnect = Substitute.For<Action>();
+        _httpAdapter = new HttpAdapter(_httpClient, logger)
+        {
+            OnDisconnected = _onDisconnect
+        };
     }
 
     private readonly HttpAdapter _httpAdapter;
     private readonly IHttpClient _httpClient;
+    private readonly Action _onDisconnect;
 
     [Fact]
     public async Task SendHttpRequestAsync_WhenCalled_OnNextShouldBeTriggered()
@@ -61,7 +67,7 @@ public class HttpAdapterTests
 
         await _httpClient.Received()
             .SendAsync(
-                Arg.Is<HttpRequest>(r => r.Uri.AbsoluteUri.StartsWith("http://localhost/?transport=polling&t=")),
+                Arg.Is<HttpRequest>(r => r.Uri!.AbsoluteUri.StartsWith("http://localhost/?transport=polling&t=")),
                 Arg.Any<CancellationToken>());
     }
 
@@ -77,6 +83,39 @@ public class HttpAdapterTests
 
         await _httpClient.Received()
             .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SendAsync_RequestIsNotConnectedAndExceptionOccurred_OnDisconnectInvoked()
+    {
+        _httpAdapter.Uri = new Uri("http://localhost");
+        _httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Failed to send message"));
+
+        await _httpAdapter
+            .Invoking(a => a.SendAsync(new HttpRequest(), CancellationToken.None))
+            .Should()
+            .ThrowAsync<Exception>();
+
+        _onDisconnect.Received().Invoke();
+    }
+
+    [Fact]
+    public async Task SendAsync_RequestIsConnectedAndExceptionOccurred_OnDisconnectNotInvoked()
+    {
+        _httpAdapter.Uri = new Uri("http://localhost");
+        _httpClient.SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Failed to send message"));
+
+        await _httpAdapter
+            .Invoking(a => a.SendAsync(new HttpRequest
+            {
+                IsConnect = true
+            }, CancellationToken.None))
+            .Should()
+            .ThrowAsync<Exception>();
+
+        _onDisconnect.DidNotReceive().Invoke();
     }
 
     [Fact]

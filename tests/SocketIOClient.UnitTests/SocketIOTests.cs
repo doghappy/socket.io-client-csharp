@@ -168,6 +168,36 @@ public class SocketIOTests
     }
 
     [Fact]
+    public async Task ConnectAsync_AdapterOnDisconnectedHappened_ConnectedIsFalseAndOnDisconnectedInvoked()
+    {
+        var onDisconnectedInvoked = false;
+        _io.OnDisconnected += (_, _) => onDisconnectedInvoked = true;
+        await ConnectAsync();
+        await _io.EmitAsync("e", _ => Task.CompletedTask);
+
+        _session.OnDisconnected();
+
+        _io.Connected.Should().BeFalse();
+        _io.PacketId.Should().Be(0);
+        onDisconnectedInvoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ConnectAsync_ConnectedMessageReceived_ResetDisconnectReason()
+    {
+        var reasons = new List<string>();
+        _io.OnDisconnected += (_, e) => reasons.Add(e);
+
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        await ConnectAsync();
+
+        _session.OnDisconnected();
+
+        reasons.Should().Equal("io client disconnect", "transport error");
+    }
+
+    [Fact]
     public async Task ConnectAsync_CancellationTokenIsCanceled_TaskCanceledException()
     {
         await _io
@@ -810,9 +840,11 @@ public class SocketIOTests
     public async Task DisconnectAsync_EverConnected_ClearStatefulData()
     {
         await ConnectAsync();
+        await _io.EmitAsync("e", _ => Task.CompletedTask);
         await _io.DisconnectAsync();
 
         _io.Connected.Should().BeFalse();
+        _io.PacketId.Should().Be(0);
         _io.Id.Should().BeNull();
     }
 
@@ -883,6 +915,33 @@ public class SocketIOTests
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
         reason.Should().Be("io server disconnect");
+    }
+
+    [Fact]
+    public async Task DisconnectAsyncFirst_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
+    {
+        var reasons = new List<string>();
+        _io.OnDisconnected += (_, e) => reasons.Add(e);
+
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        _session.OnDisconnected();
+
+        reasons.Should().HaveCount(1);
+        reasons.Should().Equal("io client disconnect");
+    }
+
+    [Fact]
+    public async Task DisconnectAsyncByServer_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
+    {
+        var reasons = new List<string>();
+        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        await ConnectAsync();
+        await OnNextAsync(_io, new DisconnectedMessage());
+        _session.OnDisconnected();
+
+        reasons.Should().HaveCount(1);
+        reasons.Should().Equal("io server disconnect");
     }
 
     #endregion

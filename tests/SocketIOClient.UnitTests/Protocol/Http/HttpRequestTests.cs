@@ -18,6 +18,7 @@ public class HttpRequestTests
                 BodyType = RequestBodyType.Text,
                 BodyBytes = null,
                 BodyText = null,
+                IsConnect = false,
             });
     }
 }
