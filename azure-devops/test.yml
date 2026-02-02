@@ -62,11 +62,6 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
-              arguments: >
-                --configuration Release
-                /p:CollectCoverage=true
-                /p:CoverletOutputFormat=cobertura
-                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.IntegrationTests/
 
           - script: dotnet tool install -g dotnet-reportgenerator-globaltool
             displayName: Install reportgenerator
