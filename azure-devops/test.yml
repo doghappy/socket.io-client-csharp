@@ -56,13 +56,6 @@ stages:
                 /p:CoverletOutputFormat=cobertura
                 /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.Serializer.NewtonsoftJson.Tests/
 
-          - template: templates/socket.io-tpl.yml
-          - task: DotNetCoreCLI@2
-            displayName: Integration tests
-            inputs:
-              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
-              command: test
-
           - script: dotnet tool install -g dotnet-reportgenerator-globaltool
             displayName: Install reportgenerator
 
@@ -79,20 +72,16 @@ stages:
               codeCoverageTool: Cobertura
               summaryFileLocation: '$(Build.SourcesDirectory)/TestResults/MergedCoverage/Cobertura.xml'
               reportDirectory: '$(Build.SourcesDirectory)/TestResults/MergedCoverage'
-#      - job:
-#        displayName: Integration tests
-#        steps:
-#          - template: templates/socket.io-tpl.yml
-#          - task: DotNetCoreCLI@2
-#            displayName: Integration tests
-#            inputs:
-#              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
-#              command: test
-#              arguments: >
-#                --configuration Release
-#                /p:CollectCoverage=true
-#                /p:CoverletOutputFormat=cobertura
-#                /p:CoverletOutput=$(Build.SourcesDirectory)/TestResults/SocketIOClient.IntegrationTests/
+      - job:
+        displayName: Integration tests
+        steps:
+          - template: templates/socket.io-tpl.yml
+          - task: DotNetCoreCLI@2
+            displayName: Integration tests
+            inputs:
+              workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
+              command: test
+
 #  - stage: NET_Framework_Tests
 #    dependsOn: CheckFormat
 #    pool:
