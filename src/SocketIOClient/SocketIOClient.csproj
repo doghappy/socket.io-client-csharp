@@ -12,7 +12,7 @@
         <PackageTags>socket.io-client</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <RepositoryType>github</RepositoryType>
-        <Version>4.0.0</Version>
+        <Version>4.0.0.1</Version>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <LangVersion>latest</LangVersion>
         <Nullable>enable</Nullable>
