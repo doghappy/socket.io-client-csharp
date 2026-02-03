@@ -151,7 +151,7 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(10);
+        await Task.Delay(50);
 
         await observer.Received()
             .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
