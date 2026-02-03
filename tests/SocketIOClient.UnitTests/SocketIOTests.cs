@@ -116,6 +116,7 @@ public class SocketIOTests
             .Should()
             .ThrowAsync<ConnectionException>();
 
+        await Task.Delay(50);
         times.Should().Be(attempts);
     }
 
