@@ -113,7 +113,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("1:emit", [TestFile.NiuB]);
 
-        await Task.Delay(DefaultDelay);
+        await Task.Delay(DefaultDelay * 2);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0)

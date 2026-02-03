@@ -85,7 +85,7 @@ public class PollingHandlerTests
         _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 100 }, false);
         _ = Task.Run(async () =>
         {
-            await Task.Delay(30);
+            await Task.Delay(50);
             _httpAdapter.IsReadyToSend.Returns(true);
         });
 
