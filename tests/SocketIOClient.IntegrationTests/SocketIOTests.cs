@@ -370,6 +370,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             await io.ConnectAsync();
             await io.DisconnectAsync();
         }
+        await Task.Delay(20);
 
         connectTimes.Should().Be(times);
         disconnectTimes.Should().Be(times);
