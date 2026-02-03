@@ -84,7 +84,7 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         }
     }
 
-    private Action _onDisconnected;
+    private Action _onDisconnected = null!;
     public Action OnDisconnected
     {
         get => _onDisconnected;

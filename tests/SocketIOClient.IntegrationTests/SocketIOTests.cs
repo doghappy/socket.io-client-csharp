@@ -155,6 +155,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         var io = NewSocketIO(Url);
         IDataMessage message = null!;
         await io.ConnectAsync();
+        await Task.Delay(DefaultDelay);
         await io.EmitAsync("1:ack", ["action"], msg =>
         {
             message = msg;
@@ -392,13 +393,14 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         };
 
         await io.ConnectAsync();
+        await Task.Delay(DefaultDelay);
         var lowerCaseKey = key.ToLowerInvariant(); // limited by server
         await io.EmitAsync("get_header", [lowerCaseKey], res =>
         {
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         actual.Should().Be(value);
     }
