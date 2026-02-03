@@ -46,7 +46,7 @@ public class ConnectionEdgeCaseTests(ITestOutputHelper output)
     {
         var root = GetProjectRootDirectory();
         var version = eio == EngineIO.V3 ? "v2" : "v4";
-        var workingDir = Path.Combine(root.FullName, "tests", "socket.io", version);
+        var workingDir = Path.Combine(root.FullName, "socket.io", version);
         var process = Process.Start(new ProcessStartInfo
         {
             FileName = "node",
@@ -67,9 +67,9 @@ public class ConnectionEdgeCaseTests(ITestOutputHelper output)
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         for (int i = 0; i < 16; i++)
         {
-            if (dir.Name is "socket.io-client-csharp")
+            if (dir.Name is "SocketIOClient.IntegrationTests")
             {
-                return dir;
+                return dir.Parent!;
             }
 
             dir = dir.Parent ?? throw new DirectoryNotFoundException();

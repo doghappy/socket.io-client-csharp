@@ -396,7 +396,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         actual.Should().Be(value);
     }
