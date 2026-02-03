@@ -81,6 +81,13 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
+          - script: |
+              echo "Stopping PM2 services..."
+              pm2 delete "v2/index.js" || true
+              pm2 delete "v4/index.js" || true
+              pm2 save || true
+            displayName: Cleanup
+            condition: always()
 
 #  - stage: NET_Framework_Tests
 #    dependsOn: CheckFormat
