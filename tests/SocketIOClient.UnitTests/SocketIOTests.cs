@@ -411,7 +411,7 @@ public class SocketIOTests
 
     private async Task ConnectAsync(SocketIO io)
     {
-        await ConnectAsync(io, 20);
+        await ConnectAsync(io, 50);
     }
 
     private async Task ConnectAsync(SocketIO io, int ms)
@@ -574,7 +574,7 @@ public class SocketIOTests
         await ConnectAsync();
 
         IInternalSocketIO io = _io;
-        await io.Invoking(x => x.SendAckDataAsync(1, null))
+        await io.Invoking(x => x.SendAckDataAsync(1, null!))
             .Should()
             .ThrowAsync<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'data')");

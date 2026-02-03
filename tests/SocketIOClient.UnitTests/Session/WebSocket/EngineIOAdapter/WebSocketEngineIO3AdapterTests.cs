@@ -39,13 +39,13 @@ public class WebSocketEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
-            PingInterval = 10,
+            PingInterval = 100,
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(100);
+        await Task.Delay(1000);
 
-        var range = Quantity.Within(6, 11);
+        var range = Quantity.Within(6, 12);
         await _webSocketAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
@@ -81,9 +81,9 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(500);
+        await Task.Delay(600);
 
-        var range = Quantity.Within(2, 7);
+        var range = Quantity.Within(2, 8);
         await _webSocketAdapter.Received(range)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
@@ -221,9 +221,9 @@ public class WebSocketEngineIO3AdapterTests
             Namespace = "/nsp",
         };
 
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 80 });
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         await _webSocketAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"),

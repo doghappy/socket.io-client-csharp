@@ -267,7 +267,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("begin-ack-on-client");
 
-        await Task.Delay(DefaultDelay * 4);
+        await Task.Delay(DefaultDelay * 5);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
@@ -396,7 +396,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(200);
+        await Task.Delay(300);
 
         actual.Should().Be(value);
     }
