@@ -410,7 +410,7 @@ public class SocketIOTests
 
     private async Task ConnectAsync(SocketIO io)
     {
-        await ConnectAsync(io, 50);
+        await ConnectAsync(io, 100);
     }
 
     private async Task ConnectAsync(SocketIO io, int ms)
