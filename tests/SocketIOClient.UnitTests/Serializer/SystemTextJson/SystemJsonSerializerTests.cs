@@ -44,7 +44,7 @@ public class SystemJsonSerializerTests
     public void SerializeData_InvalidData_ThrowArgumentNullException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
-        serializer.Invoking(x => x.Serialize(null))
+        serializer.Invoking(x => x.Serialize(null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -520,7 +520,7 @@ public class SystemJsonSerializerTests
     public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
         var serializer = NewSystemJsonSerializer(new SystemJsonEngineIO4MessageAdapter());
-        var message = (IBinaryAckMessage)serializer.Deserialize(text);
+        var message = (IBinaryAckMessage)serializer.Deserialize(text)!;
 
         message.Add(bytes);
         var item1 = message.GetValue<TestFile>(0);
@@ -537,7 +537,7 @@ public class SystemJsonSerializerTests
     {
         var serializer = NewSystemJsonSerializer(new JsonSerializerOptions());
 
-        var message = (IDataMessage)serializer.Deserialize(raw);
+        var message = (IDataMessage)serializer.Deserialize(raw)!;
         message.RawText.Should().Be(expected);
     }
 
@@ -545,7 +545,7 @@ public class SystemJsonSerializerTests
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
         var serializer = NewSystemJsonSerializer(Substitute.For<IEngineIOMessageAdapter>());
-        serializer.Invoking(x => x.Serialize(null, 1))
+        serializer.Invoking(x => x.Serialize(null!, 1))
             .Should()
             .Throw<ArgumentNullException>();
     }

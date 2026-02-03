@@ -12,7 +12,7 @@ public class WebSocketMessageTests
     {
         _webSocketMessage.Should().BeEquivalentTo(new WebSocketMessage
         {
-            Bytes = null,
+            Bytes = null!,
             Type = WebSocketMessageType.Text,
         });
     }

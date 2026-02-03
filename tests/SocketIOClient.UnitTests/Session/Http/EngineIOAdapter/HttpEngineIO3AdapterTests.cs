@@ -157,7 +157,7 @@ public class HttpEngineIO3AdapterTests
     public void ToHttpRequest_GivenAnInvalidContent_ThrowException(string? content)
     {
         _adapter
-            .Invoking(x => x.ToHttpRequest(content))
+            .Invoking(x => x.ToHttpRequest(content!))
             .Should()
             .Throw<ArgumentException>()
             .WithMessage("The content cannot be null or empty");

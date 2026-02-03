@@ -562,7 +562,7 @@ public class SocketIOTests
     {
         await ConnectAsync();
 
-        await _io.Invoking(x => x.EmitAsync("event", null, _ => Task.CompletedTask, CancellationToken.None))
+        await _io.Invoking(x => x.EmitAsync("event", null!, _ => Task.CompletedTask, CancellationToken.None))
             .Should()
             .ThrowAsync<ArgumentNullException>()
             .WithMessage("Value cannot be null. (Parameter 'data')");
@@ -1040,7 +1040,7 @@ public class SocketIOTests
     [InlineData("")]
     public void On_InvalidEventName_ThrowArgumentException(string? eventName)
     {
-        _io.Invoking(x => x.On(eventName, _ => Task.CompletedTask))
+        _io.Invoking(x => x.On(eventName!, _ => Task.CompletedTask))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -1171,7 +1171,7 @@ public class SocketIOTests
     [InlineData("")]
     public void Once_InvalidEventName_ThrowArgumentException(string? eventName)
     {
-        _io.Invoking(x => x.Once(eventName, _ => Task.CompletedTask))
+        _io.Invoking(x => x.Once(eventName!, _ => Task.CompletedTask))
             .Should()
             .Throw<ArgumentException>();
     }
@@ -1499,7 +1499,7 @@ public class SocketIOTests
     [Fact]
     public void OffAny_GivenNull_DoNothing()
     {
-        _io.Invoking(x => x.OffAny(null))
+        _io.Invoking(x => x.OffAny(null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -1528,7 +1528,7 @@ public class SocketIOTests
     [Fact]
     public void PrependAny_GivenNull_DoNothing()
     {
-        _io.Invoking(x => x.PrependAny(null))
+        _io.Invoking(x => x.PrependAny(null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
