@@ -2,20 +2,10 @@ trigger:
   - master
 
 pool:
-  name: SelfHosted-Linux
+  vmImage: ubuntu-latest
 
 stages:
-#  - stage: CheckFormat
-#    jobs:
-#      - job:
-#        displayName: Check format
-#        steps:
-#          - script: |
-#              dotnet tool restore
-#              dotnet format --verify-no-changes
-#            displayName: Check format
   - stage: NET_Tests
-#    dependsOn: CheckFormat
     jobs:
       - job:
         displayName: Unit tests
@@ -81,13 +71,13 @@ stages:
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test
-          - script: |
-              echo "Stopping PM2 services..."
-              pm2 delete "v2/index.js" || true
-              pm2 delete "v4/index.js" || true
-              pm2 save || true
-            displayName: Cleanup
-            condition: always()
+#          - script: |
+#              echo "Stopping PM2 services..."
+#              pm2 delete "v2/index.js" || true
+#              pm2 delete "v4/index.js" || true
+#              pm2 save || true
+#            displayName: Cleanup
+#            condition: always()
 
 #  - stage: NET_Framework_Tests
 #    dependsOn: CheckFormat
