@@ -203,4 +203,48 @@ public class WebSocketAdapterTests
 
         await observer.Received(Quantity.Within(0, 1)).OnNextAsync(Arg.Any<ProtocolMessage>());
     }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Subscribe(observer);
+        for (var i = 0; i < times; i++)
+        {
+            _wsAdapter.Unsubscribe(observer);
+        }
+        _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
+            .Returns(new WebSocketMessage
+            {
+                Type = WebSocketMessageType.Text,
+                Bytes = "Hello World!"u8.ToArray()
+            });
+
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
+
+        await Task.Delay(10);
+
+        await observer
+            .DidNotReceive()
+            .OnNextAsync(Arg.Any<ProtocolMessage>());
+    }
+
+    [Fact]
+    public void UnSubscribe_EvenNoObserver_AlwaysPass()
+    {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Invoking(a => a.Unsubscribe(observer))
+            .Should()
+            .NotThrow();
+    }
+
+    [Fact]
+    public void UnSubscribe_GivenNull_AlwaysPass()
+    {
+        _wsAdapter.Invoking(a => a.Unsubscribe(null!))
+            .Should()
+            .NotThrow();
+    }
 }

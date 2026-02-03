@@ -506,4 +506,49 @@ public class WebSocketSessionTests
 
         _engineIOAdapter.Received().ReadProtocolFrame(Arg.Any<byte[]>());
     }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        var session = NewSession();
+        session.Subscribe(observer);
+        for (var i = 0; i < times; i++)
+        {
+            session.Unsubscribe(observer);
+        }
+        _serializer.Deserialize(Arg.Any<string>())
+            .Returns(new SystemJsonEventMessage());
+        var protocolMessage = new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+        };
+
+        await session.OnNextAsync(protocolMessage);
+
+        await observer
+            .DidNotReceive()
+            .OnNextAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
+    public void UnSubscribe_EvenNoObserver_AlwaysPass()
+    {
+        var session = NewSession();
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        session.Invoking(a => a.Unsubscribe(observer))
+            .Should()
+            .NotThrow();
+    }
+
+    [Fact]
+    public void UnSubscribe_GivenNull_AlwaysPass()
+    {
+        var session = NewSession();
+        session.Invoking(a => a.Unsubscribe(null!))
+            .Should()
+            .NotThrow();
+    }
 }

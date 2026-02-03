@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,6 +39,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SocketIO> _logger;
     private readonly IRandom _random;
+    private readonly object _disconnectLock = new();
 
     private ISession? _session;
     private IServiceScope? _scope;
@@ -47,7 +47,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     public bool Connected { get; private set; }
     public string? Id { get; private set; }
 
-    private bool _disconnectNotified;
     private string? _namespace;
 
     private Uri _serverUri = null!;
@@ -65,7 +64,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             }
         }
     }
-
 
     private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
     private readonly Dictionary<string, Func<IEventContext, Task>> _eventHandlers = new();
@@ -303,7 +301,8 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         await SendAckDataAsync(packetId, data, CancellationToken.None).ConfigureAwait(false);
     }
 
-    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken)
+    async Task IInternalSocketIO.SendAckDataAsync(int packetId, IEnumerable<object> data,
+        CancellationToken cancellationToken)
     {
         await SendAckDataAsync(packetId, data, cancellationToken).ConfigureAwait(false);
     }
@@ -336,7 +335,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 await HandleConnectedMessage(message).ConfigureAwait(false);
                 break;
             case MessageType.Disconnected:
-                await HandleDisconnectedMessageAsync().ConfigureAwait(false);
+                InvokeOnDisconnected(DisconnectReason.IOServerDisconnect);
                 break;
             case MessageType.Event:
             case MessageType.Binary:
@@ -438,31 +437,28 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private async Task HandleConnectedMessage(IMessage message)
     {
-        _disconnectNotified = false;
         await _sessionCompletionSource!.Task.ConfigureAwait(false);
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
         _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
         _connCompletionSource!.SetResult(null);
-        _session!.OnDisconnected = OnSessionDisconnected;
+        _session!.OnDisconnected = () => InvokeOnDisconnected(DisconnectReason.TransportError);
     }
 
-    private void OnSessionDisconnected()
+    private void InvokeOnDisconnected(string reason)
     {
-        Connected = false;
-        PacketId = 0;
-        if (!_disconnectNotified)
+        lock (_disconnectLock)
         {
-            OnDisconnected?.Invoke(this, DisconnectReason.TransportError);
-        }
-    }
+            if (!Connected)
+            {
+                return;
+            }
 
-    private async Task HandleDisconnectedMessageAsync()
-    {
-        _disconnectNotified = true;
-        OnDisconnected?.Invoke(this, DisconnectReason.IOServerDisconnect);
-        await DisconnectCoreAsync(CancellationToken.None);
+            _session?.Unsubscribe(this);
+            ResetStatusForDisconnected();
+            OnDisconnected?.Invoke(this, reason);
+        }
     }
 
     private void HandlePongMessage(IMessage message)
@@ -485,12 +481,11 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public async Task DisconnectAsync(CancellationToken cancellationToken)
     {
-        _disconnectNotified = true;
-        await DisconnectCoreAsync(cancellationToken).ConfigureAwait(false);
-        OnDisconnected?.Invoke(this, DisconnectReason.IOClientDisconnect);
+        await TrySendDisconnectMessageAsync(cancellationToken).ConfigureAwait(false);
+        InvokeOnDisconnected(DisconnectReason.IOClientDisconnect);
     }
 
-    private async Task DisconnectCoreAsync(CancellationToken cancellationToken)
+    private async Task TrySendDisconnectMessageAsync(CancellationToken cancellationToken)
     {
         if (_session is not null)
         {
@@ -500,10 +495,13 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                _logger.LogError(e.ToString());
             }
         }
+    }
 
+    private void ResetStatusForDisconnected()
+    {
         Connected = false;
         Id = null;
         PacketId = 0;

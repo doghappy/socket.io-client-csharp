@@ -54,6 +54,11 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
         _observers.Add(observer);
     }
 
+    public void Unsubscribe(IMyObserver<IMessage> observer)
+    {
+        _observers.Remove(observer);
+    }
+
     public abstract Task OnNextAsync(ProtocolMessage message);
 
     public async Task OnNextAsync(IMessage message)

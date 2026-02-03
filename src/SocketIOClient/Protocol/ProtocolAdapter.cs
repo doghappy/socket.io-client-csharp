@@ -19,6 +19,11 @@ public abstract class ProtocolAdapter : IProtocolAdapter
         _observers.Add(observer);
     }
 
+    public void Unsubscribe(IMyObserver<ProtocolMessage> observer)
+    {
+        _observers.Remove(observer);
+    }
+
     public async Task OnNextAsync(ProtocolMessage message)
     {
         foreach (var observer in _observers)

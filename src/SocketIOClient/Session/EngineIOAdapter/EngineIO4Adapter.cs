@@ -94,6 +94,11 @@ public abstract class EngineIO4Adapter : IEngineIOAdapter, IDisposable
         _observers.Add(observer);
     }
 
+    public void Unsubscribe(IMyObserver<IMessage> observer)
+    {
+        _observers.Remove(observer);
+    }
+
     public void Dispose()
     {
         _pingCancellationTokenSource.Cancel();

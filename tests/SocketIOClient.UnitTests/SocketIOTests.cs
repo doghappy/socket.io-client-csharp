@@ -823,6 +823,59 @@ public class SocketIOTests
         await _wsSession.Received().ConnectAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task OnDisconnectedThrowException_DisconnectAsync_StatusAreReset()
+    {
+        _io.OnDisconnected += (_, _) => throw new Exception("Test");
+
+        await ConnectAsync();
+        await _io.EmitAsync("e", _ => Task.CompletedTask);
+        await _io.Invoking(async io => await io.DisconnectAsync())
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("Test");
+
+        _io.Connected.Should().BeFalse();
+        _io.PacketId.Should().Be(0);
+        _io.Id.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task OnDisconnectedThrowException_SessionOnDisconnectedInvoked_StatusAreReset()
+    {
+        _io.OnDisconnected += (_, _) => throw new Exception("Test");
+
+        await ConnectAsync();
+        await _io.EmitAsync("e", _ => Task.CompletedTask);
+
+        _session.Invoking(s => s.OnDisconnected())
+            .Should()
+            .ThrowExactly<Exception>()
+            .WithMessage("Test");
+
+        _io.Connected.Should().BeFalse();
+        _io.PacketId.Should().Be(0);
+        _io.Id.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task OnDisconnectedThrowException_DisconnectedMessage_StatusAreReset()
+    {
+        _io.OnDisconnected += (_, _) => throw new Exception("Test");
+
+        await ConnectAsync();
+        await _io.EmitAsync("e", _ => Task.CompletedTask);
+
+        await _io.Invoking(async _ => await OnNextAsync(_io, new DisconnectedMessage()))
+            .Should()
+            .ThrowExactlyAsync<Exception>()
+            .WithMessage("Test");
+
+        _io.Connected.Should().BeFalse();
+        _io.PacketId.Should().Be(0);
+        _io.Id.Should().BeNull();
+    }
+
     #endregion
 
     #region DisconnectAsync
@@ -942,6 +995,40 @@ public class SocketIOTests
 
         reasons.Should().HaveCount(1);
         reasons.Should().Equal("io server disconnect");
+    }
+
+    [Fact]
+    public async Task DisconnectAsyncFirst_ThenReceivedDisconnectedMessageAndAdapterOnDisconnected_OnDisconnectedInvokedOnce()
+    {
+        var reasons = new List<string>();
+        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        await OnNextAsync(_io, new DisconnectedMessage());
+        _session.OnDisconnected();
+
+        reasons.Should().HaveCount(1);
+        reasons.Should().Equal("io client disconnect");
+    }
+
+    [Theory]
+    [InlineData(17)]
+    public async Task DisconnectAsync_WithAdapterOnDisconnectedInParallel_OnDisconnectedInvokedAsExpected(int times)
+    {
+        int count = 0;
+        _io.OnDisconnected += (_, _) => count++;
+
+        for (int i = 0; i < times; i++)
+        {
+            await ConnectAsync();
+            var t1 = Task.Run(async () => await _io.DisconnectAsync());
+            var t2 = Task.Run(async () => await OnNextAsync(_io, new DisconnectedMessage()));
+            var t3 = Task.Run(() => _io.DisconnectAsync());
+            await Task.WhenAll(t1, t2, t3);
+        }
+        _session.OnDisconnected();
+
+        count.Should().Be(times);
     }
 
     #endregion

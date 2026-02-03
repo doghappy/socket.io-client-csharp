@@ -111,4 +111,41 @@ public class WebSocketEngineIO4AdapterTests
 
         result.Should().Equal(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Subscribe(observer);
+        for (var i = 0; i < times; i++)
+        {
+            _adapter.Unsubscribe(observer);
+        }
+        _stopwatch.Elapsed.Returns(TimeSpan.FromSeconds(1));
+
+        await _adapter.ProcessMessageAsync(new PingMessage());
+
+        await observer
+            .DidNotReceive()
+            .OnNextAsync(Arg.Any<IMessage>());
+    }
+
+    [Fact]
+    public void UnSubscribe_EvenNoObserver_AlwaysPass()
+    {
+        var observer = Substitute.For<IMyObserver<IMessage>>();
+        _adapter.Invoking(a => a.Unsubscribe(observer))
+            .Should()
+            .NotThrow();
+    }
+
+    [Fact]
+    public void UnSubscribe_GivenNull_AlwaysPass()
+    {
+        _adapter.Invoking(a => a.Unsubscribe(null!))
+            .Should()
+            .NotThrow();
+    }
 }
