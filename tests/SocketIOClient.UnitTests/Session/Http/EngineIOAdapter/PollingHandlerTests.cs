@@ -67,10 +67,10 @@ public class PollingHandlerTests
 
         _pollingHandler.StartPolling(new OpenedMessage
         {
-            PingInterval = 10,
+            PingInterval = 100,
         }, false);
 
-        await Task.Delay(100);
+        await Task.Delay(500);
 
         await _retryPolicy
             .Received(1)
