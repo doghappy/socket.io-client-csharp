@@ -234,9 +234,9 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(1000);
+        await Task.Delay(500);
 
-        var range = Quantity.Within(2, 8);
+        var range = Quantity.Within(2, 7);
         await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
             .Received(range)
