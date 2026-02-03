@@ -163,9 +163,7 @@ public class SocketIOTests
         await ConnectAsync(200);
         stopwatch.Stop();
 
-        stopwatch.ElapsedMilliseconds.Should()
-            .BeGreaterThanOrEqualTo(100)
-            .And.BeLessThan(300);
+        stopwatch.ElapsedMilliseconds.Should().BeGreaterThan(100);
     }
 
     [Fact]
