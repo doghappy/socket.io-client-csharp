@@ -81,7 +81,7 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(600);
+        await Task.Delay(500);
 
         var range = Quantity.Within(2, 8);
         await _webSocketAdapter.Received(range)
