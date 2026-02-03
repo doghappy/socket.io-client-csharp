@@ -230,11 +230,11 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
-            PingInterval = 20,
+            PingInterval = 100,
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(100);
+        await Task.Delay(1000);
 
         var range = Quantity.Within(2, 8);
         await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
