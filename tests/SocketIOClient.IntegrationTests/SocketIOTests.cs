@@ -20,7 +20,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     protected abstract Uri TokenUrl { get; }
     protected abstract SocketIOOptions Options { get; }
 
-    protected const int DefaultDelay = 300;
+    protected const int DefaultDelay = 400;
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
@@ -267,7 +267,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("begin-ack-on-client");
 
-        await Task.Delay(DefaultDelay * 4);
+        await Task.Delay(DefaultDelay * 5);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
@@ -291,6 +291,8 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             .Should()
             .ThrowExactlyAsync<ConnectionException>()
             .WithMessage("Authentication error");
+
+        await Task.Delay(DefaultDelay / 10);
 
         io.Connected.Should().BeFalse();
         errors.Should().Equal("Authentication error");

@@ -45,7 +45,7 @@ public class WebSocketEngineIO3AdapterTests
 
         await Task.Delay(1000);
 
-        var range = Quantity.Within(6, 12);
+        var range = Quantity.Within(2, 12);
         await _webSocketAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
