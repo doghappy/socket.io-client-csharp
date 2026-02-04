@@ -267,7 +267,7 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
     {
-        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(200));
+        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(2000));
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
