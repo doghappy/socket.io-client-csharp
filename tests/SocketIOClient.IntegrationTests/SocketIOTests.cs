@@ -20,7 +20,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     protected abstract Uri TokenUrl { get; }
     protected abstract SocketIOOptions Options { get; }
 
-    protected const int DefaultDelay = 500;
+    protected const int DefaultDelay = 200;
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
@@ -113,7 +113,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("1:emit", [TestFile.NiuB]);
 
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0)
@@ -161,7 +161,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             return Task.CompletedTask;
         });
 
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetValue<string>(0)
@@ -181,7 +181,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             return Task.CompletedTask;
         });
 
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0)
@@ -267,7 +267,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("begin-ack-on-client");
 
-        await Task.Delay(DefaultDelay * 4);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);
@@ -399,7 +399,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         actual.Should().Be(value);
     }
