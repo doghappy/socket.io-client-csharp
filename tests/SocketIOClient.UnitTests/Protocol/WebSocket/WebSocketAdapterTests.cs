@@ -143,10 +143,14 @@ public class WebSocketAdapterTests
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
         _wsAdapter.Subscribe(observer);
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
-            .Returns(new WebSocketMessage
+            .Returns(async _ =>
             {
-                Type = WebSocketMessageType.Text,
-                Bytes = "Hello World!"u8.ToArray()
+                await Task.Delay(20);
+                return new WebSocketMessage
+                {
+                    Type = WebSocketMessageType.Text,
+                    Bytes = "Hello World!"u8.ToArray()
+                };
             });
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
@@ -216,10 +220,14 @@ public class WebSocketAdapterTests
             _wsAdapter.Unsubscribe(observer);
         }
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
-            .Returns(new WebSocketMessage
+            .Returns(async _ =>
             {
-                Type = WebSocketMessageType.Text,
-                Bytes = "Hello World!"u8.ToArray()
+                await Task.Delay(20);
+                return new WebSocketMessage
+                {
+                    Type = WebSocketMessageType.Text,
+                    Bytes = "Hello World!"u8.ToArray()
+                };
             });
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
