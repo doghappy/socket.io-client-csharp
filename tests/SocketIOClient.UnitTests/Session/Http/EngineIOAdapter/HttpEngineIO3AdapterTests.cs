@@ -247,7 +247,7 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage
         {
-            PingInterval = 200,
+            PingInterval = 400,
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
