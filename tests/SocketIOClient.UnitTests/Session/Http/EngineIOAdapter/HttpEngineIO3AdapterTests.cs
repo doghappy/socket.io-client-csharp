@@ -280,11 +280,11 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_IsReadyAfter30ms_PingIsWorking()
     {
+        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(30));
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
-        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(30));
 
-        await _delay.AdvanceAsync(1);
+        await _delay.AdvanceAsync(2);
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
