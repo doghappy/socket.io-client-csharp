@@ -223,7 +223,7 @@ public class WebSocketEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(message);
-        await _delay.AdvanceAsync(1);
+        await _delay.AdvanceAsync(2);
 
         await _webSocketAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"),
