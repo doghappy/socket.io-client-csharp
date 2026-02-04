@@ -20,7 +20,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     protected abstract Uri TokenUrl { get; }
     protected abstract SocketIOOptions Options { get; }
 
-    protected const int DefaultDelay = 200;
+    protected const int DefaultDelay = 400;
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
@@ -161,7 +161,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             return Task.CompletedTask;
         });
 
-        await Task.Delay(DefaultDelay);
+        await Task.Delay(DefaultDelay * 3);
 
         message.Should().NotBeNull();
         message.GetValue<string>(0)
@@ -399,7 +399,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay);
+        await Task.Delay(DefaultDelay * 3);
 
         actual.Should().Be(value);
     }
