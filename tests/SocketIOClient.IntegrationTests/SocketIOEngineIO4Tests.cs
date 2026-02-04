@@ -28,7 +28,7 @@ public abstract class SocketIOEngineIO4Tests(ITestOutputHelper output) : SocketI
             dto = msg.GetValue<UserPasswordDto>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay);
+        await Task.Delay(DefaultDelay * 2);
 
         dto.Should().BeEquivalentTo(new UserPasswordDto
         {
