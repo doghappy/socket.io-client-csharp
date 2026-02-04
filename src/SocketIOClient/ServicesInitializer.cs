@@ -28,7 +28,8 @@ public static class ServicesInitializer
             .AddSingleton<IRandom, SystemRandom>()
             .AddSingleton<IDecapsulable, Decapsulator>()
             .AddSingleton<IRetriable, RandomDelayRetryPolicy>()
-            .AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>();
+            .AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>()
+            .AddSingleton<IDelay, TaskDelay>();
 
         services
             .AddEngineIOCompatibility()

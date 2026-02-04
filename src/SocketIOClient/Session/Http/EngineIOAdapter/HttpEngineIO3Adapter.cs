@@ -19,7 +19,8 @@ public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
         IHttpAdapter httpAdapter,
         IRetriable retryPolicy,
         ILogger<HttpEngineIO3Adapter> logger,
-        IPollingHandler pollingHandler) : base(stopwatch, logger)
+        IPollingHandler pollingHandler,
+        IDelay delay) : base(stopwatch, logger, delay)
     {
         _httpAdapter = httpAdapter;
         _retryPolicy = retryPolicy;

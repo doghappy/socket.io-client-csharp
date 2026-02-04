@@ -14,7 +14,8 @@ public class WebSocketEngineIO3Adapter : EngineIO3Adapter, IWebSocketEngineIOAda
     public WebSocketEngineIO3Adapter(
         IStopwatch stopwatch,
         ILogger<WebSocketEngineIO3Adapter> logger,
-        IWebSocketAdapter webSocketAdapter) : base(stopwatch, logger)
+        IWebSocketAdapter webSocketAdapter,
+        IDelay delay) : base(stopwatch, logger, delay)
     {
         _webSocketAdapter = webSocketAdapter;
     }

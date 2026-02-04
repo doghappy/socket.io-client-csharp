@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Common;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
@@ -10,6 +9,7 @@ using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.EngineIOAdapter;
 using SocketIOClient.Session.Http.EngineIOAdapter;
 using SocketIOClient.Test.Core;
+using SocketIOClient.UnitTests.Fakes;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.Session.Http.EngineIOAdapter;
@@ -28,12 +28,14 @@ public class HttpEngineIO3AdapterTests
         });
         var logger = output.CreateLogger<HttpEngineIO3Adapter>();
         _pollingHandler = Substitute.For<IPollingHandler>();
+        _delay = new(output);
         _adapter = new(
             _stopwatch,
             _httpAdapter,
             _retryPolicy,
             logger,
-            _pollingHandler)
+            _pollingHandler,
+            _delay)
         {
             Options = new EngineIOAdapterOptions()
         };
@@ -44,6 +46,7 @@ public class HttpEngineIO3AdapterTests
     private readonly HttpEngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
     private readonly IPollingHandler _pollingHandler;
+    private readonly FakeDelay _delay;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -184,12 +187,11 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(100);
+        await _delay.AdvanceAsync(2);
 
-        var range = Quantity.Within(2, 7);
-        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
+        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(range)
+            .Received(2)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -234,12 +236,11 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(500);
+        await _delay.AdvanceAsync(2);
 
-        var range = Quantity.Within(2, 7);
-        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
+        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(range)
+            .Received(2)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -271,7 +272,7 @@ public class HttpEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(100);
+        await _delay.AdvanceAsync(1, TimeSpan.FromMilliseconds(100));
 
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
@@ -279,18 +280,11 @@ public class HttpEngineIO3AdapterTests
     [Fact]
     public async Task ProcessMessageAsync_IsReadyAfter30ms_PingIsWorking()
     {
-        _httpAdapter.IsReadyToSend.Returns(false);
-
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(30);
-            _httpAdapter.IsReadyToSend.Returns(true);
-        });
+        _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(30));
 
-        await Task.Delay(200);
-
+        await _delay.AdvanceAsync(1);
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
@@ -474,7 +468,7 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 80 });
         await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(100);
+        await _delay.AdvanceAsync(1);
 
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
