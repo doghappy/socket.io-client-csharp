@@ -468,7 +468,7 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 80 });
         await _adapter.ProcessMessageAsync(message);
-        await _delay.AdvanceAsync(1);
+        await _delay.AdvanceAsync(2);
 
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
