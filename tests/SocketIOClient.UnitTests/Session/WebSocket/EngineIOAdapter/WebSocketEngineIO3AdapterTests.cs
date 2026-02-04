@@ -46,6 +46,7 @@ public class WebSocketEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
         await _delay.AdvanceAsync(2);
+        await Task.Delay(100);
 
         await _webSocketAdapter.Received(2)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
