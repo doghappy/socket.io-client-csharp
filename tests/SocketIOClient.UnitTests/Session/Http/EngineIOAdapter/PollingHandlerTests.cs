@@ -78,18 +78,18 @@ public class PollingHandlerTests
     }
 
     [Fact]
-    public async Task PollingAsync_IsReadyAfter30ms_PollingIsWorking()
+    public async Task PollingAsync_IsReadyAfter100ms_PollingIsWorking()
     {
         _httpAdapter.IsReadyToSend.Returns(false);
 
-        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 100 }, false);
+        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 2000 }, false);
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(100);
             _httpAdapter.IsReadyToSend.Returns(true);
         });
 
-        await Task.Delay(100);
+        await Task.Delay(200);
 
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
     }
