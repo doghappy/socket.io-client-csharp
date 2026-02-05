@@ -34,10 +34,4 @@
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
     <ProjectReference Include="..\SocketIOClient.Test.Core\SocketIOClient.Test.Core.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <None Update="xunit.runner.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>
