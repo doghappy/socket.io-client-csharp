@@ -47,7 +47,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
         await proxy.StartHttpAsync(cts.Token);
         var proxyUrl = proxy.ProxyUrl;
 
-        var io = NewSocketIO(new Uri("http://localhost:11410"), services =>
+        using var io = NewSocketIO(new Uri("http://localhost:11410"), services =>
         {
             services.AddSingleton<HttpClient>(_ =>
             {
@@ -77,7 +77,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
         await proxy.StartWebSocketAsync(cts.Token);
         var proxyUrl = proxy.ProxyUrl;
 
-        var io = NewSocketIO(new Uri("http://localhost:11400"), services =>
+        using var io = NewSocketIO(new Uri("http://localhost:11400"), services =>
         {
             services.AddSingleton(new WebSocketOptions
             {
@@ -96,7 +96,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
     [Fact]
     public async Task HttpClient_ServerCertHasError_ThrowConnectionException()
     {
-        var io = NewSocketIO(_httpsUri, _ => { });
+        using var io = NewSocketIO(_httpsUri, _ => { });
         await io.Invoking(x => x.ConnectAsync()).Should().ThrowAsync<ConnectionException>();
     }
 
@@ -104,7 +104,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
     public async Task HttpClient_IgnoreServerCertError_AlwaysPass()
     {
         var callback = false;
-        var io = NewSocketIO(_httpsUri, services =>
+        using var io = NewSocketIO(_httpsUri, services =>
         {
             services.AddSingleton<HttpClient>(_ =>
             {
@@ -131,7 +131,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
     public async Task WebSocket_ServerCertHasError_ThrowConnectionException()
     {
         _options.Transport = TransportProtocol.WebSocket;
-        var io = NewSocketIO(_wssUri, _ => { });
+        using var io = NewSocketIO(_wssUri, _ => { });
 
         await io.Invoking(x => x.ConnectAsync()).Should().ThrowAsync<ConnectionException>();
     }
@@ -141,7 +141,7 @@ public class ProxyAndSslTests(ITestOutputHelper output)
     {
         var callback = false;
         _options.Transport = TransportProtocol.WebSocket;
-        var io = NewSocketIO(_wssUri, services =>
+        using var io = NewSocketIO(_wssUri, services =>
         {
             services.AddSingleton(new WebSocketOptions
             {

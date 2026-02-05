@@ -8,6 +8,8 @@ namespace SocketIOClient;
 
 public interface IInternalSocketIO : IMyObserver<IMessage>
 {
+    int AckHandlerCount { get; }
+    int PacketId { get; }
     Task SendAckDataAsync(int packetId, IEnumerable<object> data);
     Task SendAckDataAsync(int packetId, IEnumerable<object> data, CancellationToken cancellationToken);
 }

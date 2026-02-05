@@ -20,7 +20,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     protected abstract Uri TokenUrl { get; }
     protected abstract SocketIOOptions Options { get; }
 
-    protected const int DefaultDelay = 400;
+    protected const int DefaultDelay = 200;
 
     protected virtual void ConfigureServices(IServiceCollection services)
     {
@@ -42,7 +42,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task ConnectAsync_ConnectedToServer_ConnectedIsTureIdIsNotNullOrEmpty()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         await io.ConnectAsync();
 
         io.Connected.Should().BeTrue();
@@ -54,7 +54,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task EmitAsync_EventNull_ReceiveNull()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("1:emit", msg =>
         {
@@ -81,7 +81,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [InlineData("hello\n世界\n🌍🌎🌏")]
     public async Task EmitAsync_Event1Parameter_ReceiveSameParameter(object data)
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("1:emit", msg =>
         {
@@ -103,7 +103,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task EmitAsync_ByteEvent1Parameter_ReceiveSameParameter()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("1:emit", msg =>
         {
@@ -128,7 +128,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [InlineData("hello\n世界\n🌍🌎🌏", 199)]
     public async Task EmitAsync_Event2Parameters_ReceiveSameParameters(object item0, object item1)
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("2:emit", msg =>
         {
@@ -152,7 +152,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task EmitAsync_AckWith1StringParameter_ReceiveSameParameter()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IDataMessage message = null!;
         await io.ConnectAsync();
         await io.EmitAsync("1:ack", ["action"], msg =>
@@ -161,7 +161,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
             return Task.CompletedTask;
         });
 
-        await Task.Delay(DefaultDelay * 3);
+        await Task.Delay(DefaultDelay);
 
         message.Should().NotBeNull();
         message.GetValue<string>(0)
@@ -172,7 +172,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task EmitAsync_AckWith1BinaryParameter_ReceiveSameParameter()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IDataMessage message = null!;
         await io.ConnectAsync();
         await io.EmitAsync("1:ack", [TestFile.NiuB], msg =>
@@ -197,7 +197,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [InlineData(14000, 2, 2)]
     public async Task OnPingAndOnPong_HandlerAreRegistered_WorkAsExpected(int ms, int expectedPingTimes, int expectedPongTimes)
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var pingTimes = 0;
         var pongTimes = 0;
         io.OnPing += (_, _) => pingTimes++;
@@ -213,7 +213,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task ConnectAsync_ConnectAfterDisconnect_OnConnectedTimeIs2()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var times = 0;
         io.OnConnected += (_, _) => times++;
 
@@ -229,7 +229,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task SendAckDataAsync_ClientSend2Args_ServerExecuteCallback()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("ack-on-client", async data =>
         {
@@ -253,7 +253,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task SendAckDataAsync_ClientSendBytes_ServerExecuteCallback()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         IEventContext message = null!;
         io.On("ack-on-client", async data =>
         {
@@ -316,7 +316,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task DisconnectAsync_CalledByClient_OnDisconnectIsInvoked()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var times = 0;
         string? reason = null;
         io.OnDisconnected += (_, e) =>
@@ -337,7 +337,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task DisconnectAsync_CalledByServer_OnDisconnectIsInvoked()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var times = 0;
         string? reason = null;
         io.OnDisconnected += (_, e) =>
@@ -361,7 +361,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [InlineData(7)]
     public async Task Reconnect_Manually_OnConnectedAndOnDisconnectedTriggeredManyTimes(int times)
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var connectTimes = 0;
         var disconnectTimes = 0;
         io.OnConnected += (_, _) => connectTimes++;
@@ -384,7 +384,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [InlineData("user-agent", "dotnet-socketio[client]/socket")]
     public async Task ExtraHeaders_UserGivenHeaders_PassThroughToServer(string key, string value)
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         string? actual = null;
         io.Options.ExtraHeaders = new Dictionary<string, string>
         {
@@ -392,14 +392,13 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         };
 
         await io.ConnectAsync();
-        await Task.Delay(DefaultDelay);
         var lowerCaseKey = key.ToLowerInvariant(); // limited by server
         await io.EmitAsync("get_header", [lowerCaseKey], res =>
         {
             actual = res.GetValue<string>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay * 3);
+        await Task.Delay(DefaultDelay);
 
         actual.Should().Be(value);
     }
@@ -407,7 +406,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task OnAny_ReceivedEventMessage_HandlerIsCalled()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         string? eventName = null;
         IEventContext context = null!;
         io.OnAny((e, ctx) =>
@@ -428,7 +427,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     [Fact]
     public async Task OnAny_OnHandlerAndOnAnyHandler_2HandlersAreCalled()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         var onHandlerCalled = false;
         var onAnyHandlerCalled = false;
 

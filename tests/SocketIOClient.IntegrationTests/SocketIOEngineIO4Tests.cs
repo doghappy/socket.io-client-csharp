@@ -12,7 +12,7 @@ public abstract class SocketIOEngineIO4Tests(ITestOutputHelper output) : SocketI
     [Fact]
     public async Task ConnectAsync_ValidAuth_CanGetAuthFromServer()
     {
-        var io = NewSocketIO(Url);
+        using var io = NewSocketIO(Url);
         io.Options.Reconnection = false;
         io.Options.Auth = new UserPasswordDto
         {
@@ -28,7 +28,7 @@ public abstract class SocketIOEngineIO4Tests(ITestOutputHelper output) : SocketI
             dto = msg.GetValue<UserPasswordDto>(0);
             return Task.CompletedTask;
         });
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay);
 
         dto.Should().BeEquivalentTo(new UserPasswordDto
         {

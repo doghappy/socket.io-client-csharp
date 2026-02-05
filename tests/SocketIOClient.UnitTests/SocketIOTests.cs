@@ -60,9 +60,12 @@ public class SocketIOTests
     public void NothingCalled_DefaultValues()
     {
         var io = new SocketIO(new Uri("http://localhost:3000"));
-        io.PacketId.Should().Be(0);
         io.Connected.Should().BeFalse();
         io.Id.Should().BeNull();
+
+        IInternalSocketIO internalIO = io;
+        internalIO.PacketId.Should().Be(0);
+        internalIO.AckHandlerCount.Should().Be(0);
     }
 
     #region ConnectAsync
@@ -177,8 +180,11 @@ public class SocketIOTests
         _session.OnDisconnected();
 
         _io.Connected.Should().BeFalse();
-        _io.PacketId.Should().Be(0);
         onDisconnectedInvoked.Should().BeTrue();
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(0);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     [Fact]
@@ -479,7 +485,9 @@ public class SocketIOTests
         await ConnectAsync();
         await _io.EmitAsync("event", _ => Task.CompletedTask);
 
-        _io.PacketId.Should().Be(1);
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(1);
+        io.AckHandlerCount.Should().Be(1);
     }
 
     [Fact]
@@ -495,11 +503,14 @@ public class SocketIOTests
         });
         var ackMessage = new SystemJsonAckMessage
         {
-            Id = _io.PacketId,
+            Id = 1,
         };
         await OnNextAsync(_io, ackMessage);
 
         ackCalled.Should().BeTrue();
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(1);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     [Fact]
@@ -653,7 +664,10 @@ public class SocketIOTests
                 Arg.Is<object[]>(x => x.Length == 1 && "event".Equals(x[0])),
                 Arg.Any<int>(),
                 CancellationToken.None);
-        _io.PacketId.Should().Be(1);
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(1);
+        io.AckHandlerCount.Should().Be(1);
     }
 
     [Fact]
@@ -668,7 +682,89 @@ public class SocketIOTests
                 Arg.Is<object[]>(x => x.Length == 2 && "event".Equals(x[0]) && 1.Equals(x[1])),
                 Arg.Any<int>(),
                 Arg.Any<CancellationToken>());
-        _io.PacketId.Should().Be(1);
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(1);
+        io.AckHandlerCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EmitAsyncAck_SessionSendAsyncThrow_AckHandlerCountIs1()
+    {
+        _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Test"));
+        await ConnectAsync();
+
+        await _io.Invoking(io => io.EmitAsync(
+            "event",
+            [1],
+            _ => Task.CompletedTask, CancellationToken.None))
+            .Should()
+            .ThrowAsync<Exception>()
+            .WithMessage("Test");
+
+        IInternalSocketIO io = _io;
+        io.AckHandlerCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task EmitAsyncAck_ConcurrentEmit_PacketIdAndAckHandlerCountAreCorrect()
+    {
+        _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Task.Delay(10));
+
+        await ConnectAsync();
+
+        const int count = 1000;
+        var barrier = new Barrier(20);
+
+        var tasks = Enumerable.Range(0, count).Select(i => Task.Run(() => EmitAsync(i)));
+        await Task.WhenAll(tasks);
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(count);
+        io.AckHandlerCount.Should().Be(count);
+        return;
+
+        async Task EmitAsync(int i)
+        {
+            barrier.SignalAndWait();
+            await _io.EmitAsync("ack", [i], _ => Task.CompletedTask);
+        }
+    }
+
+    [Fact]
+    public async Task EmitAsyncAck_ConcurrentConsume_PacketIdAndAckHandlerCountAreCorrect()
+    {
+        _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Task.Delay(10));
+
+        await ConnectAsync();
+
+        const int count = 1000;
+        for (var i = 0; i < count; i++)
+        {
+            await _io.EmitAsync("ack", [i], _ => Task.CompletedTask);
+        }
+
+        var barrier = new Barrier(20);
+        var tasks = Enumerable.Range(1, count).Select(i => Task.Run(() => ConsumeAsync(i)));
+        await Task.WhenAll(tasks);
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(count);
+        io.AckHandlerCount.Should().Be(0);
+        return;
+
+        async Task ConsumeAsync(int i)
+        {
+            barrier.SignalAndWait();
+            await OnNextAsync(_io, new SystemJsonAckMessage
+            {
+                Id = i,
+                DataItems = []
+            });
+        }
     }
 
     [Fact]
@@ -835,8 +931,11 @@ public class SocketIOTests
             .WithMessage("Test");
 
         _io.Connected.Should().BeFalse();
-        _io.PacketId.Should().Be(0);
         _io.Id.Should().BeNull();
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(0);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     [Fact]
@@ -853,8 +952,11 @@ public class SocketIOTests
             .WithMessage("Test");
 
         _io.Connected.Should().BeFalse();
-        _io.PacketId.Should().Be(0);
         _io.Id.Should().BeNull();
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(0);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     [Fact]
@@ -871,8 +973,11 @@ public class SocketIOTests
             .WithMessage("Test");
 
         _io.Connected.Should().BeFalse();
-        _io.PacketId.Should().Be(0);
         _io.Id.Should().BeNull();
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(0);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     #endregion
@@ -896,8 +1001,11 @@ public class SocketIOTests
         await _io.DisconnectAsync();
 
         _io.Connected.Should().BeFalse();
-        _io.PacketId.Should().Be(0);
         _io.Id.Should().BeNull();
+
+        IInternalSocketIO io = _io;
+        io.PacketId.Should().Be(0);
+        io.AckHandlerCount.Should().Be(0);
     }
 
     [Fact]

@@ -40,10 +40,14 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly ILogger<SocketIO> _logger;
     private readonly IRandom _random;
     private readonly object _disconnectLock = new();
+    private readonly object _ackHandlerLock = new();
 
     private ISession? _session;
     private IServiceScope? _scope;
-    public int PacketId { get; private set; }
+
+    private int _packetId;
+    int IInternalSocketIO.PacketId => _packetId;
+
     public bool Connected { get; private set; }
     public string? Id { get; private set; }
 
@@ -65,7 +69,8 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
     }
 
-    private readonly Dictionary<int, Func<IDataMessage, Task>> _funcHandlers = new();
+    int IInternalSocketIO.AckHandlerCount => _ackHandlers.Count;
+    private readonly Dictionary<int, Func<IDataMessage, Task>> _ackHandlers = new();
     private readonly Dictionary<string, Func<IEventContext, Task>> _eventHandlers = new();
     private readonly HashSet<string> _onceEvents = [];
     private readonly List<Func<string, IEventContext, Task>> _onAnyHandlers = [];
@@ -273,10 +278,13 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         CancellationToken cancellationToken)
     {
         CheckStatusAndData(data);
-        PacketId++;
+        lock (_ackHandlerLock)
+        {
+            _packetId++;
+            _ackHandlers.Add(_packetId, ack);
+        }
         var sessionData = MergeEventData(eventName, data);
-        await _session!.SendAsync(sessionData, PacketId, cancellationToken).ConfigureAwait(false);
-        _funcHandlers.Add(PacketId, ack);
+        await _session!.SendAsync(sessionData, _packetId, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IDataMessage, Task> ack)
@@ -429,9 +437,18 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private async Task HandleAckMessage(IMessage message)
     {
         var ackMessage = (IDataMessage)message;
-        if (_funcHandlers.TryGetValue(ackMessage.Id, out var func))
+        Func<IDataMessage, Task>? handler;
+        lock (_ackHandlerLock)
         {
-            await func(ackMessage);
+            if (_ackHandlers.TryGetValue(ackMessage.Id, out handler))
+            {
+                _ackHandlers.Remove(ackMessage.Id);
+            }
+        }
+
+        if (handler != null)
+        {
+            await handler(ackMessage).ConfigureAwait(false);
         }
     }
 
@@ -504,7 +521,8 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         Connected = false;
         Id = null;
-        PacketId = 0;
+        _packetId = 0;
+        _ackHandlers.Clear();
     }
 
     public void On(string eventName, Func<IEventContext, Task> handler)
