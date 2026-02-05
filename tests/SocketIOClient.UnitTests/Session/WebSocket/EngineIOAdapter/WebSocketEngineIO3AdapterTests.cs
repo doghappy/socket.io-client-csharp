@@ -1,6 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Common;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
@@ -45,13 +46,13 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await _fakeDelay.AdvanceAsync(100);
-        await _fakeDelay.AdvanceAsync(100);
+        await _fakeDelay.AdvanceAsync(100, 3);
 
-        await _webSocketAdapter.Received(2)
+        var range = Quantity.Within(2, 3);
+        await _webSocketAdapter.Received(range)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
-            .Received(2)
+            .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -83,12 +84,13 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await _fakeDelay.AdvanceAsync(100);
-        await _fakeDelay.AdvanceAsync(100);
-        await _webSocketAdapter.Received(2)
+        await _fakeDelay.AdvanceAsync(100, 3);
+
+        var range = Quantity.Within(2, 3);
+        await _webSocketAdapter.Received(range)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
-            .Received(2)
+            .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 

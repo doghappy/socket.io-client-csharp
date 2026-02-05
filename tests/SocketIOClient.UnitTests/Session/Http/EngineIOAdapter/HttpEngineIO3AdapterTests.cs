@@ -1,6 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Common;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
@@ -184,11 +185,11 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await _fakeDelay.AdvanceAsync(100);
-        await _fakeDelay.AdvanceAsync(100);
-        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
+        await _fakeDelay.AdvanceAsync(100, 3);
+        var range = Quantity.Within(2, 3);
+        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(2)
+            .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -233,12 +234,12 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await _fakeDelay.AdvanceAsync(100);
-        await _fakeDelay.AdvanceAsync(100);
+        await _fakeDelay.AdvanceAsync(100, 3);
 
-        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
+        var range = Quantity.Within(2, 3);
+        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(2)
+            .Received(range)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 

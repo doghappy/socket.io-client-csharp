@@ -26,6 +26,9 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
 
     public async Task AdvanceAsync(int ms)
     {
+        const int timeout = 5000;
+        const int step = 20;
+        var current = 0;
         while (true)
         {
             var exists = _delayTaskDic.TryGetValue(ms, out var tasks);
@@ -39,7 +42,22 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
                 }
                 return;
             }
-            await Task.Delay(20);
+
+            if (current >= timeout)
+            {
+                throw new TimeoutException();
+            }
+
+            current += step;
+            await Task.Delay(step);
+        }
+    }
+
+    public async Task AdvanceAsync(int ms, int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            await AdvanceAsync(ms);
         }
     }
 
