@@ -16,7 +16,7 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
     {
         await clientAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         var token = _receiveCancellationTokenSource.Token;
-        _ = ReceiveAsync(token);
+        _ = ReceiveAsync(token).ConfigureAwait(false);
     }
 
     private async Task ReceiveAsync(CancellationToken cancellationToken)

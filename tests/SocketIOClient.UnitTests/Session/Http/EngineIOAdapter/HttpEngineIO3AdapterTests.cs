@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Common;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
@@ -10,6 +9,7 @@ using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.EngineIOAdapter;
 using SocketIOClient.Session.Http.EngineIOAdapter;
 using SocketIOClient.Test.Core;
+using SocketIOClient.UnitTests.Fakes;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.Session.Http.EngineIOAdapter;
@@ -25,12 +25,14 @@ public class HttpEngineIO3AdapterTests
         _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ => { await Task.Delay(50); });
         var logger = output.CreateLogger<HttpEngineIO3Adapter>();
         _pollingHandler = Substitute.For<IPollingHandler>();
+        _fakeDelay = new FakeDelay(output);
         _adapter = new(
             _stopwatch,
             _httpAdapter,
             _retryPolicy,
             logger,
-            _pollingHandler)
+            _pollingHandler,
+            _fakeDelay)
         {
             Options = new EngineIOAdapterOptions()
         };
@@ -41,6 +43,7 @@ public class HttpEngineIO3AdapterTests
     private readonly HttpEngineIO3Adapter _adapter;
     private readonly IRetriable _retryPolicy;
     private readonly IPollingHandler _pollingHandler;
+    private readonly FakeDelay _fakeDelay;
 
     [Fact]
     public void ToHttpRequest_GivenAnEmptyArray_ThrowException()
@@ -181,11 +184,11 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(500);
-        var range = Quantity.Within(2, 10);
-        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
+        await _fakeDelay.AdvanceAsync(100);
+        await _fakeDelay.AdvanceAsync(100);
+        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(range)
+            .Received(2)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -230,12 +233,12 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(500);
-        var range = Quantity.Within(2, 10);
+        await _fakeDelay.AdvanceAsync(100);
+        await _fakeDelay.AdvanceAsync(100);
 
-        await _retryPolicy.Received(range).RetryAsync(3, Arg.Any<Func<Task>>());
+        await _retryPolicy.Received(2).RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
-            .Received(range)
+            .Received(2)
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
@@ -279,7 +282,7 @@ public class HttpEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(500);
+        await _fakeDelay.AdvanceAsync(100);
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
@@ -448,9 +451,9 @@ public class HttpEngineIO3AdapterTests
         _adapter.Options.Namespace = "/nsp";
         var message = new ConnectedMessage();
 
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(100);
+        await _fakeDelay.EnsureNoDelayAsync(200);
 
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
     }
@@ -464,9 +467,9 @@ public class HttpEngineIO3AdapterTests
             Namespace = "/nsp",
         };
 
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 10 });
         await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(500);
+        await _fakeDelay.AdvanceAsync(10);
 
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }

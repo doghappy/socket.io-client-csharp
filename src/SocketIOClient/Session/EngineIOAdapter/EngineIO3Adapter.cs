@@ -11,14 +11,16 @@ namespace SocketIOClient.Session.EngineIOAdapter;
 
 public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
 {
-    protected EngineIO3Adapter(IStopwatch stopwatch, ILogger<EngineIO3Adapter> logger)
+    protected EngineIO3Adapter(IStopwatch stopwatch, ILogger<EngineIO3Adapter> logger, IDelay delay)
     {
         _stopwatch = stopwatch;
         _logger = logger;
+        _delay = delay;
     }
 
     private readonly IStopwatch _stopwatch;
     private readonly ILogger<EngineIO3Adapter> _logger;
+    private readonly IDelay _delay;
     private readonly CancellationTokenSource _pingCancellationTokenSource = new();
     private readonly List<IMyObserver<IMessage>> _observers = [];
 
@@ -53,7 +55,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
                 await HandleOpenedMessageAsync(message).ConfigureAwait(false);
                 break;
             case MessageType.Connected:
-                shouldSwallow = HandleConnectedMessageAsync(message);
+                shouldSwallow = HandleConnectedMessage(message);
                 break;
             case MessageType.Pong:
                 HandlePongMessage(message);
@@ -74,7 +76,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         await SendConnectAsync().ConfigureAwait(false);
     }
 
-    private bool HandleConnectedMessageAsync(IMessage message)
+    private bool HandleConnectedMessage(IMessage message)
     {
         var connectedMessage = (ConnectedMessage)message;
         var shouldSwallow = !DefaultNamespaces.Contains(Options.Namespace)
@@ -82,7 +84,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         if (!shouldSwallow)
         {
             connectedMessage.Sid = OpenedMessage!.Sid;
-            Task.Run(StartPingAsync);
+            Task.Run(StartPingAsync).ConfigureAwait(false);
         }
 
         return shouldSwallow;
@@ -94,7 +96,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(OpenedMessage!.PingInterval, token).ConfigureAwait(false);
+            await _delay.DelayAsync(OpenedMessage!.PingInterval, token).ConfigureAwait(false);
             _logger.LogDebug("Sending Ping...");
             await SendPingAsync().ConfigureAwait(false);
             _logger.LogDebug("Sent Ping");

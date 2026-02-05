@@ -9,7 +9,11 @@ using SocketIOClient.Session.EngineIOAdapter;
 
 namespace SocketIOClient.Session.Http.EngineIOAdapter;
 
-public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, ILogger<PollingHandler> logger)
+public class PollingHandler(
+    IHttpAdapter httpAdapter,
+    IRetriable retryPolicy,
+    ILogger<PollingHandler> logger,
+    IDelay delay)
     : IPollingHandler, IDisposable
 {
     private OpenedMessage? _openedMessage;
@@ -22,7 +26,7 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
             return;
         }
         _openedMessage = message;
-        _ = PollingAsync();
+        _ = PollingAsync().ConfigureAwait(false);
     }
 
     private async Task PollingAsync()
@@ -46,15 +50,15 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
     public async Task WaitHttpAdapterReady()
     {
         var ms = 0;
-        const int delay = 20;
+        const int interval = 20;
         while (ms < _openedMessage!.PingInterval)
         {
             if (httpAdapter.IsReadyToSend)
             {
                 return;
             }
-            await Task.Delay(delay).ConfigureAwait(false);
-            ms += delay;
+            await delay.DelayAsync(interval, CancellationToken.None).ConfigureAwait(false);
+            ms += interval;
         }
         var ex = new TimeoutException();
         logger.LogError(ex, "Wait HttpAdapter ready timeout");

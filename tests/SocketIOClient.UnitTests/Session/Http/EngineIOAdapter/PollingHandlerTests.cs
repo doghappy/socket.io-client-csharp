@@ -4,6 +4,7 @@ using SocketIOClient.Infrastructure;
 using SocketIOClient.Protocol.Http;
 using SocketIOClient.Session.Http.EngineIOAdapter;
 using SocketIOClient.Test.Core;
+using SocketIOClient.UnitTests.Fakes;
 using Xunit.Abstractions;
 
 namespace SocketIOClient.UnitTests.Session.Http.EngineIOAdapter;
@@ -20,12 +21,14 @@ public class PollingHandlerTests
             await Task.Delay(20);
         });
         var logger = output.CreateLogger<PollingHandler>();
-        _pollingHandler = new PollingHandler(_httpAdapter, _retryPolicy, logger);
+        _fakeDelay = new FakeDelay(output);
+        _pollingHandler = new PollingHandler(_httpAdapter, _retryPolicy, logger, _fakeDelay);
     }
 
     private readonly PollingHandler _pollingHandler;
     private readonly IHttpAdapter _httpAdapter;
     private readonly IRetriable _retryPolicy;
+    private readonly FakeDelay _fakeDelay;
 
     [Fact]
     public async Task StartPolling_WhenNeverCalled_DoNotSendHttpRequest()
@@ -78,18 +81,22 @@ public class PollingHandlerTests
     }
 
     [Fact]
-    public async Task PollingAsync_IsReadyAfter100ms_PollingIsWorking()
+    public async Task PollingAsync_IsReadyFirstFalseThenTrue_PollingIsWorking()
     {
         _httpAdapter.IsReadyToSend.Returns(false);
-
-        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 2000 }, false);
         _ = Task.Run(async () =>
         {
-            await Task.Delay(100);
+            await _fakeDelay.DelayAsync(21, CancellationToken.None);
             _httpAdapter.IsReadyToSend.Returns(true);
+            await _fakeDelay.DelayAsync(22, CancellationToken.None);
         });
+        _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 2000 }, false);
 
-        await Task.Delay(200);
+
+        await _fakeDelay.AdvanceAsync(20);
+        await _fakeDelay.AdvanceAsync(21);
+        await _fakeDelay.AdvanceAsync(22);
+        await _fakeDelay.AdvanceAsync(20);
 
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
     }

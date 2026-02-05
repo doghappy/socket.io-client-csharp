@@ -24,6 +24,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _serviceProvider = ServicesInitializer.BuildServiceProvider(_services, configure);
         _logger = _serviceProvider.GetRequiredService<ILogger<SocketIO>>();
         _random = _serviceProvider.GetRequiredService<IRandom>();
+        _delay = _serviceProvider.GetRequiredService<IDelay>();
     }
 
     public SocketIO(Uri uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
@@ -39,6 +40,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SocketIO> _logger;
     private readonly IRandom _random;
+    private readonly IDelay _delay;
     private readonly object _disconnectLock = new();
     private readonly object _ackHandlerLock = new();
 
@@ -153,7 +155,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 }
 
                 var delay = _random.Next(Options.ReconnectionDelayMax);
-                await Task.Delay(delay, CancellationToken.None).ConfigureAwait(false);
+                await _delay.DelayAsync(delay, CancellationToken.None).ConfigureAwait(false);
             }
         }
     }
