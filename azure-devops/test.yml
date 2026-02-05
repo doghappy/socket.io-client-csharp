@@ -12,7 +12,7 @@ stages:
         steps:
           - task: DotNetCoreCLI@2
             displayName: SocketIOClient.UnitTests
-            timeoutInMinutes: 10
+            timeoutInMinutes: 5
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
