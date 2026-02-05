@@ -291,17 +291,12 @@ npm run start # Start socket.io server for integration testing
 
 # Change log
 
-## [4.0.0] - 2026-01-28
+## [4.0.0.2] - 2026-02-05
 
-### Architecture Refactor
-- Reworked the internal architecture to improve modularity, maintainability, and long-term extensibility
-- Clearer separation of responsibilities between core components
-- Reduced coupling between modules, making future enhancements safer and easier
+### Bugfix
 
-### Performance Enhancements
-- Improved execution efficiency in key processing paths
-- Reduced unnecessary allocations and redundant operations
-- Optimized data access and internal workflows for better runtime performance
+- Trigger the OnDisconnected event when the protocol connection is closed.
+- Fix an issue where the Emit ACK handler was not invoked in certain cases.
 
 [See more](./CHANGELOG.md)
 

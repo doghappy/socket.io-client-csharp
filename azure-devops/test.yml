@@ -12,6 +12,7 @@ stages:
         steps:
           - task: DotNetCoreCLI@2
             displayName: SocketIOClient.UnitTests
+            timeoutInMinutes: 10
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.UnitTests
               command: test
@@ -68,6 +69,7 @@ stages:
           - template: templates/socket.io-tpl.yml
           - task: DotNetCoreCLI@2
             displayName: Integration tests
+            timeoutInMinutes: 10
             inputs:
               workingDirectory: $(System.DefaultWorkingDirectory)/tests/SocketIOClient.IntegrationTests
               command: test

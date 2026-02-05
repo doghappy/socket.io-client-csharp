@@ -289,17 +289,12 @@ npm run start # 启动 socket.io server 测试服务
 
 # Change log
 
-## [4.0.0] - 2026-01-28
+## [4.0.0.2] - 2026-02-05
 
-### Architecture Refactor
-- Reworked the internal architecture to improve modularity, maintainability, and long-term extensibility
-- Clearer separation of responsibilities between core components
-- Reduced coupling between modules, making future enhancements safer and easier
+### Bugfix
 
-### Performance Enhancements
-- Improved execution efficiency in key processing paths
-- Reduced unnecessary allocations and redundant operations
-- Optimized data access and internal workflows for better runtime performance
+- 当传输协议断开后，确保 OnDisconnected 会被触发
+- 修复 Emit 时 Ack handler 在某些场景下未被触发的bug
 
 [See more](./CHANGELOG.md)
 
