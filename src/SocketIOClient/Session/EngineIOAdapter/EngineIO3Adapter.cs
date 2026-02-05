@@ -94,7 +94,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
         var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
-            await Task.Delay(OpenedMessage!.PingInterval, token);
+            await Task.Delay(OpenedMessage!.PingInterval, token).ConfigureAwait(false);
             _logger.LogDebug("Sending Ping...");
             await SendPingAsync().ConfigureAwait(false);
             _logger.LogDebug("Sent Ping");

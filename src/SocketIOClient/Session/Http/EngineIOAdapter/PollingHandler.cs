@@ -22,7 +22,7 @@ public class PollingHandler(IHttpAdapter httpAdapter, IRetriable retryPolicy, IL
             return;
         }
         _openedMessage = message;
-        _ = Task.Run(PollingAsync);
+        _ = PollingAsync();
     }
 
     private async Task PollingAsync()

@@ -26,7 +26,7 @@ public class HttpEngineIO4Tests(ITestOutputHelper output) : SocketIOEngineIO4Tes
     public async Task ConnectAsync_WebSocketIsAvailable_UpgradeToWebSocket()
     {
         var uri = new Uri("http://localhost:11400");
-        var io = NewSocketIO(uri);
+        using var io = NewSocketIO(uri);
 
         await io.ConnectAsync();
 

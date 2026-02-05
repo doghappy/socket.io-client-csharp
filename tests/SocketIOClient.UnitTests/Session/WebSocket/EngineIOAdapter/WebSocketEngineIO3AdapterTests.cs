@@ -43,10 +43,10 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(1000);
+        await Task.Delay(500);
+        var range = Quantity.Within(2, 10);
 
-        var range = Quantity.Within(2, 12);
-        await _webSocketAdapter.Received()
+        await _webSocketAdapter.Received(range)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
             .Received(range)
@@ -81,9 +81,8 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(600);
-
-        var range = Quantity.Within(2, 8);
+        await Task.Delay(500);
+        var range = Quantity.Within(2, 10);
         await _webSocketAdapter.Received(range)
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"), Arg.Any<CancellationToken>());
         await observer
@@ -223,7 +222,7 @@ public class WebSocketEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(200);
+        await Task.Delay(500);
 
         await _webSocketAdapter.Received()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"),
