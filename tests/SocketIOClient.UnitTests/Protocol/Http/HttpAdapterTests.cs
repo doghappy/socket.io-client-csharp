@@ -45,7 +45,7 @@ public class HttpAdapterTests
     public async Task SendHttpRequestAsync_ObserverBlocked100Ms_SendAsyncNotBlockedByObserver()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
-        observer.OnNextAsync(Arg.Any<ProtocolMessage>()).Returns(async _ => await Task.Delay(100));
+        observer.OnNextAsync(Arg.Any<ProtocolMessage>()).Returns(async _ => await Task.Delay(100).ConfigureAwait(false));
         _httpAdapter.Subscribe(observer);
 
         var stopwatch = Stopwatch.StartNew();

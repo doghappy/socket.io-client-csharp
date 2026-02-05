@@ -16,10 +16,8 @@ public class PollingHandlerTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
-        _retryPolicy.RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>()).Returns(async _ =>
-        {
-            await Task.Delay(20);
-        });
+        _retryPolicy.RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>())
+            .Returns(async _ => await Task.Delay(20).ConfigureAwait(false));
         var logger = output.CreateLogger<PollingHandler>();
         _fakeDelay = new FakeDelay(output);
         _pollingHandler = new PollingHandler(_httpAdapter, _retryPolicy, logger, _fakeDelay);
@@ -33,7 +31,7 @@ public class PollingHandlerTests
     [Fact]
     public async Task StartPolling_WhenNeverCalled_DoNotSendHttpRequest()
     {
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
@@ -44,7 +42,7 @@ public class PollingHandlerTests
         {
             PingInterval = 50
         }, false);
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
@@ -58,7 +56,7 @@ public class PollingHandlerTests
             PingInterval = 50
         }, false);
 
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
@@ -73,7 +71,7 @@ public class PollingHandlerTests
             PingInterval = 100,
         }, false);
 
-        await Task.Delay(500);
+        await Task.Delay(500).ConfigureAwait(false);
 
         await _retryPolicy
             .Received(1)
@@ -112,7 +110,7 @@ public class PollingHandlerTests
             Upgrades = []
         }, autoUpgrade);
 
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
@@ -125,7 +123,7 @@ public class PollingHandlerTests
             Upgrades = ["websocket"]
         }, false);
 
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
@@ -138,7 +136,7 @@ public class PollingHandlerTests
             Upgrades = ["websocket"]
         }, true);
 
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 }

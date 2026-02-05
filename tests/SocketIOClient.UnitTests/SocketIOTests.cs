@@ -119,7 +119,7 @@ public class SocketIOTests
             .Should()
             .ThrowAsync<ConnectionException>();
 
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
         times.Should().Be(attempts);
     }
 
@@ -266,7 +266,7 @@ public class SocketIOTests
         _io.Options.Reconnection = true;
         _ = Task.Run(async () =>
         {
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
             await OnNextAsync(_io, new ErrorMessage
             {
                 Error = "Invalid QueryString",
@@ -423,7 +423,7 @@ public class SocketIOTests
     {
         _ = Task.Run(async () =>
         {
-            await Task.Delay(ms);
+            await Task.Delay(ms).ConfigureAwait(false);
             await OnNextAsync(io, new ConnectedMessage
             {
                 Sid = "123",
@@ -880,7 +880,7 @@ public class SocketIOTests
         };
 
         await ConnectAsync();
-        await Task.Delay(100);
+        await Task.Delay(100).ConfigureAwait(false);
 
         _io.Connected.Should().BeTrue();
         times.Should().Be(2);
@@ -905,7 +905,7 @@ public class SocketIOTests
     public async Task OnOpenedMessage_WebSocketIsAvailable_Upgrade()
     {
         _ = _io.ConnectAsync();
-        await Task.Delay(20);
+        await Task.Delay(20).ConfigureAwait(false);
 
         await OnNextAsync(_io, new OpenedMessage
         {
@@ -1071,7 +1071,7 @@ public class SocketIOTests
 
         await ConnectAsync();
         await OnNextAsync(_io, new DisconnectedMessage());
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
@@ -1320,7 +1320,7 @@ public class SocketIOTests
         _io.Once("event", async _ =>
         {
             times++;
-            await Task.Delay(50);
+            await Task.Delay(50).ConfigureAwait(false);
         });
 
         var eventMessage = new SystemJsonEventMessage
@@ -1581,7 +1581,7 @@ public class SocketIOTests
         List<string> list = [];
         _io.OnAny(async (_, _) =>
         {
-            await Task.Delay(20);
+            await Task.Delay(20).ConfigureAwait(false);
             list.Add("Handler1");
         });
         _io.OnAny((_, _) =>
@@ -1678,7 +1678,7 @@ public class SocketIOTests
             await _io.DisconnectAsync();
         }
 
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
         connectTimes.Should().Be(times);
         disconnectTimes.Should().Be(times);
     }

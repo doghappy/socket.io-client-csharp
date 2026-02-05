@@ -20,10 +20,8 @@ public class HttpEngineIO4AdapterTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         var retryPolicy = Substitute.For<IRetriable>();
-        retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ =>
-        {
-            await Task.Delay(50);
-        });
+        retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
+            .Returns(async _ => await Task.Delay(50).ConfigureAwait(false));
         _serializer = Substitute.For<ISerializer>();
         _pollingHandler = Substitute.For<IPollingHandler>();
         _adapter = new HttpEngineIO4Adapter(_stopwatch, _httpAdapter, retryPolicy, _serializer, _pollingHandler)

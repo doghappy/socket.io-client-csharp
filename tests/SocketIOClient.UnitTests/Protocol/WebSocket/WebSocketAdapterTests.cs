@@ -145,7 +145,7 @@ public class WebSocketAdapterTests
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
             .Returns(async _ =>
             {
-                await Task.Delay(20);
+                await Task.Delay(20).ConfigureAwait(false);
                 return new WebSocketMessage
                 {
                     Type = WebSocketMessageType.Text,
@@ -155,7 +155,7 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(400);
+        await Task.Delay(400).ConfigureAwait(false);
 
         await observer.Received()
             .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
@@ -171,7 +171,7 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(400);
+        await Task.Delay(400).ConfigureAwait(false);
 
         _onDisconnect.Received().Invoke();
     }
@@ -192,7 +192,7 @@ public class WebSocketAdapterTests
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
             .Returns(async _ =>
             {
-                await Task.Delay(10);
+                await Task.Delay(10).ConfigureAwait(false);
                 return new WebSocketMessage
                 {
                     Type = WebSocketMessageType.Text,
@@ -203,7 +203,7 @@ public class WebSocketAdapterTests
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
         _wsAdapter.Dispose();
 
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
 
         await observer.Received(Quantity.Within(0, 1)).OnNextAsync(Arg.Any<ProtocolMessage>());
     }
@@ -222,7 +222,7 @@ public class WebSocketAdapterTests
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
             .Returns(async _ =>
             {
-                await Task.Delay(20);
+                await Task.Delay(20).ConfigureAwait(false);
                 return new WebSocketMessage
                 {
                     Type = WebSocketMessageType.Text,
@@ -232,7 +232,7 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(10);
+        await Task.Delay(10).ConfigureAwait(false);
 
         await observer
             .DidNotReceive()

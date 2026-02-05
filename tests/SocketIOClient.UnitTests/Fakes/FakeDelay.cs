@@ -49,7 +49,7 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
             }
 
             current += step;
-            await Task.Delay(step);
+            await Task.Delay(step).ConfigureAwait(false);
         }
     }
 
@@ -57,7 +57,7 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
     {
         for (var i = 0; i < count; i++)
         {
-            await AdvanceAsync(ms);
+            await AdvanceAsync(ms).ConfigureAwait(false);
         }
     }
 
@@ -74,13 +74,13 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
                     _delayTaskDic.Should().HaveCount(0);
                     return;
                 }
-                await Task.Delay(20, CancellationToken.None);
+                await Task.Delay(20, CancellationToken.None).ConfigureAwait(false);
             }
-        }, CancellationToken.None);
+        }, CancellationToken.None).ConfigureAwait(false);
     }
 
     public async Task EnsureNoDelayAsync(int ms)
     {
-        await EnsureNoDelayAsync(TimeSpan.FromMilliseconds(ms));
+        await EnsureNoDelayAsync(TimeSpan.FromMilliseconds(ms)).ConfigureAwait(false);
     }
 }

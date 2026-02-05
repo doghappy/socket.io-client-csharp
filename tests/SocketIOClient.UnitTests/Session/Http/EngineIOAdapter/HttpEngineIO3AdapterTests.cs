@@ -23,7 +23,8 @@ public class HttpEngineIO3AdapterTests
         _httpAdapter = Substitute.For<IHttpAdapter>();
         _httpAdapter.IsReadyToSend.Returns(true);
         _retryPolicy = Substitute.For<IRetriable>();
-        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>()).Returns(async _ => { await Task.Delay(50); });
+        _retryPolicy.RetryAsync(2, Arg.Any<Func<Task>>())
+            .Returns(async _ => await Task.Delay(50).ConfigureAwait(false));
         var logger = output.CreateLogger<HttpEngineIO3Adapter>();
         _pollingHandler = Substitute.For<IPollingHandler>();
         _fakeDelay = new FakeDelay(output);
@@ -255,7 +256,7 @@ public class HttpEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(50);
+        await Task.Delay(50).ConfigureAwait(false);
 
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
         await observer
@@ -271,7 +272,7 @@ public class HttpEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(200);
+        await Task.Delay(200).ConfigureAwait(false);
 
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
@@ -295,7 +296,7 @@ public class HttpEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(200);
+        await Task.Delay(200).ConfigureAwait(false);
 
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
     }
@@ -328,7 +329,7 @@ public class HttpEngineIO3AdapterTests
 
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
 
-        await Task.Delay(200);
+        await Task.Delay(200).ConfigureAwait(false);
         await _retryPolicy.DidNotReceive().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 

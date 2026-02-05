@@ -106,7 +106,7 @@ public class WebSocketEngineIO3AdapterTests
         });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(20);
+        await Task.Delay(20).ConfigureAwait(false);
 
         await _webSocketAdapter.DidNotReceive()
             .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
@@ -123,7 +123,7 @@ public class WebSocketEngineIO3AdapterTests
         await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
         await _adapter.ProcessMessageAsync(new ConnectedMessage());
 
-        await Task.Delay(200);
+        await Task.Delay(200).ConfigureAwait(false);
 
         await _webSocketAdapter.DidNotReceive()
             .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
@@ -206,9 +206,9 @@ public class WebSocketEngineIO3AdapterTests
         _adapter.Options.Namespace = "/nsp";
         var message = new ConnectedMessage();
 
-        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 });
-        await _adapter.ProcessMessageAsync(message);
-        await Task.Delay(100);
+        await _adapter.ProcessMessageAsync(new OpenedMessage { PingInterval = 100 }).ConfigureAwait(false);
+        await _adapter.ProcessMessageAsync(message).ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
 
         await _webSocketAdapter.DidNotReceive()
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "2"),
