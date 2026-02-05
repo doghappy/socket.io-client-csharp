@@ -7,19 +7,23 @@ namespace SocketIOClient.UnitTests.Fakes;
 public class FakeDelay(ITestOutputHelper output) : IDelay
 {
     private readonly Dictionary<int, List<TaskCompletionSource>> _delayTaskDic = [];
+    private readonly object _lock = new();
 
     public Task DelayAsync(int ms, CancellationToken cancellationToken)
     {
-        output.WriteLine($"Delay {ms} ms enqueue...");
+        output.WriteLine($"Request delay {ms} ms...");
         var tcs = new TaskCompletionSource();
-        var exists = _delayTaskDic.TryGetValue(ms, out var delayTasks);
-        if (exists)
+        lock (_lock)
         {
-            delayTasks!.Add(tcs);
-        }
-        else
-        {
-            _delayTaskDic[ms] = [tcs];
+            var exists = _delayTaskDic.TryGetValue(ms, out var delayTasks);
+            if (exists)
+            {
+                delayTasks!.Add(tcs);
+            }
+            else
+            {
+                _delayTaskDic[ms] = [tcs];
+            }
         }
         return tcs.Task;
     }
@@ -31,16 +35,20 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
         var current = 0;
         while (true)
         {
-            var exists = _delayTaskDic.TryGetValue(ms, out var tasks);
-            if (exists)
+            lock (_lock)
             {
-                tasks![0].SetResult();
-                tasks.RemoveAt(0);
-                if (tasks.Count == 0)
+                var exists = _delayTaskDic.TryGetValue(ms, out var tasks);
+                if (exists)
                 {
-                    _delayTaskDic.Remove(ms);
+                    tasks![0].SetResult();
+                    output.WriteLine($"Complete delay {ms} ms...");
+                    tasks.RemoveAt(0);
+                    if (tasks.Count == 0)
+                    {
+                        _delayTaskDic.Remove(ms);
+                    }
+                    return;
                 }
-                return;
             }
 
             if (current >= timeout)
@@ -69,10 +77,13 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
         {
             while (!token.IsCancellationRequested)
             {
-                if (_delayTaskDic.Count > 0)
+                lock (_lock)
                 {
-                    _delayTaskDic.Should().HaveCount(0);
-                    return;
+                    if (_delayTaskDic.Count > 0)
+                    {
+                        _delayTaskDic.Should().HaveCount(0);
+                        return;
+                    }
                 }
                 await Task.Delay(20, CancellationToken.None).ConfigureAwait(false);
             }
