@@ -880,6 +880,7 @@ public class SocketIOTests
         };
 
         await ConnectAsync();
+        await Task.Delay(100);
 
         _io.Connected.Should().BeTrue();
         times.Should().Be(2);
