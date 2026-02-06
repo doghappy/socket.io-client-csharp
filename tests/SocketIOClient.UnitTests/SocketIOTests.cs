@@ -818,22 +818,12 @@ public class SocketIOTests
     [Fact]
     public async Task OnConnected_ConnectedToServer_EventShouldBeInvoked()
     {
-        var triggered = false;
-        _io.OnConnected += (_, _) => triggered = true;
+        var handler = Substitute.For<EventHandler>();
+        _io.OnConnected += handler;
 
         await ConnectAsync();
 
-        triggered.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task OnConnected_ThrowExceptionByUserCode_LibWorkAsExpected()
-    {
-        _io.OnConnected += (_, _) => throw new Exception("Test");
-
-        await ConnectAsync();
-
-        _io.Connected.Should().BeTrue();
+        _eventRunner.Received().RunInBackground(handler, Arg.Any<object>(), Arg.Any<EventArgs>());
     }
 
     [Fact]
@@ -1666,6 +1656,92 @@ public class SocketIOTests
 
         _eventRunner.Received(times).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
         _eventRunner.Received(times).RunInBackground(onDisconnectedHandler, Arg.Any<object>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task SessionOnDisconnected_ReconnectionIsFalse_NotReconnect()
+    {
+        _io.Options.Reconnection = false;
+        var onConnectedHandler = Substitute.For<EventHandler>();
+        _io.OnConnected += onConnectedHandler;
+
+        await ConnectAsync();
+        _session.OnDisconnected();
+
+        _eventRunner.Received(1).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
+    }
+
+    [Fact]
+    public async Task SessionOnDisconnected_ReconnectionIsTrue_ReconnectAutomatically()
+    {
+        _io.Options.Reconnection = true;
+        var tcs = new TaskCompletionSource();
+        var onConnectedHandler = Substitute.For<EventHandler>();
+        _io.OnConnected += onConnectedHandler;
+        var onDisconnectedHandler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += onDisconnectedHandler;
+        _eventRunner
+            .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), Arg.Any<string>()))
+            .Do(x => tcs.SetResult());
+
+        await ConnectAsync();
+        _session.OnDisconnected();
+        await tcs.Task.ConfigureAwait(false);
+        await Task.Delay(50).ConfigureAwait(false);
+        await OnNextAsync(_io, new ConnectedMessage { Sid = "456" }).ConfigureAwait(false);
+
+        _eventRunner.Received(2).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
+        await _session.Received(2).ConnectAsync(Arg.Any<CancellationToken>()).ConfigureAwait(false);
+        _io.Connected.Should().BeTrue();
+        _io.Id.Should().Be("456");
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_ReconnectionIsTrue_NotReconnect()
+    {
+        _io.Options.Reconnection = true;
+        var tcs = new TaskCompletionSource();
+        var onConnectedHandler = Substitute.For<EventHandler>();
+        _io.OnConnected += onConnectedHandler;
+        var onDisconnectedHandler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += onDisconnectedHandler;
+        _eventRunner
+            .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), DisconnectReason.IOClientDisconnect))
+            .Do(x => tcs.SetResult());
+
+        await ConnectAsync();
+        await _io.DisconnectAsync();
+        await tcs.Task.ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
+
+        _eventRunner.Received(1).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
+        await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>()).ConfigureAwait(false);
+        _io.Connected.Should().BeFalse();
+        _io.Id.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ReceivedDisconnectedMessage_ReconnectionIsTrue_NotReconnect()
+    {
+        _io.Options.Reconnection = true;
+        var tcs = new TaskCompletionSource();
+        var onConnectedHandler = Substitute.For<EventHandler>();
+        _io.OnConnected += onConnectedHandler;
+        var onDisconnectedHandler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += onDisconnectedHandler;
+        _eventRunner
+            .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), DisconnectReason.IOServerDisconnect))
+            .Do(x => tcs.SetResult());
+
+        await ConnectAsync();
+        await OnNextAsync(_io, new DisconnectedMessage()).ConfigureAwait(false);
+        await tcs.Task.ConfigureAwait(false);
+        await Task.Delay(100).ConfigureAwait(false);
+
+        _eventRunner.Received(1).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
+        await _session.Received(1).ConnectAsync(Arg.Any<CancellationToken>()).ConfigureAwait(false);
+        _io.Connected.Should().BeFalse();
+        _io.Id.Should().BeNull();
     }
 
     #endregion

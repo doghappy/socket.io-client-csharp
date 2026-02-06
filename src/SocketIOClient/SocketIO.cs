@@ -468,6 +468,10 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     private void InvokeOnDisconnected(string reason)
     {
+        if (!Connected)
+        {
+            return;
+        }
         lock (_disconnectLock)
         {
             if (!Connected)
@@ -475,9 +479,19 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 return;
             }
 
-            _session?.Unsubscribe(this);
-            ResetStatusForDisconnected();
-            _eventRunner.RunInBackground(OnDisconnected, this, reason);
+            Connected = false;
+        }
+        Id = null;
+        _packetId = 0;
+        _ackHandlers.Clear();
+        _eventRunner.RunInBackground(OnDisconnected, this, reason);
+        _session?.Unsubscribe(this);
+        var isNormalDisconnected =
+            DisconnectReason.IOClientDisconnect.Equals(reason, StringComparison.OrdinalIgnoreCase)
+            || DisconnectReason.IOServerDisconnect.Equals(reason, StringComparison.OrdinalIgnoreCase);
+        if (Options.Reconnection && !isNormalDisconnected)
+        {
+            _ = ConnectAsync();
         }
     }
 
@@ -518,14 +532,6 @@ public class SocketIO : ISocketIO, IInternalSocketIO
                 _logger.LogError(e.ToString());
             }
         }
-    }
-
-    private void ResetStatusForDisconnected()
-    {
-        Connected = false;
-        Id = null;
-        _packetId = 0;
-        _ackHandlers.Clear();
     }
 
     public void On(string eventName, Func<IEventContext, Task> handler)

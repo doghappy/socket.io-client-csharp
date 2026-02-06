@@ -140,7 +140,14 @@ public class WebSocketAdapterTests
     [Fact]
     public async Task ConnectAsync_ReceivedTextMessage_NotifyToObserver()
     {
+        var tcs = new TaskCompletionSource<ProtocolMessage>();
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        observer.OnNextAsync(Arg.Any<ProtocolMessage>())
+            .Returns(callInfo =>
+            {
+                tcs.SetResult(callInfo.Arg<ProtocolMessage>());
+                return Task.CompletedTask;
+            });
         _wsAdapter.Subscribe(observer);
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
             .Returns(async _ =>
@@ -155,24 +162,26 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(400).ConfigureAwait(false);
-
-        await observer.Received()
-            .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
-                m.Type == ProtocolMessageType.Text
-                && m.Text == "Hello World!"));
+        var message = await tcs.Task.ConfigureAwait(false);
+        message.Should().BeEquivalentTo(new ProtocolMessage
+        {
+            Type = ProtocolMessageType.Text,
+            Text = "Hello World!"
+        });
     }
 
     [Fact]
     public async Task ReceiveAsync_ExceptionOccurred_OnDisconnectInvoked()
     {
+        var tcs = new TaskCompletionSource();
+        _onDisconnect.When(x => x.Invoke())
+            .Do(_ => tcs.SetResult());
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new Exception("Aborted"));
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(400).ConfigureAwait(false);
-
+        await tcs.Task.ConfigureAwait(false);
         _onDisconnect.Received().Invoke();
     }
 

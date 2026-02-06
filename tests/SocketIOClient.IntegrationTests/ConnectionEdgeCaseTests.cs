@@ -90,4 +90,37 @@ public class ConnectionEdgeCaseTests(ITestOutputHelper output)
             });
         });
     }
+
+
+    [Theory]
+    [InlineData(EngineIO.V4, TransportProtocol.WebSocket)]
+    [InlineData(EngineIO.V4, TransportProtocol.Polling)]
+    [InlineData(EngineIO.V3, TransportProtocol.WebSocket)]
+    [InlineData(EngineIO.V3, TransportProtocol.Polling)]
+    public async Task ServerRestarted_Reconnect(EngineIO eio, TransportProtocol protocol)
+    {
+        const int port = 3001;
+        using var process = StartServer(port, eio, protocol);
+        using var io = NewSocketIO(port, new SocketIOOptions
+        {
+            EIO = eio,
+            Transport = protocol,
+            AutoUpgrade = false,
+            Reconnection = true
+        }, output);
+        var count = 0;
+        io.OnConnected += (_, _) => count++;
+
+        await io.ConnectAsync();
+        io.Connected.Should().BeTrue();
+        process.Kill(true);
+        await Task.Delay(1000);
+        io.Connected.Should().BeFalse();
+        using var newProcess = StartServer(port, eio, protocol);
+        await Task.Delay(5000);
+
+        io.Connected.Should().BeTrue();
+        count.Should().Be(2);
+        newProcess.Kill(true);
+    }
 }
