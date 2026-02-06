@@ -291,7 +291,7 @@ npm run start # Start socket.io server for integration testing
 
 # Change log
 
-## [4.0.0.2] - 2026-02-05
+## [4.0.0.2] - 2026-02-06
 
 ### Bugfix
 

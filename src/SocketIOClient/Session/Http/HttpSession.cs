@@ -48,6 +48,8 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
         {
 #if DEBUG
             _logger.LogDebug("Bytes Message Length:{l}", message.Bytes?.Length ?? 0);
+            var hex = BitConverter.ToString(message.Bytes!).Replace("-", " ");
+            _logger.LogDebug("Hex: {hex}", hex);
 #endif
             var bytesMessages = EngineIOAdapter.ExtractMessagesFromBytes(message.Bytes!);
             await HandleMessagesAsync(bytesMessages).ConfigureAwait(false);

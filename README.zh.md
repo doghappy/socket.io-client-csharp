@@ -289,7 +289,7 @@ npm run start # 启动 socket.io server 测试服务
 
 # Change log
 
-## [4.0.0.2] - 2026-02-05
+## [4.0.0.2] - 2026-02-06
 
 ### Bugfix
 
