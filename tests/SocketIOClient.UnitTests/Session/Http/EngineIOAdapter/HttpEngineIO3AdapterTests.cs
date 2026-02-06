@@ -174,7 +174,7 @@ public class HttpEngineIO3AdapterTests
         req.BodyText.Should().Be(expected);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_ConnectedMessage_PingInBackground()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -194,7 +194,7 @@ public class HttpEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("/nsp")]
@@ -207,7 +207,7 @@ public class HttpEngineIO3AdapterTests
         _pollingHandler.Received().StartPolling(message, false);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_PongMessage_OnlySetDurationNotNotifyToSubscriber()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -222,7 +222,7 @@ public class HttpEngineIO3AdapterTests
             .OnNextAsync(Arg.Any<IMessage>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPingAsync_ObserverThrowException_ContinuePing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -244,7 +244,7 @@ public class HttpEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPingAsync_WhenCalled_FirstDelayThenPing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -264,7 +264,7 @@ public class HttpEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPingAsync_IsNotReadyToSend_DidNotPing()
     {
         _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(2000));
@@ -277,7 +277,7 @@ public class HttpEngineIO3AdapterTests
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_IsReadyAfter30ms_PingIsWorking()
     {
         _pollingHandler.WaitHttpAdapterReady().Returns(async _ => await Task.Delay(30));
@@ -288,7 +288,7 @@ public class HttpEngineIO3AdapterTests
         await _retryPolicy.Received().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPingAsync_DisposeIsCalled_NeverPing()
     {
         _adapter.Dispose();
@@ -301,7 +301,7 @@ public class HttpEngineIO3AdapterTests
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_ConnectedMessageButNoOpenedMessage_ThrowException()
     {
         var connectedMessage = new ConnectedMessage();
@@ -310,7 +310,7 @@ public class HttpEngineIO3AdapterTests
             .ThrowAsync<NullReferenceException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_OpenedMessageThenConnectedMessage_SidIsNotNull()
     {
         await _adapter.ProcessMessageAsync(new OpenedMessage
@@ -322,7 +322,7 @@ public class HttpEngineIO3AdapterTests
         connectedMessage.Sid.Should().Be("123");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task PollingAsync_DisposeIsCalled_NeverPolling()
     {
         _adapter.Dispose();
@@ -396,7 +396,7 @@ public class HttpEngineIO3AdapterTests
             .BeEquivalentTo(messages);
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null, "40")]
     [InlineData("", "40")]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_NotSendConnectedMessage(string nsp, string expected)
@@ -408,7 +408,7 @@ public class HttpEngineIO3AdapterTests
             .SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
     {
         _adapter.Options.Namespace = "/nsp";
@@ -419,7 +419,7 @@ public class HttpEngineIO3AdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData("/nsp", null, true)]
     [InlineData("/nsp", "", true)]
     [InlineData("/nsp", "/", true)]
@@ -460,7 +460,7 @@ public class HttpEngineIO3AdapterTests
         await _retryPolicy.DidNotReceive().RetryAsync(3, Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_ReceivedConnectedMessageWithNamespace_StartPing()
     {
         _adapter.Options.Namespace = "/nsp";

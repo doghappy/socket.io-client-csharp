@@ -73,7 +73,7 @@ public class SocketIOTests
 
     #region ConnectAsync
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_FailedToConnect_ThrowConnectionException()
     {
         _io.Options.Reconnection = false;
@@ -87,7 +87,7 @@ public class SocketIOTests
             .WithMessage("Cannot connect to server 'http://localhost:3000/'");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_ReconnectionIsFalseAttemptsIs2_OnReconnectErrorInvoked1Time()
     {
         _io.Options.Reconnection = false;
@@ -105,7 +105,7 @@ public class SocketIOTests
         _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), Arg.Any<Exception>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(1)]
     [InlineData(5)]
     public async Task ConnectAsync_FailedToConnect_OnReconnectErrorInvokedByAttempts(int attempts)
@@ -125,7 +125,7 @@ public class SocketIOTests
         _eventRunner.Received(attempts).RunInBackground(handler, Arg.Any<object>(), Arg.Any<Exception>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnReconnectError_ThrowException_NotBlocked()
     {
         _io.Options.Reconnection = true;
@@ -145,14 +145,14 @@ public class SocketIOTests
         void Handler(object? o, Exception e) => throw new InvalidOperationException();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_SessionSuccessfullyConnected_SessionSubscribeIO()
     {
         await ConnectAsync();
         _session.Received(1).Subscribe(_io);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_ConnectedMessageReceived_ConnectedIsTrueIdHasValue()
     {
         await ConnectAsync();
@@ -160,7 +160,7 @@ public class SocketIOTests
         _io.Id.Should().Be("123");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_ConnectedMessageDelay_ConnectAsyncIsSync()
     {
         var stopwatch = Stopwatch.StartNew();
@@ -170,7 +170,7 @@ public class SocketIOTests
         stopwatch.ElapsedMilliseconds.Should().BeGreaterThan(100);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_AdapterOnDisconnectedHappened_ConnectedIsFalseAndOnDisconnectedInvoked()
     {
         var onDisconnectedInvoked = false;
@@ -188,7 +188,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_ConnectedMessageReceived_ResetDisconnectReason()
     {
         var reasons = new List<string>();
@@ -203,7 +203,7 @@ public class SocketIOTests
         reasons.Should().Equal("io client disconnect", "transport error");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_CancellationTokenIsCanceled_TaskCanceledException()
     {
         await _io
@@ -217,7 +217,7 @@ public class SocketIOTests
             .ThrowExactlyAsync<TaskCanceledException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_CancelAfter100ms_ThrowTaskCanceledException()
     {
         _io.Options.Reconnection = true;
@@ -234,7 +234,7 @@ public class SocketIOTests
             .ThrowExactlyAsync<TaskCanceledException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_SessionConnectAsyncThrow_ThrowConnectionException()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>())
@@ -246,7 +246,7 @@ public class SocketIOTests
             .WithMessage($"Cannot connect to server 'http://localhost:3000/'");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_GetSocketIOConnectionResultTimeout_ThrowTimeoutException()
     {
         await _io
@@ -261,7 +261,7 @@ public class SocketIOTests
         await internalSocketIO.OnNextAsync(message);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_ReceiveAnErrorEvent_OnErrorIsInvoked()
     {
         _io.Options.Reconnection = true;
@@ -285,7 +285,7 @@ public class SocketIOTests
         errors.Should().Equal("Invalid QueryString");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_FirstFailedThenSuccess_ConnectedIsTrue()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>())
@@ -300,7 +300,7 @@ public class SocketIOTests
         _io.Connected.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_FirstSuccessThenFailed_ThrowConnectionException()
     {
         await ConnectAsync();
@@ -312,7 +312,7 @@ public class SocketIOTests
             .ThrowAsync<ConnectionException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_AlreadyConnected_FastReturn()
     {
         await ConnectAsync();
@@ -324,7 +324,7 @@ public class SocketIOTests
         stopWatch.ElapsedMilliseconds.Should().BeLessThan(10);
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(EngineIO.V3)]
     [InlineData(EngineIO.V4)]
     public async Task ConnectAsync_SessionOptionsEngine_SameAsOptionsEIO(EngineIO eio)
@@ -336,7 +336,7 @@ public class SocketIOTests
         _session.Options.EngineIO.Should().Be(eio);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_CustomValues_PassCorrectValuesToSessionOptions()
     {
         _io.Options.Path = "/chat";
@@ -374,7 +374,7 @@ public class SocketIOTests
             });
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData("http://localhost:3000", null)]
     [InlineData("http://localhost:3000/", null)]
     [InlineData("http://localhost:3000//", "")]
@@ -390,7 +390,7 @@ public class SocketIOTests
         _session.Options.Namespace.Should().Be(expectedNsp);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_SessionConnectAsyncDelay100_CanEmit()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>())
@@ -437,7 +437,7 @@ public class SocketIOTests
 
     #region EmitAsync
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", _ => Task.CompletedTask))
@@ -446,7 +446,7 @@ public class SocketIOTests
             .WithMessage("SocketIO is not connected.");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncData_NotConnected_ThrowException()
     {
         await _io.Invoking(x => x.EmitAsync("event", new List<object>()))
@@ -455,7 +455,7 @@ public class SocketIOTests
             .WithMessage("SocketIO is not connected.");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAckDataAsync_NotConnected_ThrowException()
     {
         IInternalSocketIO io = _io;
@@ -465,7 +465,7 @@ public class SocketIOTests
             .WithMessage("SocketIO is not connected.");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_EventAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
@@ -480,7 +480,7 @@ public class SocketIOTests
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_WhenCalled_PacketIdIncrementBy1()
     {
         await ConnectAsync();
@@ -491,7 +491,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_AckEventAndGotResponse_HandlerIsCalled()
     {
         var ackCalled = false;
@@ -514,7 +514,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncFuncAck_DataAndCancellationTokenNone_AlwaysPass()
     {
         await ConnectAsync();
@@ -527,7 +527,7 @@ public class SocketIOTests
                 CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncFuncAck_WithCustomCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
@@ -542,7 +542,7 @@ public class SocketIOTests
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAckDataAsync_DataAndCancellationTokenNone_AlwaysPass()
     {
         await ConnectAsync();
@@ -556,7 +556,7 @@ public class SocketIOTests
                 CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_DataIsNull_ThrowArgumentNullException()
     {
         await ConnectAsync();
@@ -568,7 +568,7 @@ public class SocketIOTests
             .WithMessage("Value cannot be null. (Parameter 'data')");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_WithNullData_ThrowArgumentNullException()
     {
         await ConnectAsync();
@@ -579,7 +579,7 @@ public class SocketIOTests
             .WithMessage("Value cannot be null. (Parameter 'data')");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAckDataAsync_WithNullData_ThrowArgumentNullException()
     {
         await ConnectAsync();
@@ -591,7 +591,7 @@ public class SocketIOTests
             .WithMessage("Value cannot be null. (Parameter 'data')");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_DataIsEmpty_AlwaysPass()
     {
         await ConnectAsync();
@@ -603,7 +603,7 @@ public class SocketIOTests
                 CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_DataIsOnly1Item_AlwaysPass()
     {
         await ConnectAsync();
@@ -615,7 +615,7 @@ public class SocketIOTests
                 CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_EventAndDataAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
@@ -628,7 +628,7 @@ public class SocketIOTests
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_OnlyEvent_AlwaysPass()
     {
         await ConnectAsync();
@@ -640,7 +640,7 @@ public class SocketIOTests
                 CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_EventAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
@@ -653,7 +653,7 @@ public class SocketIOTests
                 Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_AndEmptyData_AlwaysPass()
     {
         await ConnectAsync();
@@ -671,7 +671,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_And1Data_AlwaysPass()
     {
         await ConnectAsync();
@@ -689,7 +689,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_SessionSendAsyncThrow_AckHandlerCountIs1()
     {
         _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -708,7 +708,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsyncAck_ConcurrentEmit_PacketIdAndAckHandlerCountAreCorrect()
     {
         _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -734,7 +734,7 @@ public class SocketIOTests
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 10000)]
     public async Task EmitAsyncAck_ConcurrentConsume_PacketIdAndAckHandlerCountAreCorrect()
     {
         _session.SendAsync(Arg.Any<object[]>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
@@ -768,7 +768,7 @@ public class SocketIOTests
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task EmitAsync_EventAndDataAndAckAndCancellationToken_TokenIsNotNone()
     {
         await ConnectAsync();
@@ -787,7 +787,7 @@ public class SocketIOTests
 
     #region Events
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnPing_PingMessageWasReceived_EventHandlerIsCalled()
     {
         var called = false;
@@ -799,7 +799,7 @@ public class SocketIOTests
         called.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnPong_PongMessageWasReceived_EventHandlerIsCalled()
     {
         TimeSpan? ts = null;
@@ -814,7 +814,7 @@ public class SocketIOTests
         ts.Should().Be(TimeSpan.FromSeconds(2));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnConnected_ConnectedToServer_EventShouldBeInvoked()
     {
         var triggered = false;
@@ -825,7 +825,7 @@ public class SocketIOTests
         triggered.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnConnected_ThrowExceptionByUserCode_LibWorkAsExpected()
     {
         _io.OnConnected += (_, _) => throw new Exception("Test");
@@ -835,7 +835,7 @@ public class SocketIOTests
         _io.Connected.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnReconnectAttempt_ReconnectionIsFalse_InvokeOnce()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new TimeoutException());
@@ -848,7 +848,7 @@ public class SocketIOTests
         _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), Arg.Any<int>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(1)]
     [InlineData(3)]
     [InlineData(7)]
@@ -866,7 +866,7 @@ public class SocketIOTests
         _eventRunner.Received(attempts).RunInBackground(handler, Arg.Any<object>(), Arg.Any<int>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnReconnectAttempt_ThrowException_NotBlocked()
     {
         _io.Options.Reconnection = true;
@@ -885,7 +885,7 @@ public class SocketIOTests
         void Handler(object? o, int t) => throw new InvalidOperationException();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnOpenedMessage_WebSocketIsNotAvailable_NotUpgrade()
     {
         await ConnectAsync();
@@ -900,7 +900,7 @@ public class SocketIOTests
         await _wsSession.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnOpenedMessage_WebSocketIsAvailable_Upgrade()
     {
         _ = _io.ConnectAsync();
@@ -918,7 +918,7 @@ public class SocketIOTests
         await _wsSession.Received().ConnectAsync(Arg.Any<CancellationToken>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnDisconnectedThrowException_DisconnectAsync_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
@@ -938,7 +938,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnDisconnectedThrowException_SessionOnDisconnectedInvoked_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
@@ -959,7 +959,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnDisconnectedThrowException_DisconnectedMessage_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
@@ -984,7 +984,7 @@ public class SocketIOTests
 
     #region DisconnectAsync
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_NeverConnected_ClearStatefulData()
     {
         await _io.DisconnectAsync();
@@ -993,7 +993,7 @@ public class SocketIOTests
         _io.Id.Should().BeNull();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_EverConnected_ClearStatefulData()
     {
         await ConnectAsync();
@@ -1008,7 +1008,7 @@ public class SocketIOTests
         io.AckHandlerCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_WhenCalled_OnDisconnectedWillBeCalled()
     {
         var times = 0;
@@ -1025,14 +1025,14 @@ public class SocketIOTests
         reason.Should().Be("io client disconnect");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_NeverConnected_DisconnectAsyncOfSessionIsNotCalled()
     {
         await _io.DisconnectAsync();
         await _session.DidNotReceive().DisconnectAsync(Arg.Any<CancellationToken>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_EverConnected_DisconnectAsyncOfSessionIsNotCalled()
     {
         await ConnectAsync();
@@ -1040,7 +1040,7 @@ public class SocketIOTests
         await _session.Received().DisconnectAsync(CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_CancellationTokenOverload_DisconnectAsyncOfSessionIsNotCalled()
     {
         await ConnectAsync();
@@ -1050,7 +1050,7 @@ public class SocketIOTests
             .DisconnectAsync(Arg.Is<CancellationToken>(t => t != CancellationToken.None));
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_ExceptionOccurredWhileSendingDisconnectMessage_NotThrow()
     {
         await ConnectAsync();
@@ -1062,7 +1062,7 @@ public class SocketIOTests
             .NotThrowAsync();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_TriggeredByServer_OnDisconnectedWillBeCalled()
     {
         string reason = null!;
@@ -1077,7 +1077,7 @@ public class SocketIOTests
         reason.Should().Be("io server disconnect");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsyncFirst_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
         var reasons = new List<string>();
@@ -1091,7 +1091,7 @@ public class SocketIOTests
         reasons.Should().Equal("io client disconnect");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsyncByServer_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
         var reasons = new List<string>();
@@ -1104,7 +1104,7 @@ public class SocketIOTests
         reasons.Should().Equal("io server disconnect");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsyncFirst_ThenReceivedDisconnectedMessageAndAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
         var reasons = new List<string>();
@@ -1118,7 +1118,7 @@ public class SocketIOTests
         reasons.Should().Equal("io client disconnect");
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(17)]
     public async Task DisconnectAsync_WithAdapterOnDisconnectedInParallel_OnDisconnectedInvokedAsExpected(int times)
     {
@@ -1161,7 +1161,7 @@ public class SocketIOTests
             .Throw<ArgumentNullException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task On_WhenCalledAndEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
@@ -1181,7 +1181,7 @@ public class SocketIOTests
         times.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task On_EventReceivedTwice_HandlerShouldBeCalledTwice()
     {
         var times = 0;
@@ -1202,7 +1202,7 @@ public class SocketIOTests
         times.Should().Be(2);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task On_AnotherEventReceived_HandlerShouldNotBeCalled()
     {
         var times = 0;
@@ -1222,7 +1222,7 @@ public class SocketIOTests
         times.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task On_DuplicatedEventHandlerAdded_ExecuteNewerHandler()
     {
         var handler1Called = false;
@@ -1249,7 +1249,7 @@ public class SocketIOTests
         handler2Called.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task On_BinaryEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
@@ -1292,7 +1292,7 @@ public class SocketIOTests
             .Throw<ArgumentNullException>();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_WhenCalledAndEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
@@ -1312,7 +1312,7 @@ public class SocketIOTests
         times.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_EventReceivedTwice_HandlerShouldBeCalledOnce()
     {
         var times = 0;
@@ -1332,7 +1332,7 @@ public class SocketIOTests
         times.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_AnotherEventReceived_HandlerShouldNotBeCalled()
     {
         var times = 0;
@@ -1352,7 +1352,7 @@ public class SocketIOTests
         times.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_DuplicatedEventHandlerAdded_ExecuteNewerHandler()
     {
         var handler1Called = false;
@@ -1379,7 +1379,7 @@ public class SocketIOTests
         handler2Called.Should().BeTrue();
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_RegisterOnceEventLaterThanOn_UseOnceHandlerInstead()
     {
         var handler1Called = 0;
@@ -1407,7 +1407,7 @@ public class SocketIOTests
         handler2Called.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_RegisterOnceEventEarlierThanOn_UseOnEventInstead()
     {
         var handler1Called = 0;
@@ -1435,7 +1435,7 @@ public class SocketIOTests
         handler2Called.Should().Be(2);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task Once_BinaryEventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
@@ -1459,7 +1459,7 @@ public class SocketIOTests
 
     #region OnAny
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_EventReceived_HandlerShouldBeCalled()
     {
         var times = 0;
@@ -1486,7 +1486,7 @@ public class SocketIOTests
         context.GetValue<int>(0).Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_2Handlers_Invoked2Times()
     {
         var times = 0;
@@ -1511,7 +1511,7 @@ public class SocketIOTests
         times.Should().Be(2);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_FirstHandlerThrows_SecondHandlerStillWorks()
     {
         string handler = null!;
@@ -1532,7 +1532,7 @@ public class SocketIOTests
         handler.Should().Be("Second");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_OnAnyHandlerThrows_OnHandlerStillWorks()
     {
         string handler = null!;
@@ -1553,7 +1553,7 @@ public class SocketIOTests
         handler.Should().Be("OnHandler");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_OnHandlerThrows_OnAnyHandlerStillWorks()
     {
         string handler = null!;
@@ -1574,7 +1574,7 @@ public class SocketIOTests
         handler.Should().Be("OnAnyHandler");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnAny_2Handlers_ExecutionIsOrdered()
     {
         List<string> list = [];
@@ -1661,7 +1661,7 @@ public class SocketIOTests
 
     #region Reconnect
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(3)]
     [InlineData(7)]
     public async Task Reconnect_Manually_OnConnectedAndOnDisconnectedAreWorks(int times)

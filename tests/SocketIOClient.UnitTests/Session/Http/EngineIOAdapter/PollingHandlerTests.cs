@@ -28,14 +28,14 @@ public class PollingHandlerTests
     private readonly IRetriable _retryPolicy;
     private readonly FakeDelay _fakeDelay;
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPolling_WhenNeverCalled_DoNotSendHttpRequest()
     {
         await Task.Delay(100).ConfigureAwait(false);
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPolling_WhenCalled_SendHttpRequest()
     {
         _pollingHandler.StartPolling(new OpenedMessage
@@ -46,7 +46,7 @@ public class PollingHandlerTests
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task PollingAsync_FirstDisposeThenStartPolling_NeverStartPolling()
     {
         _pollingHandler.Dispose();
@@ -60,7 +60,7 @@ public class PollingHandlerTests
         await _retryPolicy.DidNotReceive().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task PollingAsync_HttpRequestExceptionOccurred_DoNotContinue()
     {
         _retryPolicy.RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>())
@@ -78,7 +78,7 @@ public class PollingHandlerTests
             .RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 10000)]
     public async Task PollingAsync_IsReadyFirstFalseThenTrue_PollingIsWorking()
     {
         _httpAdapter.IsReadyToSend.Returns(false);
@@ -99,7 +99,7 @@ public class PollingHandlerTests
         await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(true)]
     [InlineData(false)]
     public async Task StartPolling_ServerNotSupportsWebSocket_StartPolling(bool autoUpgrade)
@@ -114,7 +114,7 @@ public class PollingHandlerTests
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPolling_ServerSupportsWebSocketButClientNot_StartPollingReturnTrue()
     {
         _pollingHandler.StartPolling(new OpenedMessage
@@ -127,7 +127,7 @@ public class PollingHandlerTests
         await _retryPolicy.Received().RetryAsync(Arg.Any<int>(), Arg.Any<Func<Task>>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task StartPolling_BothServerAndClientSupportWebSocket_NeverStartPollingReturnFalse()
     {
         _pollingHandler.StartPolling(new OpenedMessage

@@ -30,7 +30,7 @@ public class WebSocketEngineIO4AdapterTests
     private readonly WebSocketEngineIO4Adapter _adapter;
     private readonly ISerializer _serializer;
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_PingMessage_NotifyObserverWithDuration()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -44,7 +44,7 @@ public class WebSocketEngineIO4AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null, "40")]
     [InlineData("", "40")]
     [InlineData("/nsp", "40/nsp,")]
@@ -57,7 +57,7 @@ public class WebSocketEngineIO4AdapterTests
             .SendAsync(Arg.Is<ProtocolMessage>(r => r.Text == expected), Arg.Any<CancellationToken>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null, "40{auth}")]
     [InlineData("/nsp", "40/nsp,{auth}")]
     public async Task ProcessMessageAsync_AuthIsProvided_ConnectedMessageContainsAuth(string nsp, string expected)
@@ -88,7 +88,7 @@ public class WebSocketEngineIO4AdapterTests
     public static IEnumerable<object[]> ProcessMessageAsyncMessageTypeCases =>
         ProcessMessageAsyncMessageTypeTupleCases().Select(t => new object[] { t });
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [MemberData(nameof(ProcessMessageAsyncMessageTypeCases))]
     public async Task ProcessMessageAsync_RegardlessOfMessageType_AlwaysReturnFalse(IMessage message)
     {
@@ -112,7 +112,7 @@ public class WebSocketEngineIO4AdapterTests
         result.Should().Equal(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(1)]
     [InlineData(2)]
     public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)

@@ -176,7 +176,7 @@ public class HttpEngineIO4AdapterTests
         req.BodyText.Should().Be(expected);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ProcessMessageAsync_PingMessage_NotifyObserverWithDuration()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -190,7 +190,7 @@ public class HttpEngineIO4AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => ((PongMessage)m).Duration == TimeSpan.FromSeconds(1)));
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null, "40")]
     [InlineData("", "40")]
     [InlineData("/nsp", "40/nsp,")]
@@ -203,7 +203,7 @@ public class HttpEngineIO4AdapterTests
             .SendAsync(Arg.Is<HttpRequest>(r => r.BodyText == expected), Arg.Any<CancellationToken>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null, "40{auth}")]
     [InlineData("/nsp", "40/nsp,{auth}")]
     public async Task ProcessMessageAsync_AuthIsProvided_ConnectedMessageContainsAuth(string nsp, string expected)
@@ -225,7 +225,7 @@ public class HttpEngineIO4AdapterTests
             .BeEmpty();
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("/nsp")]
@@ -255,7 +255,7 @@ public class HttpEngineIO4AdapterTests
     public static IEnumerable<object[]> ProcessMessageAsyncMessageTypeCases =>
         ProcessMessageAsyncMessageTypeTupleCases().Select(t => new object[] { t });
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [MemberData(nameof(ProcessMessageAsyncMessageTypeCases))]
     public async Task ProcessMessageAsync_RegardlessOfMessageType_AlwaysReturnFalse(IMessage message)
     {

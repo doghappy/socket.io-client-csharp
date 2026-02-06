@@ -63,7 +63,7 @@ public class WebSocketSessionTests
 
     #region ConnectAsync
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_AdapterThrowAnyException_ThrowConnectionFailedException()
     {
         _wsAdapter
@@ -79,7 +79,7 @@ public class WebSocketSessionTests
             .WithMessage("Server refused connection");
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData("http://localhost:3000", null, EngineIO.V3, "ws://localhost:3000/socket.io/?EIO=3&transport=websocket")]
     [InlineData("https://localhost:3000", null, EngineIO.V4, "wss://localhost:3000/socket.io/?EIO=4&transport=websocket")]
     [InlineData("http://localhost:3000", "", EngineIO.V3, "ws://localhost:3000/socket.io/?EIO=3&transport=websocket")]
@@ -97,7 +97,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received().ConnectAsync(new Uri(expectedUri), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_SidIsNotNull_SendUpgradeMessageToServer()
     {
         var session = NewSession();
@@ -111,7 +111,7 @@ public class WebSocketSessionTests
             .SendAsync(Arg.Is<ProtocolMessage>(m => m.Text == "5"), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_OptionQueryHasAnyItems_AppendOptionQueryToUrl()
     {
         var session = NewSession();
@@ -129,7 +129,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received().ConnectAsync(expectedUri, CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_CancelledToken_ThrowConnectionFailedException()
     {
         _wsAdapter
@@ -150,7 +150,7 @@ public class WebSocketSessionTests
             .WithMessage("Task was canceled");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_2ExtraHeaders_SetDefaultHeaderTwice()
     {
         _sessionOptions.ExtraHeaders = new Dictionary<string, string>
@@ -166,7 +166,7 @@ public class WebSocketSessionTests
         _wsAdapter.Received(1).SetDefaultHeader("key2", "value2");
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task ConnectAsync_SetDefaultHeaderThrow_PassThroughException()
     {
         _wsAdapter
@@ -197,7 +197,7 @@ public class WebSocketSessionTests
 
     #endregion
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_NoNamespace_SendDisconnectToServer()
     {
         using var cts = new CancellationTokenSource();
@@ -210,7 +210,7 @@ public class WebSocketSessionTests
                 m.Type == ProtocolMessageType.Text && m.Text == "41"), token);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task DisconnectAsync_HasNamespace_SendDisconnectToServer()
     {
         _sessionOptions.Namespace = "/test";
@@ -229,7 +229,7 @@ public class WebSocketSessionTests
         _wsAdapter.Received(1).Subscribe(session);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_BinaryMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -252,7 +252,7 @@ public class WebSocketSessionTests
         session.PendingDeliveryCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_BinaryMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -277,7 +277,7 @@ public class WebSocketSessionTests
         session.PendingDeliveryCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -300,7 +300,7 @@ public class WebSocketSessionTests
         session.PendingDeliveryCount.Should().Be(1);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_BinaryAckMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -329,7 +329,7 @@ public class WebSocketSessionTests
         session.PendingDeliveryCount.Should().Be(0);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_TextMessages_ProcessMessageAsyncOfEngineIOAdapterIsCalled()
     {
         _serializer
@@ -345,7 +345,7 @@ public class WebSocketSessionTests
         await _engineIOAdapter.Received(1).ProcessMessageAsync(Arg.Any<IMessage>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_MessageIsProcessed_NotSendToObserver()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -361,7 +361,7 @@ public class WebSocketSessionTests
         await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
@@ -376,7 +376,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAsyncDataAndId_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>(), 12)
@@ -391,7 +391,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAckDataAsync_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.SerializeAckData(Arg.Any<object[]>(), 12)
@@ -406,7 +406,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAsync_1TextMessage1ByteMessage_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
@@ -421,7 +421,7 @@ public class WebSocketSessionTests
         await _wsAdapter.Received(2).SendAsync(Arg.Any<ProtocolMessage>(), CancellationToken.None);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task SendAsync_2ByteMessages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
@@ -466,7 +466,7 @@ public class WebSocketSessionTests
         _engineIOAdapterFactory.Received(1).Create<IWebSocketEngineIOAdapter>(expectedCompatibility);
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_TextMessage_WriteProtocolFrameNeverCalled()
     {
         var session = NewSession();
@@ -482,7 +482,7 @@ public class WebSocketSessionTests
         _engineIOAdapter.DidNotReceive().ReadProtocolFrame(Arg.Any<byte[]>());
     }
 
-    [Fact]
+    [Fact(Timeout = 5000)]
     public async Task OnNextAsync_BytesMessage_WriteProtocolFrameAlwaysCalled()
     {
         var session = NewSession();
@@ -507,7 +507,7 @@ public class WebSocketSessionTests
         _engineIOAdapter.Received().ReadProtocolFrame(Arg.Any<byte[]>());
     }
 
-    [Theory]
+    [Theory(Timeout = 5000)]
     [InlineData(1)]
     [InlineData(2)]
     public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)
