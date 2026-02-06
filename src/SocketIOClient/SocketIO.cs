@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using SocketIOClient.Common;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Exceptions;
-using SocketIOClient.Extensions;
 using SocketIOClient.Infrastructure;
 using SocketIOClient.Observers;
 using SocketIOClient.Session;
@@ -25,6 +24,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _logger = _serviceProvider.GetRequiredService<ILogger<SocketIO>>();
         _random = _serviceProvider.GetRequiredService<IRandom>();
         _delay = _serviceProvider.GetRequiredService<IDelay>();
+        _eventRunner = _serviceProvider.GetRequiredService<IEventRunner>();
     }
 
     public SocketIO(Uri uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
@@ -41,6 +41,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly ILogger<SocketIO> _logger;
     private readonly IRandom _random;
     private readonly IDelay _delay;
+    private readonly IEventRunner _eventRunner;
     private readonly object _disconnectLock = new();
     private readonly object _ackHandlerLock = new();
 
@@ -147,7 +148,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             {
                 _logger.LogDebug(e, e.Message);
                 var ex = new ConnectionException($"Cannot connect to server '{ServerUri}'", e);
-                OnReconnectError?.RunInBackground(this, ex);
+                _eventRunner.RunInBackground(OnReconnectError, this, ex);
                 if (i == attempts - 1)
                 {
                     _connCompletionSource!.SetResult(ex);
@@ -164,7 +165,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     {
         var times = i + 1;
         _logger.LogDebug("ConnectCoreAsync attempt {Progress} / {Total}", times, attempts);
-        OnReconnectAttempt?.RunInBackground(this, times);
+        _eventRunner.RunInBackground(OnReconnectAttempt, this, times);
     }
 
     private async Task TryConnectAsync(ISession session, CancellationToken cancellationToken)

@@ -24,6 +24,7 @@ public class SocketIOTests
         _session = Substitute.For<ISession>();
         _wsSession = Substitute.For<ISession>();
         _random = Substitute.For<IRandom>();
+        _eventRunner = Substitute.For<IEventRunner>();
         _output = output;
         _io = NewSocketIO(new Uri("http://localhost:3000"));
     }
@@ -40,6 +41,7 @@ public class SocketIOTests
             services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.Polling, (_, _) => _session));
             services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.WebSocket, (_, _) => _wsSession));
             services.Replace(ServiceDescriptor.Singleton(_random));
+            services.Replace(ServiceDescriptor.Singleton(_eventRunner));
         })
         {
             Options =
@@ -54,6 +56,7 @@ public class SocketIOTests
     private readonly ISession _session;
     private readonly ISession _wsSession;
     private readonly IRandom _random;
+    private readonly IEventRunner _eventRunner;
     private readonly ITestOutputHelper _output;
 
     [Fact]
@@ -91,15 +94,15 @@ public class SocketIOTests
         _io.Options.ReconnectionAttempts = 2;
         _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
 
-        var times = 0;
-        _io.OnReconnectError += (_, _) => times++;
+        var handler = Substitute.For<EventHandler<Exception>>();
+        _io.OnReconnectError += handler;
 
         await _io
             .Invoking(async x => await x.ConnectAsync())
             .Should()
             .ThrowAsync<ConnectionException>();
 
-        times.Should().Be(1);
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), Arg.Any<Exception>());
     }
 
     [Theory]
@@ -111,16 +114,15 @@ public class SocketIOTests
         _io.Options.ReconnectionAttempts = attempts;
         _session.ConnectAsync(Arg.Any<CancellationToken>()).ThrowsAsync(new Exception("Test"));
 
-        var times = 0;
-        _io.OnReconnectError += (_, _) => times++;
+        var handler = Substitute.For<EventHandler<Exception>>();
+        _io.OnReconnectError += handler;
 
         await _io
             .Invoking(async x => await x.ConnectAsync())
             .Should()
             .ThrowAsync<ConnectionException>();
 
-        await Task.Delay(50).ConfigureAwait(false);
-        times.Should().Be(attempts);
+        _eventRunner.Received(attempts).RunInBackground(handler, Arg.Any<object>(), Arg.Any<Exception>());
     }
 
     [Fact]
@@ -131,17 +133,16 @@ public class SocketIOTests
         _session.ConnectAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new Exception("Test")), Task.CompletedTask);
 
-        var times = 0;
-        _io.OnReconnectError += (_, _) =>
-        {
-            times++;
-            throw new InvalidOperationException();
-        };
+        _io.OnReconnectError += Handler;
 
         await ConnectAsync();
 
         _io.Connected.Should().BeTrue();
-        times.Should().Be(1);
+        _eventRunner.Received(1).RunInBackground(Handler, Arg.Any<object>(), Arg.Any<Exception>());
+
+        return;
+
+        void Handler(object? o, Exception e) => throw new InvalidOperationException();
     }
 
     [Fact]
@@ -838,13 +839,13 @@ public class SocketIOTests
     public async Task OnReconnectAttempt_ReconnectionIsFalse_InvokeOnce()
     {
         _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new TimeoutException());
-        var attempts = 0;
-        _io.OnReconnectAttempt += (_, _) => attempts++;
+        var handler = Substitute.For<EventHandler<int>>();
+        _io.OnReconnectAttempt += handler;
 
         var func = async () => await ConnectAsync();
 
         await func.Should().ThrowAsync<ConnectionException>();
-        attempts.Should().Be(1);
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), Arg.Any<int>());
     }
 
     [Theory]
@@ -856,13 +857,13 @@ public class SocketIOTests
         _io.Options.Reconnection = true;
         _io.Options.ReconnectionAttempts = attempts;
         _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new TimeoutException());
-        var times = 0;
-        _io.OnReconnectAttempt += (_, _) => times++;
+        var handler = Substitute.For<EventHandler<int>>();
+        _io.OnReconnectAttempt += handler;
 
         var func = async () => await ConnectAsync();
 
         await func.Should().ThrowAsync<ConnectionException>();
-        times.Should().Be(attempts);
+        _eventRunner.Received(attempts).RunInBackground(handler, Arg.Any<object>(), Arg.Any<int>());
     }
 
     [Fact]
@@ -872,18 +873,16 @@ public class SocketIOTests
         _io.Options.ReconnectionAttempts = 2;
         _session.ConnectAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromException(new TimeoutException()), Task.CompletedTask);
-        var times = 0;
-        _io.OnReconnectAttempt += (_, t) =>
-        {
-            times = t;
-            throw new InvalidOperationException();
-        };
+        _io.OnReconnectAttempt += Handler;
 
         await ConnectAsync();
         await Task.Delay(100).ConfigureAwait(false);
 
         _io.Connected.Should().BeTrue();
-        times.Should().Be(2);
+        _eventRunner.Received(2).RunInBackground(Handler, Arg.Any<object>(), Arg.Any<int>());
+        return;
+
+        void Handler(object? o, int t) => throw new InvalidOperationException();
     }
 
     [Fact]
