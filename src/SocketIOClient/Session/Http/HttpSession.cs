@@ -41,13 +41,22 @@ public class HttpSession : SessionBase<IHttpEngineIOAdapter>
 
     public override async Task OnNextAsync(ProtocolMessage message)
     {
+#if DEBUG
+        _logger.LogDebug("OnNextAsync {type}", message.Type);
+#endif
         if (message.Type == ProtocolMessageType.Bytes)
         {
+#if DEBUG
+            _logger.LogDebug("Bytes Message Length:{l}", message.Bytes?.Length ?? 0);
+#endif
             var bytesMessages = EngineIOAdapter.ExtractMessagesFromBytes(message.Bytes!);
             await HandleMessagesAsync(bytesMessages).ConfigureAwait(false);
             return;
         }
 
+#if DEBUG
+        _logger.LogDebug("Text Message {t}", message.Text);
+#endif
         var messages = EngineIOAdapter.ExtractMessagesFromText(message.Text!);
         await HandleMessagesAsync(messages).ConfigureAwait(false);
     }

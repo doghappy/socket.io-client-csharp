@@ -220,13 +220,6 @@ public abstract class SessionBase<T> : ISession where T : class, IEngineIOAdapte
     private async Task OnNextBytesMessage(byte[] bytes)
     {
         _logger.LogDebug("[{protocol}⬇] 0️⃣1️⃣0️⃣1️⃣ {length}", Protocol, bytes.Length);
-#if DEBUG
-        if (bytes.Length == 75)
-        {
-            var hex = BitConverter.ToString(bytes).Replace("-", " ");
-            _logger.LogDebug("Hex: {hex}", hex);
-        }
-#endif
         var message = _messageQueue.Peek();
         message.Add(bytes);
         if (message.ReadyDelivery)

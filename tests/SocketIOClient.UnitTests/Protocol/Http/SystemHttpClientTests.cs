@@ -1,5 +1,7 @@
 using System.Net;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
 using RichardSzalay.MockHttp;
 using SocketIOClient.Protocol.Http;
 
@@ -10,7 +12,8 @@ public class SystemHttpClientTests
     public SystemHttpClientTests()
     {
         _httpMessageHandler = new MockHttpMessageHandler();
-        _httpClient = new SystemHttpClient(_httpMessageHandler.ToHttpClient());
+        var logger = Substitute.For<ILogger<SystemHttpClient>>();
+        _httpClient = new SystemHttpClient(_httpMessageHandler.ToHttpClient(), logger);
     }
 
     private readonly SystemHttpClient _httpClient;
