@@ -39,10 +39,9 @@ public class HttpAdapter(IHttpClient httpClient, ILogger<HttpAdapter> logger) : 
         req.Uri ??= NewUri();
         try
         {
+            var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
             var body = req.BodyType == RequestBodyType.Text ? req.BodyText : $"0️⃣1️⃣0️⃣1️⃣ {req.BodyBytes!.Length}";
             logger.LogDebug("[Polling⬆] {Body}", body);
-            var response = await httpClient.SendAsync(req, cancellationToken).ConfigureAwait(false);
-            logger.LogDebug("[Polling⬇] MediaType: {media}", response.MediaType);
             _ = HandleResponseAsync(response).ConfigureAwait(false);
         }
         catch (Exception e)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -109,43 +110,37 @@ public class HttpEngineIO3Adapter : EngineIO3Adapter, IHttpEngineIOAdapter
         var index = 0;
         while (index < bytes.Length)
         {
-            // byte messageType = bytes[index];
+            byte messageType = bytes[index];
             index++;
             var payloadLength = 0;
-            var multiplier = 1;
 
             while (index < bytes.Length && bytes[index] != byte.MaxValue)
             {
-                payloadLength = payloadLength * multiplier + bytes[index++];
-                multiplier *= 10;
+                payloadLength = payloadLength * 10 + bytes[index++];
             }
 
             index++;
 
-            var data = new byte[payloadLength - 1];
-            Buffer.BlockCopy(bytes, index + 1, data, 0, data.Length);
-            yield return new ProtocolMessage
+            if (messageType == byte.MinValue)
             {
-                Type = ProtocolMessageType.Bytes,
-                Bytes = data,
-            };
-            // switch (messageType)
-            // {
-            //     case 0:
-            //         var text = Encoding.UTF8.GetString(bytes, index, payloadLength);
-            //         await OnTextReceived.TryInvokeAsync(text);
-            //         break;
-            //
-            //     case 1:
-            //         if (payloadLength < 1) break;
-            //         var data = new byte[payloadLength - 1];
-            //         Buffer.BlockCopy(bytes, index + 1, data, 0, data.Length);
-            //         await OnBytes(data);
-            //         break;
-            //
-            //     default:
-            //         break;
-            // }
+                var data = new byte[payloadLength];
+                Buffer.BlockCopy(bytes, index, data, 0, data.Length);
+                yield return new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Text,
+                    Text = Encoding.UTF8.GetString(data),
+                };
+            }
+            else
+            {
+                var data = new byte[payloadLength - 1];
+                Buffer.BlockCopy(bytes, index + 1, data, 0, data.Length);
+                yield return new ProtocolMessage
+                {
+                    Type = ProtocolMessageType.Bytes,
+                    Bytes = data,
+                };
+            }
 
             index += payloadLength;
         }
