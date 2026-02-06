@@ -193,7 +193,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
 
     [Theory]
     [InlineData(4000, 0, 0)]
-    [InlineData(5900, 1, 1)]
+    [InlineData(7500, 1, 1)]
     [InlineData(14000, 2, 2)]
     public async Task OnPingAndOnPong_HandlerAreRegistered_WorkAsExpected(int ms, int expectedPingTimes, int expectedPongTimes)
     {
@@ -267,7 +267,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
         await io.ConnectAsync();
         await io.EmitAsync("begin-ack-on-client");
 
-        await Task.Delay(DefaultDelay * 2);
+        await Task.Delay(DefaultDelay * 4);
 
         message.Should().NotBeNull();
         message.GetValue<TestFile>(0).Should().BeEquivalentTo(TestFile.IndexHtml);

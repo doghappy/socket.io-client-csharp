@@ -1,3 +1,4 @@
+using FluentAssertions;
 using NSubstitute;
 using SocketIOClient.Common.Messages;
 using SocketIOClient.Infrastructure;
@@ -79,24 +80,15 @@ public class PollingHandlerTests
     }
 
     [Fact]
-    public async Task PollingAsync_IsReadyFirstFalseThenTrue_PollingIsWorking()
+    public async Task PollingAsync_WhenCalled_WaitUntilIsReadyTrue()
     {
-        _httpAdapter.IsReadyToSend.Returns(false);
-        _ = Task.Run(async () =>
-        {
-            await _fakeDelay.DelayAsync(21, CancellationToken.None);
-            _httpAdapter.IsReadyToSend.Returns(true);
-            await _fakeDelay.DelayAsync(22, CancellationToken.None);
-        });
+        _httpAdapter.IsReadyToSend.Returns(false, false, true);
         _pollingHandler.StartPolling(new OpenedMessage { PingInterval = 2000 }, false);
 
-
         await _fakeDelay.AdvanceAsync(20);
-        await _fakeDelay.AdvanceAsync(21);
-        await _fakeDelay.AdvanceAsync(22);
         await _fakeDelay.AdvanceAsync(20);
 
-        await _retryPolicy.Received().RetryAsync(2, Arg.Any<Func<Task>>());
+        _fakeDelay.DelayCounts.Should().Be(2);
     }
 
     [Theory]

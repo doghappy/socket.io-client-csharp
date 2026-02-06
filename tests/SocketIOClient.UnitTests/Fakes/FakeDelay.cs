@@ -8,6 +8,7 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
 {
     private readonly Dictionary<int, List<TaskCompletionSource>> _delayTaskDic = [];
     private readonly object _lock = new();
+    public int DelayCounts { get; private set; }
 
     public Task DelayAsync(int ms, CancellationToken cancellationToken)
     {
@@ -15,6 +16,7 @@ public class FakeDelay(ITestOutputHelper output) : IDelay
         var tcs = new TaskCompletionSource();
         lock (_lock)
         {
+            DelayCounts++;
             var exists = _delayTaskDic.TryGetValue(ms, out var delayTasks);
             if (exists)
             {
