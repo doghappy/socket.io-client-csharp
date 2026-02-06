@@ -461,7 +461,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         var connectedMessage = (ConnectedMessage)message;
         Id = connectedMessage.Sid;
         Connected = true;
-        _ = Task.Run(() => OnConnected?.Invoke(this, EventArgs.Empty));
+        _eventRunner.RunInBackground(OnConnected, this, EventArgs.Empty);
         _connCompletionSource!.SetResult(null);
         _session!.OnDisconnected = () => InvokeOnDisconnected(DisconnectReason.TransportError);
     }
@@ -477,7 +477,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
             _session?.Unsubscribe(this);
             ResetStatusForDisconnected();
-            OnDisconnected?.Invoke(this, reason);
+            _eventRunner.RunInBackground(OnDisconnected, this, reason);
         }
     }
 

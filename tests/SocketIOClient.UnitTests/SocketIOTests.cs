@@ -171,17 +171,17 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_AdapterOnDisconnectedHappened_ConnectedIsFalseAndOnDisconnectedInvoked()
+    public async Task ConnectAsync_SessionOnDisconnectedInvoked_ConnectedIsFalseAndOnDisconnectedInvoked()
     {
-        var onDisconnectedInvoked = false;
-        _io.OnDisconnected += (_, _) => onDisconnectedInvoked = true;
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
         await ConnectAsync();
         await _io.EmitAsync("e", _ => Task.CompletedTask);
 
         _session.OnDisconnected();
 
         _io.Connected.Should().BeFalse();
-        onDisconnectedInvoked.Should().BeTrue();
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), Arg.Any<string>());
 
         IInternalSocketIO io = _io;
         io.PacketId.Should().Be(0);
@@ -191,8 +191,8 @@ public class SocketIOTests
     [Fact]
     public async Task ConnectAsync_ConnectedMessageReceived_ResetDisconnectReason()
     {
-        var reasons = new List<string>();
-        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
 
         await ConnectAsync();
         await _io.DisconnectAsync();
@@ -200,7 +200,8 @@ public class SocketIOTests
 
         _session.OnDisconnected();
 
-        reasons.Should().Equal("io client disconnect", "transport error");
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), "io client disconnect");
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), "transport error");
     }
 
     [Fact]
@@ -919,16 +920,13 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnDisconnectedThrowException_DisconnectAsync_StatusAreReset()
+    public async Task DisconnectAsync_OnDisconnectedThrowException_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
 
         await ConnectAsync();
         await _io.EmitAsync("e", _ => Task.CompletedTask);
-        await _io.Invoking(async io => await io.DisconnectAsync())
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("Test");
+        await _io.DisconnectAsync();
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
@@ -939,17 +937,14 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnDisconnectedThrowException_SessionOnDisconnectedInvoked_StatusAreReset()
+    public async Task OnDisconnected_ThrowExceptionAndSessionOnDisconnectedInvoked_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
 
         await ConnectAsync();
         await _io.EmitAsync("e", _ => Task.CompletedTask);
 
-        _session.Invoking(s => s.OnDisconnected())
-            .Should()
-            .ThrowExactly<Exception>()
-            .WithMessage("Test");
+        _session.OnDisconnected();
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
@@ -960,17 +955,14 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task OnDisconnectedThrowException_DisconnectedMessage_StatusAreReset()
+    public async Task OnDisconnected_ThrowExceptionAndReceivedDisconnectedMessage_StatusAreReset()
     {
         _io.OnDisconnected += (_, _) => throw new Exception("Test");
 
         await ConnectAsync();
         await _io.EmitAsync("e", _ => Task.CompletedTask);
 
-        await _io.Invoking(async _ => await OnNextAsync(_io, new DisconnectedMessage()))
-            .Should()
-            .ThrowExactlyAsync<Exception>()
-            .WithMessage("Test");
+        await OnNextAsync(_io, new DisconnectedMessage());
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
@@ -1011,18 +1003,12 @@ public class SocketIOTests
     [Fact]
     public async Task DisconnectAsync_WhenCalled_OnDisconnectedWillBeCalled()
     {
-        var times = 0;
-        string? reason = null;
-        _io.OnDisconnected += (_, e) =>
-        {
-            times++;
-            reason = e;
-        };
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
         await ConnectAsync();
         await _io.DisconnectAsync();
 
-        times.Should().Be(1);
-        reason.Should().Be("io client disconnect");
+        _eventRunner.Received(1).RunInBackground(handler, Arg.Any<object>(), "io client disconnect");
     }
 
     [Fact]
@@ -1065,65 +1051,65 @@ public class SocketIOTests
     [Fact]
     public async Task DisconnectAsync_TriggeredByServer_OnDisconnectedWillBeCalled()
     {
-        string reason = null!;
-        _io.OnDisconnected += (_, r) => reason = r;
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
 
         await ConnectAsync();
         await OnNextAsync(_io, new DisconnectedMessage());
-        await Task.Delay(50).ConfigureAwait(false);
 
         _io.Connected.Should().BeFalse();
         _io.Id.Should().BeNull();
-        reason.Should().Be("io server disconnect");
+        _eventRunner.Received(1)
+            .RunInBackground(handler, Arg.Any<object>(), "io server disconnect");
     }
 
     [Fact]
     public async Task DisconnectAsyncFirst_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
-        var reasons = new List<string>();
-        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
 
         await ConnectAsync();
         await _io.DisconnectAsync();
         _session.OnDisconnected();
 
-        reasons.Should().HaveCount(1);
-        reasons.Should().Equal("io client disconnect");
+        _eventRunner.Received(1)
+            .RunInBackground(handler, Arg.Any<object>(), "io client disconnect");
     }
 
     [Fact]
     public async Task DisconnectAsyncByServer_ThenAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
-        var reasons = new List<string>();
-        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
         await ConnectAsync();
         await OnNextAsync(_io, new DisconnectedMessage());
         _session.OnDisconnected();
 
-        reasons.Should().HaveCount(1);
-        reasons.Should().Equal("io server disconnect");
+        _eventRunner.Received(1)
+            .RunInBackground(handler, Arg.Any<object>(), "io server disconnect");
     }
 
     [Fact]
     public async Task DisconnectAsyncFirst_ThenReceivedDisconnectedMessageAndAdapterOnDisconnected_OnDisconnectedInvokedOnce()
     {
-        var reasons = new List<string>();
-        _io.OnDisconnected += (_, e) => reasons.Add(e);
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
         await ConnectAsync();
         await _io.DisconnectAsync();
         await OnNextAsync(_io, new DisconnectedMessage());
         _session.OnDisconnected();
 
-        reasons.Should().HaveCount(1);
-        reasons.Should().Equal("io client disconnect");
+        _eventRunner.Received(1)
+            .RunInBackground(handler, Arg.Any<object>(), "io client disconnect");
     }
 
     [Theory]
     [InlineData(17)]
     public async Task DisconnectAsync_WithAdapterOnDisconnectedInParallel_OnDisconnectedInvokedAsExpected(int times)
     {
-        int count = 0;
-        _io.OnDisconnected += (_, _) => count++;
+        var handler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += handler;
 
         for (int i = 0; i < times; i++)
         {
@@ -1135,7 +1121,8 @@ public class SocketIOTests
         }
         _session.OnDisconnected();
 
-        count.Should().Be(times);
+        _eventRunner.Received(times)
+            .RunInBackground(handler, Arg.Any<object>(), Arg.Any<string>());
     }
 
     #endregion
@@ -1666,10 +1653,10 @@ public class SocketIOTests
     [InlineData(7)]
     public async Task Reconnect_Manually_OnConnectedAndOnDisconnectedAreWorks(int times)
     {
-        var connectTimes = 0;
-        var disconnectTimes = 0;
-        _io.OnConnected += (_, _) => connectTimes++;
-        _io.OnDisconnected += (_, _) => disconnectTimes++;
+        var onConnectedHandler = Substitute.For<EventHandler>();
+        _io.OnConnected += onConnectedHandler;
+        var onDisconnectedHandler = Substitute.For<EventHandler<string>>();
+        _io.OnDisconnected += onDisconnectedHandler;
 
         for (var i = 0; i < times; i++)
         {
@@ -1677,9 +1664,8 @@ public class SocketIOTests
             await _io.DisconnectAsync();
         }
 
-        await Task.Delay(50).ConfigureAwait(false);
-        connectTimes.Should().Be(times);
-        disconnectTimes.Should().Be(times);
+        _eventRunner.Received(times).RunInBackground(onConnectedHandler, Arg.Any<object>(), Arg.Any<EventArgs>());
+        _eventRunner.Received(times).RunInBackground(onDisconnectedHandler, Arg.Any<object>(), Arg.Any<string>());
     }
 
     #endregion
