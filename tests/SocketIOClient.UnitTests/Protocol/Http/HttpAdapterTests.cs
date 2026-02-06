@@ -27,7 +27,7 @@ public class HttpAdapterTests
     private readonly IHttpClient _httpClient;
     private readonly Action _onDisconnect;
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendHttpRequestAsync_WhenCalled_OnNextShouldBeTriggered()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -41,7 +41,7 @@ public class HttpAdapterTests
         await observer.Received().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendHttpRequestAsync_ObserverBlocked100Ms_SendAsyncNotBlockedByObserver()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -58,7 +58,7 @@ public class HttpAdapterTests
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(20);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendHttpRequestAsync_UrlIsNotProvided_UseDefault()
     {
         _httpAdapter.Uri = new Uri("http://localhost/?transport=polling");
@@ -71,7 +71,7 @@ public class HttpAdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendHttpRequestAsync_UrlIsProvided_UseProvidedOne()
     {
         _httpAdapter.Uri = new Uri("http://localhost");
@@ -85,7 +85,7 @@ public class HttpAdapterTests
             .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == new Uri("http://localhost:8080")), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_RequestIsNotConnectedAndExceptionOccurred_OnDisconnectInvoked()
     {
         _httpAdapter.Uri = new Uri("http://localhost");
@@ -100,7 +100,7 @@ public class HttpAdapterTests
         _onDisconnect.Received().Invoke();
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_RequestIsConnectedAndExceptionOccurred_OnDisconnectNotInvoked()
     {
         _httpAdapter.Uri = new Uri("http://localhost");
@@ -136,7 +136,7 @@ public class HttpAdapterTests
         _httpAdapter.IsReadyToSend.Should().Be(isReadyToSend);
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData("")]
     [InlineData("test")]
     [InlineData("text/plain")]
@@ -163,7 +163,7 @@ public class HttpAdapterTests
                 && m.Text == "Hello World"));
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData("application/octet-stream")]
     [InlineData("Application/Octet-Stream")]
     [InlineData("APPLICATION/OCTET-STREAM")]

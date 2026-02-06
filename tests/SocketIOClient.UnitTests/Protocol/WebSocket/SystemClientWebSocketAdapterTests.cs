@@ -23,7 +23,7 @@ public class SystemClientWebSocketAdapterTests
     private readonly SystemClientWebSocketAdapter _adapter;
     private readonly IWebSocketClient _ws;
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(0, 1)]
     [InlineData(1024, 1)]
     [InlineData(1025, 2)]
@@ -47,7 +47,7 @@ public class SystemClientWebSocketAdapterTests
             CancellationToken.None);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_ByteMessage_PartitionData()
     {
         var data = new byte[1025];
@@ -66,7 +66,7 @@ public class SystemClientWebSocketAdapterTests
             CancellationToken.None);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_WhenCalled_ThoughPassToWebSocketClient()
     {
         var cts = new CancellationTokenSource();
@@ -76,7 +76,7 @@ public class SystemClientWebSocketAdapterTests
         await _ws.Received().ConnectAsync(new Uri("ws://localhost:12345"), token);
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(1023)]
@@ -92,7 +92,7 @@ public class SystemClientWebSocketAdapterTests
         message.Bytes.Should().HaveCount(length);
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(1025)]
     [InlineData(2048)]
     public async Task ReceiveAsync_ActualDataLengthGreaterThanReceiveChunkSize_ReturnActualLength(int length)

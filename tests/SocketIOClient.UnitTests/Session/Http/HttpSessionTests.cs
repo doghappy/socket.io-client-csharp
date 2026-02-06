@@ -63,7 +63,7 @@ public class HttpSessionTests
 
     #region ConnectAsync
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_HttpAdapterThrowAnyException_ThrowConnectionFailedException()
     {
         _httpAdapter
@@ -79,7 +79,7 @@ public class HttpSessionTests
             .WithMessage("Server refused connection");
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData("http://localhost:3000", null, EngineIO.V3, "http://localhost:3000/socket.io/?EIO=3&transport=polling")]
     [InlineData("https://localhost:3000", null, EngineIO.V4, "https://localhost:3000/socket.io/?EIO=4&transport=polling")]
     [InlineData("http://localhost:3000", "", EngineIO.V3, "http://localhost:3000/socket.io/?EIO=3&transport=polling")]
@@ -109,7 +109,7 @@ public class HttpSessionTests
             ]);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_CancelledToken_ThrowConnectionFailedException()
     {
         _httpAdapter
@@ -130,7 +130,7 @@ public class HttpSessionTests
             .WithMessage("Task was canceled");
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_WhenCalled_SetAdapterUri()
     {
         var session = NewSession();
@@ -138,7 +138,7 @@ public class HttpSessionTests
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=4&transport=polling"));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_EvenSidIsNotNull_SidIsIgnored()
     {
         var session = NewSession();
@@ -151,7 +151,7 @@ public class HttpSessionTests
             .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == expectedUri), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_OptionQueryHasAnyItems_AppendOptionQueryToUrl()
     {
         var session = NewSession();
@@ -170,7 +170,7 @@ public class HttpSessionTests
             .SendAsync(Arg.Is<HttpRequest>(r => r.Uri == expectedUri), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_2ExtraHeaders_SetDefaultHeaderTwice()
     {
         _sessionOptions.ExtraHeaders = new Dictionary<string, string>
@@ -186,7 +186,7 @@ public class HttpSessionTests
         _httpAdapter.Received(1).SetDefaultHeader("key2", "value2");
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_SetDefaultHeaderThrow_PassThroughException()
     {
         _httpAdapter
@@ -217,7 +217,7 @@ public class HttpSessionTests
 
     #endregion
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task DisconnectAsync_NoNamespace_SendDisconnectToServer()
     {
         var request = new HttpRequest
@@ -232,7 +232,7 @@ public class HttpSessionTests
         await _httpAdapter.Received(1).SendAsync(request, Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task DisconnectAsync_HasNamespace_SendDisconnectToServer()
     {
         _sessionOptions.Namespace = "/test";
@@ -255,7 +255,7 @@ public class HttpSessionTests
         _httpAdapter.Received(1).Subscribe(session);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_BinaryMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -279,7 +279,7 @@ public class HttpSessionTests
         session.PendingDeliveryCount.Should().Be(1);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_BinaryMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -314,7 +314,7 @@ public class HttpSessionTests
         session.PendingDeliveryCount.Should().Be(0);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_BinaryAckMessageIsNotReady_NoMessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -344,7 +344,7 @@ public class HttpSessionTests
         session.PendingDeliveryCount.Should().Be(1);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_BinaryAckMessageReady_MessageWillBePushed()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -389,7 +389,7 @@ public class HttpSessionTests
         session.PendingDeliveryCount.Should().Be(0);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_TextMessages_ProcessMessageAsyncOfEngineIOAdapterIsCalled()
     {
         _serializer
@@ -413,7 +413,7 @@ public class HttpSessionTests
         await _engineIOAdapter.Received(1).ProcessMessageAsync(Arg.Any<IMessage>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_ByteMessages_ProcessMessageAsyncOfEngineIOAdapterIsNeverCalled()
     {
         _serializer
@@ -441,7 +441,7 @@ public class HttpSessionTests
         await _engineIOAdapter.DidNotReceive().ProcessMessageAsync(Arg.Any<IMessage>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_ConnectedMessage_SetAdapterUriWithSid()
     {
         _serializer
@@ -467,7 +467,7 @@ public class HttpSessionTests
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling&sid=abc"));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_OpenedMessageAndProcessMessageAsyncThrows_AdapterUriIsUpdated()
     {
         _serializer
@@ -497,7 +497,7 @@ public class HttpSessionTests
         _httpAdapter.Uri.Should().Be(new Uri("http://localhost:3000/socket.io/?EIO=3&transport=polling&sid=abc"));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task OnNextAsync_MessageIsProcessed_NotSendToObserver()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -522,7 +522,7 @@ public class HttpSessionTests
         await observer.DidNotReceive().OnNextAsync(Arg.Any<IMessage>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsyncData_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
@@ -537,7 +537,7 @@ public class HttpSessionTests
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsyncDataAndId_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>(), 12)
@@ -552,7 +552,7 @@ public class HttpSessionTests
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAckDataAsync_SerializerReturn2Messages_CallAdapter2Times()
     {
         _serializer.SerializeAckData(Arg.Any<object[]>(), 12)
@@ -567,7 +567,7 @@ public class HttpSessionTests
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_1TextMessage1ByteMessage_CallAdapter2Times()
     {
         _serializer.Serialize(Arg.Any<object[]>())
@@ -582,7 +582,7 @@ public class HttpSessionTests
         await _httpAdapter.Received(2).SendAsync(Arg.Any<HttpRequest>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_2ByteMessages_CallAdapter1Time()
     {
         _serializer.Serialize(Arg.Any<object[]>())

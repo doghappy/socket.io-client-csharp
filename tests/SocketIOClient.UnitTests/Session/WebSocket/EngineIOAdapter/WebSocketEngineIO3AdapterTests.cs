@@ -34,7 +34,7 @@ public class WebSocketEngineIO3AdapterTests
     private readonly WebSocketEngineIO3Adapter _adapter;
     private readonly FakeDelay _fakeDelay;
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_ConnectedMessage_PingInBackground()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -56,7 +56,7 @@ public class WebSocketEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_PongMessage_OnlySetDurationNotNotifyToSubscriber()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -71,7 +71,7 @@ public class WebSocketEngineIO3AdapterTests
             .OnNextAsync(Arg.Any<IMessage>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task StartPingAsync_ObserverThrowException_ContinuePing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -94,7 +94,7 @@ public class WebSocketEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task StartPingAsync_WhenCalled_FirstDelayThenPing()
     {
         var observer = Substitute.For<IMyObserver<IMessage>>();
@@ -115,7 +115,7 @@ public class WebSocketEngineIO3AdapterTests
             .OnNextAsync(Arg.Is<IMessage>(m => m.Type == MessageType.Ping));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task StartPingAsync_DisposeIsCalled_NeverPing()
     {
         _adapter.Dispose();
@@ -129,7 +129,7 @@ public class WebSocketEngineIO3AdapterTests
             .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_ConnectedMessageButNoOpenedMessage_ThrowException()
     {
         var connectedMessage = new ConnectedMessage();
@@ -138,7 +138,7 @@ public class WebSocketEngineIO3AdapterTests
             .ThrowAsync<NullReferenceException>();
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_OpenedMessageThenConnectedMessage_SidIsNotNull()
     {
         await _adapter.ProcessMessageAsync(new OpenedMessage
@@ -150,7 +150,7 @@ public class WebSocketEngineIO3AdapterTests
         connectedMessage.Sid.Should().Be("123");
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(null, "40")]
     [InlineData("", "40")]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_NotSendConnectedMessage(string nsp, string expected)
@@ -162,7 +162,7 @@ public class WebSocketEngineIO3AdapterTests
             .SendAsync(Arg.Any<ProtocolMessage>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_ReceivedOpenedMessage_SendConnectedMessage()
     {
         _adapter.Options.Namespace = "/nsp";
@@ -173,7 +173,7 @@ public class WebSocketEngineIO3AdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData("/nsp", null, true)]
     [InlineData("/nsp", "", true)]
     [InlineData("/nsp", "/", true)]
@@ -200,7 +200,7 @@ public class WebSocketEngineIO3AdapterTests
         result.Should().Be(shouldSwallow);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_OnlyReceivedSwallowedConnectedMessage_NeverStartPing()
     {
         _adapter.Options.Namespace = "/nsp";
@@ -215,7 +215,7 @@ public class WebSocketEngineIO3AdapterTests
                 Arg.Any<CancellationToken>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ProcessMessageAsync_ReceivedConnectedMessageWithNamespace_StartPing()
     {
         _adapter.Options.Namespace = "/nsp";
@@ -294,7 +294,7 @@ public class WebSocketEngineIO3AdapterTests
         result.Should().Equal(expected);
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)

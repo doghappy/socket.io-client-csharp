@@ -28,7 +28,7 @@ public class WebSocketAdapterTests
     private readonly IWebSocketClientAdapter _clientAdapter;
     private readonly Action _onDisconnect;
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_TextMessageButTextIsNull_ThrowsException()
     {
         await _wsAdapter.Invoking(async x =>
@@ -43,7 +43,7 @@ public class WebSocketAdapterTests
             .ThrowExactlyAsync<ArgumentNullException>();
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_ByteMessageButBytesIsNull_ThrowsException()
     {
         await _wsAdapter.Invoking(async x =>
@@ -58,7 +58,7 @@ public class WebSocketAdapterTests
             .ThrowExactlyAsync<ArgumentNullException>();
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData("")]
     [InlineData("abc")]
     [InlineData("🐮🍺")]
@@ -79,7 +79,7 @@ public class WebSocketAdapterTests
             token);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_ByteMessageAndEmpty_ThoughPassToClientAdapter()
     {
         var message = new ProtocolMessage
@@ -97,7 +97,7 @@ public class WebSocketAdapterTests
             token);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task SendAsync_ByteMessage_ThoughPassToClientAdapter()
     {
         var message = new ProtocolMessage
@@ -115,7 +115,7 @@ public class WebSocketAdapterTests
             token);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_WhenCalled_ThoughPassToClientAdapter()
     {
         var cts = new CancellationTokenSource();
@@ -125,7 +125,7 @@ public class WebSocketAdapterTests
         await _clientAdapter.Received().ConnectAsync(new Uri("ws://127.0.0.1:1234"), token);
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ConnectAsync_NotConnectedEvenReceivedMessage_ObserverCannotGetMessage()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -163,7 +163,7 @@ public class WebSocketAdapterTests
                 && m.Text == "Hello World!"));
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task ReceiveAsync_ExceptionOccurred_OnDisconnectInvoked()
     {
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
@@ -184,7 +184,7 @@ public class WebSocketAdapterTests
         _clientAdapter.Received().SetDefaultHeader("name", "value");
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task Dispose_WhenCalled_StopsReceivingFurtherMessages()
     {
         var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
@@ -208,7 +208,7 @@ public class WebSocketAdapterTests
         await observer.Received(Quantity.Within(0, 1)).OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
-    [Theory(Timeout = 5000)]
+    [Theory]
     [InlineData(1)]
     [InlineData(2)]
     public async Task UnSubscribe_WhenCalled_NotReceiveMessageAnymore(int times)

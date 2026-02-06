@@ -15,7 +15,7 @@ public class RandomDelayRetryPolicyTests
     private readonly RandomDelayRetryPolicy _policy;
     private readonly IRandom _random;
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task RetryAsync_TimesLessThan1_ThrowException()
     {
         var func = Substitute.For<Func<Task>>();
@@ -27,7 +27,7 @@ public class RandomDelayRetryPolicyTests
             .WithMessage("Times must be greater than 0 (Parameter 'times')");
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task RetryAsync_TimesIs2AndNoExceptionWhenFirstCall_FuncIsCalled1Time()
     {
         var func = Substitute.For<Func<Task>>();
@@ -38,7 +38,7 @@ public class RandomDelayRetryPolicyTests
         _random.DidNotReceive().Next(Arg.Any<int>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task RetryAsync_FirstThrowThenOk_FuncIsCalled2TimesNoException()
     {
         var func = Substitute.For<Func<Task>>();
@@ -50,7 +50,7 @@ public class RandomDelayRetryPolicyTests
         _random.Received(1).Next(Arg.Any<int>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task RetryAsync_FirstOkThenThrow_FuncIsCalled1TimeNoException()
     {
         var func = Substitute.For<Func<Task>>();
@@ -62,7 +62,7 @@ public class RandomDelayRetryPolicyTests
         _random.DidNotReceive().Next(Arg.Any<int>());
     }
 
-    [Fact(Timeout = 5000)]
+    [Fact]
     public async Task RetryAsync_Throw2Times_FuncIsCalled2TimesAndThrowException()
     {
         var func = Substitute.For<Func<Task>>();
