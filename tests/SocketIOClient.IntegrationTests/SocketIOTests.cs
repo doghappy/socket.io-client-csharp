@@ -317,18 +317,18 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     public async Task DisconnectAsync_CalledByClient_OnDisconnectIsInvoked()
     {
         using var io = NewSocketIO(Url);
-        var times = 0;
+        var tcs = new TaskCompletionSource();
         string? reason = null;
         io.OnDisconnected += (_, e) =>
         {
-            times++;
             reason = e;
+            tcs.SetResult();
         };
 
         await io.ConnectAsync();
         await io.DisconnectAsync();
 
-        times.Should().Be(1);
+        await tcs.Task;
         reason.Should().Be(DisconnectReason.IOClientDisconnect);
         io.Id.Should().BeNull();
         io.Connected.Should().BeFalse();
@@ -338,19 +338,18 @@ public abstract class SocketIOTests(ITestOutputHelper output)
     public async Task DisconnectAsync_CalledByServer_OnDisconnectIsInvoked()
     {
         using var io = NewSocketIO(Url);
-        var times = 0;
+        var tcs = new TaskCompletionSource();
         string? reason = null;
         io.OnDisconnected += (_, e) =>
         {
-            times++;
             reason = e;
+            tcs.SetResult();
         };
 
         await io.ConnectAsync();
         await io.EmitAsync("disconnect", [false]);
-        await Task.Delay(100);
 
-        times.Should().Be(1);
+        await tcs.Task;
         reason.Should().Be(DisconnectReason.IOServerDisconnect);
         io.Id.Should().BeNull();
         io.Connected.Should().BeFalse();
@@ -418,7 +417,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
 
         await io.ConnectAsync();
         await io.EmitAsync("1:emit", ["OnAny"]);
-        await Task.Delay(100);
+        await Task.Delay(DefaultDelay);
 
         eventName.Should().Be("1:emit");
         context.GetValue<string>(0).Should().Be("OnAny");
@@ -444,7 +443,7 @@ public abstract class SocketIOTests(ITestOutputHelper output)
 
         await io.ConnectAsync();
         await io.EmitAsync("1:emit", ["OnAny"]);
-        await Task.Delay(100);
+        await Task.Delay(DefaultDelay);
 
         onHandlerCalled.Should().BeTrue();
         onAnyHandlerCalled.Should().BeTrue();
