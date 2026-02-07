@@ -45,7 +45,8 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
             }
             catch (Exception e)
             {
-                logger.LogError(e, "Failed to receive message");
+                logger.LogError("Failed to receive message");
+                logger.LogError(e.ToString());
                 OnDisconnected();
                 throw;
             }

@@ -594,6 +594,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
 
     public void Dispose()
     {
+#if DEBUG
+        _logger.LogDebug("Dispose()");
+#endif
         _scope?.Dispose();
     }
 }
