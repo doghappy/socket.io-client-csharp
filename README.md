@@ -17,6 +17,7 @@ An elegant socket.io client for .NET, it supports socket.io server v2/v3/v4, and
     - [Serializer](#serializer)
     - [Self-signed certificate](#self-signed-certificate)
     - [Proxy](#Proxy)
+    - [Logging](#logging)
 - [Development](#development)
 - [Change log](#change-log)
 - [Thanks](#thanks)
@@ -274,6 +275,23 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 ```
 
 > Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this case, you may need to configure a proxy for both transports.
+
+## Logging
+
+To further obtain internal logs for observing its internal behavior, you can use the following approach:
+
+```cs
+var client = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions(), services =>
+{
+    services.AddLogging(builder =>
+    {
+        builder.SetMinimumLevel(LogLevel.Trace);
+        builder.AddConsole();
+    });
+});
+```
+
+Here, `Microsoft.Extensions.Logging.Console` is used as the logging provider. For more logging providers, please refer to: [Third-party logging providers](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-10.0#third-party-logging-providers)
 
 # Development
 

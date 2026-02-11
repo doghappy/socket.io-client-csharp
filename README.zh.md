@@ -17,6 +17,7 @@ socket.io client 的 .NET 实现, 它支持 socket.io server v2/v3/v4, 并且支
   - [Serializer](#serializer)
   - [自签名证书](#自签名证书)
   - [代理](#代理)
+  - [日志](#日志)
 - [开发](#开发)
 - [Change log](#change-log)
 - [Thanks](#thanks)
@@ -272,6 +273,23 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 ```
 
 > 注意：默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置代理
+
+## 日志
+
+为了进一步获得 SocketIO 的内部日志，以便与观测内部工作状况，可以使用这种方式：
+
+```cs
+var client = new SocketIO(new Uri("http://localhost:11400"), new SocketIOOptions(), services =>
+{
+    services.AddLogging(builder =>
+    {
+        builder.SetMinimumLevel(LogLevel.Trace);
+        builder.AddConsole();
+    });
+});
+```
+
+这里, 使用了 `Microsoft.Extensions.Logging.Console` 日志将输出到控制台. 更多日志框架参见: [第三方日志记录提供程序](https://learn.microsoft.com/zh-cn/aspnet/core/fundamentals/logging/?view=aspnetcore-10.0#third-party-logging-providers)
 
 # 开发
 
