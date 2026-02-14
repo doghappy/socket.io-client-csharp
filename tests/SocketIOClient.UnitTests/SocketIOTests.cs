@@ -1682,7 +1682,7 @@ public class SocketIOTests
         _io.OnDisconnected += onDisconnectedHandler;
         _eventRunner
             .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), Arg.Any<string>()))
-            .Do(x => tcs.SetResult());
+            .Do(_ => tcs.SetResult());
 
         await ConnectAsync();
         _session.OnDisconnected();
@@ -1707,7 +1707,7 @@ public class SocketIOTests
         _io.OnDisconnected += onDisconnectedHandler;
         _eventRunner
             .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), DisconnectReason.IOClientDisconnect))
-            .Do(x => tcs.SetResult());
+            .Do(_ => tcs.SetResult());
 
         await ConnectAsync();
         await _io.DisconnectAsync();
@@ -1731,7 +1731,7 @@ public class SocketIOTests
         _io.OnDisconnected += onDisconnectedHandler;
         _eventRunner
             .When(x => x.RunInBackground(onDisconnectedHandler, Arg.Any<object>(), DisconnectReason.IOServerDisconnect))
-            .Do(x => tcs.SetResult());
+            .Do(_ => tcs.SetResult());
 
         await ConnectAsync();
         await OnNextAsync(_io, new DisconnectedMessage()).ConfigureAwait(false);
