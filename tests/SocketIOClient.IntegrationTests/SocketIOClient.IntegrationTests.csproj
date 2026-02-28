@@ -16,6 +16,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <ProjectReference Include="..\..\src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
     <None Remove="Transport/**" />
     <Content Include="appsettings*.yml">

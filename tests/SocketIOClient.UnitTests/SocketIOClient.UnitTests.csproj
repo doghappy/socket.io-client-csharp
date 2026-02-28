@@ -31,6 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj" />
     <ProjectReference Include="..\..\src\SocketIOClient\SocketIOClient.csproj" />
     <ProjectReference Include="..\SocketIOClient.Test.Core\SocketIOClient.Test.Core.csproj" />
   </ItemGroup>

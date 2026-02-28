@@ -26,7 +26,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\SocketIOClient.Common\SocketIOClient.Common.csproj" />
-        <ProjectReference Include="..\SocketIOClient.Serializer.NewtonsoftJson\SocketIOClient.Serializer.NewtonsoftJson.csproj"/>
         <ProjectReference Include="..\SocketIOClient.Serializer\SocketIOClient.Serializer.csproj"/>
         <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
         <None Include="..\..\README.zh.md" Pack="true" PackagePath="\"/>
