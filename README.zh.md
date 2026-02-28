@@ -307,12 +307,15 @@ npm run start # 启动 socket.io server 测试服务
 
 # Change log
 
-## [4.0.0.2] - 2026-02-06
+## [4.0.1] - 2026-02-28
 
-### Bugfix
+### Added
 
-- 当传输协议断开后，确保 OnDisconnected 会被触发
-- 修复 Emit 时 Ack handler 在某些场景下未被触发的bug
+- 当连接意外断开时自动重连
+
+### Updated
+
+- 优化依赖
 
 [See more](./CHANGELOG.md)
 

@@ -309,12 +309,15 @@ npm run start # Start socket.io server for integration testing
 
 # Change log
 
-## [4.0.0.2] - 2026-02-06
+## [4.0.1] - 2026-02-28
 
-### Bugfix
+### Added
 
-- Trigger the OnDisconnected event when the protocol connection is closed.
-- Fix an issue where the Emit ACK handler was not invoked in certain cases.
+- Automatically attempt to reconnect when the connection is unexpectedly interrupted.
+
+### Updated
+
+- Optimize dependencies.
 
 [See more](./CHANGELOG.md)
 
