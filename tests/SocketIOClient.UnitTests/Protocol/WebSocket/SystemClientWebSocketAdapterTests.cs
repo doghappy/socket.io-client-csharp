@@ -115,4 +115,14 @@ public class SystemClientWebSocketAdapterTests
 
         _ws.Received().SetDefaultHeader("name", "value");
     }
+
+    [Fact]
+    public async Task CloseAsync_WhenCalled_AlwaysPass()
+    {
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await _adapter.CloseAsync(token);
+
+        await _ws.Received(1).CloseAsync(WebSocketCloseStatus.NormalClosure, "io client disconnect", token);
+    }
 }

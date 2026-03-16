@@ -55,8 +55,8 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
 
     public async Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken)
     {
-        var isTextButNull = message.Type == ProtocolMessageType.Text && message.Text == null;
-        var isBytesButNull = message.Type == ProtocolMessageType.Bytes && message.Bytes == null;
+        var isTextButNull = message is { Type: ProtocolMessageType.Text, Text: null };
+        var isBytesButNull = message is { Type: ProtocolMessageType.Bytes, Bytes: null };
         if (isTextButNull || isBytesButNull)
         {
             throw new ArgumentNullException();
@@ -75,6 +75,11 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
                 .ConfigureAwait(false);
         }
         logger.LogDebug("Sent {type} message.", message.Type);
+    }
+
+    public async Task CloseAsync(CancellationToken cancellationToken)
+    {
+        await clientAdapter.CloseAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public override void SetDefaultHeader(string name, string value) => clientAdapter.SetDefaultHeader(name, value);

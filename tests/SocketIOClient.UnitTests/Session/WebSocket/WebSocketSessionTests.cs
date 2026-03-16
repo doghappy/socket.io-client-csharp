@@ -208,6 +208,21 @@ public class WebSocketSessionTests
         await _wsAdapter.Received(1)
             .SendAsync(Arg.Is<ProtocolMessage>(m =>
                 m.Type == ProtocolMessageType.Text && m.Text == "41"), token);
+        await _wsAdapter.Received(1).CloseAsync(token);
+    }
+
+    [Fact]
+    public async Task DisconnectAsync_FailedToSend41_StillCloseAsync()
+    {
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        var session = NewSession();
+        _wsAdapter.SendAsync(Arg.Any<ProtocolMessage>(), token)
+            .Returns(Task.FromException(new Exception()));
+
+        await session.DisconnectAsync(token);
+
+        await _wsAdapter.Received(1).CloseAsync(token);
     }
 
     [Fact]

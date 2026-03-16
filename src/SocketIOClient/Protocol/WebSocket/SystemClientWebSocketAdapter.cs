@@ -57,4 +57,10 @@ public class SystemClientWebSocketAdapter(IWebSocketClient ws) : IWebSocketClien
     }
 
     public void SetDefaultHeader(string name, string value) => ws.SetDefaultHeader(name, value);
+
+    public async Task CloseAsync(CancellationToken cancellationToken)
+    {
+        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "io client disconnect", cancellationToken)
+            .ConfigureAwait(false);
+    }
 }

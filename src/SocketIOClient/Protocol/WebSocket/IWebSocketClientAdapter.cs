@@ -10,4 +10,5 @@ public interface IWebSocketClientAdapter
     Task SendAsync(byte[] data, WebSocketMessageType messageType, CancellationToken cancellationToken);
     Task<WebSocketMessage> ReceiveAsync(CancellationToken cancellationToken);
     void SetDefaultHeader(string name, string value);
+    Task CloseAsync(CancellationToken cancellationToken);
 }

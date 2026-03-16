@@ -145,7 +145,7 @@ public class WebSocketAdapterTests
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
             .Returns(async _ =>
             {
-                await Task.Delay(20).ConfigureAwait(false);
+                await Task.Delay(100).ConfigureAwait(false);
                 return new WebSocketMessage
                 {
                     Type = WebSocketMessageType.Text,
@@ -253,5 +253,15 @@ public class WebSocketAdapterTests
         _wsAdapter.Invoking(a => a.Unsubscribe(null!))
             .Should()
             .NotThrow();
+    }
+
+    [Fact]
+    public async Task CloseAsync_WhenCalled_AlwaysPass()
+    {
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await _wsAdapter.CloseAsync(token);
+
+        await _clientAdapter.Received(1).CloseAsync(token);
     }
 }

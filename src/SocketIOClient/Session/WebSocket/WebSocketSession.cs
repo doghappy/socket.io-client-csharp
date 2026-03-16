@@ -122,6 +122,15 @@ public class WebSocketSession : SessionBase<IWebSocketEngineIOAdapter>
     {
         var content = string.IsNullOrEmpty(Options.Namespace) ? "41" : $"41{Options.Namespace},";
         var message = new ProtocolMessage { Text = content };
-        await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _wsAdapter.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Failed to send '{content}'", content);
+            _logger.LogError(e.ToString());
+        }
+        await _wsAdapter.CloseAsync(cancellationToken).ConfigureAwait(false);
     }
 }

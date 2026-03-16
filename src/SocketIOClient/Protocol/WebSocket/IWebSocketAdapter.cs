@@ -9,4 +9,5 @@ public interface IWebSocketAdapter : IProtocolAdapter
 {
     Task ConnectAsync(Uri uri, CancellationToken cancellationToken);
     Task SendAsync(ProtocolMessage message, CancellationToken cancellationToken);
+    Task CloseAsync(CancellationToken cancellationToken);
 }
