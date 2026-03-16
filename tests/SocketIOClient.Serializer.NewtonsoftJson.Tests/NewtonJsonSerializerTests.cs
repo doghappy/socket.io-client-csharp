@@ -39,7 +39,7 @@ public class NewtonJsonSerializerTests
     public void Serialize_DataOnlyAndDataIsNull_ThrowArgumentNullException()
     {
         var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
-        serializer.Invoking(x => x.Serialize(null))
+        serializer.Invoking(x => x.Serialize(null!))
             .Should()
             .Throw<ArgumentNullException>();
     }
@@ -510,7 +510,7 @@ public class NewtonJsonSerializerTests
     public void DeserializeGenericType_BinaryEventMessage_ReturnNiuB(string text, byte[] bytes, object expected)
     {
         var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
-        var message = (IBinaryAckMessage)serializer.Deserialize(text);
+        var message = (IBinaryAckMessage)serializer.Deserialize(text)!;
 
         message.Add(bytes);
         var item1 = message.GetValue<TestFile>(0);
@@ -527,7 +527,7 @@ public class NewtonJsonSerializerTests
     {
         var serializer = NewSerializer(new NewtonJsonEngineIO4MessageAdapter());
 
-        var message = (IDataMessage)serializer.Deserialize(raw);
+        var message = (IDataMessage)serializer.Deserialize(raw)!;
         message.RawText.Should().Be(expected);
     }
 
@@ -535,7 +535,7 @@ public class NewtonJsonSerializerTests
     public void SerializeDataAndId_DataIsNull_ThrowArgumentNullException()
     {
         var serializer = NewSerializer(Substitute.For<IEngineIOMessageAdapter>());
-        serializer.Invoking(x => x.Serialize(null, 1))
+        serializer.Invoking(x => x.Serialize(null!, 1))
             .Should()
             .Throw<ArgumentNullException>();
     }
