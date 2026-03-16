@@ -178,6 +178,8 @@ public class WebSocketAdapterTests
     [Fact]
     public async Task ReceiveAsync_CloseMessage_OnDisconnectNotInvoked()
     {
+        var observer = Substitute.For<IMyObserver<ProtocolMessage>>();
+        _wsAdapter.Subscribe(observer);
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
            .Returns(async _ =>
            {
@@ -192,6 +194,7 @@ public class WebSocketAdapterTests
 
         await Task.Delay(200).ConfigureAwait(false);
         _onDisconnect.DidNotReceive().Invoke();
+        await observer.DidNotReceive().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
     [Fact]
