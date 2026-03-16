@@ -171,8 +171,27 @@ public class WebSocketAdapterTests
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
-        await Task.Delay(400).ConfigureAwait(false);
+        await Task.Delay(200).ConfigureAwait(false);
         _onDisconnect.Received().Invoke();
+    }
+
+    [Fact]
+    public async Task ReceiveAsync_CloseMessage_OnDisconnectNotInvoked()
+    {
+        _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
+           .Returns(async _ =>
+           {
+               await Task.Delay(20).ConfigureAwait(false);
+               return new WebSocketMessage
+               {
+                   Type = WebSocketMessageType.Close,
+               };
+           });
+
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
+
+        await Task.Delay(200).ConfigureAwait(false);
+        _onDisconnect.DidNotReceive().Invoke();
     }
 
     [Fact]
