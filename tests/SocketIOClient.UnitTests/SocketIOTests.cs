@@ -891,9 +891,31 @@ public class SocketIOTests
         await _wsSession.DidNotReceive().ConnectAsync(Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task OnOpenedMessage_WebSocketIsAvailable_Upgrade()
+    [Theory]
+    [InlineData("websocket")]
+    [InlineData("WebSocket")]
+    [InlineData("WEBSOCKET")]
+    public async Task OnOpenedMessage_WebSocketIsAvailable_Upgrade(string websocket)
     {
+        _ = _io.ConnectAsync();
+        await Task.Delay(20).ConfigureAwait(false);
+
+        await OnNextAsync(_io, new OpenedMessage
+        {
+            Sid = "123456",
+            Upgrades = [websocket]
+        });
+
+        _io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
+        await _session.Received().ConnectAsync(Arg.Any<CancellationToken>());
+        _wsSession.Options.Sid.Should().Be("123456");
+        await _wsSession.Received().ConnectAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task OnOpenedMessage_CurrentProtocolIsWebSocketAndWebSocketIsAvailable_NotUpgrade()
+    {
+        _io.Options.Transport = TransportProtocol.WebSocket;
         _ = _io.ConnectAsync();
         await Task.Delay(20).ConfigureAwait(false);
 
@@ -904,9 +926,8 @@ public class SocketIOTests
         });
 
         _io.Options.Transport.Should().Be(TransportProtocol.WebSocket);
-        await _session.Received().ConnectAsync(Arg.Any<CancellationToken>());
-        _wsSession.Options.Sid.Should().Be("123456");
-        await _wsSession.Received().ConnectAsync(Arg.Any<CancellationToken>());
+        await _wsSession.Received(1).ConnectAsync(Arg.Any<CancellationToken>());
+        _wsSession.Options.Sid.Should().BeNull();
     }
 
     [Fact]

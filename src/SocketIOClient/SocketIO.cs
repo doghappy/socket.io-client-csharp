@@ -369,8 +369,13 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             return;
         }
 
+        if (Options.Transport == TransportProtocol.WebSocket)
+        {
+            return;
+        }
+
         var openedMessage = (OpenedMessage)message;
-        if (!openedMessage.Upgrades.Contains("websocket"))
+        if (!openedMessage.Upgrades.Contains("websocket", StringComparer.OrdinalIgnoreCase))
         {
             return;
         }
