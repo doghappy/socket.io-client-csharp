@@ -1,5 +1,6 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)_${{ parameters.package }}
 trigger: none
+pr: none
 
 pool:
   vmImage: ubuntu-latest
