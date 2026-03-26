@@ -309,15 +309,11 @@ npm run start # Start socket.io server for integration testing
 
 # Change log
 
-## [4.0.1] - 2026-02-28
+## [4.0.2] - 2026-03-26
 
-### Added
+### Bugfix
 
-- Automatically attempt to reconnect when the connection is unexpectedly interrupted.
-
-### Updated
-
-- Optimize dependencies.
+- Handle some edge cases for websocket and improve robustness.
 
 [See more](./CHANGELOG.md)
 

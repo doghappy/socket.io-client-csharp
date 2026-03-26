@@ -307,15 +307,11 @@ npm run start # 启动 socket.io server 测试服务
 
 # Change log
 
-## [4.0.1] - 2026-02-28
+## [4.0.2] - 2026-03-26
 
-### Added
+### Bugfix
 
-- 当连接意外断开时自动重连
-
-### Updated
-
-- 优化依赖
+- 处理 WebSocket 的边缘场景，提升健壮性
 
 [See more](./CHANGELOG.md)
 
