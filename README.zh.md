@@ -307,11 +307,11 @@ npm run start # 启动 socket.io server 测试服务
 
 # Change log
 
-## [4.0.2] - 2026-03-26
+## [4.0.3] - 2026-03-28
 
 ### Bugfix
 
-- 处理 WebSocket 的边缘场景，提升健壮性
+- 优化服务端为 Python 实现时的边缘场景处理
 
 [See more](./CHANGELOG.md)
 

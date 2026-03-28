@@ -309,11 +309,11 @@ npm run start # Start socket.io server for integration testing
 
 # Change log
 
-## [4.0.2] - 2026-03-26
+## [4.0.3] - 2026-03-28
 
 ### Bugfix
 
-- Handle some edge cases for websocket and improve robustness.
+- Improve handling of edge cases when the server is implemented in Python
 
 [See more](./CHANGELOG.md)
 
