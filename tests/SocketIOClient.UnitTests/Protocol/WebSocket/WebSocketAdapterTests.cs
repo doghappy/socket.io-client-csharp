@@ -145,7 +145,7 @@ public class WebSocketAdapterTests
         _clientAdapter.ReceiveAsync(Arg.Is<CancellationToken>(c => c != CancellationToken.None))
             .Returns(async _ =>
             {
-                await Task.Delay(100).ConfigureAwait(false);
+                await Task.Delay(20).ConfigureAwait(false);
                 return new WebSocketMessage
                 {
                     Type = WebSocketMessageType.Text,

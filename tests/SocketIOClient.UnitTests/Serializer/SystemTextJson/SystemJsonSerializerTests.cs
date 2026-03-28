@@ -315,6 +315,14 @@ public class SystemJsonSerializerTests
             Error = "Authentication error",
         });
 
+    private static readonly (string text, IMessage message) DeserializeEio3NspErrorMessage = new(
+        "44/socket.io,\"Unable to connect\"",
+        new ErrorMessage
+        {
+            Namespace = "/socket.io",
+            Error = "Unable to connect",
+        });
+
     private static readonly (string text, IMessage message) DeserializeEio4ErrorMessage = new(
         "44/test,{\"message\":\"Authentication error\"}",
         new ErrorMessage
@@ -347,6 +355,7 @@ public class SystemJsonSerializerTests
             { DeserializeIdNamespaceEventMessage.text, DeserializeIdNamespaceEventMessage.message },
             { DeserializeNamespaceAckMessage.text, DeserializeNamespaceAckMessage.message },
             { DeserializeEio3ErrorMessage.text, DeserializeEio3ErrorMessage.message },
+            { DeserializeEio3NspErrorMessage.text, DeserializeEio3NspErrorMessage.message },
             { DeserializeBinaryAckMessage.text, DeserializeBinaryAckMessage.message },
         };
 

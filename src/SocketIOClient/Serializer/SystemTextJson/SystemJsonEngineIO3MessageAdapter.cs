@@ -17,12 +17,22 @@ public class SystemJsonEngineIO3MessageAdapter : IEngineIOMessageAdapter
         return message;
     }
 
+    private static string DecapsulateNamespace(string text, INamespaceMessage message)
+    {
+        var index = text.IndexOf('"');
+        if (index > 0)
+        {
+            message.Namespace = text.Substring(0, index - 1);
+            text = text.Substring(index);
+        }
+        return text;
+    }
+
     public ErrorMessage DeserializeErrorMessage(string text)
     {
-        var error = JsonNode.Parse(text).Deserialize<string>()!;
-        return new ErrorMessage
-        {
-            Error = error,
-        };
+        var message = new ErrorMessage();
+        var rawJson = DecapsulateNamespace(text, message);
+        message.Error = JsonNode.Parse(rawJson).Deserialize<string>()!;
+        return message;
     }
 }
