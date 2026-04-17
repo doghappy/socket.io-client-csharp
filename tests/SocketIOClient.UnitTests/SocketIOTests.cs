@@ -51,6 +51,21 @@ public class SocketIOTests
             },
         };
     }
+    private SocketIO NewSocketIO(Uri url, SocketIOOptions customOptions)
+    {
+        return new SocketIO(url, customOptions, services =>
+        {
+            services.AddLogging(builder =>
+            {
+                builder.SetMinimumLevel(LogLevel.Trace);
+                builder.AddProvider(new XUnitLoggerProvider(_output));
+            });
+            services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.Polling, (_, _) => _session));
+            services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.WebSocket, (_, _) => _wsSession));
+            services.Replace(ServiceDescriptor.Singleton(_random));
+            services.Replace(ServiceDescriptor.Singleton(_eventRunner));
+        });
+    }
 
     private readonly SocketIO _io;
     private readonly ISession _session;
@@ -402,6 +417,90 @@ public class SocketIOTests
         await _session.Received().SendAsync(Arg.Any<object[]>(), CancellationToken.None);
     }
 
+    /// <summary>
+    /// Test if ConnectAsync's _connCompletionSource can throw because of .SetResult being called multiple times
+    /// 
+    /// Bug: _connCompletionSource uses SetResult in multiple competing locations:
+    ///   1. timeoutCts.Token.Register  -> fires at ConnectionTimeout * 1.02        -> .SetResult
+    ///   2. cancellationToken.Register -> fires when caller's token is cancelled   -> .SetResult
+    /// 
+    /// Fix: replace all SetResult calls on _connCompletionSource with TrySetResult.
+    /// </summary>
+    [Fact]
+    public async Task ConnectAsync_NoUnobservedTaskSchedulerExceptions()
+    {
+        var unobservedConnectionExceptions = new System.Collections.Concurrent.ConcurrentBag<Exception>();
+        EventHandler<UnobservedTaskExceptionEventArgs> unobservedHandler = (_, e) =>
+        {
+            // Filter out false positives that are unrelated to the SetResult race bug:
+            //   - xunit TestOutputHelper throws when logging after the test context ends
+            static bool IsFalsePositive(Exception ex)
+            {
+                if (ex is AggregateException agg)
+                    return agg.InnerExceptions.All(IsFalsePositive);
+                return (ex is InvalidOperationException && ex.Message.Contains("There is no currently active test"));
+            }
+
+            if (IsFalsePositive(e.Exception))
+            {
+                e.SetObserved();
+                return;
+            }
+
+            try
+            {
+                _output.WriteLine($">> Unobserved exception: {e.Exception}");
+                unobservedConnectionExceptions.Add(e.Exception);
+                e.SetObserved();
+            } catch (Exception) {} // ignore any exception from logging
+        };
+        TaskScheduler.UnobservedTaskException += unobservedHandler;
+
+        try
+        {
+            int timeout = 1; // socket io timeout
+            int timeout2 = (int)(timeout * 1.02); // timeoutCts fires at this time
+
+            // Build socket io instance
+            SocketIOOptions opts = new SocketIOOptions
+            {
+                ConnectionTimeout = TimeSpan.FromMilliseconds(timeout),
+                Reconnection = false
+            };
+            SocketIO sio = NewSocketIO(new Uri("https://unresolvable.invalid:3443"), opts);
+
+            // Run many iterations to maximize the chance of hitting the race window
+            for (int i = 0; i < 300; i++)
+            {
+                try
+                {
+                    // Cancel at the same time the connection is expected to fail,
+                    // so cancellationToken.Register and ConnectCoreAsync.SetResult race
+                    using var cts = new CancellationTokenSource(timeout2);
+                    await _io.ConnectAsync(cts.Token);
+                }
+                catch (Exception ex) when (ex is TaskCanceledException or ConnectionException or TimeoutException) {
+                    // All of these are expected outcomes — only InvalidOperationException is the bug
+                }
+                if (unobservedConnectionExceptions.Count > 0)
+                    break; // error recreated
+            }
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            await Task.Delay(200);
+        }
+        finally
+        {
+            TaskScheduler.UnobservedTaskException -= unobservedHandler;
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        await Task.Delay(1000);
+
+        unobservedConnectionExceptions.Should().BeEmpty("because no exception should be thrown from ConnectAsync's _connCompletionSource");
+
+    }
     #endregion
 
     #region Private Methods
