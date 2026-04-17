@@ -110,14 +110,14 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
 
         using var timeoutCts = new CancellationTokenSource(timeout);
-        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
+        timeoutCts.Token.Register(() => _connCompletionSource.TrySetResult(new TimeoutException()));
 
-        cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
+        cancellationToken.Register(() => _connCompletionSource.TrySetResult(new TaskCanceledException()));
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         var ctsToken = cts.Token;
 
-        _ = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
+        var taskConn = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
         _logger.LogDebug("Waiting for socket.io connection result...");
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), ctsToken);
         var ex = await task.ConfigureAwait(false);
@@ -127,6 +127,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             _logger.LogDebug(ex.ToString());
             throw ex;
         }
+        await taskConn;
     }
 
     private async Task ConnectCoreAsync(CancellationToken cancellationToken)
@@ -174,7 +175,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _logger.LogDebug("Session connecting...");
         await session.ConnectAsync(cancellationToken).ConfigureAwait(false);
         _session = session;
-        _sessionCompletionSource!.SetResult(true);
+        _sessionCompletionSource!.TrySetResult(true);
         _logger.LogDebug("Session connected");
     }
 
@@ -188,7 +189,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
         catch (Exception ex)
         {
-            _connCompletionSource!.SetResult(ex);
+            _connCompletionSource!.TrySetResult(ex);
             throw;
         }
 
