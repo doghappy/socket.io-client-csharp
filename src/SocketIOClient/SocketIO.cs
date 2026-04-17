@@ -117,7 +117,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         var ctsToken = cts.Token;
 
-        _ = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
+        var taskConn = ConnectCoreAsync(ctsToken).ConfigureAwait(false);
         _logger.LogDebug("Waiting for socket.io connection result...");
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), ctsToken);
         var ex = await task.ConfigureAwait(false);
@@ -127,6 +127,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
             _logger.LogDebug(ex.ToString());
             throw ex;
         }
+        await taskConn;
     }
 
     private async Task ConnectCoreAsync(CancellationToken cancellationToken)
