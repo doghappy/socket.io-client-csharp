@@ -4,6 +4,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NSubstitute.ReceivedExtensions;
 using SocketIOClient.Common;
+using SocketIOClient.Infrastructure;
 using SocketIOClient.Observers;
 using SocketIOClient.Protocol.WebSocket;
 using SocketIOClient.Test.Core;
@@ -18,7 +19,8 @@ public class WebSocketAdapterTests
         var logger = output.CreateLogger<WebSocketAdapter>();
         _clientAdapter = Substitute.For<IWebSocketClientAdapter>();
         _onDisconnect = Substitute.For<Action>();
-        _wsAdapter = new WebSocketAdapter(logger, _clientAdapter)
+        _errorStrategy = Substitute.For<IErrorStrategy>();
+        _wsAdapter = new WebSocketAdapter(logger, _clientAdapter, _errorStrategy)
         {
             OnDisconnected = _onDisconnect
         };
@@ -26,6 +28,7 @@ public class WebSocketAdapterTests
 
     private readonly WebSocketAdapter _wsAdapter;
     private readonly IWebSocketClientAdapter _clientAdapter;
+    private readonly IErrorStrategy _errorStrategy;
     private readonly Action _onDisconnect;
 
     [Fact]
@@ -288,21 +291,15 @@ public class WebSocketAdapterTests
     }
 
     [Fact]
-    public async Task ReceiveAsync_ThrowInBackground_NoUnobservedTaskExceptions()
+    public async Task ReceiveAsync_ThrowInBackground_ErrorStrategyWasUsed()
     {
-        var exceptions = new List<Exception>();
-        TaskScheduler.UnobservedTaskException += (_, e) => { exceptions.Add(e.Exception); };
-
         _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync(new Exception("Boom"));
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
 
         await Task.Delay(200).ConfigureAwait(false);
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
 
-        exceptions.Should().BeEmpty();
+        await _errorStrategy.Received(1).OnErrorAsync(Arg.Any<AggregateException>());
     }
 }

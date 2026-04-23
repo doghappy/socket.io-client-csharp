@@ -25,6 +25,7 @@ public class SocketIOTests
         _wsSession = Substitute.For<ISession>();
         _random = Substitute.For<IRandom>();
         _eventRunner = Substitute.For<IEventRunner>();
+        _errorStrategy = Substitute.For<IErrorStrategy>();
         _output = output;
         _io = NewSocketIO(new Uri("http://localhost:3000"));
     }
@@ -42,6 +43,7 @@ public class SocketIOTests
             services.Replace(ServiceDescriptor.KeyedScoped(TransportProtocol.WebSocket, (_, _) => _wsSession));
             services.Replace(ServiceDescriptor.Singleton(_random));
             services.Replace(ServiceDescriptor.Singleton(_eventRunner));
+            services.Replace(ServiceDescriptor.Singleton(_errorStrategy));
         })
         {
             Options =
@@ -57,6 +59,7 @@ public class SocketIOTests
     private readonly ISession _wsSession;
     private readonly IRandom _random;
     private readonly IEventRunner _eventRunner;
+    private readonly IErrorStrategy _errorStrategy;
     private readonly ITestOutputHelper _output;
 
     [Fact]
@@ -403,28 +406,17 @@ public class SocketIOTests
     }
 
     [Fact]
-    public async Task ConnectAsync_ThrowInBackground_NoUnobservedTaskExceptions()
+    public async Task ConnectAsync_ThrowInBackground_ErrorStrategyWasUsed()
     {
-        var exceptions = new List<Exception>();
-        TaskScheduler.UnobservedTaskException += (_, e) =>
-        {
-            exceptions.Add(e.Exception);
-        };
-
         _io.Options.Reconnection = true;
-        _io.Options.ReconnectionAttempts = 2;
-        _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new Exception("Test"));
+        _io.Options.ReconnectionAttempts = 5;
+        _session.ConnectAsync(Arg.Any<CancellationToken>()).Throws(new Exception("Boom"));
         await _io
             .Invoking(async x => await x.ConnectAsync())
             .Should()
             .ThrowAsync<ConnectionException>();
 
-        await Task.Delay(200);
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-
-        exceptions.Should().BeEmpty();
+        await _errorStrategy.Received(1).OnErrorAsync(Arg.Any<AggregateException>());
     }
     #endregion
 
