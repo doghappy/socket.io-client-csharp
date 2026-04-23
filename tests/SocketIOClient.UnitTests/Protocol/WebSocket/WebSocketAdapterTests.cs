@@ -286,4 +286,23 @@ public class WebSocketAdapterTests
 
         await _clientAdapter.Received(1).CloseAsync(token);
     }
+
+    [Fact]
+    public async Task ReceiveAsync_ThrowInBackground_NoUnobservedTaskExceptions()
+    {
+        var exceptions = new List<Exception>();
+        TaskScheduler.UnobservedTaskException += (_, e) => { exceptions.Add(e.Exception); };
+
+        _clientAdapter.ReceiveAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Boom"));
+
+        await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
+
+        await Task.Delay(200).ConfigureAwait(false);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        exceptions.Should().BeEmpty();
+    }
 }
