@@ -93,11 +93,7 @@ public abstract class EngineIO3Adapter : IEngineIOAdapter, IDisposable
     private async Task StartPingAsync()
     {
         await OnPingTaskStarted().ConfigureAwait(false);
-
-        if (_pingCancellationTokenSource.IsCancellationRequested)
-            return;
-        var token = _pingCancellationTokenSource.Token; // .Token may throw ObjectDisposedException
-
+        var token = _pingCancellationTokenSource.Token;
         while (!token.IsCancellationRequested)
         {
             await _delay.DelayAsync(OpenedMessage!.PingInterval, token).ConfigureAwait(false);
