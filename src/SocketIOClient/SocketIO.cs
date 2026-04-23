@@ -110,9 +110,9 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
 
         using var timeoutCts = new CancellationTokenSource(timeout);
-        timeoutCts.Token.Register(() => _connCompletionSource.TrySetResult(new TimeoutException()));
+        timeoutCts.Token.Register(() => _connCompletionSource.SetResult(new TimeoutException()));
 
-        cancellationToken.Register(() => _connCompletionSource.TrySetResult(new TaskCanceledException()));
+        cancellationToken.Register(() => _connCompletionSource.SetResult(new TaskCanceledException()));
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         var ctsToken = cts.Token;
@@ -174,7 +174,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _logger.LogDebug("Session connecting...");
         await session.ConnectAsync(cancellationToken).ConfigureAwait(false);
         _session = session;
-        _sessionCompletionSource!.TrySetResult(true);
+        _sessionCompletionSource!.SetResult(true);
         _logger.LogDebug("Session connected");
     }
 
@@ -188,7 +188,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         }
         catch (Exception ex)
         {
-            _connCompletionSource!.TrySetResult(ex);
+            _connCompletionSource!.SetResult(ex);
             throw;
         }
 
