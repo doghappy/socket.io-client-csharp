@@ -140,6 +140,21 @@ public class WebSocketAdapterTests
         await observer.DidNotReceive().OnNextAsync(Arg.Any<ProtocolMessage>());
     }
 
+    private async Task WaitUntilListenerStartedAsync()
+    {
+        const int delay = 20;
+        for (var i = 0; i < 500; i++)
+        {
+            if (_wsAdapter.HasListenerStarted)
+            {
+                return;
+            }
+
+            await Task.Delay(delay);
+        }
+        throw new TimeoutException();
+    }
+
     [Fact]
     public async Task ConnectAsync_ReceivedTextMessage_NotifyToObserver()
     {
@@ -157,8 +172,7 @@ public class WebSocketAdapterTests
             });
 
         await _wsAdapter.ConnectAsync(new Uri("ws://127.0.0.1:1234"), CancellationToken.None);
-
-        await Task.Delay(400).ConfigureAwait(false);
+        await WaitUntilListenerStartedAsync();
 
         await observer.Received()
             .OnNextAsync(Arg.Is<ProtocolMessage>(m =>
