@@ -4,10 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SocketIOClient.Common;
+using SocketIOClient.Infrastructure;
 
 namespace SocketIOClient.Protocol.WebSocket;
 
-public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClientAdapter clientAdapter)
+public class WebSocketAdapter(
+    ILogger<WebSocketAdapter> logger,
+    IWebSocketClientAdapter clientAdapter,
+    IErrorStrategy errorStrategy)
     : ProtocolAdapter, IWebSocketAdapter, IDisposable
 {
     private readonly CancellationTokenSource _receiveCancellationTokenSource = new();
@@ -16,9 +20,7 @@ public class WebSocketAdapter(ILogger<WebSocketAdapter> logger, IWebSocketClient
     {
         await clientAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
         var token = _receiveCancellationTokenSource.Token;
-        _ = ReceiveAsync(token)
-            .ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted)
-            .ConfigureAwait(false);
+        ReceiveAsync(token).FireAndForget(errorStrategy);
     }
 
     private async Task ReceiveAsync(CancellationToken cancellationToken)

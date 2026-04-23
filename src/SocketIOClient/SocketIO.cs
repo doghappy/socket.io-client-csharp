@@ -25,6 +25,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         _random = _serviceProvider.GetRequiredService<IRandom>();
         _delay = _serviceProvider.GetRequiredService<IDelay>();
         _eventRunner = _serviceProvider.GetRequiredService<IEventRunner>();
+        _errorStrategy = _serviceProvider.GetRequiredService<IErrorStrategy>();
     }
 
     public SocketIO(Uri uri, Action<IServiceCollection> configure) : this(uri, new SocketIOOptions(), configure)
@@ -42,6 +43,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
     private readonly IRandom _random;
     private readonly IDelay _delay;
     private readonly IEventRunner _eventRunner;
+    private readonly IErrorStrategy _errorStrategy;
     private readonly object _disconnectLock = new();
     private readonly object _ackHandlerLock = new();
 
@@ -117,9 +119,7 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         var ctsToken = cts.Token;
 
-        _ = ConnectCoreAsync(ctsToken)
-            .ContinueWith(t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted)
-            .ConfigureAwait(false);
+        ConnectCoreAsync(ctsToken).FireAndForget(_errorStrategy);
         _logger.LogDebug("Waiting for socket.io connection result...");
         var task = Task.Run(async () => await _connCompletionSource.Task.ConfigureAwait(false), ctsToken);
         var ex = await task.ConfigureAwait(false);

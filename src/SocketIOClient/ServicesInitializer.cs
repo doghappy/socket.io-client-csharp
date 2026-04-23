@@ -30,7 +30,8 @@ public static class ServicesInitializer
             .AddSingleton<IRetriable, RandomDelayRetryPolicy>()
             .AddSingleton<IEngineIOMessageAdapterFactory, EngineIOMessageAdapterFactory>()
             .AddSingleton<IDelay, TaskDelay>()
-            .AddSingleton<IEventRunner, EventRunner>();
+            .AddSingleton<IEventRunner, EventRunner>()
+            .AddSingleton<IErrorStrategy, NoOpErrorStrategy>();
 
         services
             .AddEngineIOCompatibility()
