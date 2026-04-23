@@ -16,6 +16,8 @@ public class WebSocketAdapter(
 {
     private readonly CancellationTokenSource _receiveCancellationTokenSource = new();
 
+    public bool HasListenerStarted { get; private set; }
+
     public async Task ConnectAsync(Uri uri, CancellationToken cancellationToken)
     {
         await clientAdapter.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
@@ -46,6 +48,7 @@ public class WebSocketAdapter(
                 }
 
                 await OnNextAsync(protocolMessage).ConfigureAwait(false);
+                HasListenerStarted = true;
             }
             catch (Exception e)
             {
