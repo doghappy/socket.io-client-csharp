@@ -158,8 +158,9 @@
     <Reference Include="OpenTelemetry, Version=1.0.0.0, Culture=neutral, PublicKeyToken=7bd6737fe5b67e3c, processorArchitecture=MSIL">
       <HintPath>..\..\packages\OpenTelemetry.1.14.0\lib\net462\OpenTelemetry.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTelemetry.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=7bd6737fe5b67e3c, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\OpenTelemetry.Api.1.14.0\lib\net462\OpenTelemetry.Api.dll</HintPath>
+    <Reference Include="OpenTelemetry.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=7bd6737fe5b67e3c">
+      <HintPath>..\..\packages\OpenTelemetry.Api.1.15.3\lib\net462\OpenTelemetry.Api.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="OpenTelemetry.Api.ProviderBuilderExtensions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=7bd6737fe5b67e3c, processorArchitecture=MSIL">
       <HintPath>..\..\packages\OpenTelemetry.Api.ProviderBuilderExtensions.1.14.0\lib\net462\OpenTelemetry.Api.ProviderBuilderExtensions.dll</HintPath>
