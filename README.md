@@ -237,8 +237,9 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
     });
 });
 ```
-
-> Note: By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this scenario, you may need to configure CertificateValidationCallback for both transports.
+> **Notes:**
+> - By default, the client communicates with the server using polling first. If the server supports WebSocket, the connection will be upgraded to a WebSocket channel. In this scenario, you may need to configure CertificateValidationCallback for both transports.
+> - `WebSocketOptions` also exists in `System.Net.WebSockets` (.NET), which does not have a `RemoteCertificateValidationCallback` property and will cause a compile error. Make sure you're using `SocketIOClient.Protocol.WebSocket.WebSocketOptions`, either via an explicit `using SocketIOClient.Protocol.WebSocket;` or by using the fully qualified name.
 
 ## Proxy
 

@@ -236,7 +236,9 @@ var client = new SocketIO(new Uri("http://localhost:11400"), services =>
 });
 ```
 
-> 注意：默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置 CertificateValidationCallback
+> **注意：**
+> - 默认情况下优先使用 Polling 与服务端通信，如果服务端支持 WebSocket，则会升级到 WebSocket 信道，在这种场景下，你可能需要同时为两者配置 CertificateValidationCallback
+> - `WebSocketOptions` 在 .NET 的 `System.Net.WebSockets` 命名空间中也存在，但该类型没有 `RemoteCertificateValidationCallback` 属性，使用错误会导致编译错误。请确保使用的是 `SocketIOClient.Protocol.WebSocket.WebSocketOptions`，可以通过显式 `using SocketIOClient.Protocol.WebSocket;` 或使用完全限定名来避免冲突。
 
 ## 代理
 
