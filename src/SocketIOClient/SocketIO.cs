@@ -283,13 +283,15 @@ public class SocketIO : ISocketIO, IInternalSocketIO
         CancellationToken cancellationToken)
     {
         CheckStatusAndData(data);
+        int packetId;
         lock (_ackHandlerLock)
         {
             _packetId++;
-            _ackHandlers.Add(_packetId, ack);
+            packetId = _packetId;
+            _ackHandlers.Add(packetId, ack);
         }
         var sessionData = MergeEventData(eventName, data);
-        await _session!.SendAsync(sessionData, _packetId, cancellationToken).ConfigureAwait(false);
+        await _session!.SendAsync(sessionData, packetId, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task EmitAsync(string eventName, IEnumerable<object> data, Func<IDataMessage, Task> ack)
