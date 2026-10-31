@@ -167,8 +167,10 @@ await client.EmitAsync("1:emit", [
 client.On("new files", ctx =>
 {
     // RawText: ["new files", {"name":"template.html","mimeType":"text/html","bytes":{"_placeholder":true,"num":0}}]
-    var result = ctx.GetValue<FileDTO>();
-    Console.WriteLine(Encoding.UTF8.GetString(result.Bytes))
+    var result = ctx.GetValue<FileDTO>(0)!;
+    Console.WriteLine(Encoding.UTF8.GetString(result.Bytes));
+
+    return Task.CompletedTask;
 });
 ```
 
